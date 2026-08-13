@@ -42,11 +42,13 @@
 Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Follower**:
 - **kalimete (HUB)**: pull → collect (local→repo) → push al remoto.
 - **victoria (FOLLOWER)**: pull → deploy (repo→local). Solo lectura.
+- **rootsource (FOLLOWER)**: pull → deploy (repo→local). Solo lectura.
 - Collect y deploy son DESTRUCTIVOS: eliminan "agentes zombies" (archivos que existen en una máquina pero ya no en la fuente de verdad).
 
 ### Automatización
 - **kalimete**: cron `*/5 * * * *` → sync.sh → push (hub único)
 - **victoria**: cron `*/5 * * * *` → sync.sh → pull+deploy (solo lectura)
+- **rootsource**: cron `*/5 * * * *` → sync.sh → pull+deploy (solo lectura; deploy key de solo lectura, registrada 2026-08-13)
 - **jonas**: *(sin cron de sync — acceso SSH roto, pendiente de arreglar)*
 
 ## Agentes por Máquina
@@ -69,6 +71,12 @@ Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Fol
 - 8 agentes sincronizados desde kalimete (via hub/follower sync)
 - **Nota**: Victoria no tiene agentes locales propios — usa opencode.jsonc con `default_agent: kalimete` y proveedor `rootsource` para modelos locales (ollama, gemma-4-31b).
 - Agentes locales: ollama (:11434), victoria-voice (healthy), gemma-4-31b ethical (ollama)
+
+### rootsource
+- 9 agentes sincronizados desde kalimete (via hub/follower sync): kalimete + 7 eco-* + **docs-keeper**
+- **docs-keeper** — agente local original de rootsource (mantiene AGENTS.md de llmgate, ComfyUI, NemoClaw); añadido al repo 2026-08-13 (portable, sin model fijo)
+- **Nota**: usa `default_agent: kalimete` (añadido 2026-08-13), proveedor `rootsource` con modelos locales (baseline/baseline-fast via llmgate local :4010)
+- Al ser follower, NO pusha al repo: deploy key `rootsource-follower-readonly` (solo lectura)
 
 ### jonas
 - *(Sin agentes locales — sin cron de sync, SSH roto desde kalimete)*

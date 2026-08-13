@@ -21,6 +21,14 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [05:35] - Sync: integración de rootsource al ecosistema (follower)
+- **Tipo**: sync | infra | agente
+- **Modificado**: armada-sync/AGENTS.md, armada-sync/agents/docs-keeper.md (nuevo), rootsource: ~/.ssh/id_github_rootsource + ~/.ssh/config, cron, opencode.jsonc (default_agent)
+- **Afecta a**: kalimete, victoria, rootsource
+- **Causa**: rootsource es el proveedor de modelos (vLLM/llmgate) de todo el ecosistema; quedaba fuera del sync de agentes
+- **Estado**: ✅ sincronizado
+- **Notas**: rootsource ahora es FOLLOWER (pull+deploy, nunca push). Deploy key `rootsource-follower-readonly` (solo lectura) registrada en GitHub vía gh. docs-keeper.md (agente local de rootsource) añadido al repo con model portable (sin model fijo → usa default de cada máquina). Cron `*/5` instalado. default_agent: kalimete añadido al opencode.jsonc de rootsource. md5 de kalimete.md idéntico al repo. jonas queda pendiente (SSH roto).
+
 ### [00:15] - Sync: arquitectura hub/follower, collect/deploy destructivos, cron.log gitignore
 - **Tipo**: sync
 - **Modificado**: armada-sync/sync.sh, armada-sync/.gitignore
