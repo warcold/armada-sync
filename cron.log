@@ -3631,3 +3631,29 @@ Already up to date.
   → command/reporte.md
 [3/4] Collecting local changes...
 [4/4] Pushing to GitHub...
+[master 5a476db] Sync 2026-08-13_00:15:01 from kalimete
+ 1 file changed, 25 insertions(+)
+To ssh://github.com/warcold/armada-sync.git
+   00d8cd9..5a476db  master -> master
+Pushed successfully.
+=== Sync complete ===
+=== Armada Sync — Thu Aug 13 12:20:01 AM EDT 2026 ===
+[0/4] Host=kalimete hub=true
+[1/4] Pulling latest from GitHub...
+From ssh://github.com/warcold/armada-sync
+ * branch            master     -> FETCH_HEAD
+Already up to date.
+[2/4] Deploying to opencode dirs (destructive)...
+  → agents/eco-accesos.md (skip)
+  → agents/eco-cloudflare-dns.md (skip)
+  → agents/eco-cloudflare-security.md (skip)
+  → agents/eco-cloudflare-storage.md (skip)
+  → agents/eco-cloudflare-tunnels.md (skip)
+  → agents/eco-cloudflare-workers.md (skip)
+  → agents/eco-voice.md (skip)
+  → agents/kalimete.md (skip)
+  → skills/cloudflare
+  → commands/mapa.md (skip)
+  → commands/reporte.md (skip)
+[3/4] Collecting local changes (hub only)...
+[4/4] Pushing to GitHub (hub)...

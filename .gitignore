@@ -2,3 +2,5 @@ daily-report.env
 daily-report.log
 __pycache__/
 *.pyc
+# Logs de sync (cada host tiene el suyo, no compartir)
+cron.log
