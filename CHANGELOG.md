@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [13:30] - Fix: vLLM context overflow (163K → 262K)
+- **Tipo**: config | infra
+- **Modificado**: opencode.jsonc (baseline-thinking), MAPA.md (regla anti-desborde)
+- **Afecta a**: kalimete (config opencode)
+- **Causa**: 147,457 input + 16,384 max_tokens = 163,841 > 163,840 vLLM limit → "Type validation failed". El modelo soporta 262K según NVIDIA docs.
+- **Estado**: ✅ sincronizado
+- **Notas**: baseline-thinking: max_tokens 16384→8192, context 158000→245000. MAPA.md actualizado con contexto real 262K. vLLM contenedor aún en 163K → no urgente (opencode.jsonc tiene margen).
+
+---
+
+## 2026-08-13
+
 ### [05:35] - Sync: integración de rootsource al ecosistema (follower)
 - **Tipo**: sync | infra | agente
 - **Modificado**: armada-sync/AGENTS.md, armada-sync/agents/docs-keeper.md (nuevo), rootsource: ~/.ssh/id_github_rootsource + ~/.ssh/config, cron, opencode.jsonc (default_agent)
