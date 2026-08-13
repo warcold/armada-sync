@@ -3657,3 +3657,35 @@ Already up to date.
   → commands/reporte.md (skip)
 [3/4] Collecting local changes (hub only)...
 [4/4] Pushing to GitHub (hub)...
+[master 5a6cf7e] Sync 2026-08-13_00:20:02 from kalimete
+ 2 files changed, 28 insertions(+)
+To ssh://github.com/warcold/armada-sync.git
+   0ab10d5..5a6cf7e  master -> master
+Pushed successfully.
+=== Sync complete ===
+=== Armada Sync — kalimete — Thu Aug 13 12:25:01 AM EDT 2026 ===
+Host=kalimete hub=true
+[1/3] Pulling latest from GitHub...
+From ssh://github.com/warcold/armada-sync
+ * branch            master     -> FETCH_HEAD
+Already up to date.
+/home/warcold/armada-sync/sync.sh: line 45: syntax error near unexpected token `2'
+=== Armada Sync — kalimete — Thu Aug 13 12:30:01 AM EDT 2026 ===
+Host=kalimete hub=true
+[1/3] Pulling latest from GitHub...
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+Warning: pull failed, continuing...
+[2/3] Collecting local → repo dir (hub)...
+  → repo/agents/eco-accesos.md (overwrite)
+  → repo/agents/eco-cloudflare-dns.md (overwrite)
+  → repo/agents/eco-cloudflare-security.md (overwrite)
+  → repo/agents/eco-cloudflare-storage.md (overwrite)
+  → repo/agents/eco-cloudflare-tunnels.md (overwrite)
+  → repo/agents/eco-cloudflare-workers.md (overwrite)
+  → repo/agents/eco-voice.md (overwrite)
+  → repo/agents/kalimete.md (overwrite)
+  → repo/skills/cloudflare/ (overwrite)
+  → repo/commands/mapa.md (overwrite)
+  → repo/commands/reporte.md (overwrite)
+[3/3] Pushing to GitHub (hub)...
