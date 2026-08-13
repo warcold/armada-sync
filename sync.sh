@@ -1,71 +1,70 @@
 #!/bin/bash
 set -euo pipefail
 
+# nullglob: si no hay *.md, el for no se ejecuta (en vez de usar literal "*.md")
+shopt -s nullglob
+
 MY_HOME=$(eval echo ~$(whoami))
 REPO_DIR="$MY_HOME/armada-sync"
 
 echo "=== Armada Sync — $(hostname) — $(date) ==="
 
 # ── Arquitectura Hub/Follower ──────────────────────────────────────
-# kalimete = HUB (único que push) → fuentes de verdad de todos los
-# agentes/skills/commands. Victoria = FOLLOWER (solo pull+deploy).
+# kalimete = HUB (único push) → fuente de verdad
+# Victoria = FOLLOWER (solo pull+deploy, read-only)
 #
-# Flujo HUB:   pull → collect(→repo) → push
-# Flujo FOL:   pull → deploy(→local)
+# collect: local opencode → repo dir (overwrite + delete)
+# deploy:  repo dir → local opencode (overwrite + delete)
+# Ambos DESTRUCTIVOS (eliminan "agentes zombies")
 #
-# collect: local → repo dir (overwrite + delete)
-# deploy:  repo dir → local (overwrite + delete)
-#
-# collect/deploy destructivos eliminan "agentes zombies" (archivos
-# que existen en una máquina pero ya no en la fuente de verdad).
+# Convención:
+#   Repo (armada-sync/):  agents/, skills/, commands/  (plural)
+#   Config (opencode/):   agent/, skill/, command/     (singular)
 
 IS_HUB=false
 [ "$(hostname)" = "kalimete" ] && IS_HUB=true
 echo "Host=$(hostname) hub=$IS_HUB"
 
 # ═══════════════════════════════════════════════════════════════════
-# PASO 1: PULL DE TODOS (traer cambios del remoto al repo dir)
+# PASO 1: PULL (todos reciben cambios del remoto)
 # ═══════════════════════════════════════════════════════════════════
 echo "[1/3] Pulling latest from GitHub..."
 cd "$REPO_DIR"
+git config pull.rebase true 2>/dev/null || true
 git pull origin master 2>&1 || echo "Warning: pull failed, continuing..."
 
-# ═══════════════════════════════════════════════════════════════════
-# PASO 2/3: SEGÚN ROL
-# ═══════════════════════════════════════════════════════════════════
 if $IS_HUB; then
     # ── HUB: COLLECT → PUSH ────────────────────────────────────────
-    echo "[2/3] Collecting local → remote (hub)..."
+    echo "[2/3] Collecting local → repo dir (hub)..."
 
-    for d in agent skill command; do
-        mkdir -p "$REPO_DIR/$d"
-        local_dir="$MY_HOME/.config/opencode/$d"
+    for dir_pair in "agent:agents" "skill:skills" "command:commands"; do
+        local_part="${dir_pair%%:*}"
+        repo_part="${dir_pair##*:}"
 
-        # a) Overwrite: copiar todo lo que existe en config local al repo dir
-        for f in "$local_dir"/*.md 2>/dev/null; do
-            [ -f "$f" ] || continue
-            cp -f "$f" "$REPO_DIR/$d/$(basename "$f")"
-            echo "  → repo/$d/$(basename "$f") (overwrite)"
+        mkdir -p "$REPO_DIR/$repo_part"
+        local_dir="$MY_HOME/.config/opencode/$local_part"
+
+        # a) Overwrite: config → repo dir
+        for f in "$local_dir"/*.md; do
+            cp -f "$f" "$REPO_DIR/$repo_part/$(basename "$f")"
+            echo "  → repo/$repo_part/$(basename "$f") (overwrite)"
         done
-        for d2 in "$local_dir"/*/ 2>/dev/null; do
-            [ -d "$d2" ] || continue
+        for d2 in "$local_dir"/*/; do
             nm=$(basename "$d2")
-            rm -rf "$REPO_DIR/$d/$nm"
-            mkdir -p "$REPO_DIR/$d/$nm"
-            cp -r "$d2"* "$REPO_DIR/$d/$nm/" 2>/dev/null || true
-            echo "  → repo/$d/$nm/ (overwrite)"
+            rm -rf "$REPO_DIR/$repo_part/$nm"
+            mkdir -p "$REPO_DIR/$repo_part/$nm"
+            cp -r "$d2"* "$REPO_DIR/$repo_part/$nm/" 2>/dev/null || true
+            echo "  → repo/$repo_part/$nm/ (overwrite)"
         done
 
-        # b) Delete: borrar del repo dir lo que ya no existe en config local
-        for f in "$REPO_DIR/$d"/*.md 2>/dev/null; do
-            [ -f "$f" ] || continue
+        # b) Delete: lo que ya no existe en config → borrar del repo dir
+        for f in "$REPO_DIR/$repo_part"/*.md; do
             local_name=$(basename "$f")
-            [ ! -f "$local_dir/$local_name" ] && rm -f "$f" && echo "  ✗ repo/$d/$local_name (deleted — removed locally)"
+            [ ! -f "$local_dir/$local_name" ] && rm -f "$f" && echo "  ✗ repo/$repo_part/$local_name (deleted)"
         done
-        for d2 in "$REPO_DIR/$d"/*/ 2>/dev/null; do
-            [ -d "$d2" ] || continue
+        for d2 in "$REPO_DIR/$repo_part"/*/; do
             local_name=$(basename "$d2")
-            [ ! -d "$local_dir/$local_name" ] && rm -rf "$d2" && echo "  ✗ repo/$d/$local_name/ (deleted — removed locally)"
+            [ ! -d "$local_dir/$local_name" ] && rm -rf "$d2" && echo "  ✗ repo/$repo_part/$local_name/ (deleted)"
         done
     done
 
@@ -80,46 +79,40 @@ if $IS_HUB; then
     fi
 else
     # ── FOLLOWER: DEPLOY (destructivo) ─────────────────────────────
-    echo "[2/3] Deploying from remote → local (follower)..."
+    echo "[2/3] Deploying from repo dir → local (follower)..."
 
-    for d in agent skill command; do
-        mkdir -p "$MY_HOME/.config/opencode/$d"
-        local_dir="$MY_HOME/.config/opencode/$d"
+    for dir_pair in "agent:agents" "skill:skills" "command:commands"; do
+        local_part="${dir_pair%%:*}"
+        repo_part="${dir_pair##*:}"
 
-        # a) Delete: borrar de config local lo que ya no existe en repo dir
-        for f in "$local_dir"/*.md 2>/dev/null; do
-            [ -f "$f" ] || continue
+        mkdir -p "$MY_HOME/.config/opencode/$local_part"
+        local_dir="$MY_HOME/.config/opencode/$local_part"
+
+        # a) Delete: lo que no está en repo dir → borrar de config
+        for f in "$local_dir"/*.md; do
             local_name=$(basename "$f")
-            if [ ! -f "$REPO_DIR/$d/$local_name" ]; then
-                rm -f "$f"
-                echo "  ✗ $d/$local_name (removed — not in remote)"
-            fi
+            [ ! -f "$REPO_DIR/$repo_part/$local_name" ] && rm -f "$f" && echo "  ✗ $local_part/$local_name (removed)"
         done
-        for d2 in "$local_dir"/*/ 2>/dev/null; do
-            [ -d "$d2" ] || continue
+        for d2 in "$local_dir"/*/; do
             local_name=$(basename "$d2")
-            if [ ! -d "$REPO_DIR/$d/$local_name" ]; then
-                rm -rf "$d2"
-                echo "  ✗ $d/$local_name/ (removed — not in remote)"
-            fi
+            [ ! -d "$REPO_DIR/$repo_part/$local_name" ] && rm -rf "$d2" && echo "  ✗ $local_part/$local_name/ (removed)"
         done
 
-        # b) Overwrite: copiar del repo dir a config local
-        for f in "$REPO_DIR/$d"/*.md 2>/dev/null; do
-            [ -f "$f" ] || continue
+        # b) Overwrite: repo dir → config
+        for f in "$REPO_DIR/$repo_part"/*.md; do
             name=$(basename "$f")
-            [ "$f" = "$local_dir/$name" ] && continue
-            cp -f "$f" "$local_dir/$name"
-            echo "  → $d/$name"
+            dest="$local_dir/$name"
+            [ "$f" = "$dest" ] && continue
+            cp -f "$f" "$dest"
+            echo "  → $local_part/$name"
         done
-        for d2 in "$REPO_DIR/$d"/*/ 2>/dev/null; do
-            [ -d "$d2" ] || continue
+        for d2 in "$REPO_DIR/$repo_part"/*/; do
             name=$(basename "$d2")
             dest="$local_dir/$name"
             rm -rf "$dest" 2>/dev/null || true
             mkdir -p "$dest"
             cp -r "$d2"* "$dest/" 2>/dev/null || true
-            echo "  → $d/$name/"
+            echo "  → $local_part/$name/"
         done
     done
 
