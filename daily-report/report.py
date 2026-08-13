@@ -172,18 +172,24 @@ Datos brutos del día:
 {report_md[:6000]}"""
     body = json.dumps({
         "model": MODEL,
-        "messages": [{"role": "system", "content": prompt}],
-        "max_tokens": 400,
+        "messages": [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": "Genera el resumen ejecutivo del día."},
+        ],
+        "max_tokens": 2000,
         "temperature": 0.4,
+        "chat_template_kwargs": {"enable_thinking": False},
     }).encode()
     req = urllib.request.Request(LLMGATE, data=body, headers={
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     })
     try:
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with urllib.request.urlopen(req, timeout=180) as r:
             d = json.loads(r.read())
-            return d["choices"][0]["message"]["content"].strip()
+            msg = d["choices"][0]["message"]
+            content = msg.get("content") or msg.get("reasoning") or ""
+            return content.strip() or None
     except Exception as e:
         print(f"  ⚠️ LLM summary: {e}", file=sys.stderr)
         return None
@@ -199,7 +205,11 @@ def send_discord(text, embed_text=None):
     req = urllib.request.Request(
         f"https://discord.com/api/v10/channels/{DISCORD_CHANNEL}/messages",
         data=body,
-        headers={"Authorization": f"Bot {DISCORD_TOKEN}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bot {DISCORD_TOKEN}",
+            "Content-Type": "application/json",
+            "User-Agent": "DiscordBot (daily-report-armada, 1.0)",
+        },
     )
     try:
         with urllib.request.urlopen(req, timeout=20) as r:

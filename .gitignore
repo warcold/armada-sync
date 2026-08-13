@@ -1,24 +1,4 @@
-# Secrets
-*.env
-.env.*
-*.pem
-*.key
-*.p12
-*.pfx
-*.db
-*.sqlite
-*.sqlite3
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Opencode node_modules
-node_modules/
-
-# ComfyUI models
-comfyui/models/checkpoints/*
-comfyui/models/diffusion_models/*
-comfyui/models/loras/*
-!comfyui/models/checkpoints/.gitkeep
-!comfyui/models/diffusion_models/.gitkeep
+daily-report.env
+daily-report.log
+__pycache__/
+*.pyc
