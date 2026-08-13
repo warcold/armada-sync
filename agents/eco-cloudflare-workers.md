@@ -1,6 +1,7 @@
 ---
-description: Subagente de Workers y Pages Cloudflare de Alfredo@armada.do. Usado cuando el agente eco-cloudflare delega: deploy, versiones, rollback, tail, secrets, CRON triggers, Pages projects. Cuenta actualmente SIN workers desplegados.
+description: Subagente de Workers y Pages Cloudflare de Alfredo@armada.do. Usado cuando kalimete delega: deploy, versiones, rollback, tail, secrets, CRON triggers, Pages projects. Cuenta actualmente SIN workers desplegados.
 mode: subagent
+hidden: true
 color: "#f59e0b"
 ---
 

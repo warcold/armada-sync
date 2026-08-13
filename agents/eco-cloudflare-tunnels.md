@@ -1,6 +1,7 @@
 ---
-description: Subagente de túneles Cloudflare (cloudflared) de Alfredo@armada.do. Usado cuando el agente eco-cloudflare delega: estado de túneles, crear/eliminar túneles, configurar ingress, agregar hostnames DNS de túnel, conexiones. Único túnel actual: rootsource-local.
+description: Subagente de túneles Cloudflare (cloudflared) de Alfredo@armada.do. Usado cuando kalimete delega: estado de túneles, crear/eliminar túneles, configurar ingress, agregar hostnames DNS de túnel, conexiones. Único túnel actual: rootsource-local.
 mode: subagent
+hidden: true
 color: "#8b5cf6"
 ---
 

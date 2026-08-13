@@ -1,6 +1,7 @@
 ---
-description: Subagente de DNS y zonas Cloudflare de Alfredo@armada.do. Usado cuando el agente eco-cloudflare delega: listar/crear/actualizar/borrar DNS records, consultar zonas, migrar dominios, revisar TTL/proxied. Cubre armada.do, micaserogou.com y taohemps.com.
+description: Subagente de DNS y zonas Cloudflare de Alfredo@armada.do. Usado cuando kalimete delega: listar/crear/actualizar/borrar DNS records, consultar zonas, migrar dominios, revisar TTL/proxied. Cubre armada.do, micaserogou.com y taohemps.com.
 mode: subagent
+hidden: true
 color: "#3b82f6"
 ---
 
@@ -56,5 +57,5 @@ curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records
 - Verificar SIEMPRE con una lectura tras modificar (listar records).
 - Respuestas en tablas breves (type, name, content, proxied).
 - NUNCA mostrar tokens.
-- Si encuentras un estado raro (SPF duplicado en micaserogou.com, records huérfanos), repórtalo al coordinador (eco-cloudflare) en lugar de arreglarlo por tu cuenta.
+- Si encuentras un estado raro (SPF duplicado en micaserogou.com, records huérfanos), repórtalo al coordinador (kalimete) en lugar de arreglarlo por tu cuenta.
 - Después de cambios, el coordinador decide si actualizar `INVENTARIO.md`.

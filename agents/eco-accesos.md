@@ -1,6 +1,7 @@
 ---
-description: Subagente del modelo de acceso SSH del ecosistema Armada. Usado cuando el agente ecosistema delega: quién tiene acceso a qué host, usuarios y llaves, auditoría de intentos denegados, revocar/agregar llaves. (⚠️ victoria→rootsource SSH eliminado 2026-08-12)
+description: Subagente del modelo de acceso SSH del ecosistema Armada. Usado cuando kalimete delega: quién tiene acceso a qué host, usuarios y llaves, auditoría de intentos denegados, revocar/agregar llaves. (⚠️ victoria→rootsource SSH eliminado 2026-08-12)
 mode: subagent
+hidden: true
 color: "#f59e0b"
 ---
 

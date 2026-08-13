@@ -1,6 +1,7 @@
 ---
-description: Subagente del servicio de voz de Victoria (openclaw-voice). Usado cuando el agente ecosistema delega: UI https://victoria.local:8765, contenedor victoria-voice, nginx TLS, WebSocket /ws, micrófono que no funciona, troubleshooting, espejado de idioma, STT 401 ya solucionado.
+description: Subagente del servicio de voz de Victoria (openclaw-voice). Usado cuando kalimete delega: UI https://victoria.local:8765, contenedor victoria-voice, nginx TLS, WebSocket /ws, micrófono que no funciona, troubleshooting, espejado de idioma, STT 401 ya solucionado.
 mode: subagent
+hidden: true
 color: "#8b5cf6"
 ---
 

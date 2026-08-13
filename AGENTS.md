@@ -40,13 +40,18 @@ Cada máquina ejecuta  para:
 ## Agentes por Máquina
 
 ### kalimete (hub)
--  — Agente principal del ecosistema
--  — Modelo de acceso SSH
--  — Servicio de voz de Victoria
--  — Consulta solo lectura
-- Cloudflare agents (cf-dns, cf-security, cf-storage, cf-tunnels, cf-workers, cloudflare)
-- Skill: 
-- Command: 
+- **kalimete** — Agente principal del ecosistema (CEREBRO CENTRAL, por defecto; ex-eco-cloudflare)
+- **eco-accesos** — Modelo de acceso SSH (hidden)
+- **eco-voice** — Servicio de voz de Victoria (hidden)
+- **eco-cloudflare-dns** — DNS de las 3 zonas (hidden)
+- **eco-cloudflare-security** — SSL, WAF, firewall, tokens (hidden)
+- **eco-cloudflare-storage** — KV, D1, Queues (hidden)
+- **eco-cloudflare-tunnels** — Túneles cloudflared (hidden)
+- **eco-cloudflare-workers** — Workers/Pages (hidden)
+- **plan / build** — Proyectos nuevos no-ecosistema (built-in)
+- Retirados 2026-08-12: cloudflare, ecosistema, cf-* (5), eco-cloudflare (→ kalimete), jonas-ro, kalimete-ro, kalimete-ro-agent, rootsource-ro
+- Skill: **cloudflare** → `skill/cloudflare/SKILL.md`
+- Command: **mapa**, **reporte** → `commands/`
 
 ### victoria
 -  — Consulta solo lectura a kalimete

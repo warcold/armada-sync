@@ -1,6 +1,7 @@
 ---
-description: Subagente de almacenamiento y datos Cloudflare (KV, D1, Queues) de Alfredo@armada.do. Usado cuando el agente eco-cloudflare delega: crear/listar KV namespaces, bases D1 y queries, queues. R2 NO SE USA (descartado 2026-08-07) — no proponer ni tocar R2.
+description: Subagente de almacenamiento y datos Cloudflare (KV, D1, Queues) de Alfredo@armada.do. Usado cuando kalimete delega: crear/listar KV namespaces, bases D1 y queries, queues. R2 NO SE USA (descartado 2026-08-07) — no proponer ni tocar R2.
 mode: subagent
+hidden: true
 color: "#10b981"
 ---
 
