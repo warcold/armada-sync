@@ -121,3 +121,55 @@ wrangler whoami
 - Resultados legibles: `jq` + tablas breves. Respuestas: estado antes → cambio → verificación.
 - Si se modifica infraestructura, recordar actualizar `INVENTARIO.md` (y el MAPA del ecosistema si afecta la red local).
 - Si el usuario pide "el mapa": mostrar `~/.config/opencode/ecosistema-map/MAPA.md` (mapa maestro) + `~/.config/opencode/cloudflare-map/MAPA.md` si quiere el detalle Cloudflare.
+
+## Change Detection + Reporting (2026-08-13)
+
+Sistema automático de detección y reporte de cambios. Funciona en 3 momentos:
+
+### 1. Al iniciar sesión — Change Log
+Al recibir el primer mensaje del usuario, ejecutar:
+```sh
+cd ~/armada-sync && git log --oneline -30 2>/dev/null
+```
+Esto muestra los últimos 30 commits (~2-3 KB). Kalimete debe:
+- **Identificar cambios relevantes** (agentes modificados, sync.sh cambiado, AGENTS.md actualizado, etc.)
+- **Informar al usuario** brevemente: "detecto X cambios desde la última sesión"
+- Si hay cambios en agentes, señalar cuál se modificó y por qué
+
+**Ejemplo de reporte inicial**:
+> "Detecto 3 cambios desde la última sesión:
+> - AGENTS.md completado con datos reales
+> - sync.sh corregido (nullglob syntax error)
+> - victoria sync.sh actualizado (hub/follower)
+> Todos sincronizados y push OK."
+
+### 2. Al finalizar una tarea que modifique infra — CHANGELOG.md
+Cada vez que kalimete ejecute un cambio en el ecosistema, debe:
+1. **Determinar el impacto**: ¿afecta a kalimete? ¿a Victoria? ¿a rootsource? ¿al repo?
+2. **Escribir en CHANGELOG.md** (al inicio, antes del resto de entradas):
+   ```markdown
+   ## YYYY-MM-DD
+
+   ### [HH:MM] - Cambio: descripción corta
+   - **Tipo**: agente | config | sync | infra | servicio | red | seguridad | otro
+   - **Modificado**: archivo o componente que cambió
+   - **Afecta a**: máquina o agente impactado (o "ninguno" si es local)
+   - **Causa**: razón del cambio
+   - **Estado**: ✅ sincronizado | ⚠️ pendiente | ❌ error
+   - **Notas**: detalles, alertas, observaciones
+   ```
+3. **Reportar al usuario**: "Cambié X, afecta a Y, ya sincronizado"
+4. **Commit + push** (el cron de 5 min lo hará, pero kalimete puede forzarlo si es urgente: `git add -A && git commit -m "..." && git push`)
+
+### 3. Al detectar un cambio de Victoria (follower)
+Victoria NUNCA push al repo. Si kalimete detecta que Victoria tiene cambios locales (por ejemplo, si el usuario le pide a Victoria que modifique algo y kalimete lo nota indirectamente):
+- **Informar al usuario**: "Victoria tiene cambios locales en X que no se reflejan en el repo. ¿Quieres que los comitee desde kalimete?"
+- **NO aplicar cambios de Victoria automáticamente**. Solo el HUB (kalimete) escribe al repo.
+
+### Principios del sistema
+- **Un solo writer**: solo kalimete push al remoto (hub). Victoria es solo lectura (follower).
+- **Un solo reporte**: kalimete es el que informa los cambios. No esperar a que Victoria reporte nada.
+- **Compacto**: el git log al iniciar es ~2-3 KB (seguro, no desborda el contexto).
+- **Práctico**: el CHANGELOG.md se lee solo cuando el usuario pregunta "¿qué cambió?" — no se carga automáticamente en cada request.
+- **Destructivo sync**: collect/deploy borran zombies automáticamente (ya implementado).
+- **Sin scripts de detección**: no hay necesidad de un script de "change detection". El git log es suficiente. El reporting lo hace kalimete al leerlo.
