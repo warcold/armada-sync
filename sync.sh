@@ -4,99 +4,126 @@ set -euo pipefail
 MY_HOME=$(eval echo ~$(whoami))
 REPO_DIR="$MY_HOME/armada-sync"
 
-echo "=== Armada Sync — $(date) ==="
-HOSTNAME_LOCAL=$(hostname)
+echo "=== Armada Sync — $(hostname) — $(date) ==="
 
-# ── Modo unidireccional ──────────────────────────────────────
-# Solo kalimete (hub) puede push al repo. Los demás (victoria,
-# rootsource, jonas) solo hacen pull+deploy — nunca collect ni push.
-# Esto evita que agentes locales de victoria/otros contaminen
-# el repositorio central (fuente única de verdad = kalimete).
+# ── Arquitectura Hub/Follower ──────────────────────────────────────
+# kalimete = HUB (único que push) → fuentes de verdad de todos los
+# agentes/skills/commands. Victoria = FOLLOWER (solo pull+deploy).
+#
+# Flujo HUB:   pull → collect(→repo) → push
+# Flujo FOL:   pull → deploy(→local)
+#
+# collect: local → repo dir (overwrite + delete)
+# deploy:  repo dir → local (overwrite + delete)
+#
+# collect/deploy destructivos eliminan "agentes zombies" (archivos
+# que existen en una máquina pero ya no en la fuente de verdad).
+
 IS_HUB=false
-[ "$HOSTNAME_LOCAL" = "kalimete" ] && IS_HUB=true
+[ "$(hostname)" = "kalimete" ] && IS_HUB=true
+echo "Host=$(hostname) hub=$IS_HUB"
 
-echo "[0/4] Host=$HOSTNAME_LOCAL hub=$IS_HUB"
-
-# 1. Pull latest from GitHub
-echo "[1/4] Pulling latest from GitHub..."
+# ═══════════════════════════════════════════════════════════════════
+# PASO 1: PULL DE TODOS (traer cambios del remoto al repo dir)
+# ═══════════════════════════════════════════════════════════════════
+echo "[1/3] Pulling latest from GitHub..."
 cd "$REPO_DIR"
-git pull origin master || echo "Warning: pull failed, continuing..."
+git pull origin master 2>&1 || echo "Warning: pull failed, continuing..."
 
-# 2. Deploy to local opencode dirs (DESTRUCTIVO — borra archivos
-#    que ya no existen en el repo para mantener consistencia)
-echo "[2/4] Deploying to opencode dirs (destructive)..."
-
-for dir in agents skills commands; do
-    [ -d "$REPO_DIR/$dir" ] || continue
-
-    for d in "$REPO_DIR/$dir"/*/; do
-        [ -d "$d" ] || continue
-        name=$(basename "$d")
-        dest="$MY_HOME/.config/opencode/${dir}/${name}"
-        # Destructivo: borrar lo que ya no está en el repo
-        if [ -d "$dest" ]; then
-            rm -rf "$dest"
-        fi
-        mkdir -p "$dest"
-        cp -r "$d"* "$dest/" 2>/dev/null || true
-        echo "  → ${dir}/${name}"
-    done
-
-    for f in "$REPO_DIR/$dir"/*.md; do
-        [ -f "$f" ] || continue
-        name=$(basename "$f")
-        dest="$MY_HOME/.config/opencode/${dir}/${name}"
-        # Destructivo: borrar archivos que ya no están en el repo
-        if [ -f "$dest" ]; then
-            current_md5=$(md5sum "$dest" | cut -d' ' -f1)
-            repo_md5=$(md5sum "$f" | cut -d' ' -f1)
-            [ "$current_md5" != "$repo_md5" ] && rm -f "$dest"
-        fi
-        cp "$f" "$dest" 2>/dev/null || echo "  → ${dir}/${name} (skip)"
-    done
-done
-
+# ═══════════════════════════════════════════════════════════════════
+# PASO 2/3: SEGÚN ROL
+# ═══════════════════════════════════════════════════════════════════
 if $IS_HUB; then
-    # 3. Collect local changes (solo kalimete puede cambiar agentes)
-    echo "[3/4] Collecting local changes (hub only)..."
-    cd "$REPO_DIR"
+    # ── HUB: COLLECT → PUSH ────────────────────────────────────────
+    echo "[2/3] Collecting local → remote (hub)..."
 
-    mkdir -p "$REPO_DIR/agents"
-    for f in "$MY_HOME/.config/opencode/agent"/*.md; do
-        [ -f "$f" ] || continue
-        name=$(basename "$f")
-        cp -f "$f" "$REPO_DIR/agents/$name"
+    for d in agent skill command; do
+        mkdir -p "$REPO_DIR/$d"
+        local_dir="$MY_HOME/.config/opencode/$d"
+
+        # a) Overwrite: copiar todo lo que existe en config local al repo dir
+        for f in "$local_dir"/*.md 2>/dev/null; do
+            [ -f "$f" ] || continue
+            cp -f "$f" "$REPO_DIR/$d/$(basename "$f")"
+            echo "  → repo/$d/$(basename "$f") (overwrite)"
+        done
+        for d2 in "$local_dir"/*/ 2>/dev/null; do
+            [ -d "$d2" ] || continue
+            nm=$(basename "$d2")
+            rm -rf "$REPO_DIR/$d/$nm"
+            mkdir -p "$REPO_DIR/$d/$nm"
+            cp -r "$d2"* "$REPO_DIR/$d/$nm/" 2>/dev/null || true
+            echo "  → repo/$d/$nm/ (overwrite)"
+        done
+
+        # b) Delete: borrar del repo dir lo que ya no existe en config local
+        for f in "$REPO_DIR/$d"/*.md 2>/dev/null; do
+            [ -f "$f" ] || continue
+            local_name=$(basename "$f")
+            [ ! -f "$local_dir/$local_name" ] && rm -f "$f" && echo "  ✗ repo/$d/$local_name (deleted — removed locally)"
+        done
+        for d2 in "$REPO_DIR/$d"/*/ 2>/dev/null; do
+            [ -d "$d2" ] || continue
+            local_name=$(basename "$d2")
+            [ ! -d "$local_dir/$local_name" ] && rm -rf "$d2" && echo "  ✗ repo/$d/$local_name/ (deleted — removed locally)"
+        done
     done
 
-    mkdir -p "$REPO_DIR/skills"
-    for d in "$MY_HOME/.config/opencode/skill"/*/; do
-        [ -d "$d" ] || continue
-        name=$(basename "$d")
-        rm -rf "$REPO_DIR/skills/$name"
-        mkdir -p "$REPO_DIR/skills/$name"
-        cp -r "$d"* "$REPO_DIR/skills/$name/" 2>/dev/null || true
-    done
-
-    mkdir -p "$REPO_DIR/commands"
-    for f in "$MY_HOME/.config/opencode/command"/*.md; do
-        [ -f "$f" ] || continue
-        name=$(basename "$f")
-        cp -f "$f" "$REPO_DIR/commands/$name"
-    done
-
-    # 4. Push to GitHub (solo kalimete)
-    echo "[4/4] Pushing to GitHub (hub)..."
+    # Commit + push si hay cambios
+    echo "[3/3] Pushing to GitHub (hub)..."
     git add -A
     if git diff --cached --quiet; then
-        echo "No changes to push."
+        echo "No local changes."
     else
-        git commit -m "Sync $(date +%Y-%m-%d_%H:%M:%S) from $(hostname)"
-        git push origin master
-        echo "Pushed successfully."
+        git commit -m "hub: sync $(date +%H:%M)"
+        git push origin master 2>&1 && echo "Pushed OK." || echo "Push FAILED!"
     fi
 else
-    echo "[3/4] Skip collect+push (not hub — read-only sync)"
-    # Solo loguear sin git add para evitar conflictos de cron.log
+    # ── FOLLOWER: DEPLOY (destructivo) ─────────────────────────────
+    echo "[2/3] Deploying from remote → local (follower)..."
+
+    for d in agent skill command; do
+        mkdir -p "$MY_HOME/.config/opencode/$d"
+        local_dir="$MY_HOME/.config/opencode/$d"
+
+        # a) Delete: borrar de config local lo que ya no existe en repo dir
+        for f in "$local_dir"/*.md 2>/dev/null; do
+            [ -f "$f" ] || continue
+            local_name=$(basename "$f")
+            if [ ! -f "$REPO_DIR/$d/$local_name" ]; then
+                rm -f "$f"
+                echo "  ✗ $d/$local_name (removed — not in remote)"
+            fi
+        done
+        for d2 in "$local_dir"/*/ 2>/dev/null; do
+            [ -d "$d2" ] || continue
+            local_name=$(basename "$d2")
+            if [ ! -d "$REPO_DIR/$d/$local_name" ]; then
+                rm -rf "$d2"
+                echo "  ✗ $d/$local_name/ (removed — not in remote)"
+            fi
+        done
+
+        # b) Overwrite: copiar del repo dir a config local
+        for f in "$REPO_DIR/$d"/*.md 2>/dev/null; do
+            [ -f "$f" ] || continue
+            name=$(basename "$f")
+            [ "$f" = "$local_dir/$name" ] && continue
+            cp -f "$f" "$local_dir/$name"
+            echo "  → $d/$name"
+        done
+        for d2 in "$REPO_DIR/$d"/*/ 2>/dev/null; do
+            [ -d "$d2" ] || continue
+            name=$(basename "$d2")
+            dest="$local_dir/$name"
+            rm -rf "$dest" 2>/dev/null || true
+            mkdir -p "$dest"
+            cp -r "$d2"* "$dest/" 2>/dev/null || true
+            echo "  → $d/$name/"
+        done
+    done
+
+    echo "[3/3] Done (follower — read-only sync)"
 fi
 
 echo "=== Sync complete ==="
