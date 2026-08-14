@@ -21,6 +21,21 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~23:59] - Gateway v2: contabilidad (metering, precio por llave, presupuesto, roles, rate real)
+- **Tipo**: servicio | seguridad | infra | config
+- **Modificado**: `/home/victoria/llm-gateway.py` (v2.0.0; backup `llm-gateway.py.bkup-v1-20260814`), nuevo `/home/victoria/admin_template.html` (SPA panel), DB migrada automáticamente (ALTER TABLE)
+- **Afecta a**: victoria, kalimete, Alfredo (panel), consumidores del gateway
+- **Causa**: usuario pidió panel profesional con contabilidad: precio por llave, uso general, límites, manejo de llaves y tiers (admin/coder) — mejoras basadas en prácticas de LiteLLM/Portkey/LLM Gateway (budget duro por llave, metering en el gateway, scoping por rol, llave visible una sola vez)
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - Metering real: cada request guarda model, prompt/completion/total tokens y costo en `usage_log`; acumula totales por llave. Costo = total_tokens/1000 × `price_per_1k_tokens` (default 0.02, env DEFAULT_PRICE_PER_1K; independiente del modelo).
+  - Presupuesto: `budget` USD por llave (0=ilimitado) → 402 "budget exceeded" al agotarse. Rate real por minuto (usage_log últ. 60s) → 429. max_tokens de la key se impone por request. Expiración por horas.
+  - Roles: `admin` (ve uso global en /v1/usage) / `coder` (solo su propia key). Panel admin = ADMIN_PASS, sigue LAN-only (403 vía túnel).
+  - Endpoints nuevos: `GET /v1/usage`, `PUT /admin/keys/{name}` (editar), `GET /admin/keys/{name}/usage`, `GET /admin/usage?key=`.
+  - Panel: login, dashboard (6 stats + chart 14 días + top keys por gasto + actividad), API Keys (crear con rol/precio/presupuesto/expiración, tabla con barra de presupuesto, editar/activar/desactivar/borrar, modal de uso con chart), Usage con filtro por llave y costo por request.
+  - Llaves finales: `demo` (admin, del sistema — opencode/túnel) y `alfredo` (coder, $0.05/1k, budget $2, creada por Alfredo en el panel). Tests: budget→402 ✓, rate→429 ✓, túnel con metering ✓, /admin 403 vía túnel ✓.
+  - ⚠️ Streaming: pasa raw sin medir tokens (cost 0) — documentado; opencode usa el vLLM directo :8000, no el gateway.
+
 ### [~23:30] - Fix panel admin: login redirigía a /admin/dashboard (JSON) en vez de /admin (HTML)
 - **Tipo**: servicio | bugfix
 - **Modificado**: `/home/victoria/llm-gateway.py` — doLogin: `location.href = '/admin/dashboard'` → `'/admin'` (patch remoto, sin backup; cambio de 1 línea)
