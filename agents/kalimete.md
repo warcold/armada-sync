@@ -12,7 +12,7 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 
 - **TAB muestra SOLO**: `kalimete` (tú), `plan` y `build`. Los subagentes están **ocultos** (`hidden: true`) — no aparecen en TAB ni en @-menciones, pero puedes delegarles con la tool `task`.
 - **plan/build**: agentes por defecto de opencode para proyectos NUEVOS no relacionados al ecosistema.
-- Retirados (→ `~/.config/opencode/agent-backup-2026-08-12/`): cloudflare, ecosistema, cf-dns, cf-security, cf-storage, cf-tunnels, cf-workers, jonas-ro, kalimete-ro, kalimete-ro-agent, rootsource-ro.
+- Retirados (→ `~/.config/opencode/agent-backup-2026-08-12/`): cloudflare, ecosistema, cf-dns, cf-security, cf-storage, cf-tunnels, cf-workers, jonas-ro, kalimete-ro, kalimete-ro-agent.
 
 ### Delegación a subagentes (ocultos, mode: subagent)
 
@@ -31,22 +31,20 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | Host | IP | SSH | Usuario local | Rol |
 |---|---|---|---|---|
 | **kalimete** | 10.0.0.106 | puerto 1111 | `warcold` | Máquina de trabajo de Alfredo (esta) |
-| **victoria** | 10.0.0.5 | puerto 1666 | `victoria` (sudo, password `vcolador`) | Asistente Victoria — **NUEVA victoria (2026-08-13, ex-rootsource)**: GPU GB10, gateway LLM, Docker |
+| **victoria** | 10.0.0.5 | puerto 1666 | `victoria` (sudo, password `vcolador`) | Asistente Victoria: GPU GB10, vLLM, gateway LLM, Docker, RDP headless, túnel cloudflared |
 | **jonas** | 10.0.0.20 | puerto 1222 | `jonas` | NAS / servidor de respaldo |
-| ~~rootsource~~ | ~~10.0.0.5~~ | ~~31337~~ | — | ELIMINADO 2026-08-13: el host se renombró a **victoria** |
 
-- SSH a victoria: `ssh victoria.local` (= `ssh -p 1666 victoria@10.0.0.5`, llave `id_ed25519_kalimete` autorizada 2026-08-13). `rootsource.local` es alias legacy → victoria.
-- La victoria VIEJA (10.0.0.64) ya no existe: esa IP la usa el Windows de Alfredo (cliente RDP `WARCOLD`).
+- SSH a victoria: `ssh victoria.local` (= `ssh -p 1666 victoria@10.0.0.5`, llave `id_ed25519_kalimete` autorizada 2026-08-13).
+- La IP 10.0.0.64 es del Windows de Alfredo (cliente RDP `WARCOLD`).
 - DNS local: mDNS/avahi (`.local`). UFW: victoria SIN firewall (2026-08-12).
 
-## Gateway LLM (en victoria, ex-rootsource) — stack validado 2026-08-12
+## Gateway LLM (victoria) — stack validado 2026-08-13
 
-- `nemoclaw-vllm` (Docker): vLLM `nvidia/Qwen3.6-35B-A3B-NVFP4` en `:8000` (262k contexto).
-- `llmgate` (systemd): FastAPI en `:4010`, auth por API keys (hash SHA-256 en SQLite `data/router.db`). Config `/home/rootsource/llmgate/config.env` (ADMIN_KEY, UPSTREAM_URL, SERVED_MODEL, PORT). Código `llmgate.py` — reescribe el model del cliente a `nvidia/Qwen3.6-35B-A3B-NVFP4`; timeout upstream 600s.
-- ⚠️ 2026-08-13: **llmgate INACTIVE** (systemctl is-active = inactive) — verificar/reactivar con `sudo systemctl start llmgate`.
-- Clientes (opencode kalimete/victoria) → `http://10.0.0.5:4010/v1` con API key (provider `nvidia` en opencode.jsonc, key vía `{env:ROOTSOURCE_API_KEY}`).
-- Diagnóstico: `systemctl status llmgate`, `docker logs --tail 80 nemoclaw-vllm`, `nvidia-smi`, `journalctl -u llmgate`. Health: `curl -H "Authorization: Bearer $KEY" http://127.0.0.1:4010/v1/models` (valores de config.env van ENTRE COMILLAS SIMPLES — extraer con `grep -oP "sk-[A-Za-z0-9]+"`).
-- Fallo conocido 2026-08-12: si vLLM está caído/restarting, llmgate da `httpx.ConnectError` (streams rotos = chat "cargando"). Generaciones largas de thinking (~50 tok/s) tardan minutos con `content: null` — normal.
+- **vLLM directo**: contenedor Docker `nemoclaw-vllm` sirve `nvidia/Qwen3.6-35B-A3B-NVFP4` en `:8000` (262k contexto, GPU GB10). Es el motor de inferencia.
+- **opencode kalimete y victoria** usan provider `vllm` → `http://10.0.0.5:8000/v1` (kalimete) / `http://127.0.0.1:8000/v1` (victoria) — API directa a vLLM, sin llaves.
+- **`victoria-llm-gateway`** (systemd): FastAPI en `:8010`, auth por API keys, código `/home/victoria/llm-gateway.py` (WorkingDirectory /home/victoria, User=victoria). Health: `curl http://127.0.0.1:8010/v1/models` → `{"error":"missing_api_key",...}` = responde con auth OK. Env: `VLLM_URL` (default localhost:8000), `GATEWAY_PORT` (default 8010).
+- Diagnóstico: `systemctl status victoria-llm-gateway`, `docker logs --tail 80 nemoclaw-vllm`, `nvidia-smi`, `journalctl -u victoria-llm-gateway`.
+- Fallo conocido 2026-08-12: si vLLM está caído/restarting, el gateway da `httpx.ConnectError` (streams rotos = chat "cargando"). Generaciones largas de thinking (~50 tok/s) tardan minutos con `content: null` — normal.
 
 ## Cloudflare (cuenta Alfredo@armada.do)
 
@@ -73,8 +71,8 @@ wrangler whoami
 
 - **NUNCA subdominios de 2 niveles** (api.x.armada.do): Universal SSL gratis no los cubre → usar `x-api.armada.do`.
 - **A proxied + SSL strict exige origin con 443 y cert válido**: si el origin no tiene TLS, timeout total. Emitir LE con el record en gris, luego volver a naranja.
-- Registros grises (proxied=false) para: DDNS (`home`/`victoria.armada.do` → 69.143.73.120, los actualiza el cron de jonas cada 5 min, **NO tocar**), DNS de correo cPanel, TXT.
-- `rootsource.armada.do` es CNAME → `17f5ad45-fb7c-4ddd-a8c6-9c59b2f90160.cfargotunnel.com` (túnel). Hostnames nuevos de túnel: `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (cert.pem en `~/.cloudflared/`).
+- Registros grises (proxied=false) para: DDNS (`home.armada.do` → 69.143.73.120, los actualiza el cron de jonas cada 5 min, **NO tocar**), DNS de correo cPanel, TXT.
+- `victoria.armada.do` es CNAME proxied → `d9abe241-fcbb-40a6-9202-36d0cfa7a95a.cfargotunnel.com` (túnel `victoria-armada`). Hostnames nuevos de túnel: `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (cert.pem en `~/.cloudflared/`).
 - Comandos: listar zonas/records, crear/actualizar/borrar vía API v4 (ver skill).
 
 ## Seguridad
@@ -96,7 +94,9 @@ wrangler whoami
 
 ## Túneles (cloudflared)
 
-- **ÚNICO túnel**: `rootsource-local` (ID `17f5ad45-fb7c-4ddd-a8c6-9c59b2f90160`, healthy, 4 conexiones). Ingress: `rootsource.armada.do` → `http://localhost:4000`; default → 404. Corredor: `cloudflared.service` en victoria (10.0.0.5, ex-rootsource). ⚠️ 2026-08-13: **cloudflared INACTIVE** — el túnel está caído, reactivar con `sudo systemctl start cloudflared`.
+- **ÚNICO túnel**: `victoria-armada` (ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a`, healthy, 4 conexiones). Ingress: `victoria.armada.do` → `http://127.0.0.1:18789`; default → 404. Corredor: `cloudflared.service` en victoria (10.0.0.5, instalado 2026-08-13, token file `/etc/cloudflared/token`).
+- ⚠️ Victoria es **ARM64** — los binarios deben ser arm64.
+- ⚠️ El gateway del túnel (18789) aún no escucha en victoria → `victoria.armada.do` da 503 hasta que se levante.
 - ~~kalimete-local~~ ELIMINADO 2026-08-06: las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` — **NUNCA exponer en armada.do sin confirmación explícita del usuario**.
 - Eliminar un túnel derriba el servicio asociado → confirmar mostrando túnel/hostnames. Hostnames de túnel = CNAME → cfargotunnel.com (no A). NUNCA mostrar tokens de túnel.
 
@@ -147,7 +147,7 @@ Esto muestra los últimos 30 commits (~2-3 KB). Kalimete debe:
 
 ### 2. Al finalizar una tarea que modifique infra — CHANGELOG.md
 Cada vez que kalimete ejecute un cambio en el ecosistema, debe:
-1. **Determinar el impacto**: ¿afecta a kalimete? ¿a Victoria? ¿a rootsource? ¿al repo?
+1. **Determinar el impacto**: ¿afecta a kalimete? ¿a Victoria? ¿a jonas? ¿al repo?
 2. **Escribir en CHANGELOG.md** (al inicio, antes del resto de entradas):
    ```markdown
    ## YYYY-MM-DD
