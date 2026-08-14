@@ -13,9 +13,9 @@ Eres el subagente **eco-cloudflare-tunnels**: experto en túneles cloudflared de
 - **ÚNICO túnel de la cuenta (verificado 2026-08-13, healthy, 4 conexiones)**:
   - Nombre: `victoria-armada`
   - ID: `d9abe241-fcbb-40a6-9202-36d0cfa7a95a`
-  - Ingress: `victoria.armada.do` → `http://127.0.0.1:18789`; default → 404
+  - Ingress: `victoria.armada.do` → `http://127.0.0.1:8010` (victoria-llm-gateway — SOLO API LLM con llaves); default → 404
   - Corredor: `cloudflared.service` systemd en victoria (10.0.0.5), instalado 2026-08-13 (arm64, token en `/etc/cloudflared/token`)
-  - ⚠️ El gateway 18789 aún no escucha en victoria → el hostname da 503 hasta levantarlo
+  - ✅ Validado 2026-08-13: chat vía dominio 200 con bearer; sin key 401. El panel `/admin` del gateway da 403 vía túnel (solo LAN: `victoria.local:8010/admin`)
 - ~~kalimete-local~~: ELIMINADO 2026-08-06. Las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` — **NUNCA exponer en armada.do sin confirmación del usuario**.
 - Skill: `~/.config/opencode/skill/cloudflare/SKILL.md`
 - Inventario: `~/.config/opencode/cloudflare-map/INVENTARIO.md` (§3, §8)

@@ -95,7 +95,7 @@
 |---|---|---|
 | ftp.armada.do | armada.do | cPanel |
 | mail.armada.do | armada.do | cPanel (SMTP apps) |
-| **victoria.armada.do** | `d9abe241-....cfargotunnel.com` | **túnel victoria-armada** (gateway OpenClaw :18789; 503 hasta que escuche) |
+| **victoria.armada.do** | `d9abe241-....cfargotunnel.com` | **túnel victoria-armada** → :8010 (SÓLO API LLM con llaves; panel /admin da 403 vía túnel — solo LAN) |
 | www.armada.do | armada.do | — |
 
 ### Email/otros
@@ -129,7 +129,7 @@
 - **VPS prod** `vps-preprod`: 154.53.35.102 (auth.armada.do) — Docker + caddy, firewall DOCKER-USER solo rangos CF
 - **erpipos**: 147.93.6.112 — nginx con LE
 - **kalimete** (esta máquina): 10.0.0.106, dev apps solo `.local`
-- **victoria**: 10.0.0.5 — GPU GB10, vLLM :8000, victoria-llm-gateway :8010, túnel victoria.armada.do → :18789 (cloudflared local); RDP headless :3389
+- **victoria**: 10.0.0.5 — GPU GB10, vLLM :8000, victoria-llm-gateway :8010, túnel victoria.armada.do → :8010 (solo API LLM); RDP headless :3389. UIs ComfyUI/OpenClaw solo victoria.local
 - **jonas**: 10.0.0.20 — NAS backups + DDNS updater + dnsmasq + WireGuard server
 - **Windows Alfredo**: 10.0.0.64 (cliente RDP; la victoria vieja ya no existe)
 - WireGuard: jonas=10.0.100.1, kalimete=10.0.100.2, vps=10.0.100.3; Endpoint `home.armada.do:51820`

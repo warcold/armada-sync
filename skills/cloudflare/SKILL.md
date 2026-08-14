@@ -38,7 +38,7 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 ### Túneles activos
 
 **1. `victoria-armada`** ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a` (en victoria, 10.0.0.5) — ÚNICO túnel de la cuenta (verificado 2026-08-13, healthy, 4 conexiones)
-- Ingress: `victoria.armada.do` → `http://127.0.0.1:18789` (gateway OpenClaw de Victoria); default → 404
+- Ingress: `victoria.armada.do` → `http://127.0.0.1:8010` (victoria-llm-gateway — SOLO API LLM con llaves, chat validado 2026-08-13); default → 404. ⚠️ Panel /admin y UIs (ComfyUI/OpenClaw) = solo LAN (victoria.local)
 - `cloudflared.service` systemd en victoria (instalado 2026-08-13, arm64, token en `/etc/cloudflared/token`)
 
 **2. ~~`kalimete-local`~~ ELIMINADO 2026-08-06**: las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` (desarrollo) — nunca exponer en armada.do sin pedir confirmación al usuario.
@@ -49,7 +49,7 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 
 ### Red local / acceso remoto
 - VPN WireGuard: servidor **jonas (10.0.0.20, wg0=10.0.100.1)**, clientes kalimete (10.0.100.2) y vps-preprod (10.0.100.3). Port-forward del router: UDP 51820 → jonas.
-- **DDNS de la casa (2026-08-06)**: `home.armada.do` → IP pública (A, `proxied:false`, TTL 120) — endpoint oficial del WG. `victoria.armada.do` es alias del mismo DDNS (también actualizado por el updater). **Updater**: `/usr/local/sbin/cloudflare-ddns.sh` en jonas (token DNS en `/etc/cloudflare-ddns/token` root:600), cron `*/5`, actualiza ambos registros si la IP cambia (ipify). Los clientes WG usan `Endpoint = home.armada.do:51820` (kalimete: `/etc/wireguard/bridge-to-local.conf`; vps: `/etc/wireguard/wg0.conf`).
+- **DDNS de la casa (2026-08-06)**: `home.armada.do` → IP pública (A, `proxied:false`, TTL 120) — endpoint oficial del WG. **Updater**: `/usr/local/sbin/cloudflare-ddns.sh` en jonas (token DNS en `/etc/cloudflare-ddns/token` root:600), cron `*/5`, actualiza si la IP cambia (ipify). Los clientes WG usan `Endpoint = home.armada.do:51820` (kalimete: `/etc/wireguard/bridge-to-local.conf`; vps: `/etc/wireguard/wg0.conf`). ⚠️ **2026-08-13**: el updater ANTES también actualizaba `victoria.armada.do` (A) — ahora ese nombre es CNAME proxied del túnel victoria-armada; si el updater lo recrea como A pisa el túnel (verificar en jonas cuando el SSH se arregle).
 - DNS LAN: resolver `10.0.0.20` (dnsmasq en jonas, `/etc/dnsmasq.d/lan-overrides.conf`). Sirve los `.local` (kalimete.local=10.0.0.106, victoria.local=10.0.0.5, jonas.local=10.0.0.20) y split-horizon `.armada.do` internos (jonas.armada.do, victoria.armada.do → LAN; el bug victoria→10.0.0.106 fue corregido el 2026-08-06). Clientes WG externos: usar `DNS=10.0.0.20` para resolver los `.local` igual que en casa.
 - Las apps dev de kalimete SOLO se acceden en localhost:PUERTO — no exponer
 
@@ -198,7 +198,7 @@ Se puede usar con `aws cli --endpoint-url` o `rclone`. Alternativa nativa: `wran
 3. Operaciones destructivas (delete, overwrite, rollback) → confirmar antes con el usuario.
 4. No subir el archivo `~/.config/cloudflare/env` a ningún repositorio.
 5. **Pendiente de privacidad**: el router Comcast aún tiene port-forward `443 → 10.0.0.5` (ya innecesario con el túnel). Recomendado eliminarlo del router para ocultar el origin por completo. En ufw del servidor: 4000 y 443 deberían restringirse a LAN/127.0.0.1 (el tráfico externo ya entra solo por túnel).
-6. La IP pública del origin (`69.143.73.120` y rango IPv6 `2601:152:1580:92d0::/64`) solo debe aparecer en los registros DDNS del WG (`home.armada.do`/`victoria.armada.do`, grises, gestionados por el updater de jonas). Para servicios web: SIEMPRE CNAME → cfargotunnel.com.
+6. La IP pública del origin (`69.143.73.120` y rango IPv6 `2601:152:1580:92d0::/64`) solo debe aparecer en el registro DDNS del WG (`home.armada.do`, gris, gestionado por el updater de jonas). Para servicios web: SIEMPRE CNAME → cfargotunnel.com (victoria.armada.do = CNAME proxied del túnel desde 2026-08-13).
 
 ## Sistema de agentes Cloudflare (mapa)
 

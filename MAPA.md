@@ -87,9 +87,9 @@ No se cargan en opencode (movidos fuera de `agent/` y del repo armada-sync). Ref
 ### Stack LLM en victoria
 
 - **`nemoclaw-vllm`** (contenedor Docker): vLLM directo sirviendo `nvidia/Qwen3.6-35B-A3B-NVFP4` en `:8000`. Es el motor de inferencia. GPU GB10 (~128 GB VRAM, ~47.7 GiB usados por vLLM).
-- **`victoria-llm-gateway`** (servicio systemd): FastAPI en `:8010` con autenticación por API keys. Código `/home/victoria/llm-gateway.py`, User=victoria, WorkingDirectory=/home/victoria. Env: `VLLM_URL` (default localhost:8000), `GATEWAY_PORT` (default 8010). Health: `curl http://127.0.0.1:8010/v1/models` → `{"error":"missing_api_key"}` = OK (auth requerida).
+- **`victoria-llm-gateway`** (servicio systemd): FastAPI en `:8010` con autenticación por API keys (auth por NOMBRE de key — la key activa se llama `demo`; validado 2026-08-13). Código `/home/victoria/llm-gateway.py`, User=victoria, WorkingDirectory=/home/victoria. Env: `VLLM_URL` (default localhost:8000), `GATEWAY_PORT` (default 8010), `ADMIN_PASS` (login del panel). Rutas: `/v1/chat/completions`, `/v1/completions`, `/models`, `/admin*` (panel: llaves, dashboard, usage — **solo LAN**). Health: `curl http://127.0.0.1:8010/v1/chat/completions` sin bearer → 401 `missing_api_key` = OK. ⚠️ `/v1/models` NO existe (404) — usar `/models`.
 - **opencode kalimete y victoria**: provider `vllm` directo a `http://10.0.0.5:8000/v1` (kalimete) / `http://127.0.0.1:8000/v1` (victoria) — sin API key, directo a vLLM.
-- **`openshell` sandbox** (contenedor Docker): gateway NemoClaw corriendo dentro de un sandbox NemoClaw en red `openshell-docker`. ⚠️ El puerto 18789 (gateway del túnel) NO escucha aún en el host → `victoria.armada.do` da 503 hasta levantarlo.
+- **`openshell` sandbox** (contenedor Docker): gateway NemoClaw corriendo dentro de un sandbox NemoClaw en red `openshell-docker` (escucha :18789 loopback). ⚠️ Solo LAN: `victoria.local` — NO está en el túnel ni en DNS público. La UI de NemoClaw/OpenClaw NO es accesible desde fuera de la casa (decisión 2026-08-13).
 - **`nemoclaw-vllm`** y **`openshell`** se crearon automáticamente por NemoClaw — NO hay docker-compose files manuales.
 
 - **Diagnóstico gateway (2026-08-12, validado)**: en modo stream, un `httpx.ConnectError` NO se captura en `_stream()` (solo captura `TimeoutException`) → el cliente ve el stream cortado = chat "cargando" sin respuesta. Generaciones long-tail con `content: null` (razonamiento qwen3) pueden tardar minutos a ~50 tok/s — normal, no es cuelgue.
@@ -113,7 +113,7 @@ No se cargan en opencode (movidos fuera de `agent/` y del repo armada-sync). Ref
 - **GPU**: NVIDIA GB10 (~128 GB VRAM, ~47.7 GiB usados por vLLM)
 - **Arquitectura**: ARM64 — binarios/docker images deben ser arm64
 - **Acceso SSH desde kalimete**: `ssh victoria.local` (10.0.0.5:1666, user `victoria`, llave `id_ed25519_kalimete` autorizada 2026-08-13) ✅ validado. Password: `vcolador` (sudo OK).
-- **Túnel Cloudflare**: `victoria-armada` (`d9abe241-fcbb-40a6-9202-36d0cfa7a95a`), healthy, 4 conexiones QUIC. Ingress: `victoria.armada.do` → `http://127.0.0.1:18789`; default → 404. cloudflared instalado 2026-08-13 (arm64, token en /etc/cloudflared/token).
+- **Túnel Cloudflare**: `victoria-armada` (`d9abe241-fcbb-40a6-9202-36d0cfa7a95a`), healthy, 4 conexiones QUIC. Ingress: `victoria.armada.do` → `http://127.0.0.1:8010` (victoria-llm-gateway — SOLO API LLM con llaves; chat validado 2026-08-13); default → 404. cloudflared instalado 2026-08-13 (arm64, token en /etc/cloudflared/token). ⚠️ Panel /admin del gateway y UIs (ComfyUI :8188, NemoClaw/OpenClaw :18789) = SOLO victoria.local (LAN) — vía túnel /admin da 403.
 - **Victoria VIEJA (10.0.0.64)**: ya no existe como host Ubuntu — la IP la usa el Windows de Alfredo (cliente RDP `WARCOLD`). Servicios de voz (victoria-voice, nginx 8765, ollama) NO migrados aún → ⚠️ PENDIENTE VERIFICAR migración.
 
 ### jonas (10.0.0.20)

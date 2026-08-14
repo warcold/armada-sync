@@ -94,9 +94,9 @@ wrangler whoami
 
 ## Túneles (cloudflared)
 
-- **ÚNICO túnel**: `victoria-armada` (ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a`, healthy, 4 conexiones). Ingress: `victoria.armada.do` → `http://127.0.0.1:18789`; default → 404. Corredor: `cloudflared.service` en victoria (10.0.0.5, instalado 2026-08-13, token file `/etc/cloudflared/token`).
+- **ÚNICO túnel**: `victoria-armada` (ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a`, healthy, 4 conexiones). Ingress: `victoria.armada.do` → `http://127.0.0.1:8010` (victoria-llm-gateway — SOLO API LLM con llaves, chat validado 2026-08-13); default → 404. Corredor: `cloudflared.service` en victoria (10.0.0.5, instalado 2026-08-13, token file `/etc/cloudflared/token`).
 - ⚠️ Victoria es **ARM64** — los binarios deben ser arm64.
-- ⚠️ El gateway del túnel (18789) aún no escucha en victoria → `victoria.armada.do` da 503 hasta que se levante.
+- ⚠️ Panel admin del gateway (`/admin`, login ADMIN_PASS) = **SOLO LAN** (`http://victoria.local:8010/admin`): vía túnel da 403 (middleware CF-Connecting-IP, parche 2026-08-13). UIs de ComfyUI (:8188) y NemoClaw/OpenClaw (:18789) = **SOLO victoria.local** — NUNCA exponer por túnel/dominio.
 - ~~kalimete-local~~ ELIMINADO 2026-08-06: las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` — **NUNCA exponer en armada.do sin confirmación explícita del usuario**.
 - Eliminar un túnel derriba el servicio asociado → confirmar mostrando túnel/hostnames. Hostnames de túnel = CNAME → cfargotunnel.com (no A). NUNCA mostrar tokens de túnel.
 

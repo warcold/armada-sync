@@ -69,7 +69,7 @@ Regla del ecosistema: **una llave por persona** — nunca compartir llaves priva
 - **Sandbox OpenClaw**: ahora corre dentro de un contenedor OpenShell/NemoClaw con `NEMOCLAW_*` env vars. PID mismatch: PID real ≠ PID file.
 - **RDP**: GNOME Remote Desktop headless en `:3389` (credenciales victoria/vcolador, TLS self-signed). xrdp DESACTIVADO 2026-08-13.
 - **UFW**: sin reglas activas en victoria (verificar antes de asumir).
-- **Túnel Cloudflare**: `victoria-armada` (d9abe241-fcbb-40a6-9202-36d0cfa7a95a), healthy 4 conexiones, ingress `victoria.armada.do` → `http://127.0.0.1:18789`. cloudflared instalado en victoria (arm64).
+- **Túnel Cloudflare**: `victoria-armada` (d9abe241-fcbb-40a6-9202-36d0cfa7a95a), healthy 4 conexiones, ingress `victoria.armada.do` → `http://127.0.0.1:8010` (SÓLO API LLM con llaves; panel /admin y UIs solo LAN). cloudflared instalado en victoria (arm64).
 
 ### 🔑 SSH victoria → LAN habilitado (2026-08-12)
 

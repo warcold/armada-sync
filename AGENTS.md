@@ -81,14 +81,14 @@ Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Fol
 | Servicio | Puerto | Máquina | Estado |
 |----------|--------|---------|--------|
 | vLLM (Qwen3.6-35B-A3B-NVFP4) | 8000 | victoria | ✅ contenedor nemoclaw-vllm |
-| victoria-llm-gateway | 8010 | victoria | ✅ systemd ACTIVE (auth por NOMBRE de key, validado 2026-08-13; key activa: `demo`) |
-| OpenShell sandbox | 18789 | victoria | ⚠️ contenedor healthy pero :18789 NO escucha en host → victoria.armada.do da 503 (esperado) |
-| ComfyUI | 8188 | victoria | ❌ No corre |
+| victoria-llm-gateway | 8010 | victoria | ✅ systemd ACTIVE (auth por NOMBRE de key — `demo`; validado 2026-08-13). Panel /admin = SOLO LAN (victoria.local:8010/admin, 403 vía túnel) |
+| OpenShell sandbox | 18789 | victoria | ⚠️ contenedor healthy, escucha :18789 loopback — SOLO victoria.local (NO en túnel, decisión 2026-08-13) |
+| ComfyUI | 8188 | victoria | ❌ No corre — cuando corra: SOLO victoria.local (LAN), nunca túnel/dominio |
 | Ollama | 11434 | victoria | ❌ No corre (verificado 2026-08-13) |
 | Voice UI | 8765 | victoria | ⚠️ PENDIENTE migración (servicios de voz de la victoria vieja: victoria-voice, nginx TLS) |
 | Home Assistant | 8123 | jonas | ✅ Container |
 | RDP Headless | 3389 | victoria | ✅ gnome-remote-desktop (ARREGLADO 2026-08-13: credenciales victoria/vcolador + TLS self-signed + xrdp desactivado) |
-| Túnel cloudflared | — | victoria | ✅ `victoria-armada` (ID d9abe241-…), 4 conexiones, ingress victoria.armada.do → :18789 |
+| Túnel cloudflared | — | victoria | ✅ `victoria-armada` (ID d9abe241-…), 4 conexiones, ingress victoria.armada.do → :8010 (SÓLO API LLM con llaves; panel /admin 403 vía túnel) |
 
 ## Reglas de Operación
 

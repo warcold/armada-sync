@@ -21,6 +21,19 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~21:00] - victoria.armada.do → SOLO API LLM (túnel :8010) + panel admin LAN-only + UIs fuera de internet
+- **Tipo**: red | seguridad | infra | config
+- **Modificado**: túnel victoria-armada (ingress → :8010), llm-gateway.py (middleware admin LAN-only), DNS (verificado), docs (kalimete.md, eco-cloudflare-tunnels.md, eco-accesos.md, SKILL, MAPAs, AGENTS.md), snapshots históricos borrados
+- **Afecta a**: kalimete, victoria, repo armada-sync
+- **Causa**: usuario pidió (1) borrar los históricos con menciones del host antiguo, (2) victoria.armada.do SOLO para requests al vLLM (vía gateway con llaves + panel admin como el anterior), (3) UIs de ComfyUI y NemoClaw/OpenClaw SOLO en victoria.local (LAN) — no accesibles desde fuera de la casa
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - Túnel: ingress `victoria.armada.do` → `http://127.0.0.1:8010` (era :18789). Validado: chat 200 con bearer, 401 sin key, `/models` 200. Panel `/admin` vía dominio → 403.
+  - Gateway parcheado (llm-gateway.py, backup .bkup-20260813): rutas `/admin*` bloqueadas si hay header CF-Connecting-IP (viene por túnel) o IP no-LAN → panel = `http://victoria.local:8010/admin` (login ADMIN_PASS). Servicio reiniciado, verificado LAN 200 / túnel 403 / chat 200.
+  - Borrados: `~/.config/opencode/agent-backup-2026-08-12/`, `~/armada-sync/agents-retired-2026-08-12/`, `~/.config/opencode/opencode.jsonc.bkup.old`.
+  - ⚠️ Pendiente: el updater DDNS de jonas aún puede pisar el CNAME de victoria.armada.do (verificar cuando el SSH a jonas se arregle). ComfyUI :8188 no corre (cuando corra = solo LAN). OpenClaw :18789 solo LAN.
+  - Uso: API LLM pública = `https://victoria.armada.do/v1/chat/completions` (bearer = nombre de key); panel = victoria.local:8010/admin; UIs = victoria.local.
+
 ### [~20:00] - Migración documental completa: victoria hace el trabajo completo (0 menciones del host antiguo)
 - **Tipo**: config | infra | doc | sync
 - **Modificado**: ~/.config/opencode (kalimete.md, eco-*.md, MAPA.md, cloudflare-map, skills), armada-sync (AGENTS.md, MAPA.md, configs/, skills/, daily-report/), ~/.zshrc, ~/.config/opencode/daily-report.env, DNS verificado
