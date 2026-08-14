@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-14
 
+### [~16:00] - opencode.jsonc (kalimete + victoria): capabilities full feature del modelo
+- **Tipo**: config
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete) y `/home/victoria/.config/opencode/opencode.jsonc` (victoria): capabilities del modelo `nvidia/Qwen3.6-35B-A3B-NVFP4` → `tools`, **`reasoning`** (modo thinking Qwen3, parser ya activo en vLLM) y **`input: [text, image]`** (visión VERIFICADA: el modelo describió un pixel PNG y respondió el hex #FFFFFF)
+- **Afecta a**: kalimete, victoria (y cualquier PC con la plantilla pública)
+- **Causa**: el usuario pidió dejar el modelo "full feature" en opencode en vez de solo tools+text
+- **Estado**: ✅ sincronizado (commit+push); sintaxis JSON validada en ambas máquinas
+- **Notas**: el jsonc local NO se sincroniza por armada-sync (fuera del scope de sync.sh); el cambio se aplicó directo en cada máquina
+
+---
+
+## 2026-08-14
+
 ### [~15:30] - Panel admin: Owner como identificador visible; name autogenerado interno
 - **Tipo**: servicio | config
 - **Modificado**: `/home/victoria/llm-gateway.py` (`CreateKeyRequest`: `name` opcional (autogen), `owner` ahora REQUERIDO; `create_key` autogenera `name` = slug(owner) único con sufijo -2/-3 si colisiona); `/home/victoria/admin_template.html` (formulario sin campo Nombre, solo "Owner *"; tabla con columna principal **Owner** + "id: <name>" muted debajo; JS createKey sin name). Backups: `llm-gateway.py.bkup-v3b-20260814`, `admin_template.html.bkup-v3b-20260814`
