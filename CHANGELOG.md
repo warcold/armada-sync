@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-14
 
+### [~02:25] - Gateway: soporte `reasoning_effort` estándar (OpenAI) + catálogo opencode con 2 modelos y variants nativas
+- **Tipo**: servicio | config
+- **Modificado**: `/home/victoria/llm-gateway.py` (_proxy: si el body trae `reasoning_effort`, lo traduce a `chat_template_kwargs`: `none`/`minimal` → `enable_thinking:false`; `low`/`medium`/`high`/`xhigh` → `enable_thinking:true` + `thinking_level` correspondiente; `xhigh`→high). Backup `llm-gateway.py.bkup-v5-20260814`. `~/.config/opencode/opencode.jsonc` (kalimete): catálogo reducido a 2 modelos — "Coding con Victoria" (`-normal`, sin reasoning) y "Thinking · Coding con Victoria" (base, con **variants nativas** low/medium/high vía `reasoningEffort`)
+- **Afecta a**: victoria (gateway), kalimete (opencode), PC pública (plantilla: misma config con baseURL `https://victoria.armada.do/v1`)
+- **Causa**: el usuario pidió quedarse con 2 modelos y usar las variantes de opencode si estaban bien soportadas. Validado según docs de vLLM (reasoning_outputs: `reasoning_effort` estándar; niveles oficiales low/medium/high — **max NO es oficial**) y docs de opencode (variants = overlays por modelo con settings/body). Verificación empírica: `opencode run --variant low/high` → el gateway recibe `reasoning_effort` correcto; `--thinking` muestra el bloque Thinking ✓
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**: el `reasoning: 0` en `step_finish` de opencode es solo contabilidad del SDK openai-compatible — el modelo SÍ razona (verificado con `--thinking` y stream con `delta.reasoning`). El gateway sigue soportando sufijos (`-normal`, `-thinking-*`) para scripts/uso manual
+
+---
+
+## 2026-08-14
+
 ### [~17:10] - Catálogo opencode simplificado: base + Normal + Thinking Max (quedan fuera low/medium/high)
 - **Tipo**: config
 - **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete): se eliminan del catálogo `-thinking-low/medium/high`; quedan 3 modelos: base (thinking on default), `-normal` (sin reasoning) y `-thinking-max`. El gateway SIGUE soportando los 4 niveles por sufijo (no se tocó) — disponibles para scripts/uso manual
