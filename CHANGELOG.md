@@ -21,6 +21,14 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~23:30] - Fix panel admin: login redirigía a /admin/dashboard (JSON) en vez de /admin (HTML)
+- **Tipo**: servicio | bugfix
+- **Modificado**: `/home/victoria/llm-gateway.py` — doLogin: `location.href = '/admin/dashboard'` → `'/admin'` (patch remoto, sin backup; cambio de 1 línea)
+- **Afecta a**: Alfredo (panel https://victoria.local/admin)
+- **Causa**: tras loguearse, la SPA mandaba al navegador a un endpoint JSON de la API — se veía "el request crudo" y no la web de administración
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**: verificado: GET /admin → HTML con redirect correcto; POST /admin/login → token; GET /admin/keys con token → lista (demo active). El panel completo (crear/activar/desactivar/borrar llaves, usage) ya existía en el template y queda operativo.
+
 ### [~23:00] - TLS en victoria.local (nginx 443) — panel y API sin puertos
 - **Tipo**: infra | red | seguridad | config
 - **Modificado**: victoria (10.0.0.5): nginx instalado + site `gateway.conf` (443 TLS → 127.0.0.1:8010), cert mkcert `victoria.local`/`victoria` (firmado con CA de kalimete, expira 2028-11-14) en `/etc/ssl/local-certs/`, gateway GATEWAY_HOST 0.0.0.0→127.0.0.1 (8010 loopback-only), kalimete: CA copiada a `~/rootCA-kalimete-victoria-local.crt`
