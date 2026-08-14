@@ -9,9 +9,9 @@
 | Host | IP | SSH | Usuario | GPU | Rol |
 |------|-----|-----|---------|-----|------|
 | **kalimete** | 10.0.0.106 | 1111 | warcold | — | Hub principal, PC de trabajo |
-| **victoria** | 10.0.0.5 | 1666 | victoria | GB10 124GB | Asistente Victoria — NUEVA 2026-08-13 (ex-rootsource: GPU, LLM, gateway) |
+| **victoria** | 10.0.0.5 | 1666 | victoria | GB10 124GB | Asistente Victoria: GPU, LLM (vLLM + gateway), túnel Cloudflare, RDP headless |
 | **jonas** | 10.0.0.20 | 1222 | jonas | — | NAS, Home Assistant |
-| ~~rootsource~~ | ~~10.0.0.5~~ | ~~31337~~ | — | — | ELIMINADO 2026-08-13: host renombrado a **victoria**. La victoria vieja (10.0.0.64) ya no existe — esa IP la usa el Windows de Alfredo |
+| ~~victoria (vieja)~~ | ~~10.0.0.64~~ | — | — | — | ELIMINADA 2026-08-13: el host Ubuntu ya no existe — esa IP la usa el Windows de Alfredo (cliente RDP) |
 
 ## Conectividad SSH
 
@@ -32,6 +32,8 @@
   ├── agents/          # .md de agentes opencode (→ agent/ local)
   ├── skills/          # directorios por skill (→ skill/ local)
   ├── commands/        # .md de commands opencode (→ command/ local)
+  ├── configs/         # mapas e inventarios (→ ~/.config/opencode/*-map/)
+  ├── daily-report/    # script del reporte diario (comando /reporte)
   ├── AGENTS.md        # Este archivo
   ├── MAPA.md          # Mapa maestro del ecosistema
   └── sync.sh          # Script de sync (hub/follower)
@@ -41,13 +43,11 @@
 Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Follower**:
 - **kalimete (HUB)**: pull → collect (local→repo) → push al remoto.
 - **victoria (FOLLOWER)**: pull → deploy (repo→local). Solo lectura.
-- **victoria (FOLLOWER, ex-rootsource)**: pull → deploy (repo→local). Solo lectura.
 - Collect y deploy son DESTRUCTIVOS: eliminan "agentes zombies" (archivos que existen en una máquina pero ya no en la fuente de verdad).
 
 ### Automatización
 - **kalimete**: cron `*/5 * * * *` → sync.sh → push (hub único)
-- **victoria**: cron `*/5 * * * *` → sync.sh → pull+deploy (solo lectura)
-- **victoria (ex-rootsource)**: cron `*/5 * * * *` → sync.sh → pull+deploy (solo lectura; deploy key de solo lectura, registrada 2026-08-13)
+- **victoria**: cron `*/5 * * * *` → sync.sh → pull+deploy (solo lectura; deploy key `victoria-follower-readonly`, registrada 2026-08-13)
 - **jonas**: *(sin cron de sync — acceso SSH roto, pendiente de arreglar)*
 
 ## Agentes por Máquina
@@ -62,20 +62,16 @@ Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Fol
 - **eco-cloudflare-tunnels** — Túneles cloudflared (hidden)
 - **eco-cloudflare-workers** — Workers/Pages (hidden)
 - **plan / build** — Proyectos nuevos no-ecosistema (built-in)
-- Retirados 2026-08-12: cloudflare, ecosistema, cf-* (5), eco-cloudflare (→ kalimete), jonas-ro, kalimete-ro, kalimete-ro-agent, rootsource-ro
+- Retirados 2026-08-12: cloudflare, ecosistema, cf-* (5), eco-cloudflare (→ kalimete), jonas-ro, kalimete-ro, kalimete-ro-agent (ver `agents-retired-2026-08-12/`)
 - Skill: **cloudflare** → `skill/cloudflare/SKILL.md`
 - Command: **mapa**, **reporte** → `commands/`
 
-### victoria
-- 8 agentes sincronizados desde kalimete (via hub/follower sync)
-- **Nota**: Victoria no tiene agentes locales propios — usa opencode.jsonc con `default_agent: kalimete` y proveedor `rootsource` para modelos locales (ollama, gemma-4-31b).
-- Agentes locales: ollama (:11434), victoria-voice (healthy), gemma-4-31b ethical (ollama)
-
-### victoria (ex-rootsource, 10.0.0.5)
+### victoria (10.0.0.5)
 - 9 agentes sincronizados desde kalimete (via hub/follower sync): kalimete + 7 eco-* + **docs-keeper**
-- **docs-keeper** — agente local original (mantiene AGENTS.md de llmgate, ComfyUI, NemoClaw); añadido al repo 2026-08-13 (portable, sin model fijo)
-- **Nota**: usa `default_agent: kalimete` (añadido 2026-08-13), proveedor local (baseline/baseline-fast via llmgate local :4010)
-- Al ser follower, NO pusha al repo: deploy key `victoria-follower-readonly` (solo lectura, ex rootsource-follower-readonly)
+- **docs-keeper** — agente local original (mantiene AGENTS.md de victoria-llm-gateway, ComfyUI, NemoClaw); añadido al repo 2026-08-13 (portable, sin model fijo)
+- **Nota**: usa `default_agent: kalimete`, modelos locales vía vLLM (`http://127.0.0.1:8000/v1`, directo, sin key)
+- Al ser follower, NO pusha al repo: deploy key `victoria-follower-readonly` (solo lectura)
+- ⚠️ opencode.jsonc de victoria debe apuntar al stack nuevo — la victoria vieja (10.0.0.64) ya no existe
 
 ### jonas
 - *(Sin agentes locales — sin cron de sync, SSH roto desde kalimete)*
@@ -84,15 +80,15 @@ Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Fol
 
 | Servicio | Puerto | Máquina | Estado |
 |----------|--------|---------|--------|
-| vLLM | 8000 | victoria (ex-rootsource) | ✅ Qwen3.6-35B-A3B-NVFP4 |
-| llmgate | 4010 | victoria | ✅ API key auth (⚠️ INACTIVE 2026-08-13, reactivar) |
-| OpenShell | 18789 | victoria | ✅ Sandbox Docker |
+| vLLM (Qwen3.6-35B-A3B-NVFP4) | 8000 | victoria | ✅ contenedor nemoclaw-vllm |
+| victoria-llm-gateway | 8010 | victoria | ✅ systemd ACTIVE (auth por NOMBRE de key, validado 2026-08-13; key activa: `demo`) |
+| OpenShell sandbox | 18789 | victoria | ⚠️ contenedor healthy pero :18789 NO escucha en host → victoria.armada.do da 503 (esperado) |
 | ComfyUI | 8188 | victoria | ❌ No corre |
-| OpenClaw | 18789 | victoria (vieja 10.0.0.64) | ⚠️ PENDIENTE verificar migración |
-| Voice UI | 8765 | victoria (vieja 10.0.0.64) | ⚠️ PENDIENTE verificar migración |
+| Ollama | 11434 | victoria | ❌ No corre (verificado 2026-08-13) |
+| Voice UI | 8765 | victoria | ⚠️ PENDIENTE migración (servicios de voz de la victoria vieja: victoria-voice, nginx TLS) |
 | Home Assistant | 8123 | jonas | ✅ Container |
-| Ollama | 11434 | victoria (ex-rootsource) | ✅ Local |
-| RDP Headless | 3389 | victoria | ✅ gnome-remote-desktop (ARREGLADO 2026-08-13: credenciales + TLS + xrdp desactivado) |
+| RDP Headless | 3389 | victoria | ✅ gnome-remote-desktop (ARREGLADO 2026-08-13: credenciales victoria/vcolador + TLS self-signed + xrdp desactivado) |
+| Túnel cloudflared | — | victoria | ✅ `victoria-armada` (ID d9abe241-…), 4 conexiones, ingress victoria.armada.do → :18789 |
 
 ## Reglas de Operación
 

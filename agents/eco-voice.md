@@ -70,7 +70,7 @@ docker victoria-voice (imagen victoria-voice:latest, network_mode: host)
 
 ## STT 401 — ✅ SOLUCIONADO 2026-08-08 (noche)
 
-- **Causa raíz**: `ROOTSOURCE_API_KEY` no existía en el entorno de `docker compose` (solo en `~/.zshrc` que los shells no interactivos no leen) y `compose/.env` no existía → `${ROOTSOURCE_API_KEY:-}` resolvía vacío.
+- **Causa raíz**: la API key no existía en el entorno de `docker compose` (solo en `~/.zshrc` que los shells no interactivos no leen) y `compose/.env` no existía → `${VICTORIA_API_KEY:-}` resolvía vacío.
 - **Fix**: creado `/home/victoria/victoria/compose/.env` (600, ya en `.gitignore`) con la key admin Victoria Gateway. Container recreado con `--env-file` (patrón de `victoria-compose-up.sh`). Verificado: `docker exec victoria-voice env | grep STT` ✅, curl STT 200 ✅, 0 errores 401 ✅.
 - **⚠️ 2026-08-12**: el endpoint STT (`:4000/v1/audio/transcriptions`) fue eliminado junto con el stack `baseline-*`. El fix de `.env` ya no aplica hasta que se reinstale whisper o se proporcione un servicio STT alternativo.
 
@@ -81,7 +81,7 @@ docker victoria-voice (imagen victoria-voice:latest, network_mode: host)
  2. **LAN cerrada para el gateway**: `sudo ufw insert 1 deny 18789/tcp` (antes `ALLOW 10.0.0.0/8`). El loopback no lo filtra ufw → nginx (443) y voice (127.0.0.1) siguen funcionando. Verificado desde kalimete: 18789 bloqueado, 8765/443 OK ✅.
     - **⚠️ 2026-08-12**: UFW parece sin reglas activas en victoria (posiblemente se reseteó). Verificar con `sudo ufw status` y reaplicar si es necesario.
    - Todo el acceso al gateway desde fuera pasa ahora por `https://victoria.local` (nginx TLS, que a su vez va a 127.0.0.1:18789).
-3. **Keys unificadas**: `ROOTSOURCE_API_KEY=sk-7279…` (Victoria Gateway, admin) ahora en **openclaw.json** (models.vllm.apiKey), **compose/.env** y **~/.zshrc** (línea 299). Antes zshrc tenía sk-cae3f06 (Alfredo). Un solo valor en todo el stack.
+3. **Keys unificadas**: `VICTORIA_API_KEY` (Victoria Gateway, admin) ahora en **openclaw.json** (models.vllm.apiKey), **compose/.env** y **~/.zshrc**. Un solo valor en todo el stack.
 4. **Voice UI sin auth propia** (`OPENCLAW_REQUIRE_AUTH=false`): decisión consciente — LAN confiable y el browser necesita micrófono. Si se expone a internet algún día, activar (el código soporta `token_manager` con keys `ocv_`).
 5. **Pendiente opcional**: el token del gateway vive en texto plano en `openclaw.json` (que está en git del repo victoria). Para mayor higiene: rotar a un token random y guardarlo fuera de git (env/secret). No bloqueante en LAN.
 

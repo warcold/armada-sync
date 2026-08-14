@@ -37,7 +37,7 @@
 | Queues | **0** | — |
 | Workflows | **0** | — |
 | R2 buckets | **DESACTIVADO** | error 10042 (R2 no activado; decisión 2026-08-07: NO usar R2, backups en NAS jonas) |
-| Túneles | **1: `rootsource-local`** | ID `17f5ad45-fb7c-4ddd-a8c6-9c59b2f90160`, **healthy, 4 conexiones** |
+| Túneles | **1: `victoria-armada`** | ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a`, **healthy, 4 conexiones** (verificado 2026-08-13) |
 | Tokens API | **4 activos** (ver §4) | listados con el token de cuenta |
 
 ## 4. Tokens API (inventario verificado 2026-08-07)
@@ -58,7 +58,7 @@
 | Leer settings SSL de cada zona | ✅ |
 | Listar DNS records (3 zonas) | ✅ |
 | Listar Workers / KV / D1 / Queues / Pages / Workflows | ✅ (vacío) |
-| Listar túneles + estado | ✅ (rootsource-local healthy) |
+| Listar túneles + estado | ✅ (victoria-armada healthy, 4 conexiones — verificado 2026-08-13) |
 | Listar tokens de la cuenta | ✅ (4 tokens) |
 | Crear/borrar zona (sonda) | ✅ probado antes (prueba-invalida.com) |
 | DNS create/edit/delete | ✅ (usado 2026-08-06 para cleanup) |
@@ -85,7 +85,7 @@
 | scriberr.armada.do | 154.53.35.102 | ✅ VPS prod |
 | telecomm.armada.do | 207.244.236.223 | ❌ |
 | *.telecomm.armada.do | 207.244.236.223 | ❌ wildcard |
-| victoria.armada.do | 69.143.73.120 | ❌ DDNS WG (alias home) |
+| victoria.armada.do | — | ❌→✅ **2026-08-13: CNAME al túnel victoria-armada** (ver CNAME) |
 | whiteboard.armada.do | 154.53.35.102 | ✅ VPS prod |
 | whiteboard.nextcloud.armada.do | 154.53.35.102 | ❌ |
 | woodly.armada.do | 154.53.35.102 | ✅ VPS prod |
@@ -95,7 +95,7 @@
 |---|---|---|
 | ftp.armada.do | armada.do | cPanel |
 | mail.armada.do | armada.do | cPanel (SMTP apps) |
-| **rootsource.armada.do** | `17f5ad45-....cfargotunnel.com` | **túnel rootsource-local** (smart-router LLM) |
+| **victoria.armada.do** | `d9abe241-....cfargotunnel.com` | **túnel victoria-armada** (gateway OpenClaw :18789; 503 hasta que escuche) |
 | www.armada.do | armada.do | — |
 
 ### Email/otros
@@ -129,10 +129,11 @@
 - **VPS prod** `vps-preprod`: 154.53.35.102 (auth.armada.do) — Docker + caddy, firewall DOCKER-USER solo rangos CF
 - **erpipos**: 147.93.6.112 — nginx con LE
 - **kalimete** (esta máquina): 10.0.0.106, dev apps solo `.local`
-- **rootsource.local**: 10.0.0.5 — túnel rootsource.armada.do → localhost:4000
+- **victoria**: 10.0.0.5 — GPU GB10, vLLM :8000, victoria-llm-gateway :8010, túnel victoria.armada.do → :18789 (cloudflared local); RDP headless :3389
 - **jonas**: 10.0.0.20 — NAS backups + DDNS updater + dnsmasq + WireGuard server
-- **victoria**: 10.0.0.64
+- **Windows Alfredo**: 10.0.0.64 (cliente RDP; la victoria vieja ya no existe)
 - WireGuard: jonas=10.0.100.1, kalimete=10.0.100.2, vps=10.0.100.3; Endpoint `home.armada.do:51820`
+- ⚠️ **OJO DDNS**: el updater de jonas actualiza `home.armada.do` (A) y ANTES también `victoria.armada.do` — desde 2026-08-13 `victoria.armada.do` es CNAME del túnel; si el updater recrea el A lo pisa (verificar en jonas cuando el SSH se arregle)
 
 ## 9. Cómo actualizar este inventario
 

@@ -80,7 +80,7 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 - `CLOUDFLARE_API_TOKEN` (spring-dream-d681, en env): cuenta entera (túneles, R2, workers) — NO DNS de zona
 - `CLOUDFLARE_DNS_TOKEN` (opencode-dns-cleanup, en env): **DNS Read/Write solo armada.do** — creado 2026-08-06 vía API, para operaciones de DNS
 - Otros tokens del inventario: `erpipos-server-dns` (DNS+SSL en armada.do y micaserogou.com, en uso) y `damp-surf-3478-fusion` (DNS armada.do, SIN uso desde 27-jul — candidato a borrar)
-- `ROOTSOURCE_API_KEY` (env shell): clave del smart-router LLM (requiere Authorization Bearer)
+- `VICTORIA_API_KEY` (env shell, ~/.zshrc): bearer del gateway LLM de victoria (`victoria-llm-gateway` :8010, auth por NOMBRE de key — la key activa se llama `demo`; validado 2026-08-13)
 - La zona `micaserogou.com` (fdebf4707c11ec49d9a73204457ba19c) aún NO tiene token de DNS propio (erpipos-server-dns la cubre)
 
 ### Reglas aprendidas
@@ -193,7 +193,7 @@ Se puede usar con `aws cli --endpoint-url` o `rclone`. Alternativa nativa: `wran
 
 ## Reglas de seguridad
 
-1. NUNCA imprimir `CLOUDFLARE_API_TOKEN`, `R2_SECRET_ACCESS_KEY`, `ROOTSOURCE_API_KEY` ni tokens de túnel en respuestas ni logs.
+1. NUNCA imprimir `CLOUDFLARE_API_TOKEN`, `R2_SECRET_ACCESS_KEY`, `VICTORIA_API_KEY` ni tokens de túnel en respuestas ni logs.
 2. Si un comando falla con "Unauthorized"/403, verificar que se cargaron las env.
 3. Operaciones destructivas (delete, overwrite, rollback) → confirmar antes con el usuario.
 4. No subir el archivo `~/.config/cloudflare/env` a ningún repositorio.

@@ -2,7 +2,7 @@
 """Reporte diario de actividad del ecosistema Armada.
 
 Recolecta las sesiones de opencode (SQLite) de los 4 servidores locales
-(kalimete, victoria, rootsource, jonas) de las últimas 24 horas,
+(kalimete, victoria, jonas) de las últimas 24 horas,
 genera un resumen ejecutivo con el LLM local (llmgate) y lo envía
 al canal de Discord Piso 14 (#general-chat).
 
@@ -22,12 +22,11 @@ from datetime import datetime, timedelta
 SERVERS = [
     {"name": "kalimete",  "user": "warcold",   "host": "127.0.0.1", "ssh": None},
     {"name": "victoria",  "user": "victoria",  "host": "victoria.local",  "ssh": True},
-    {"name": "rootsource","user": "rootsource","host": "rootsource.local","ssh": True},
     {"name": "jonas",     "user": "jonas",     "host": "jonas.local",     "ssh": True, "optional": True},
 ]
 DB_PATH = "~/.local/share/opencode/opencode.db"
-LLMGATE = "http://10.0.0.5:4010/v1/chat/completions"
-MODEL = "qwen3.6"
+LLMGATE = "http://10.0.0.5:8010/v1/chat/completions"
+MODEL = "nvidia/Qwen3.6-35B-A3B-NVFP4"
 DISCORD_CHANNEL = "1492992262085546025"  # #general-chat Piso 14
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN", "")
 STATE_FILE = os.path.expanduser("~/.config/opencode/daily-report-state.json")
@@ -156,8 +155,8 @@ def build_report(data, hours):
 
 
 def llm_summary(report_md, hours):
-    """Genera un resumen ejecutivo con el LLM local (llmgate)."""
-    api_key = os.environ.get("ROOTSOURCE_API_KEY", "")
+    """Genera un resumen ejecutivo con el LLM local (victoria-llm-gateway :8010)."""
+    api_key = os.environ.get("VICTORIA_API_KEY", "")
     if not api_key:
         return None
     prompt = f"""Eres el analista de actividad del ecosistema Armada. Genera un RESUMEN EJECUTIVO
