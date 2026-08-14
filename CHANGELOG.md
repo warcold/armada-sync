@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-14
 
+### [~16:40] - Gateway: niveles de thinking (low/medium/high/max) + versión normal — vía sufijos de model id
+- **Tipo**: servicio | config
+- **Modificado**: `/home/victoria/llm-gateway.py` (_proxy: antes de normalizar el model, interpreta sufijos del id → `chat_template_kwargs` hacia vLLM): `-normal`/`-fast` → `enable_thinking:false` (respuesta directa); `-thinking` → thinking high; `-thinking-low|medium|high|max` → nivel exacto. Backup `llm-gateway.py.bkup-v4-20260814`. `~/.config/opencode/opencode.jsonc` (kalimete): 5 modelos en el catálogo (Normal, Thinking Low/Medium/High/Max) además del base
+- **Afecta a**: victoria (gateway), kalimete (opencode), cualquier PC con la plantilla pública
+- **Causa**: el usuario recordó que antes podía elegir low/medium/high/max y pidió validar y agregar la versión normal + la thinking
+- **Estado**: ✅ sincronizado (commit+push); servicio reiniciado y activo
+- **Notas**: validado en vLLM — el modelo soporta `chat_template_kwargs.enable_thinking` + `thinking_level` (los 4 niveles aceptados; razonamiento llega en el campo `reasoning` de vLLM 0.21, no `reasoning_content`). Default del template SIN kwargs = thinking ON (explica los content:null largos). Verificado vía gateway (victoria.local/v1): -normal → 0 chars reasoning, -thinking-low/high/max → 600-800 chars. `opencode run` con thinking-high → 22 ✓. Victoria (opencode local) sigue con vLLM directo sin niveles — si los quiere, apuntar su provider al gateway por loopback (127.0.0.1:8010)
+
+---
+
+## 2026-08-14
+
 ### [~16:00] - opencode.jsonc (kalimete + victoria): capabilities full feature del modelo
 - **Tipo**: config
 - **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete) y `/home/victoria/.config/opencode/opencode.jsonc` (victoria): capabilities del modelo `nvidia/Qwen3.6-35B-A3B-NVFP4` → `tools`, **`reasoning`** (modo thinking Qwen3, parser ya activo en vLLM) y **`input: [text, image]`** (visión VERIFICADA: el modelo describió un pixel PNG y respondió el hex #FFFFFF)
