@@ -81,7 +81,7 @@ Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Fol
 | Servicio | Puerto | Máquina | Estado |
 |----------|--------|---------|--------|
 | vLLM (Qwen3.6-35B-A3B-NVFP4) | 8000 | victoria | ✅ nemoclaw-vllm — util 0.5, 8 seqs, batched 16384 → KV 3.4M tok (13× conc. 262K). Límites cliente 240K+20K (2026-08-14) |
-| victoria-llm-gateway | 8010 | victoria | ✅ systemd ACTIVE (auth por NOMBRE de key — `demo`; validado 2026-08-13). Panel /admin = SOLO LAN (victoria.local:8010/admin, 403 vía túnel) |
+| victoria-llm-gateway | 443/8010 | victoria | ✅ systemd ACTIVE (auth por NOMBRE de key — `demo`). Panel: **https://victoria.local/admin** (nginx TLS 443 → loopback 8010, cert mkcert). /admin 403 vía túnel |
 | OpenShell sandbox | 18789 | victoria | ⚠️ contenedor healthy, escucha :18789 loopback — SOLO victoria.local (NO en túnel, decisión 2026-08-13) |
 | ComfyUI | 8188 | victoria | ❌ No corre — cuando corra: SOLO victoria.local (LAN), nunca túnel/dominio |
 | Ollama | 11434 | victoria | ❌ No corre (verificado 2026-08-13) |

@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~23:00] - TLS en victoria.local (nginx 443) — panel y API sin puertos
+- **Tipo**: infra | red | seguridad | config
+- **Modificado**: victoria (10.0.0.5): nginx instalado + site `gateway.conf` (443 TLS → 127.0.0.1:8010), cert mkcert `victoria.local`/`victoria` (firmado con CA de kalimete, expira 2028-11-14) en `/etc/ssl/local-certs/`, gateway GATEWAY_HOST 0.0.0.0→127.0.0.1 (8010 loopback-only), kalimete: CA copiada a `~/rootCA-kalimete-victoria-local.crt`
+- **Afecta a**: kalimete, victoria, Alfredo (Windows 10.0.0.64)
+- **Causa**: usuario no podía entrar al panel (ERR_SSL_PROTOCOL_ERROR — navegador forzaba https contra HTTP plano) y pidió trabajar con TLS sin ver puertos
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - URLs finales: panel **`https://victoria.local/admin`** (login `victoria-admin`), API LAN **`https://victoria.local/v1/chat/completions`**, API pública **`https://victoria.armada.do/v1/...`** (túnel → loopback 8010, intacto).
+  - Verificado: 443 admin 200 (CA validada), login 200, chat 200; 8010 ya no responde en LAN (refused); túnel 200.
+  - Windows de Alfredo: instalar `~/rootCA-kalimete-victoria-local.crt` (en kalimete) en "Entidades de certificación raíz de confianza" para que https://victoria.local no marque error (mDNS/avahi activo resuelve victoria.local).
+  - El gateway sigue en 8010 loopback (nginx + cloudflared lo consumen por 127.0.0.1). Middleware admin LAN-only intacto (403 vía túnel).
+
 ### [~22:00] - vLLM reconfigured: concurrencia real (13x) + fix límite total del modelo
 - **Tipo**: infra | config | servicio
 - **Modificado**: contenedor nemoclaw-vllm (recreado: `--gpu-memory-utilization 0.5`, `--max-num-seqs 8`, `--max-num-batched-tokens 16384`), victoria-llm-gateway (patch: normaliza model id → evita 404 por alias), opencode.jsonc kalimete + victoria (context 262144→240000, output 32768→20000)
