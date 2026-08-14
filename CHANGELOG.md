@@ -21,6 +21,14 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~01:00] - opencode.jsonc (kalimete): provider "armada" — gateway como público
+- **Tipo**: config
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete) — provider nuevo `armada` (@ai-sdk/openai-compatible, baseURL `https://victoria.armada.do/v1`, apiKey `alfredo`), model `armada/nvidia/Qwen3.6-35B-A3B-NVFP4` (limit 240000/20000). Provider `vllm` directo (:8000) intacto; providers opencode zen intactos (no viven en este archivo).
+- **Afecta a**: kalimete
+- **Causa**: probar el gateway "como público" desde el opencode local
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**: validado con `opencode run --model armada/nvidia/Qwen3.6-35B-A3B-NVFP4` → respuesta OK; streaming SSE passthrough por túnel verificado; metering contabiliza el request (alfredo 2 requests).
+
 ### [~00:30] - Llaves finales (3 personas) + límites por defecto relajados
 - **Tipo**: servicio | config | seguridad
 - **Modificado**: `/home/victoria/llm-gateway.py` (defaults create_key/panel: rate 1000/min, max_tokens 32768), `/home/victoria/admin_template.html` (formulario con defaults amplios); DB: llaves
