@@ -21,6 +21,17 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~02:00] - Formato de llaves: vllm-key-<hex> (rotadas las 4)
+- **Tipo**: servicio | seguridad | config
+- **Modificado**: `/home/victoria/llm-gateway.py` (create_key genera `vllm-key-<token_hex(32)>`; backup `.bkup-v2b-20260814`); DB: 4 llaves rotadas in-place (key_plaintext+key_hash, historial intacto); `~/.config/opencode/opencode.jsonc` (apiKey alfredo nuevo), `~/.zshrc` + `daily-report.env` (VICTORIA_API_KEY demo nuevo)
+- **Afecta a**: victoria, kalimete, Alfredo, Victoria (NemoClaw), Juan Carlos
+- **Causa**: formato `vict-llm-<nombre>-<salt>` exponía el nombre de la persona; el usuario pidió `vllm-key-*****`
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - Nuevo formato: `vllm-key-` + 64 hex (sin nombre). Auth sigue por valor real (key_hash).
+  - Las llaves viejas `vict-llm-*` ya NO funcionan (401). Valores rotados sin perder historial de uso.
+  - Validado: alfredo 200, demo 200, vict-llm vieja 401, túnel con demo 200, opencode run OK.
+
 ### [~01:30] - Auth por VALOR real de llave + jsonc limpio (provider alfredopro, host local)
 - **Tipo**: servicio | seguridad | config
 - **Modificado**: `/home/victoria/llm-gateway.py` (validate_key por key_hash del bearer; backup `.bkup-v2-20260814`), `~/.config/opencode/opencode.jsonc` (solo provider `alfredopro`/name "www.alfredo.pro", model "Coding con Victoria", baseURL `https://victoria.local/v1` local, apiKey = valor real alfredo; quitado provider `vllm` directo), `~/.zshrc` y `~/.config/opencode/daily-report.env` (VICTORIA_API_KEY = valor real demo)
