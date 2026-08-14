@@ -19,7 +19,9 @@ echo "=== Armada Sync — $(hostname) — $(date) ==="
 #
 # Convención:
 #   Repo (armada-sync/):  agents/, skills/, commands/  (plural)
-#   Config (opencode/):   agent/, skill/, command/     (singular)
+#   Config (opencode/):   agent/, skills/, command/    (skills PLURAL — opencode
+#                         lee ~/.config/opencode/skills/; el singular skill/
+#                         fue eliminado 2026-08-14)
 
 IS_HUB=false
 [ "$(hostname)" = "kalimete" ] && IS_HUB=true
@@ -37,7 +39,7 @@ if $IS_HUB; then
     # ── HUB: COLLECT → PUSH ────────────────────────────────────────
     echo "[2/3] Collecting local → repo dir (hub)..."
 
-    for dir_pair in "agent:agents" "skill:skills" "command:commands"; do
+    for dir_pair in "agent:agents" "skills:skills" "command:commands"; do
         local_part="${dir_pair%%:*}"
         repo_part="${dir_pair##*:}"
 
@@ -81,7 +83,7 @@ else
     # ── FOLLOWER: DEPLOY (destructivo) ─────────────────────────────
     echo "[2/3] Deploying from repo dir → local (follower)..."
 
-    for dir_pair in "agent:agents" "skill:skills" "command:commands"; do
+    for dir_pair in "agent:agents" "skills:skills" "command:commands"; do
         local_part="${dir_pair%%:*}"
         repo_part="${dir_pair##*:}"
 

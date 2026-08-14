@@ -1,6 +1,6 @@
 # INVENTARIO — Cuenta Cloudflare de Alfredo@armada.do
 
-> **Última verificación completa: 2026-08-07** (recolectado vía API v4 con el token de cuenta)
+> **Última verificación completa: 2026-08-14** (recolectado vía API v4 con el token de cuenta)
 > Este archivo es la fuente de verdad del ESTADO de la cuenta. Si algo cambia, actualízalo.
 
 ---
@@ -15,7 +15,7 @@
 | Máquina de trabajo de este agente | la máquina local de warcold (kalimete) |
 | Herramientas | `wrangler` 4.119.0 (global) + API v4 con `curl`/`jq` |
 
-## 2. Zonas (3 activas) — verificadas 2026-08-07
+## 2. Zonas (3 activas) — verificadas 2026-08-14
 
 | Zona | Zone ID | Status | SSL mode |
 |---|---|---|---|
@@ -25,8 +25,10 @@
 
 > SSL strict = todo origin proxied debe servir HTTPS:443 con cert válido (ver reglas aprendidas en skill).
 > taohemps.com es la zona de banahosting migrada; su DNS de correo (autoconfig/autodiscover/cpanel/webmail/whm/MX/SRV/DKIM/DMARC/SPF) NO se toca.
+>
+> **WAF Managed Free Ruleset** (`77454fe2d30c4220b5701f6fdfb893ba`): desplegado en **armada.do** y **micaserogou.com** (2026-08-06). **taohemps.com: NO desplegado (verificado 2026-08-14)** — pendiente si el usuario lo pide.
 
-## 3. Recursos de la cuenta (verificados 2026-08-07)
+## 3. Recursos de la cuenta (verificados 2026-08-14)
 
 | Recurso | Estado | Notas |
 |---|---|---|
@@ -40,7 +42,7 @@
 | Túneles | **1: `victoria-armada`** | ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a`, **healthy, 4 conexiones** (verificado 2026-08-13) |
 | Tokens API | **4 activos** (ver §4) | listados con el token de cuenta |
 
-## 4. Tokens API (inventario verificado 2026-08-07)
+## 4. Tokens API (inventario verificado 2026-08-14 — sin cambios desde 08-07)
 
 | ID | Nombre | Alcance / Uso |
 |---|---|---|
@@ -67,7 +69,7 @@
 
 > ⚠️ `/user` y `/user/tokens/verify` fallan SIEMPRE con este token. NO es un bug del agente: los tokens account-scoped no tienen permisos de usuario. No insistir ni reportarlo como fallo.
 
-## 5. Mapa DNS armada.do (verificado 2026-08-07, 35 records)
+## 5. Mapa DNS armada.do (verificado 2026-08-14, 35 records)
 
 ### A records
 | Name | Content | Proxied |
@@ -95,7 +97,7 @@
 |---|---|---|
 | ftp.armada.do | armada.do | cPanel |
 | mail.armada.do | armada.do | cPanel (SMTP apps) |
-| **victoria.armada.do** | `d9abe241-....cfargotunnel.com` | **túnel victoria-armada** → :8010 (SÓLO API LLM con llaves; panel /admin da 403 vía túnel — solo LAN) |
+| **victoria.armada.do** | `d9abe241-....cfargotunnel.com` | **túnel victoria-armada** → :8010 (SÓLO API LLM con llaves; panel /admin da 403 vía túnel — panel solo LAN en **https://victoria.local/admin**) |
 | www.armada.do | armada.do | — |
 
 ### Email/otros
@@ -103,7 +105,7 @@
 - TXT: SPF (mailchannels), DMARC p=none, DKIM default._domainkey, caldav/carddav SRVs (cPanel), `_acme-challenge` (cPanel LE)
 - SRV: _autodiscover, _caldav(s), _carddav(s) → cPanel
 
-## 6. Mapa DNS micaserogou.com (verificado 2026-08-07, 28 records)
+## 6. Mapa DNS micaserogou.com (verificado 2026-08-14, 27 records)
 
 ### A records
 | Name | Content | Proxied |
@@ -118,22 +120,25 @@
 ### Email/otros
 - MX → micaserogou.com, TXT: **2 SPF duplicados** (uno con mailchannels, otro simple), DMARC, DKIM, SRVs cPanel
 
-## 7. Mapa DNS taohemps.com (verificado 2026-08-07, ~30 records)
+## 7. Mapa DNS taohemps.com (verificado 2026-08-14, 27 records)
 
-- A root → 154.53.35.102 (✅ proxied) + cPanel records (66.225.201.198, ahora proxied)
+- A root → 154.53.35.102 (✅ proxied) + cPanel records (66.225.201.198, ahora **proxied**)
 - CNAME www/ftp/mail → taohemps.com
 - **NO TOCAR**: autoconfig/autodiscover/cpanel/webmail/whm/MX/SRV/DKIM/DMARC/SPF de correo banahosting
+- ⚠️ WAF Managed Free Ruleset **NO desplegado** en esta zona (verificado 2026-08-14)
 
 ## 8. Infraestructura relacionada (recordatorio — detalle en skill cloudflare)
 
 - **VPS prod** `vps-preprod`: 154.53.35.102 (auth.armada.do) — Docker + caddy, firewall DOCKER-USER solo rangos CF
 - **erpipos**: 147.93.6.112 — nginx con LE
 - **kalimete** (esta máquina): 10.0.0.106, dev apps solo `.local`
-- **victoria**: 10.0.0.5 — GPU GB10, vLLM :8000, victoria-llm-gateway :8010, túnel victoria.armada.do → :8010 (solo API LLM); RDP headless :3389. UIs ComfyUI/OpenClaw solo victoria.local
+- **victoria**: 10.0.0.5 — GPU GB10, vLLM :8000, victoria-llm-gateway :8010 (loopback), túnel victoria.armada.do → :8010 (solo API LLM); RDP headless :3389; panel admin https://victoria.local/admin (nginx TLS). **ComfyUI NO existe; OpenClaw :18789 NO responde; voz ELIMINADA (2026-08-14)**
 - **jonas**: 10.0.0.20 — NAS backups + DDNS updater + dnsmasq + WireGuard server
 - **Windows Alfredo**: 10.0.0.64 (cliente RDP; la victoria vieja ya no existe)
 - WireGuard: jonas=10.0.100.1, kalimete=10.0.100.2, vps=10.0.100.3; Endpoint `home.armada.do:51820`
 - ⚠️ **OJO DDNS**: el updater de jonas actualiza `home.armada.do` (A) y ANTES también `victoria.armada.do` — desde 2026-08-13 `victoria.armada.do` es CNAME del túnel; si el updater recrea el A lo pisa (verificar en jonas cuando el SSH se arregle)
+- ⚠️ **Registros obsoletos no documentados (2026-08-14)**: `proxy.us-east.armada.do` (31.220.102.176, gris), `telecomm.armada.do` + `*.telecomm.armada.do` (207.244.236.223, gris), `whiteboard.nextcloud.armada.do` (gris). Sin uso documentado → candidatos a revisar/borrar con confirmación del usuario.
+- ⚠️ **SPF duplicado en micaserogou.com**: persisten 2 registros SPF (uno con mailchannels, otro simple) — no tocar sin confirmación.
 
 ## 9. Cómo actualizar este inventario
 

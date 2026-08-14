@@ -19,6 +19,31 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ---
 
+## 2026-08-14
+
+### [~14:30] - Auditoría completa de documentación y agentes contra estado real (limpieza)
+- **Tipo**: documentación | agente | config | sync
+- **Modificado**:
+  - `kalimete.md` reescrito: gateway v2 (auth por valor, panel, llaves), provider alfredopro, health 401, max-model-len 262144, skill plural, backup retirados borrado, voz/ComfyUI/18789 fuera
+  - `ecosistema-map/MAPA.md` reescrito: UFW inactive, voz ELIMINADA, openshell 18789 muerto, límites 262K, cron duplicado detectado
+  - `eco-voice.md` reescrito como doc de reconstrucción (servicio ELIMINADO 2026-08-14)
+  - `eco-accesos.md`: IP histórica 192.168.5.74 corregida (kalimete en LAN), jonas roto, UFW inactive, llaves gateway v2
+  - `eco-cloudflare-*.md` (5): fechas 2026-08-14, skill plural, WAF taohemps NO desplegado, panel URL
+  - `cloudflare-map/INVENTARIO.md`: verificación 2026-08-14, WAF taohemps NO, micaserogou 27 records, taohemps 27 records, registros obsoletos VPS documentados, panel URL
+  - `armada-sync/AGENTS.md`: gateway v2, voz eliminada, 18789, límites 262K, skill plural, docs-keeper fuera
+  - `armada-sync/sync.sh`: **bug corregido** — deployea a `skills/` plural (antes `skill/` singular que opencode NO lee)
+  - `command/mapa.md`: apunta al mapa maestro ecosistema (no al agente retirado cloudflare)
+  - ELIMINADO: `~/.config/opencode/skill/` (duplicado singular, idéntico a `skills/`)
+- **Afecta a**: kalimete, victoria (follower sync), repo
+- **Causa**: auditoría ordenada por el usuario (validar docs/agentes contra servicios reales, limpiar obsoleto)
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - Verificado en vivo 2026-08-14: victoria 2 contenedores, 4 systemd activos, UFW inactive, 8010 loopback, 443 nginx, 3389 RDP; NADA en 8765/8766/18789/8188 (voz/ComfyUI/OpenClaw gateway muertos); jonas SSH sigue roto; kalimete 7 contenedores, kalimete-tunnel active
+  - ⚠️ Pendiente usuario: cron duplicado de sync.sh en kalimete (2 líneas idénticas) + entrada cron RSS apuntando a /home/victoria (no existe en kalimete)
+  - ⚠️ Pendiente usuario: token damp-surf-3478-fusion, registros VPS obsoletos (proxy.us-east, telecomm×2, whiteboard.nextcloud), SPF duplicado micaserogou
+
+---
+
 ## 2026-08-13
 
 ### [~02:30] - demo eliminada; scripts usan la llave de alfredo

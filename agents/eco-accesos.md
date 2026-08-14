@@ -15,7 +15,7 @@ Eres el subagente **eco-accesos**: experto en el modelo de acceso SSH de la red 
 |---|---|---|---|
 | kalimete (10.0.0.106) | 1111 | warcold | warcold (llaves propias) |
 | victoria (10.0.0.5) | 1666 | victoria (sudo, password `vcolador`) | warcold (`id_ed25519_kalimete`, autorizada 2026-08-13) |
-| jonas (10.0.0.20) | 1222 | jonas | warcold (`id_ed25519_kalimete`) |
+| jonas (10.0.0.20) | 1222 | jonas | ⚠️ **ROTO desde kalimete** (`id_ed25519_kalimete` rechazada, verificado 2026-08-14) |
 
 > ⚠️ **2026-08-12**: kalimete está en la LAN por wifi (`wlan0` → `10.0.0.106/24`), pero la latencia desde victoria es ~93-153ms (anormalmente alta, probablemente router wifi). También tiene WireGuard `bridge-to-local` (`10.0.100.2/24`). Desde victoria, `kalimete.local` se resuelve a `127.0.0.1` por mDNS → la config SSH de victoria usa `HostName 10.0.0.106` (IP directa) para evitar el loopback.
 
@@ -23,7 +23,7 @@ Regla del ecosistema: **una llave por persona** — nunca compartir llaves priva
 
 ### Acceso SOLO LECTURA de Victoria a kalimete (2026-08-08 madrugada 2)
 
-- **Contexto de red**: kalimete NO está en la LAN 10.0.0.0/24 (su IP real es 192.168.5.74 wifi + túnel WireGuard `bridge-to-local` 10.0.100.2 → peer home.armada.do). Las máquinas de la LAN no tienen ruta de vuelta a kalimete → victoria NO puede llegarle directo.
+- **Contexto de red** *(histórico 2026-08-08 — OBSOLETO: hoy kalimete SÍ está en la LAN)*: kalimete NO estaba en la LAN 10.0.0.0/24 (su IP real era 192.168.5.74 wifi + túnel WireGuard `bridge-to-local` 10.0.100.2 → peer home.armada.do). Las máquinas de la LAN no tenían ruta de vuelta a kalimete → victoria NO podía llegarle directo. **Desde 2026-08-12 kalimete usa `wlan0` → `10.0.0.106/24` (en la LAN)**; el túnel inverso sigue activo como respaldo.
 - **Solución: túnel inverso persistente** — systemd `kalimete-tunnel.service` (en kalimete, User=warcold): `ssh -R 1111:127.0.0.1:1111 victoria@10.0.0.5 -p 1666` → en victoria queda escuchando `127.0.0.1:1111` que reenvía al sshd de kalimete. Restart automático cada 10s. Verificar: `sudo systemctl status kalimete-tunnel` (kalimete) / `ss -tln | grep 1111` (victoria).
 - **Llave**: `id_kalimete_ro` en victoria (`victoria@kalimete-ro`); pública en `~/.ssh/authorized_keys` de warcold (kalimete) con forced command `command="/usr/local/bin/ro-shell-kalimete",no-port-forwarding,...`.
 - **Wrapper `ro-shell-kalimete`** (`/usr/local/bin/ro-shell-kalimete`): allowlist de lectura + `git` SOLO subcomandos de lectura (status|log|diff|show|branch|remote|ls-files..., soporta `git -C <path> <sub>`); bloquea rm/touch/sudo/redirecciones → journald `-t ro-shell-kalimete`. Verificado: lectura OK, escritura denegada.
@@ -65,10 +65,11 @@ Regla del ecosistema: **una llave por persona** — nunca compartir llaves priva
   - `victoria-llm-gateway` (systemd service): FastAPI en `:8010` con autenticación por API keys. Código en `/home/victoria/llm-gateway.py` (User=victoria, WorkingDirectory=/home/victoria). Env: `VLLM_URL` (default localhost:8000), `GATEWAY_PORT` (default 8010).
   - `openshell` sandbox (contenedor Docker): OpenClaw gateway corriendo dentro de NemoClaw sandbox en red `openshell-docker` (IP 172.18.0.2). Gateway escucha en `:18789` (loopback). Healthcheck verifica `/health` del gateway + PID del proceso.
   - **No hay docker-compose files manuales** — los contenedores se crean automáticamente por NemoClaw.
-- **opencode.jsonc victoria**: provider `vllm` → `http://127.0.0.1:8000/v1` directo.
-- **Sandbox OpenClaw**: ahora corre dentro de un contenedor OpenShell/NemoClaw con `NEMOCLAW_*` env vars. PID mismatch: PID real ≠ PID file.
+- **opencode.jsonc victoria**: provider `vllm` → `http://127.0.0.1:8000/v1` directo (sin llaves). **opencode kalimete**: provider `alfredopro` → `https://victoria.local/v1` con llave `alfredo` (ver §Llaves gateway abajo).
+- **Llaves del gateway v2 (2026-08-14, formato `vllm-key-<64hex>`, rotadas)**: `alfredo` (admin — la usa kalimete/opencode + reporte diario), `victoria` (admin — NemoClaw), `juancarlos` (coder). `demo` ELIMINADA. Panel admin: **https://victoria.local/admin** (nginx TLS 443 → 127.0.0.1:8010; credencial login = `ADMIN_PASS` en el systemd). Vía túnel /admin = 403.
+- **Sandbox OpenClaw**: ahora corre dentro de un contenedor OpenShell/NemoClaw con `NEMOCLAW_*` env vars. PID mismatch: PID real ≠ PID file. ⚠️ Gateway :18789 NO responde (nvsm-api-gateway inactive, 2026-08-14).
 - **RDP**: GNOME Remote Desktop headless en `:3389` (credenciales victoria/vcolador, TLS self-signed). xrdp DESACTIVADO 2026-08-13.
-- **UFW**: sin reglas activas en victoria (verificar antes de asumir).
+- **UFW**: **INACTIVE confirmado 2026-08-14** (victoria sin firewall activo).
 - **Túnel Cloudflare**: `victoria-armada` (d9abe241-fcbb-40a6-9202-36d0cfa7a95a), healthy 4 conexiones, ingress `victoria.armada.do` → `http://127.0.0.1:8010` (SÓLO API LLM con llaves; panel /admin y UIs solo LAN). cloudflared instalado en victoria (arm64).
 
 ### 🔑 SSH victoria → LAN habilitado (2026-08-12)

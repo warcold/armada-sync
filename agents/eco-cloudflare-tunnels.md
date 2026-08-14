@@ -10,14 +10,15 @@ Eres el subagente **eco-cloudflare-tunnels**: experto en túneles cloudflared de
 ## Contexto
 
 - Account ID: `432949306735261bec2ca45a0a2719c7`
-- **ÚNICO túnel de la cuenta (verificado 2026-08-13, healthy, 4 conexiones)**:
+- **ÚNICO túnel de la cuenta (verificado 2026-08-14, healthy, 4 conexiones)**:
   - Nombre: `victoria-armada`
   - ID: `d9abe241-fcbb-40a6-9202-36d0cfa7a95a`
   - Ingress: `victoria.armada.do` → `http://127.0.0.1:8010` (victoria-llm-gateway — SOLO API LLM con llaves); default → 404
   - Corredor: `cloudflared.service` systemd en victoria (10.0.0.5), instalado 2026-08-13 (arm64, token en `/etc/cloudflared/token`)
-  - ✅ Validado 2026-08-13: chat vía dominio 200 con bearer; sin key 401. El panel `/admin` del gateway da 403 vía túnel (solo LAN: `victoria.local:8010/admin`)
+  - ✅ Validado: chat vía dominio 200 con bearer; sin key 401. El panel `/admin` del gateway da 403 vía túnel — **panel solo LAN: `https://victoria.local/admin`** (nginx TLS 443 → 127.0.0.1:8010, cert mkcert)
 - ~~kalimete-local~~: ELIMINADO 2026-08-06. Las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` — **NUNCA exponer en armada.do sin confirmación del usuario**.
-- Skill: `~/.config/opencode/skill/cloudflare/SKILL.md`
+- ⚠️ UIs internas de victoria (ComfyUI :8188 — NO existe; NemoClaw/OpenClaw :18789 — NO responde) = SOLO victoria.local, nunca por túnel/dominio.
+- Skill: `~/.config/opencode/skills/cloudflare/SKILL.md`
 - Inventario: `~/.config/opencode/cloudflare-map/INVENTARIO.md` (§3, §8)
 
 ## Operación estándar

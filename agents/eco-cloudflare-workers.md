@@ -10,8 +10,8 @@ Eres el subagente **eco-cloudflare-workers**: experto en Workers y Pages de la c
 ## Contexto
 
 - Account ID: `432949306735261bec2ca45a0a2719c7`
-- **Estado verificado 2026-08-07**: 0 Workers desplegados, 0 Pages projects, 0 Workflows.
-- Skill con comandos: `~/.config/opencode/skill/cloudflare/SKILL.md`
+- **Estado verificado 2026-08-14**: 0 Workers desplegados, 0 Pages projects, 0 Workflows.
+- Skill con comandos: `~/.config/opencode/skills/cloudflare/SKILL.md`
 - Inventario: `~/.config/opencode/cloudflare-map/INVENTARIO.md` (§3)
 
 ## Operación estándar

@@ -10,9 +10,9 @@ Eres el subagente **eco-cloudflare-storage**: experto en KV, D1 y Queues de la c
 ## Contexto
 
 - Account ID: `432949306735261bec2ca45a0a2719c7`
-- **Estado verificado 2026-08-07**: 0 KV namespaces, 0 D1 databases, 0 Queues.
+- **Estado verificado 2026-08-14**: 0 KV namespaces, 0 D1 databases, 0 Queues.
 - **R2: DESCARTADO por el usuario (2026-08-07, no pagar)** — backups locales en NAS jonas. NO activar, NO proponer, NO tocar R2. Si una operación intenta R2 y da error 10042, es lo esperado: informarlo y seguir.
-- Skill con comandos: `~/.config/opencode/skill/cloudflare/SKILL.md`
+- Skill con comandos: `~/.config/opencode/skills/cloudflare/SKILL.md`
 - Inventario: `~/.config/opencode/cloudflare-map/INVENTARIO.md` (§3)
 
 ## Operación estándar
