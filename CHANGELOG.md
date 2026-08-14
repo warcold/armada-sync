@@ -21,6 +21,17 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~00:30] - Llaves finales (3 personas) + límites por defecto relajados
+- **Tipo**: servicio | config | seguridad
+- **Modificado**: `/home/victoria/llm-gateway.py` (defaults create_key/panel: rate 1000/min, max_tokens 32768), `/home/victoria/admin_template.html` (formulario con defaults amplios); DB: llaves
+- **Afecta a**: victoria, Alfredo, Victoria (NemoClaw), Juan Carlos
+- **Causa**: uso entre amigos + NemoClaw → sin límites duros; 3 llaves personales (admin/admin/coder), borrada la `alfredo` de prueba
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - Llaves finales (auth por NOMBRE, Bearer <name>): `alfredo` (Alfredo Armada, admin), `victoria` (Victoria Armada/NemoClaw, admin), `juancarlos` (Juan Carlos Jerez, coder), `demo` (admin, interna del sistema).
+  - Parámetros personales: rate 100000/min, max_tokens 262144, budget 0 (ilimitado), sin expiración, precio 0.02 $/1k (solo contabilidad).
+  - Validado: roles/scopes en /v1/usage (admin=all, coder=self).
+
 ### [~23:59] - Gateway v2: contabilidad (metering, precio por llave, presupuesto, roles, rate real)
 - **Tipo**: servicio | seguridad | infra | config
 - **Modificado**: `/home/victoria/llm-gateway.py` (v2.0.0; backup `llm-gateway.py.bkup-v1-20260814`), nuevo `/home/victoria/admin_template.html` (SPA panel), DB migrada automáticamente (ALTER TABLE)
