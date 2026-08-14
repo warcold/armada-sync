@@ -49,7 +49,7 @@
 | `b9076e84545b65db035dc7328d0c5286` | **opencode-dns-cleanup** | DNS Read/Write armada.do → `$CLOUDFLARE_DNS_TOKEN` (en uso por DDNS de jonas, cron */5 — NO borrar) |
 | `4142d2e99b73d6873262a263cf125b50` | **spring-dream-d681** | Token de CUENTA → `$CLOUDFLARE_API_TOKEN`. Hace TODO: túneles, workers, DNS Edit all zones, settings SSL, bot mgmt, crear zonas |
 | `6d9959e277ae228473ff5562358953f7` | **erpipos-server-dns** | DNS+SSL en armada.do y micaserogou.com (en uso por el server erpipos) |
-| `d9a90759bbc5f7e5cba11b06ac7c091a` | **damp-surf-3478-fusion** | DNS armada.do — SIN uso desde 27-jul → candidato a borrar (confirmar con usuario) |
+| `d9a90759bbc5f7e5cba11b06ac7c091a` | **damp-surf-3478-fusion** | DNS armada.do — **EN USO: proyecto VPS-telecomm (confirmado 2026-08-14). NO tocar, NO borrar** (documentación completa pendiente) |
 
 ### Alcances probados del token de cuenta (spring-dream-d681) — 2026-08-07
 
@@ -137,7 +137,7 @@
 - **Windows Alfredo**: 10.0.0.64 (cliente RDP; la victoria vieja ya no existe)
 - WireGuard: jonas=10.0.100.1, kalimete=10.0.100.2, vps=10.0.100.3; Endpoint `home.armada.do:51820`
 - ⚠️ **OJO DDNS**: el updater de jonas actualiza `home.armada.do` (A) y ANTES también `victoria.armada.do` — desde 2026-08-13 `victoria.armada.do` es CNAME del túnel; si el updater recrea el A lo pisa (verificar en jonas cuando el SSH se arregle)
-- ⚠️ **Registros obsoletos no documentados (2026-08-14)**: `proxy.us-east.armada.do` (31.220.102.176, gris), `telecomm.armada.do` + `*.telecomm.armada.do` (207.244.236.223, gris), `whiteboard.nextcloud.armada.do` (gris). Sin uso documentado → candidatos a revisar/borrar con confirmación del usuario.
+- ⚠️ **Registros del proyecto VPS-telecomm (2026-08-14, NO tocar)**: `proxy.us-east.armada.do` (31.220.102.176, gris), `telecomm.armada.do` + `*.telecomm.armada.do` (207.244.236.223, gris), `whiteboard.nextcloud.armada.do` (gris) — pertenecen al proyecto de servidores telecomm (token `damp-surf-3478-fusion`); se documentarán correctamente después.
 - ⚠️ **SPF duplicado en micaserogou.com**: persisten 2 registros SPF (uno con mailchannels, otro simple) — no tocar sin confirmación.
 
 ## 9. Cómo actualizar este inventario

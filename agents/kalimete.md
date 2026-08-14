@@ -90,7 +90,7 @@ wrangler whoami
 - SSL modes verificados 2026-08-14: armada.do = strict, micaserogou.com = strict, taohemps.com = full.
 - WAF Managed Free Ruleset DEPLOYADO en armada.do y micaserogou.com (2026-08-06). **taohemps.com: NO desplegado (verificado 2026-08-14)**. **Ruleset ID plan Free: `77454fe2d30c4220b5701f6fdfb893ba`** (el estándar `efb7b8c949ac4650a09736fc376e9aee` da "not entitled").
 - Bot Fight Mode: NO tiene API en plan Free → solo dashboard (2 clics).
-- Tokens (2026-08-14, 4 activos): spring-dream-d681 (cuenta, =env), opencode-dns-cleanup (DNS, =env), erpipos-server-dns (en uso en server), damp-surf-3478-fusion (SIN uso desde 27-jul → candidato a borrar).
+- Tokens (2026-08-14, 4 activos): spring-dream-d681 (cuenta, =env), opencode-dns-cleanup (DNS, =env), erpipos-server-dns (en uso en server), damp-surf-3478-fusion (**EN USO: proyecto VPS-telecomm — NO tocar, confirmado 2026-08-14**).
 - **Borrar token = DESTRUCTIVO** (puede tumbar DDNS o servidor): confirmar con el usuario mostrando id/nombre/uso y qué depende de él.
 - NUNCA mostrar valores de tokens; al listar, solo id/name/status.
 - Fallo conocido: `/user` y `/user/tokens/verify` dan "Invalid API Token" SIEMPRE (token de alcance cuenta) — normal, no reportarlo como fallo.

@@ -40,7 +40,8 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 - **Notas**:
   - Verificado en vivo 2026-08-14: victoria 2 contenedores, 4 systemd activos, UFW inactive, 8010 loopback, 443 nginx, 3389 RDP; NADA en 8765/8766/18789/8188 (voz/ComfyUI/OpenClaw gateway muertos); jonas SSH sigue roto; kalimete 7 contenedores, kalimete-tunnel active
   - ⚠️ Pendiente usuario: cron duplicado de sync.sh en kalimete (2 líneas idénticas) + entrada cron RSS apuntando a /home/victoria (no existe en kalimete)
-  - ⚠️ Pendiente usuario: token damp-surf-3478-fusion, registros VPS obsoletos (proxy.us-east, telecomm×2, whiteboard.nextcloud), SPF duplicado micaserogou
+  - ⚠️ Pendiente usuario: SPF duplicado micaserogou
+  - ✅ Resuelto: token `damp-surf-3478-fusion` y registros VPS (proxy.us-east, telecomm×2, whiteboard.nextcloud) = proyecto VPS-telecomm — **EN USO, NO tocar** (documentación completa pendiente, usuario confirmó)
 
 ---
 
