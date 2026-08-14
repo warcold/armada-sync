@@ -31,9 +31,9 @@ wrangler whoami
 
 - **NUNCA subdominios de 2 niveles** (api.x.armada.do): Universal SSL gratis no los cubre → usar `x-api.armada.do`
 - **A proxied + SSL strict exige origin con 443 y cert válido**: si el origin no tiene TLS, timeout total. Emitir LE con el record en gris, luego volver a naranja.
-- Registros grises (proxied=false) para: DDNS (home/victoria.armada.do → 69.143.73.120, gestionados por updater de jonas, NO tocar), DNS de correo cPanel, registros TXT.
-- `home.armada.do` y `victoria.armada.do` son el endpoint WireGuard (TTL 120 / TTL 1) — los actualiza el cron de jonas cada 5 min. NO cambiar contenido manualmente.
-- Túnel: `rootsource.armada.do` es CNAME → `17f5ad45-fb7c-4ddd-a8c6-9c59b2f90160.cfargotunnel.com` (para hostnames de túnel usa eco-cloudflare-tunnels).
+- Registros grises (proxied=false) para: DDNS (`home.armada.do` → 69.143.73.120, gestionado por updater de jonas, **NO tocar**), DNS de correo cPanel, registros TXT.
+- `home.armada.do` es el endpoint WireGuard (TTL 120) — lo actualiza el cron de jonas cada 5 min. NO cambiar contenido manualmente.
+- Túnel: `victoria.armada.do` es CNAME proxied → `d9abe241-fcbb-40a6-9202-36d0cfa7a95a.cfargotunnel.com` (túnel `victoria-armada`; para hostnames de túnel usa eco-cloudflare-tunnels).
 - CNAME de túnel nuevo: `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (usa cert.pem de `~/.cloudflared/`).
 
 ## Comandos de referencia

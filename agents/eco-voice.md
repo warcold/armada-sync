@@ -23,8 +23,8 @@ docker victoria-voice (imagen victoria-voice:latest, network_mode: host)
    │  uvicorn src.server.main:app --host 127.0.0.1 --port 8766
    ▼
    ├── gateway openclaw: http://127.0.0.1:18789 (host, no docker)
-   ├── TTS:   http://rootsource.local:9001/v1/audio/speech  ⚠️ ELIMINADO (XTTS)
-   └── STT:   http://rootsource.local:4000/v1/audio/transcriptions  ⚠️ ELIMINADO (whisper)
+   ├── TTS:   http://victoria.local:9001/v1/audio/speech  ⚠️ ELIMINADO (XTTS)
+   └── STT:   http://victoria.local:4000/v1/audio/transcriptions  ⚠️ ELIMINADO (whisper)
 ```
 
 - Compose: `/home/victoria/victoria/compose/docker-compose.yml` (backup del original: `docker-compose.yml.bak-20260808`)
@@ -40,33 +40,32 @@ docker victoria-voice (imagen victoria-voice:latest, network_mode: host)
 - Pitfall bind: nginx no puede bind `0.0.0.0:8765` si algo ya escucha en `127.0.0.1:8765` (EADDRINUSE) → por eso el app vive en 8766 (loopback interno) y nginx en 8765.
 - Certificado: mkcert (CA local, issuer CN=mkcert warcold@victoria). El navegador debe confiar en la CA mkcert (igual que para victoria.local:443).
 
-## ⚠️ 2026-08-12: ROOTSOURCE STACK LLM REEMPLAZADO — voice PUEDE estar roto
+## ⚠️ 2026-08-12: STACK LLM REEMPLAZADO EN VICTORIA — voice PUEDE estar roto
 
-- **Cambio**: El router anterior (`baseline-router` :4000) fue reemplazado por `nemoclaw-vllm` (:8000) + `llmgate` (:4010) + sandbox OpenShell.
-- **Servicios que YA NO EXISTEN en rootsource**:
+- **Cambio**: El router anterior (`baseline-router` :4000) fue reemplazado por `nemoclaw-vllm` (:8000) + `victoria-llm-gateway` (:8010) + sandbox OpenShell.
+- **Servicios que YA NO EXISTEN en victoria**:
   - `baseline-router` (:4000) — ELIMINADO
   - `baseline-qwen-35b` (:8000) — ELIMINADO
   - `baseline-tts` (:9001, XTTS) — ELIMINADO
   - `baseline-whisper` (:4000/v1/audio) — ELIMINADO
   - `baseline-resource-manager` (:8300) — ELIMINADO
-  - Usuario `victoria` SSH — ELIMINADO (ro-shell ya no existe)
 - **Servicios que SÍ EXISTEN**:
   - `nemoclaw-vllm` (:8000) — vLLM directo con Qwen3.6-35B-A3B-NVFP4
-  - `llmgate` (:4010) — gateway con API keys, conecta a :8000
+  - `victoria-llm-gateway` (:8010) — gateway con API keys, conecta a :8000
   - `openshell` sandbox — OpenClaw gateway en red `openshell-docker` (:18789 loopback)
-  - `llmgate.service` — systemd corriendo
+  - `victoria-llm-gateway.service` — systemd corriendo
   - **Impacto en Victoria**:
-  - **openclaw.json de Victoria**: `models.providers.vllm.baseUrl` apunta a `http://rootsource.local:4010/v1` (llmgate) → **401 Unauthorized** — la API key en openclaw.json es inválida para llmgate (hay que actualizarla).
-  - **TTS de Victoria** (`tts.providers.openai.baseUrl`): `http://rootsource.local:4000/v1` (XTTS) → **ROTO** — el contenedor XTTS fue eliminado.
-  - **Discord voice TTS**: `http://rootsource.local:4000/v1` (XTTS) → **ROTO** — mismo problema.
-  - **Voice server TTS**: `http://rootsource.local:9001/v1/audio/speech` (XTTS) → **ROTO**.
-  - **Voice server STT**: `http://rootsource.local:4000/v1/audio/transcriptions` (whisper) → **ROTO**.
-  - **Voice → gateway**: El voice server llama al gateway de Victoria (`:18789`), que a su vez se conecta al LLM de rootsource vía `http://rootsource.local:4010/v1` (llmgate). Si llmgate responde, el chat de voz debería funcionar (texto), pero TTS y STT están rotos.
+  - **openclaw.json de Victoria**: `models.providers.vllm.baseUrl` apuntaba a `http://victoria.local:4010/v1` (gateway viejo) → actualizar al stack nuevo (`http://127.0.0.1:8000/v1` o gateway :8010 con key).
+  - **TTS de Victoria** (`tts.providers.openai.baseUrl`): `http://victoria.local:4000/v1` (XTTS) → **ROTO** — el contenedor XTTS fue eliminado.
+  - **Discord voice TTS**: `http://victoria.local:4000/v1` (XTTS) → **ROTO** — mismo problema.
+  - **Voice server TTS**: `http://victoria.local:9001/v1/audio/speech` (XTTS) → **ROTO**.
+  - **Voice server STT**: `http://victoria.local:4000/v1/audio/transcriptions` (whisper) → **ROTO**.
+  - **Voice → gateway**: El voice server llama al gateway de Victoria (`:18789`), que a su vez se conecta al LLM vía el stack nuevo. Si el gateway responde, el chat de voz debería funcionar (texto), pero TTS y STT están rotos.
 - **Verificar**:
   1. `ssh victoria.local "docker logs victoria-voice --tail 50"` → buscar errores de gateway/LLM.
   2. `ssh victoria.local "curl -s http://127.0.0.1:18789/health"` → health del gateway de Victoria.
   3. `ssh victoria.local "curl -s -X POST http://127.0.0.1:18789/v1/chat/completions -H 'Authorization: Bearer <token>' -d '{\"model\":\"openclaw\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}'"` → probar chat.
-  4. `ssh victoria.local "curl -s http://rootsource.local:4010/v1/models -H 'Authorization: Bearer sk-7279...'"` → probar llmgate.
+  4. `ssh victoria.local "curl -s http://127.0.0.1:8010/v1/models -H 'Authorization: Bearer <key>'"` → probar victoria-llm-gateway.
 - **Acción recomendada**: Antes de tocar nada, verificar si el voice funciona. Si está roto, decidir si se necesita reinstalar whisper/TTS o si se usa otro servicio.
 
 ## STT 401 — ✅ SOLUCIONADO 2026-08-08 (noche)
@@ -93,7 +92,7 @@ docker victoria-voice (imagen victoria-voice:latest, network_mode: host)
 3. **Reiniciar el servicio**: `ssh victoria.local "cd /home/victoria/victoria/compose && docker compose --env-file /home/victoria/victoria/compose/.env -f docker-compose.yml up -d --force-recreate voice"` — el `.env` es OBLIGATORIO (sin él, STT y gateway token quedan vacíos).
 4. **Probar STT manualmente**: ⚠️ **2026-08-12**: el endpoint `:4000/v1/audio/transcriptions` del router anterior fue eliminado. Si se reinstala whisper, la URL sería la misma. Por ahora, verificar logs del voice server para ver si STT falla.
 5. **Probar WS**: `curl -sk --http1.1 -o /dev/null -w "%{http_code}" -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" https://victoria.local:8765/ws` → esperar 101.
-6. **Probar voice → gateway**: `curl -s -X POST http://127.0.0.1:18789/v1/chat/completions -H "Authorization: Bearer v1ct0r1a-g4t3w4y-s3cur3-2026!" -d '{"model":"openclaw","messages":[{"role":"user","content":"hi"}]}'` → 200 (401 = token mal; 400 = model mal). ⚠️ Si el gateway de Victoria no puede conectar al LLM de rootsource (stack nuevo), esto fallará.
+6. **Probar voice → gateway**: `curl -s -X POST http://127.0.0.1:18789/v1/chat/completions -H "Authorization: Bearer v1ct0r1a-g4t3w4y-s3cur3-2026!" -d '{"model":"openclaw","messages":[{"role":"user","content":"hi"}]}'` → 200 (401 = token mal; 400 = model mal). ⚠️ Si el gateway de Victoria no puede conectar al LLM (stack nuevo), esto fallará.
 
 ## Prohibido
 
@@ -111,12 +110,12 @@ docker victoria-voice (imagen victoria-voice:latest, network_mode: host)
 - **Validado post-deploy**: 4/4 EN → inglés, 4/4 ES → español, y turnos mixtos EN→ES→EN en la misma conversación siguen el idioma del último turno ✅. Contenedor healthy, modelo `openclaw/default`.
 - **Regla para el futuro**: SIEMPRE nombrar el idioma en la instrucción del turno; los tags sueltos no son confiables con esta persona. Si algún día cambia el prompt del agente, re-medir con langtest (formato arriba).
 
-## ✅ SOLUCIONADO 2026-08-08 (madrugada): espejado roto por STT — bug en wrapper whisper de rootsource
+## ✅ SOLUCIONADO 2026-08-08 (madrugada): espejado roto por STT — bug en wrapper whisper
 
 - **Síntoma real**: el usuario hablaba español y Victoria respondía en inglés (los logs mostraban transcript perfecto en español pero `lang=english`).
-- **Causa raíz (NIVEL STT, no del voice)**: el wrapper `whisper_wrapper.py` de rootsource NO pasaba `language` cuando venía None/""/"auto" → el whisper.cpp server usaba su default `en` → TODA transcripción devolvía `language=english`. El voice (correctamente) armaba `[EN] Answer in English, like the user. <texto>` → respuesta en inglés.
+- **Causa raíz (NIVEL STT, no del voice)**: el wrapper `whisper_wrapper.py` NO pasaba `language` cuando venía None/""/"auto" → el whisper.cpp server usaba su default `en` → TODA transcripción devolvía `language=english`. El voice (correctamente) armaba `[EN] Answer in English, like the user. <texto>` → respuesta en inglés.
   - Verificado: contra :9003 con `-F language=auto` → `es (p=0.999)`; sin parámetro → `english`.
-- **Fix en rootsource** (`whisper_wrapper.py`, línea ~142): si no viene idioma, forzar `data["language"] = "auto"`. Rebuild: `docker compose build whisper && docker compose up -d --force-recreate whisper`. Modelo sigue large-v3-turbo GGML.
+- **Fix** (`whisper_wrapper.py`, línea ~142): si no viene idioma, forzar `data["language"] = "auto"`. Rebuild: `docker compose build whisper && docker compose up -d --force-recreate whisper`. Modelo sigue large-v3-turbo GGML.
 - **Validado end-to-end real** (TTS es/en → STT :4000 → formato voice → gateway openclaw): STT ahora da `spanish`/`english` correcto; 6/6 respuestas espejan (3/3 ES→español, 3/3 EN→inglés). Voice reiniciado, UI 200, WS 101.
 - **⚠️ 2026-08-12**: el stack `baseline-*` (incluyendo whisper) fue eliminado. Este fix ya no aplica hasta que se reinstale un servicio STT.
 - **Lección**: si el espejado de idioma falla de nuevo, verificar PRIMERO qué devuelve el STT (curl verbose_json) antes de tocar el voice.

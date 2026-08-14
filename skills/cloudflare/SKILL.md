@@ -37,9 +37,9 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 
 ### Túneles activos
 
-**1. `rootsource-local`** ID `17f5ad45-fb7c-4ddd-a8c6-9c59b2f90160` (en rootsource.local) — ÚNICO túnel de la cuenta (verificado 2026-08-07, healthy, 4 conexiones)
-- Ingress: `rootsource.armada.do` → `http://localhost:4000` (smart-router/LiteLLM); default → 404
-- `cloudflared.service` systemd en el servidor
+**1. `victoria-armada`** ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a` (en victoria, 10.0.0.5) — ÚNICO túnel de la cuenta (verificado 2026-08-13, healthy, 4 conexiones)
+- Ingress: `victoria.armada.do` → `http://127.0.0.1:18789` (gateway OpenClaw de Victoria); default → 404
+- `cloudflared.service` systemd en victoria (instalado 2026-08-13, arm64, token en `/etc/cloudflared/token`)
 
 **2. ~~`kalimete-local`~~ ELIMINADO 2026-08-06**: las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` (desarrollo) — nunca exponer en armada.do sin pedir confirmación al usuario.
 
@@ -50,14 +50,14 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 ### Red local / acceso remoto
 - VPN WireGuard: servidor **jonas (10.0.0.20, wg0=10.0.100.1)**, clientes kalimete (10.0.100.2) y vps-preprod (10.0.100.3). Port-forward del router: UDP 51820 → jonas.
 - **DDNS de la casa (2026-08-06)**: `home.armada.do` → IP pública (A, `proxied:false`, TTL 120) — endpoint oficial del WG. `victoria.armada.do` es alias del mismo DDNS (también actualizado por el updater). **Updater**: `/usr/local/sbin/cloudflare-ddns.sh` en jonas (token DNS en `/etc/cloudflare-ddns/token` root:600), cron `*/5`, actualiza ambos registros si la IP cambia (ipify). Los clientes WG usan `Endpoint = home.armada.do:51820` (kalimete: `/etc/wireguard/bridge-to-local.conf`; vps: `/etc/wireguard/wg0.conf`).
-- DNS LAN: resolver `10.0.0.20` (dnsmasq en jonas, `/etc/dnsmasq.d/lan-overrides.conf`). Sirve los `.local` (kalimete.local=10.0.0.106, victoria.local=10.0.0.64, rootsource.local=10.0.0.5, jonas.local=10.0.0.20) y split-horizon `.armada.do` internos (jonas.armada.do, victoria.armada.do → LAN; el bug victoria→10.0.0.106 fue corregido el 2026-08-06). Clientes WG externos: usar `DNS=10.0.0.20` para resolver los `.local` igual que en casa.
+- DNS LAN: resolver `10.0.0.20` (dnsmasq en jonas, `/etc/dnsmasq.d/lan-overrides.conf`). Sirve los `.local` (kalimete.local=10.0.0.106, victoria.local=10.0.0.5, jonas.local=10.0.0.20) y split-horizon `.armada.do` internos (jonas.armada.do, victoria.armada.do → LAN; el bug victoria→10.0.0.106 fue corregido el 2026-08-06). Clientes WG externos: usar `DNS=10.0.0.20` para resolver los `.local` igual que en casa.
 - Las apps dev de kalimete SOLO se acceden en localhost:PUERTO — no exponer
 
 ### Politica SSH (todos los servers, local y remoto)
 - **Sin restriccion por IP** (amigos con usuarios propios conectan desde cualquier lado)
 - Autenticacion SOLO por llave (`PasswordAuthentication no`), root directo solo con la llave de kalimete (`warcold@kalimete.local`, ~/.ssh/id_ed25519_kalimete)
 - vps-preprod: puerto 1333, root + key, usuario amigo `justin_t` (sin llaves aun — avisar cuando quiera conectar), fail2ban activo (jail sshd)
-- rootsource: puerto 31337, root SIN llaves (solo usuario rootsource + sudo NOPASSWD)
+- victoria: puerto 1666, root SIN llaves (solo usuario victoria + sudo con password)
 - kalimete: puerto 1111, root prohibit-password
 
 ### VPS preprod/produccion (`vps-preprod` = auth.armada.do = 154.53.35.102)
@@ -71,9 +71,9 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 - staging-postgres/minio: SOLO red docker (sin bind publico); platform-traefik ELIMINADO (config en /opt/residencial-staging/traefik.removed-20260806)
 - **VPN wg `bridge-to-local` ARREGLADA 2026-08-06**: el wg server es **jonas (10.0.0.20, wg0=10.0.100.1)**; relé kalimete (10.0.100.2) ↔ vps (10.0.100.3). El bug: ufw de jonas tiene default "deny (routed)" y ufw-before-forward solo acepta ICMP echo → TCP entre peers se caía en el policy DROP del FORWARD. Fix: `sudo ufw route allow in on wg0 out on wg0` (persiste). Verificado: SSH root@10.0.100.3:1333 desde kalimete (host key idéntica a la del IP público); puerto 22 del vps queda DROP (firewall)
 - royalsmoke ELIMINADO (kalimete y vps) 2026-08-06 — ya no procede
-- **Backups (2026-08-06): NAS central = jonas** (`/srv/backups/<host>/<servicio>/`). Timers: jonas 03:00, vps 03:20 (nextcloud-db, ragnarok/woodly, taohemps, petsuite, infra+env), victoria 04:05, rootsource 04:35; prune 30 días 06:00. Push vía rsync+SSH 1222 con llaves `id_backup` forzadas al gate `backup-gate.sh` (solo rsync y /srv/backups). Restauración nextcloud-db PROBADA. Detalles: `ops/agents/backups/AGENTS.md`
+- **Backups (2026-08-06): NAS central = jonas** (`/srv/backups/<host>/<servicio>/`). Timers: jonas 03:00, vps 03:20 (nextcloud-db, ragnarok/woodly, taohemps, petsuite, infra+env), victoria 04:05; prune 30 días 06:00. Push vía rsync+SSH 1222 con llaves `id_backup` forzadas al gate `backup-gate.sh` (solo rsync y /srv/backups). Restauración nextcloud-db PROBADA. Detalles: `ops/agents/backups/AGENTS.md`
 
-- **Agentes por sistema**: repositorio `ops/agents/<sistema>/AGENTS.md` (jonas, vps, victoria, rootsource, kalimete, vpn, backups) en https://github.com/warcold/armada-ops — **actualizar el agente correspondiente tras CADA cambio** en cualquier sistema.
+- **Agentes por sistema**: repositorio `ops/agents/<sistema>/AGENTS.md` (jonas, vps, victoria, kalimete, vpn, backups) en https://github.com/warcold/armada-ops — **actualizar el agente correspondiente tras CADA cambio** en cualquier sistema.
 - **Git = solo SSH keys** (sin PATs): remotes `git@github.com:warcold/*.git`. PAT clásico filtrado revocado; gho_ muerto eliminado del VPS.
 
 ### Credenciales y tokens
@@ -87,8 +87,8 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 - **NUNCA registrar un A proxied (nube naranja) apuntando a un origin sin 443 si la zona está en SSL=strict**: Cloudflare exige HTTPS:443 con cert válido al origin → si no existe, timeout total (caso erpipos 2026-08-07: el origin solo servía HTTP; con flexible funcionaba, strict lo tumbó). Al emitir cert LE en un origin proxied, **grisar temporalmente el registro** (challenge HTTP-01 directo) y volver a naranja después.
 - **NUNCA subdominios de 2 niveles** (api.x.armada.do): Universal SSL gratis no los cubre → handshake_failure. Usar `x-api.armada.do`
 - DNS CNAME: crear con `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (usa cert.pem de `~/.cloudflared/`, cubre armada.do y micaserogou.com)
-- **PENDIENTE (dashboard)**: NADA en DNS — los 9 CNAME muertos del túnel kalimete ya fueron borrados 2026-08-06 (API con token opencode-dns-cleanup). `kalimete.armada.do` ELIMINADO 2026-08-06 (era CNAME al túnel borrado). Solo queda `rootsource.armada.do` (túnel vivo)
-- ufw rootsource endurecido: SOLO LAN (4000, 443, 31337, 8188, 9000, 9001, 127.0.0.1) — nada abierto a internet (el túnel no lo necesita)
+- **PENDIENTE (dashboard)**: NADA en DNS — los 9 CNAME muertos del túnel kalimete ya fueron borrados 2026-08-06 (API con token opencode-dns-cleanup). `kalimete.armada.do` ELIMINADO 2026-08-06 (era CNAME al túnel borrado). El CNAME activo es `victoria.armada.do` (túnel victoria-armada)
+- ufw victoria: SOLO LAN (4000, 443, 1666, 8000, 8010, 18789, 127.0.0.1) — nada abierto a internet (el túnel no lo necesita)
 
 ### Playbook: agregar un servidor/servicio nuevo a armada.do
 
