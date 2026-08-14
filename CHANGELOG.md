@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-14
 
+### [~17:10] - Catálogo opencode simplificado: base + Normal + Thinking Max (quedan fuera low/medium/high)
+- **Tipo**: config
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete): se eliminan del catálogo `-thinking-low/medium/high`; quedan 3 modelos: base (thinking on default), `-normal` (sin reasoning) y `-thinking-max`. El gateway SIGUE soportando los 4 niveles por sufijo (no se tocó) — disponibles para scripts/uso manual
+- **Afecta a**: kalimete (selector de opencode), PC pública (plantilla)
+- **Causa**: validación con el usuario — las mediciones mostraron que la diferencia entre niveles es suave y estocástica (medium dio 3159 chars vs high 812 en la misma pregunta); el control fino no aporta en la práctica, solo tiempo/tokens. Lo que importa: con o sin razonamiento
+- **Estado**: ✅ sincronizado (commit+push); verificado `opencode run` con `-normal` → 21 ✓
+- **Notas**: plantilla PC pública ahora con los mismos 3 modelos
+
+---
+
+## 2026-08-14
+
 ### [~16:40] - Gateway: niveles de thinking (low/medium/high/max) + versión normal — vía sufijos de model id
 - **Tipo**: servicio | config
 - **Modificado**: `/home/victoria/llm-gateway.py` (_proxy: antes de normalizar el model, interpreta sufijos del id → `chat_template_kwargs` hacia vLLM): `-normal`/`-fast` → `enable_thinking:false` (respuesta directa); `-thinking` → thinking high; `-thinking-low|medium|high|max` → nivel exacto. Backup `llm-gateway.py.bkup-v4-20260814`. `~/.config/opencode/opencode.jsonc` (kalimete): 5 modelos en el catálogo (Normal, Thinking Low/Medium/High/Max) además del base
