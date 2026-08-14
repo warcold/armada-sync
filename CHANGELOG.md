@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~01:30] - Auth por VALOR real de llave + jsonc limpio (provider alfredopro, host local)
+- **Tipo**: servicio | seguridad | config
+- **Modificado**: `/home/victoria/llm-gateway.py` (validate_key por key_hash del bearer; backup `.bkup-v2-20260814`), `~/.config/opencode/opencode.jsonc` (solo provider `alfredopro`/name "www.alfredo.pro", model "Coding con Victoria", baseURL `https://victoria.local/v1` local, apiKey = valor real alfredo; quitado provider `vllm` directo), `~/.zshrc` y `~/.config/opencode/daily-report.env` (VICTORIA_API_KEY = valor real demo)
+- **Afecta a**: victoria, kalimete, Alfredo, Victoria (NemoClaw), Juan Carlos
+- **Causa**: el usuario dudó que las llaves fueran su nombre (auth por nombre = el valor largo no servía). Decidió auth por valor real (estándar, como OpenAI)
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - Bearer = valor completo `vict-llm-<name>-<salt>`; el nombre ya NO autentica (401). Lookup por SHA-256(key_plaintext).
+  - Los valores largos dados antes siguen siendo los mismos y AHORA son las credenciales reales (antes decorativos).
+  - Validado: valor alfredo 200, "alfredo" 401, valor demo 200 (env daily-report + túnel chat 200), valor juancarlos 200, `opencode run` con provider alfredopro OK (valor real).
+  - opencode.jsonc ahora SOLO LAN (victoria.local); para otros equipos usar victoria.armada.do con su CA/valor.
+
 ### [~01:00] - opencode.jsonc (kalimete): provider "armada" — gateway como público
 - **Tipo**: config
 - **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete) — provider nuevo `armada` (@ai-sdk/openai-compatible, baseURL `https://victoria.armada.do/v1`, apiKey `alfredo`), model `armada/nvidia/Qwen3.6-35B-A3B-NVFP4` (limit 240000/20000). Provider `vllm` directo (:8000) intacto; providers opencode zen intactos (no viven en este archivo).
