@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-14
 
+### [~15:30] - Panel admin: Owner como identificador visible; name autogenerado interno
+- **Tipo**: servicio | config
+- **Modificado**: `/home/victoria/llm-gateway.py` (`CreateKeyRequest`: `name` opcional (autogen), `owner` ahora REQUERIDO; `create_key` autogenera `name` = slug(owner) único con sufijo -2/-3 si colisiona); `/home/victoria/admin_template.html` (formulario sin campo Nombre, solo "Owner *"; tabla con columna principal **Owner** + "id: <name>" muted debajo; JS createKey sin name). Backups: `llm-gateway.py.bkup-v3b-20260814`, `admin_template.html.bkup-v3b-20260814`
+- **Afecta a**: victoria (panel admin)
+- **Causa**: validado con el usuario — `name` solo era el identificador visual porque la llave real no se veía; ahora que el panel muestra `vllm-key-*` con Ver/Copiar, Owner es lo que importa. `name` sigue existiendo internamente (UNIQUE, rutas /admin/keys/{name}, usage_log.key_name) pero invisible
+- **Estado**: ✅ sincronizado (commit+push); servicio reiniciado y activo
+- **Notas**: verificado — crear sin name → slug autogen (prueba-tester, prueba-tester-2 en colisión); sin owner → 422; lista devuelve owner+key_plaintext; HTML sin "Nombre *"; chat con llave alfredo 200 (auth intacta). Llaves de prueba borradas. Owners actuales: Alfredo Armada, Victoria Armada, Juan Carlos Jerez
+
+---
+
+## 2026-08-14
+
 ### [~15:00] - Panel admin: las llaves reales ahora se ven en el dashboard (fix)
 - **Tipo**: servicio | config
 - **Modificado**: `/home/victoria/llm-gateway.py` (`GET /admin/keys` ahora usa `list_keys(include_secret=True)` — antes descartaba `key_plaintext` y el dashboard solo mostraba los NOMBRES como si fueran llaves); `/home/victoria/admin_template.html` (columna nueva "Llave" con valor real enmascarado `vllm-key-•••…`, botones **Ver** (toggle mostrar/ocultar) y **Copiar** (clipboard + toast); colspan 11→12). Backups: `llm-gateway.py.bkup-v3-20260814`, `admin_template.html.bkup-v3-20260814`
