@@ -21,6 +21,18 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-14
 
+### [~15:00] - Panel admin: las llaves reales ahora se ven en el dashboard (fix)
+- **Tipo**: servicio | config
+- **Modificado**: `/home/victoria/llm-gateway.py` (`GET /admin/keys` ahora usa `list_keys(include_secret=True)` — antes descartaba `key_plaintext` y el dashboard solo mostraba los NOMBRES como si fueran llaves); `/home/victoria/admin_template.html` (columna nueva "Llave" con valor real enmascarado `vllm-key-•••…`, botones **Ver** (toggle mostrar/ocultar) y **Copiar** (clipboard + toast); colspan 11→12). Backups: `llm-gateway.py.bkup-v3-20260814`, `admin_template.html.bkup-v3-20260814`
+- **Afecta a**: victoria (panel admin), administradores (Alfredo/Victoria)
+- **Causa**: el usuario reportó que en el dashboard "veía los nombres como llaves" — no aparecía el valor real (`vllm-key-<64hex>`)
+- **Estado**: ✅ sincronizado (commit+push); servicio reiniciado y activo
+- **Notas**: verificado — `/admin/keys` con sesión admin devuelve `key_plaintext` (len=73) de alfredo/victoria/juancarlos; HTML sirve la columna nueva; chat con llave alfredo 200 / sin llave 401 (auth intacta)
+
+---
+
+## 2026-08-14
+
 ### [~14:30] - Auditoría completa de documentación y agentes contra estado real (limpieza)
 - **Tipo**: documentación | agente | config | sync
 - **Modificado**:
