@@ -21,6 +21,17 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~22:00] - vLLM reconfigured: concurrencia real (13x) + fix límite total del modelo
+- **Tipo**: infra | config | servicio
+- **Modificado**: contenedor nemoclaw-vllm (recreado: `--gpu-memory-utilization 0.5`, `--max-num-seqs 8`, `--max-num-batched-tokens 16384`), victoria-llm-gateway (patch: normaliza model id → evita 404 por alias), opencode.jsonc kalimete + victoria (context 262144→240000, output 32768→20000)
+- **Afecta a**: kalimete, victoria, repo armada-sync
+- **Causa**: usuario reportó que el vLLM parecía tener 1 sola secuencia y se trancaba con requests al máximo de tokens. Diagnóstico: (1) util 0.4 → KV ~560K tokens → solo ~2 secuencias de contexto completo; (2) **clientes pedían context 262144 + output 32768 = 294912 > 262144 (límite total del modelo)** → vLLM rechaza con 400 = chat trancado; (3) gateway pasaba el model tal cual → 404 con alias.
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - Resultado: KV cache **3,447,590 tokens** (~34.7 GiB), **concurrencia 13.15×** para requests de 262K (antes ~2×). Validado: 6 requests concurrentes → 200 en ~9s; output 30000 OK; chat vía dominio con alias `qwen3.6` → 200.
+  - Backup del inspect del contenedor: `/home/victoria/nemoclaw-vllm-inspect-backup.json`. ⚠️ NemoClaw gestiona el contenedor (label managed-vllm) — si lo recrea, puede volver a defaults.
+  - Límites clientes: 240000 + 20000 = 260000 ≤ 262144 (holgura ~2K). gateway: SERVED_MODEL env (default nvidia/Qwen3.6-35B-A3B-NVFP4).
+
 ### [~21:00] - victoria.armada.do → SOLO API LLM (túnel :8010) + panel admin LAN-only + UIs fuera de internet
 - **Tipo**: red | seguridad | infra | config
 - **Modificado**: túnel victoria-armada (ingress → :8010), llm-gateway.py (middleware admin LAN-only), DNS (verificado), docs (kalimete.md, eco-cloudflare-tunnels.md, eco-accesos.md, SKILL, MAPAs, AGENTS.md), snapshots históricos borrados
