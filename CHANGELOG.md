@@ -21,6 +21,14 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [23:35] - Red: rootsource → NUEVA victoria (10.0.0.5) + fix RDP headless
+- **Tipo**: red | infra | servicio | config
+- **Modificado**: hosts, SSH configs, MAPA.md, kalimete.md, eco-accesos.md, AGENTS.md, perfil remmina, victoria (10.0.0.5): xrdp desactivado, grd RDP habilitado con credenciales + TLS
+- **Afecta a**: kalimete, victoria (ex-rootsource), Alfredo (Windows en 10.0.0.64)
+- **Causa**: usuario reportó RDP rechazado tras credenciales; validación de logs mostró: (1) el host 10.0.0.5 ya no es rootsource sino la NUEVA victoria (puerto 1666, user victoria), (2) xrdp validaba OK pero GNOME mataba la sesión ("Session manager already running" — sesión local activa), (3) grd tenía RDP disabled y sin credenciales
+- **Estado**: ✅ sincronizado
+- **Notas**: llave `id_ed25519_kalimete` autorizada en victoria. `grdctl --system rdp set-credentials victoria vcolador` + cert self-signed en /var/lib/gnome-remote-desktop/. xrdp y xrdp-sesman DISABLED. ⚠️ llmgate y cloudflared INACTIVE en victoria — pendiente reactivar. Victoria vieja (10.0.0.64) ya no existe como Ubuntu (IP ahora del Windows de Alfredo).
+
 ### [13:30] - Fix: vLLM context overflow (163K → 262K)
 - **Tipo**: config | infra
 - **Modificado**: opencode.jsonc (baseline-thinking), MAPA.md (regla anti-desborde)

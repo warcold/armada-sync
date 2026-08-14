@@ -31,17 +31,19 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | Host | IP | SSH | Usuario local | Rol |
 |---|---|---|---|---|
 | **kalimete** | 10.0.0.106 | puerto 1111 | `warcold` | Máquina de trabajo de Alfredo (esta) |
-| **victoria** | 10.0.0.64 | puerto 1666 | `victoria` | Asistente Victoria (openclaw + opencode) |
+| **victoria** | 10.0.0.5 | puerto 1666 | `victoria` (sudo, password `vcolador`) | Asistente Victoria — **NUEVA victoria (2026-08-13, ex-rootsource)**: GPU GB10, gateway LLM, Docker |
 | **jonas** | 10.0.0.20 | puerto 1222 | `jonas` | NAS / servidor de respaldo |
-| **rootsource** | 10.0.0.5 | puerto 31337 | `rootsource` (admin, sudoers) | Servidor Spark: GPU GB10, gateway LLM |
+| ~~rootsource~~ | ~~10.0.0.5~~ | ~~31337~~ | — | ELIMINADO 2026-08-13: el host se renombró a **victoria** |
 
-- SSH a rootsource: `ssh -p 31337 -i ~/.ssh/id_ed25519_kalimete rootsource@10.0.0.5`.
-- DNS local: mDNS/avahi (`.local`). UFW por host: rootsource y victoria SIN firewall (2026-08-12).
+- SSH a victoria: `ssh victoria.local` (= `ssh -p 1666 victoria@10.0.0.5`, llave `id_ed25519_kalimete` autorizada 2026-08-13). `rootsource.local` es alias legacy → victoria.
+- La victoria VIEJA (10.0.0.64) ya no existe: esa IP la usa el Windows de Alfredo (cliente RDP `WARCOLD`).
+- DNS local: mDNS/avahi (`.local`). UFW: victoria SIN firewall (2026-08-12).
 
-## Gateway LLM (rootsource) — stack validado 2026-08-12
+## Gateway LLM (en victoria, ex-rootsource) — stack validado 2026-08-12
 
 - `nemoclaw-vllm` (Docker): vLLM `nvidia/Qwen3.6-35B-A3B-NVFP4` en `:8000` (262k contexto).
 - `llmgate` (systemd): FastAPI en `:4010`, auth por API keys (hash SHA-256 en SQLite `data/router.db`). Config `/home/rootsource/llmgate/config.env` (ADMIN_KEY, UPSTREAM_URL, SERVED_MODEL, PORT). Código `llmgate.py` — reescribe el model del cliente a `nvidia/Qwen3.6-35B-A3B-NVFP4`; timeout upstream 600s.
+- ⚠️ 2026-08-13: **llmgate INACTIVE** (systemctl is-active = inactive) — verificar/reactivar con `sudo systemctl start llmgate`.
 - Clientes (opencode kalimete/victoria) → `http://10.0.0.5:4010/v1` con API key (provider `nvidia` en opencode.jsonc, key vía `{env:ROOTSOURCE_API_KEY}`).
 - Diagnóstico: `systemctl status llmgate`, `docker logs --tail 80 nemoclaw-vllm`, `nvidia-smi`, `journalctl -u llmgate`. Health: `curl -H "Authorization: Bearer $KEY" http://127.0.0.1:4010/v1/models` (valores de config.env van ENTRE COMILLAS SIMPLES — extraer con `grep -oP "sk-[A-Za-z0-9]+"`).
 - Fallo conocido 2026-08-12: si vLLM está caído/restarting, llmgate da `httpx.ConnectError` (streams rotos = chat "cargando"). Generaciones largas de thinking (~50 tok/s) tardan minutos con `content: null` — normal.
@@ -94,7 +96,7 @@ wrangler whoami
 
 ## Túneles (cloudflared)
 
-- **ÚNICO túnel**: `rootsource-local` (ID `17f5ad45-fb7c-4ddd-a8c6-9c59b2f90160`, healthy, 4 conexiones). Ingress: `rootsource.armada.do` → `http://localhost:4000`; default → 404. Corredor: `cloudflared.service` en rootsource (10.0.0.5).
+- **ÚNICO túnel**: `rootsource-local` (ID `17f5ad45-fb7c-4ddd-a8c6-9c59b2f90160`, healthy, 4 conexiones). Ingress: `rootsource.armada.do` → `http://localhost:4000`; default → 404. Corredor: `cloudflared.service` en victoria (10.0.0.5, ex-rootsource). ⚠️ 2026-08-13: **cloudflared INACTIVE** — el túnel está caído, reactivar con `sudo systemctl start cloudflared`.
 - ~~kalimete-local~~ ELIMINADO 2026-08-06: las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` — **NUNCA exponer en armada.do sin confirmación explícita del usuario**.
 - Eliminar un túnel derriba el servicio asociado → confirmar mostrando túnel/hostnames. Hostnames de túnel = CNAME → cfargotunnel.com (no A). NUNCA mostrar tokens de túnel.
 

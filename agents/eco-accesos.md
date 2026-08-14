@@ -14,9 +14,9 @@ Eres el subagente **eco-accesos**: experto en el modelo de acceso SSH de la red 
 | Host | Puerto | Usuarios | Quién entra |
 |---|---|---|---|
 | kalimete (10.0.0.106) | 1111 | warcold | warcold (llaves propias) |
-| victoria (10.0.0.64) | 1666 | victoria | warcold (`id_ed25519_kalimete`) |
+| victoria (10.0.0.5) — NUEVA 2026-08-13 (ex-rootsource) | 1666 | victoria (sudo, password `vcolador`) | warcold (`id_ed25519_kalimete`, autorizada 2026-08-13) |
 | jonas (10.0.0.20) | 1222 | jonas | warcold (`id_ed25519_kalimete`) |
-| rootsource (10.0.0.5) | 31337 | `rootsource` (admin) | warcold (`id_ed25519_kalimete`); rootsource: `id_ed25519_kalimete` (copiado 2026-08-12) |
+| ~~rootsource~~ (10.0.0.5) | ~~31337~~ | — | ELIMINADO 2026-08-13: host renombrado a **victoria**. La victoria vieja (10.0.0.64) ya no existe — esa IP la usa el Windows de Alfredo |
 
 > ⚠️ **2026-08-12**: kalimete está en la LAN por wifi (`wlan0` → `10.0.0.106/24`), pero la latencia desde rootsource es ~93-153ms (anormalmente alta, probablemente router wifi). También tiene WireGuard `bridge-to-local` (`10.0.100.2/24`). Desde rootsource, `kalimete.local` se resuelve a `127.0.0.1` por mDNS → la config SSH de rootsource usa `HostName 10.0.0.106` (IP directa) para evitar el loopback.
 

@@ -7,20 +7,19 @@
 ## Topología de Red
 
 | Host | IP | SSH | Usuario | GPU | Rol |
-|------|-----|-----|---------|-----|-----|
+|------|-----|-----|---------|-----|------|
 | **kalimete** | 10.0.0.106 | 1111 | warcold | — | Hub principal, PC de trabajo |
-| **rootsource** | 10.0.0.5 | 31337 | rootsource | GB10 124GB | Servidor LLM, gateway |
-| **victoria** | 10.0.0.64 | 1666 | victoria | — | Asistente Victoria, OpenClaw |
+| **victoria** | 10.0.0.5 | 1666 | victoria | GB10 124GB | Asistente Victoria — NUEVA 2026-08-13 (ex-rootsource: GPU, LLM, gateway) |
 | **jonas** | 10.0.0.20 | 1222 | jonas | — | NAS, Home Assistant |
+| ~~rootsource~~ | ~~10.0.0.5~~ | ~~31337~~ | — | — | ELIMINADO 2026-08-13: host renombrado a **victoria**. La victoria vieja (10.0.0.64) ya no existe — esa IP la usa el Windows de Alfredo |
 
 ## Conectividad SSH
 
 | Origen | Destino | Comando |
 |--------|---------|---------|
-| kalimete → rootsource | `ssh -p 31337 -i ~/.ssh/id_ed25519_kalimete rootsource@10.0.0.5` |
-| kalimete → victoria | `ssh -p 1666 -i ~/.ssh/id_ed25519_kalimete victoria@10.0.0.64` |
+| kalimete → victoria | `ssh victoria.local` (= `ssh -p 1666 victoria@10.0.0.5`, llave `id_ed25519_kalimete` autorizada 2026-08-13) |
 | kalimete → jonas | ⚠️ SSH ROTO (2026-08-12, llave no autorizada) |
-| rootsource → kalimete | `ssh -p 1111 warcold@10.0.0.106` |
+| victoria → kalimete | `ssh -p 1111 warcold@10.0.0.106` |
 
 ## Sistema de Sincronización
 
@@ -42,13 +41,13 @@
 Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Follower**:
 - **kalimete (HUB)**: pull → collect (local→repo) → push al remoto.
 - **victoria (FOLLOWER)**: pull → deploy (repo→local). Solo lectura.
-- **rootsource (FOLLOWER)**: pull → deploy (repo→local). Solo lectura.
+- **victoria (FOLLOWER, ex-rootsource)**: pull → deploy (repo→local). Solo lectura.
 - Collect y deploy son DESTRUCTIVOS: eliminan "agentes zombies" (archivos que existen en una máquina pero ya no en la fuente de verdad).
 
 ### Automatización
 - **kalimete**: cron `*/5 * * * *` → sync.sh → push (hub único)
 - **victoria**: cron `*/5 * * * *` → sync.sh → pull+deploy (solo lectura)
-- **rootsource**: cron `*/5 * * * *` → sync.sh → pull+deploy (solo lectura; deploy key de solo lectura, registrada 2026-08-13)
+- **victoria (ex-rootsource)**: cron `*/5 * * * *` → sync.sh → pull+deploy (solo lectura; deploy key de solo lectura, registrada 2026-08-13)
 - **jonas**: *(sin cron de sync — acceso SSH roto, pendiente de arreglar)*
 
 ## Agentes por Máquina
@@ -72,11 +71,11 @@ Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Fol
 - **Nota**: Victoria no tiene agentes locales propios — usa opencode.jsonc con `default_agent: kalimete` y proveedor `rootsource` para modelos locales (ollama, gemma-4-31b).
 - Agentes locales: ollama (:11434), victoria-voice (healthy), gemma-4-31b ethical (ollama)
 
-### rootsource
+### victoria (ex-rootsource, 10.0.0.5)
 - 9 agentes sincronizados desde kalimete (via hub/follower sync): kalimete + 7 eco-* + **docs-keeper**
-- **docs-keeper** — agente local original de rootsource (mantiene AGENTS.md de llmgate, ComfyUI, NemoClaw); añadido al repo 2026-08-13 (portable, sin model fijo)
-- **Nota**: usa `default_agent: kalimete` (añadido 2026-08-13), proveedor `rootsource` con modelos locales (baseline/baseline-fast via llmgate local :4010)
-- Al ser follower, NO pusha al repo: deploy key `rootsource-follower-readonly` (solo lectura)
+- **docs-keeper** — agente local original (mantiene AGENTS.md de llmgate, ComfyUI, NemoClaw); añadido al repo 2026-08-13 (portable, sin model fijo)
+- **Nota**: usa `default_agent: kalimete` (añadido 2026-08-13), proveedor local (baseline/baseline-fast via llmgate local :4010)
+- Al ser follower, NO pusha al repo: deploy key `victoria-follower-readonly` (solo lectura, ex rootsource-follower-readonly)
 
 ### jonas
 - *(Sin agentes locales — sin cron de sync, SSH roto desde kalimete)*
@@ -85,15 +84,15 @@ Cada máquina ejecuta `sync.sh` cada 5 minutos vía cron. Arquitectura **Hub/Fol
 
 | Servicio | Puerto | Máquina | Estado |
 |----------|--------|---------|--------|
-| vLLM | 8000 | rootsource | ✅ Qwen3.6-35B-A3B-NVFP4 |
-| llmgate | 4010 | rootsource | ✅ API key auth |
-| OpenShell | 18789 | rootsource | ✅ Sandbox Docker |
-| ComfyUI | 8188 | rootsource | ❌ No corre |
-| OpenClaw | 18789 | victoria | ✅ Gateway |
-| Voice UI | 8765 | victoria | ✅ HTTPS |
+| vLLM | 8000 | victoria (ex-rootsource) | ✅ Qwen3.6-35B-A3B-NVFP4 |
+| llmgate | 4010 | victoria | ✅ API key auth (⚠️ INACTIVE 2026-08-13, reactivar) |
+| OpenShell | 18789 | victoria | ✅ Sandbox Docker |
+| ComfyUI | 8188 | victoria | ❌ No corre |
+| OpenClaw | 18789 | victoria (vieja 10.0.0.64) | ⚠️ PENDIENTE verificar migración |
+| Voice UI | 8765 | victoria (vieja 10.0.0.64) | ⚠️ PENDIENTE verificar migración |
 | Home Assistant | 8123 | jonas | ✅ Container |
-| Ollama | 11434 | victoria | ✅ Local |
-| RDP Headless | 3389 | rootsource | ✅ gnome-remote-desktop (2026-08-12) |
+| Ollama | 11434 | victoria (ex-rootsource) | ✅ Local |
+| RDP Headless | 3389 | victoria | ✅ gnome-remote-desktop (ARREGLADO 2026-08-13: credenciales + TLS + xrdp desactivado) |
 
 ## Reglas de Operación
 
