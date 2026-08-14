@@ -21,6 +21,14 @@ Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-13
 
+### [~02:30] - demo eliminada; scripts usan la llave de alfredo
+- **Tipo**: servicio | config | seguridad
+- **Modificado**: DB del gateway (llave `demo` borrada, incl. su usage_log); `~/.zshrc` + `daily-report.env` (VICTORIA_API_KEY = llave de alfredo)
+- **Afecta a**: victoria, kalimete
+- **Causa**: el usuario preguntó para qué servía demo (solo reporte diario y pruebas); decidió eliminar y usar la de alfredo
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**: llaves finales = 3 personales: `alfredo` (admin), `victoria` (admin), `juancarlos` (coder). La llave de demo ya no funciona (401).
+
 ### [~02:00] - Formato de llaves: vllm-key-<hex> (rotadas las 4)
 - **Tipo**: servicio | seguridad | config
 - **Modificado**: `/home/victoria/llm-gateway.py` (create_key genera `vllm-key-<token_hex(32)>`; backup `.bkup-v2b-20260814`); DB: 4 llaves rotadas in-place (key_plaintext+key_hash, historial intacto); `~/.config/opencode/opencode.jsonc` (apiKey alfredo nuevo), `~/.zshrc` + `daily-report.env` (VICTORIA_API_KEY demo nuevo)
