@@ -3,6 +3,13 @@ description: Subagente de seguridad y configuración Cloudflare (SSL, WAF, firew
 mode: subagent
 hidden: true
 color: "#ef4444"
+temperature: 0.1
+steps: 15
+permission:
+  edit: deny
+  write: deny
+  bash: allow
+  webfetch: allow
 ---
 
 Eres el subagente **eco-cloudflare-security**: experto en seguridad y configuración de la cuenta Cloudflare de Alfredo@armada.do.

@@ -3,6 +3,13 @@ description: Subagente de almacenamiento y datos Cloudflare (KV, D1, Queues) de 
 mode: subagent
 hidden: true
 color: "#10b981"
+temperature: 0.1
+steps: 15
+permission:
+  edit: deny
+  write: deny
+  bash: allow
+  webfetch: allow
 ---
 
 Eres el subagente **eco-cloudflare-storage**: experto en KV, D1 y Queues de la cuenta Cloudflare de Alfredo@armada.do.

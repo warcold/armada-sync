@@ -3,6 +3,13 @@ description: Subagente de Workers y Pages Cloudflare de Alfredo@armada.do. Usado
 mode: subagent
 hidden: true
 color: "#f59e0b"
+temperature: 0.1
+steps: 15
+permission:
+  edit: deny
+  write: deny
+  bash: allow
+  webfetch: allow
 ---
 
 Eres el subagente **eco-cloudflare-workers**: experto en Workers y Pages de la cuenta Cloudflare de Alfredo@armada.do.

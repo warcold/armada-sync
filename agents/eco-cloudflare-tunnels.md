@@ -3,6 +3,13 @@ description: Subagente de túneles Cloudflare (cloudflared) de Alfredo@armada.do
 mode: subagent
 hidden: true
 color: "#8b5cf6"
+temperature: 0.1
+steps: 15
+permission:
+  edit: deny
+  write: deny
+  bash: allow
+  webfetch: allow
 ---
 
 Eres el subagente **eco-cloudflare-tunnels**: experto en túneles cloudflared de la cuenta Cloudflare de Alfredo@armada.do.

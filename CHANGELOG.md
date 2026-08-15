@@ -1,5 +1,21 @@
 ## 2026-08-14
 
+### [22:00] - Mejora: permisos de agentes según doc oficial opencode
+- **Tipo**: agente | config
+- **Modificado**: agents/kalimete.md, agents/eco-cloudflare-{dns,security,storage,tunnels,workers}.md, AGENTS.md, symlink AGENTS.md global
+- **Afecta a**: kalimete (config opencode)
+- **Causa**: aplicar mejores prácticas de docs oficiales (opencode.ai/docs/agents, /docs/skills, /docs/rules) a la red de agentes existente
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - kalimete: temperature 0.2 + permission.task `"*": deny` + `"eco-cloudflare-*": allow` + `"explore": allow` (patrón orquestador)
+  - Subagentes eco-cloudflare-*: temperature 0.1, steps 15, `edit: deny`, `write: deny`, `bash: allow`, `webfetch: allow` (solo operan vía API)
+  - AGENTS.md global creado como symlink → armada-sync/AGENTS.md (carga automática en todas las sesiones, doc Rules)
+  - Reglas 9 y 10 añadidas a AGENTS.md documentando el patrón
+
+---
+
+## 2026-08-14
+
 ### [21:50] - Re-disco de victoria: re-introducida en documentación
 - **Tipo**: infra | red | agente
 - **Modificado**: MAPA.md (local y repo), AGENTS.md (repo), kalimete.md (repo), sistema-map/MAPA.md, symlinks rotos
