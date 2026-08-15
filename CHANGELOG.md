@@ -1,5 +1,22 @@
 ## 2026-08-14
 
+### [21:50] - Re-disco de victoria: re-introducida en documentación
+- **Tipo**: infra | red | agente
+- **Modificado**: MAPA.md (local y repo), AGENTS.md (repo), kalimete.md (repo), sistema-map/MAPA.md, symlinks rotos
+- **Afecta a**: kalimete (conocimiento y config opencode)
+- **Causa**: victoria fue eliminada de la documentación previa pero sigue existiendo y funcionando como servidor GPU/LLM. Se rediscoveró y se documentó con datos reales: SSH como warcold, vLLM standalone, gateway LLM, nginx, cloudflared, GB10 GPU.
+- **Estado**: ✅ sincronizado (commit+push)
+- **Notas**:
+  - SSH configurado con llave `~/.ssh/victoria` (warcold, ssh 1666, rbash)
+  - Victoria rediscoverada pero NO agregada a opencode agents — solo documentada
+  - Symlinks rotos (eco-accesos.md, eco-voice.md) eliminados
+  - opencode.jsonc actual: baseURL victoria.armada.do/v1, key alfredo, context:240000/output:32000 (excede límite)
+  - AGENTS.md repo actualizado: victoria como máquina activa, no sigue siendo "elim"
+
+---
+
+## 2026-08-14
+
 ### [~18:30] - Limpieza completa: eliminación de victoria/rootsource del ecosistema
 - **Tipo**: agente | config | infra | documentación
 - **Modificado**: 15+ archivos de agents/maps/docs (ver lista abajo)
