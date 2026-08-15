@@ -49,13 +49,20 @@ Si el usuario pide "eco-accesos" o "eco-voice", informar que no existen y ejecut
 | **jonas** | 10.0.0.20 | puerto 1222 | `jonas` | NAS, backups | 🔴 SSH roto, fuera de servicio |
 | Windows | 10.0.0.64 | RDP | — | Cliente RDP de Alfredo | — |
 
-- SSH kalimete → victoria: `ssh victoria` (key `~/.ssh/victoria`, warcold, SSH 1666)
+- SSH kalimete → victoria: `ssh victoria` (key `~/.ssh/id_ed25519_kalimete`, warcold, SSH 1666)
 - SSH kalimete → jonas: **ROTO** (llave no autorizada) — no intentar operaciones
 - DNS local: mDNS/avahi (`.local`)
 
 ## Victoria — GPU/LLM Gateway
 
-- **Acceso**: `ssh victoria` → warcold, ssh 1666, llave `~/.ssh/victoria`
+#### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
+**NUNCA intentes escribir/modificar/nomificar NADA en victoria.** Tu acceso SSH a victoria (warcold, rbash) es SOLO LECTURA.
+- Solo puedes leer: `cat`, `ls`, `ps`, `curl`, `ss`, `nvidia-smi`, `sqlite3ro_real`, `systemctl is-*`, `timedatectl`, `df`, `uptime` (lectura de services)
+- NUNCA: editar archivos, instalar paquetes, reiniciar servicios, crear/copiar archivos, `sed -i`, `tee` (escritura), `sudo -S` (escritura)
+- El usuario modifica archivos en victoria por su cuenta. Kalimete SOLO los lee y actualiza la documentación en kalimete.
+- Si el CHANGELOG dice "Modificado: /home/victoria/..." eran cambios del usuario, NO de kalimete.
+
+- **Acceso**: `ssh victoria` → warcold, ssh 1666, llave `~/.ssh/id_ed25519_kalimete`
 - **GPU**: NVIDIA GB10 (Blackwell), driver 580.159.03, CUDA 13.0
   - vLLM: `nvidia/Qwen3.6-35B-A3B-NVFP4`, max-model-len 262144
   - **Ejecuta como proceso standalone** (no Docker container), :8000
@@ -109,6 +116,13 @@ Si el usuario pide "eco-accesos" o "eco-voice", informar que no existen y ejecut
 - Sync red: `~/armada-sync/` (repo git, cron cada 5 min, hub único)
 - Reporte diario: `~/armada-sync/daily-report/report.py` (comando `/reporte`)
 - CHANGELOG: `~/armada-sync/CHANGELOG.md` — cada cambio en infraestructura se registra aqui
+
+## Gestión de progreso (TODOS)
+
+**Regla estricta**: SIEMPRE inicia cada sesión con `todowrite` mostrando las tareas pendientes, con prioridad y estado (`pending`, `in_progress`, `completed`).
+**Mantén visible el todo list**: actualiza el estado con CADA cambio real realizado (pending → `in_progress` → `completed`).
+**NO vacíes el todo list (todos: [])** hasta que TODAS las tareas estén marcadas como `completed`. Un todo list vacío = sesión terminada. Mientras estés trabajando, debe haber al menos una tarea visible.
+**Mostrar al final**: siempre muestra el estado actual del todo list al responder para que el usuario vea en qué va.
 
 ## Reglas generales
 

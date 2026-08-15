@@ -23,7 +23,7 @@
 - **Causa**: victoria fue eliminada de la documentación previa pero sigue existiendo y funcionando como servidor GPU/LLM. Se rediscoveró y se documentó con datos reales: SSH como warcold, vLLM standalone, gateway LLM, nginx, cloudflared, GB10 GPU.
 - **Estado**: ✅ sincronizado (commit+push)
 - **Notas**:
-  - SSH configurado con llave `~/.ssh/victoria` (warcold, ssh 1666, rbash)
+  - SSH configurado con llave `~/.ssh/id_ed25519_kalimete` (warcold, ssh 1666, rbash)
   - Victoria rediscoverada pero NO agregada a opencode agents — solo documentada
   - Symlinks rotos (eco-accesos.md, eco-voice.md) eliminados
   - opencode.jsonc actual: baseURL victoria.armada.do/v1, key alfredo, context:240000/output:32000 (excede límite)
@@ -119,7 +119,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~02:25] - Gateway: soporte `reasoning_effort` estándar (OpenAI) + catálogo opencode con 2 modelos y variants nativas
 - **Tipo**: servicio | config
-- **Modificado**: `/home/victoria/llm-gateway.py` (_proxy: si el body trae `reasoning_effort`, lo traduce a `chat_template_kwargs`: `none`/`minimal` → `enable_thinking:false`; `low`/`medium`/`high`/`xhigh` → `enable_thinking:true` + `thinking_level` correspondiente; `xhigh`→high). Backup `llm-gateway.py.bkup-v5-20260814`. `~/.config/opencode/opencode.jsonc` (kalimete): catálogo reducido a 2 modelos — "Coding con Victoria" (`-normal`, sin reasoning) y "Thinking · Coding con Victoria" (base, con **variants nativas** low/medium/high vía `reasoningEffort`)
+- **Modificado**: `llm-gateway.py` en victoria (cambio remoto del usuario en `/home/victoria`, no kalimete — proxy reasoning: `reasoning_effort` → `chat_template_kwargs`: `none`/`minimal` → `enable_thinking:false`; `low`/`medium`/`high`/`xhigh` → `enable_thinking:true` + `thinking_level` correspondiente; `xhigh`→high). Backup `llm-gateway.py.bkup-v5-20260814`. En kalimete: `~/.config/opencode/opencode.jsonc` — catálogo reducido a 2 modelos — "Coding con Victoria" (`-normal`, sin reasoning) y "Thinking · Coding con Victoria" (base, con **variants nativas** low/medium/high vía `reasoningEffort`)
 - **Afecta a**: victoria (gateway), kalimete (opencode), PC pública (plantilla: misma config con baseURL `https://victoria.armada.do/v1`)
 - **Causa**: el usuario pidió quedarse con 2 modelos y usar las variantes de opencode si estaban bien soportadas. Validado según docs de vLLM (reasoning_outputs: `reasoning_effort` estándar; niveles oficiales low/medium/high — **max NO es oficial**) y docs de opencode (variants = overlays por modelo con settings/body). Verificación empírica: `opencode run --variant low/high` → el gateway recibe `reasoning_effort` correcto; `--thinking` muestra el bloque Thinking ✓
 - **Estado**: ✅ sincronizado (commit+push)
@@ -143,7 +143,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~16:40] - Gateway: niveles de thinking (low/medium/high/max) + versión normal — vía sufijos de model id
 - **Tipo**: servicio | config
-- **Modificado**: `/home/victoria/llm-gateway.py` (_proxy: antes de normalizar el model, interpreta sufijos del id → `chat_template_kwargs` hacia vLLM): `-normal`/`-fast` → `enable_thinking:false` (respuesta directa); `-thinking` → thinking high; `-thinking-low|medium|high|max` → nivel exacto. Backup `llm-gateway.py.bkup-v4-20260814`. `~/.config/opencode/opencode.jsonc` (kalimete): 5 modelos en el catálogo (Normal, Thinking Low/Medium/High/Max) además del base
+- **Modificado**: llm-gateway.py en victoria (`/home/victoria/` — cambio del usuario, _proxy: antes de normalizar el model, interpreta sufijos del id → `chat_template_kwargs` hacia vLLM): `-normal`/`-fast` → `enable_thinking:false` (respuesta directa); `-thinking` → thinking high; `-thinking-low|medium|high|max` → nivel exacto. Backup `llm-gateway.py.bkup-v4-20260814`. `~/.config/opencode/opencode.jsonc` (kalimete): 5 modelos en el catálogo (Normal, Thinking Low/Medium/High/Max) además del base
 - **Afecta a**: victoria (gateway), kalimete (opencode), cualquier PC con la plantilla pública
 - **Causa**: el usuario recordó que antes podía elegir low/medium/high/max y pidió validar y agregar la versión normal + la thinking
 - **Estado**: ✅ sincronizado (commit+push); servicio reiniciado y activo
@@ -153,9 +153,9 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ## 2026-08-14
 
-### [~16:00] - opencode.jsonc (kalimete + victoria): capabilities full feature del modelo
+### [~16:00] - opencode.jsonc: capabilities full feature del modelo
 - **Tipo**: config
-- **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete) y `/home/victoria/.config/opencode/opencode.jsonc` (victoria): capabilities del modelo `nvidia/Qwen3.6-35B-A3B-NVFP4` → `tools`, **`reasoning`** (modo thinking Qwen3, parser ya activo en vLLM) y **`input: [text, image]`** (visión VERIFICADA: el modelo describió un pixel PNG y respondió el hex #FFFFFF)
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete); `/home/victoria/.config/opencode/opencode.jsonc` (victoria — cambio del usuario), capabilities del modelo `nvidia/Qwen3.6-35B-A3B-NVFP4` → `tools`, **`reasoning`** (modo thinking Qwen3, parser ya activo en vLLM) y **`input: [text, image]`** (visión VERIFICADA: el modelo describió un pixel PNG y respondió el hex #FFFFFF)
 - **Afecta a**: kalimete, victoria (y cualquier PC con la plantilla pública)
 - **Causa**: el usuario pidió dejar el modelo "full feature" en opencode en vez de solo tools+text
 - **Estado**: ✅ sincronizado (commit+push); sintaxis JSON validada en ambas máquinas
@@ -167,7 +167,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~15:30] - Panel admin: Owner como identificador visible; name autogenerado interno
 - **Tipo**: servicio | config
-- **Modificado**: `/home/victoria/llm-gateway.py` (`CreateKeyRequest`: `name` opcional (autogen), `owner` ahora REQUERIDO; `create_key` autogenera `name` = slug(owner) único con sufijo -2/-3 si colisiona); `/home/victoria/admin_template.html` (formulario sin campo Nombre, solo "Owner *"; tabla con columna principal **Owner** + "id: <name>" muted debajo; JS createKey sin name). Backups: `llm-gateway.py.bkup-v3b-20260814`, `admin_template.html.bkup-v3b-20260814`
+- **Modificado**: `llm-gateway.py` (cambio del usuario en `/home/victoria/`: `CreateKeyRequest`: `name` opcional (autogen), `owner` ahora REQUERIDO; `create_key` autogenera `name` = slug(owner) único con sufijo -2/-3 si colisiona); `admin_template.html` (cambio del usuario en `/home/victoria/`: formulario sin campo Nombre, solo "Owner *"; tabla con columna principal **Owner** + "id: <name>" muted debajo; JS createKey sin name). Backups: `llm-gateway.py.bkup-v3b-20260814`, `admin_template.html.bkup-v3b-20260814`
 - **Afecta a**: victoria (panel admin)
 - **Causa**: validado con el usuario — `name` solo era el identificador visual porque la llave real no se veía; ahora que el panel muestra `vllm-key-*` con Ver/Copiar, Owner es lo que importa. `name` sigue existiendo internamente (UNIQUE, rutas /admin/keys/{name}, usage_log.key_name) pero invisible
 - **Estado**: ✅ sincronizado (commit+push); servicio reiniciado y activo
@@ -179,7 +179,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~15:00] - Panel admin: las llaves reales ahora se ven en el dashboard (fix)
 - **Tipo**: servicio | config
-- **Modificado**: `/home/victoria/llm-gateway.py` (`GET /admin/keys` ahora usa `list_keys(include_secret=True)` — antes descartaba `key_plaintext` y el dashboard solo mostraba los NOMBRES como si fueran llaves); `/home/victoria/admin_template.html` (columna nueva "Llave" con valor real enmascarado `vllm-key-•••…`, botones **Ver** (toggle mostrar/ocultar) y **Copiar** (clipboard + toast); colspan 11→12). Backups: `llm-gateway.py.bkup-v3-20260814`, `admin_template.html.bkup-v3-20260814`
+- **Modificado**: `llm-gateway.py` (cambio del usuario en `/home/victoria/`: `GET /admin/keys` ahora usa `list_keys(include_secret=True)` — antes descartaba `key_plaintext` y el dashboard solo mostraba los NOMBRES como si fueran llaves); `admin_template.html` (cambio del usuario en `/home/victoria/`: columna nueva "Llave" con valor real enmascarado `vllm-key-•••…`, botones **Ver** (toggle mostrar/ocultar) y **Copiar** (clipboard + toast); colspan 11→12). Backups: `llm-gateway.py.bkup-v3-20260814`, `admin_template.html.bkup-v3-20260814`
 - **Afecta a**: victoria (panel admin), administradores (Alfredo/Victoria)
 - **Causa**: el usuario reportó que en el dashboard "veía los nombres como llaves" — no aparecía el valor real (`vllm-key-<64hex>`)
 - **Estado**: ✅ sincronizado (commit+push); servicio reiniciado y activo
@@ -225,7 +225,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~02:00] - Formato de llaves: vllm-key-<hex> (rotadas las 4)
 - **Tipo**: servicio | seguridad | config
-- **Modificado**: `/home/victoria/llm-gateway.py` (create_key genera `vllm-key-<token_hex(32)>`; backup `.bkup-v2b-20260814`); DB: 4 llaves rotadas in-place (key_plaintext+key_hash, historial intacto); `~/.config/opencode/opencode.jsonc` (apiKey alfredo nuevo), `~/.zshrc` + `daily-report.env` (VICTORIA_API_KEY demo nuevo)
+- **Modificado**: `llm-gateway.py` en victoria (`/home/victoria/` — cambio del usuario: create_key genera `vllm-key-<token_hex(32)>`; backup `.bkup-v2b-20260814`); DB: 4 llaves rotadas in-place (key_plaintext+key_hash, historial intacto); `~/.config/opencode/opencode.jsonc` (apiKey alfredo nuevo), `~/.zshrc` + `daily-report.env` (VICTORIA_API_KEY demo nuevo)
 - **Afecta a**: victoria, kalimete, Alfredo, Victoria (NemoClaw), Juan Carlos
 - **Causa**: formato `vict-llm-<nombre>-<salt>` exponía el nombre de la persona; el usuario pidió `vllm-key-*****`
 - **Estado**: ✅ sincronizado (commit+push)
@@ -236,7 +236,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~01:30] - Auth por VALOR real de llave + jsonc limpio (provider alfredopro, host local)
 - **Tipo**: servicio | seguridad | config
-- **Modificado**: `/home/victoria/llm-gateway.py` (validate_key por key_hash del bearer; backup `.bkup-v2-20260814`), `~/.config/opencode/opencode.jsonc` (solo provider `alfredopro`/name "www.alfredo.pro", model "Coding con Victoria", baseURL `https://victoria.local/v1` local, apiKey = valor real alfredo; quitado provider `vllm` directo), `~/.zshrc` y `~/.config/opencode/daily-report.env` (VICTORIA_API_KEY = valor real demo)
+- **Modificado**: llm-gateway.py en victoria (`/home/victoria/` — cambio del usuario: validate_key por key_hash del bearer; backup `.bkup-v2-20260814`); `~/.config/opencode/opencode.jsonc` (solo provider `alfredopro`/name "www.alfredo.pro", model "Coding con Victoria", baseURL `https://victoria.local/v1` local, apiKey = valor real alfredo; quitado provider `vllm` directo), `~/.zshrc` y `~/.config/opencode/daily-report.env` (VICTORIA_API_KEY = valor real demo)
 - **Afecta a**: victoria, kalimete, Alfredo, Victoria (NemoClaw), Juan Carlos
 - **Causa**: el usuario dudó que las llaves fueran su nombre (auth por nombre = el valor largo no servía). Decidió auth por valor real (estándar, como OpenAI)
 - **Estado**: ✅ sincronizado (commit+push)
@@ -256,7 +256,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~00:30] - Llaves finales (3 personas) + límites por defecto relajados
 - **Tipo**: servicio | config | seguridad
-- **Modificado**: `/home/victoria/llm-gateway.py` (defaults create_key/panel: rate 1000/min, max_tokens 32768), `/home/victoria/admin_template.html` (formulario con defaults amplios); DB: llaves
+- **Modificado**: llm-gateway.py (cambio del usuario en `/home/victoria/`: defaults create_key/panel: rate 1000/min, max_tokens 32768), admin_template.html (cambio del usuario en `/home/victoria/`: formulario con defaults amplios); DB: llaves
 - **Afecta a**: victoria, Alfredo, Victoria (NemoClaw), Juan Carlos
 - **Causa**: uso entre amigos + NemoClaw → sin límites duros; 3 llaves personales (admin/admin/coder), borrada la `alfredo` de prueba
 - **Estado**: ✅ sincronizado (commit+push)
@@ -267,7 +267,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~23:59] - Gateway v2: contabilidad (metering, precio por llave, presupuesto, roles, rate real)
 - **Tipo**: servicio | seguridad | infra | config
-- **Modificado**: `/home/victoria/llm-gateway.py` (v2.0.0; backup `llm-gateway.py.bkup-v1-20260814`), nuevo `/home/victoria/admin_template.html` (SPA panel), DB migrada automáticamente (ALTER TABLE)
+- **Modificado**: llm-gateway.py en victoria (`/home/victoria/` — cambio del usuario, v2.0.0; backup `llm-gateway.py.bkup-v1-20260814`), admin_template.html (cambio del usuario en `/home/victoria/`: nuevo SPA panel), DB migrada automáticamente (ALTER TABLE)
 - **Afecta a**: victoria, kalimete, Alfredo (panel), consumidores del gateway
 - **Causa**: usuario pidió panel profesional con contabilidad: precio por llave, uso general, límites, manejo de llaves y tiers (admin/coder) — mejoras basadas en prácticas de LiteLLM/Portkey/LLM Gateway (budget duro por llave, metering en el gateway, scoping por rol, llave visible una sola vez)
 - **Estado**: ✅ sincronizado (commit+push)
@@ -282,7 +282,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~23:30] - Fix panel admin: login redirigía a /admin/dashboard (JSON) en vez de /admin (HTML)
 - **Tipo**: servicio | bugfix
-- **Modificado**: `/home/victoria/llm-gateway.py` — doLogin: `location.href = '/admin/dashboard'` → `'/admin'` (patch remoto, sin backup; cambio de 1 línea)
+- **Modificado**: llm-gateway.py en victoria (`/home/victoria/` — cambio del usuario) — doLogin: `location.href = '/admin/dashboard'` → `'/admin'` (patch remoto, sin backup; cambio de 1 línea)
 - **Afecta a**: Alfredo (panel https://victoria.local/admin)
 - **Causa**: tras loguearse, la SPA mandaba al navegador a un endpoint JSON de la API — se veía "el request crudo" y no la web de administración
 - **Estado**: ✅ sincronizado (commit+push)
@@ -290,7 +290,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~23:00] - TLS en victoria.local (nginx 443) — panel y API sin puertos
 - **Tipo**: infra | red | seguridad | config
-- **Modificado**: victoria (10.0.0.5): nginx instalado + site `gateway.conf` (443 TLS → 127.0.0.1:8010), cert mkcert `victoria.local`/`victoria` (firmado con CA de kalimete, expira 2028-11-14) en `/etc/ssl/local-certs/`, gateway GATEWAY_HOST 0.0.0.0→127.0.0.1 (8010 loopback-only), kalimete: CA copiada a `~/rootCA-kalimete-victoria-local.crt`
+- **Modificado**: victoria (10.0.0.5) — usuario instaló/configuró: nginx + site `gateway.conf` (443 TLS → 127.0.0.1:8010), cert mkcert `victoria.local`/`victoria` (firmado con CA de kalimete, expira 2028-11-14) en `/etc/ssl/local-certs/`, gateway GATEWAY_HOST 0.0.0.0→127.0.0.1 (8010 loopback-only); kalimete: CA copiada a `~/rootCA-kalimete-victoria-local.crt`
 - **Afecta a**: kalimete, victoria, Alfredo (Windows 10.0.0.64)
 - **Causa**: usuario no podía entrar al panel (ERR_SSL_PROTOCOL_ERROR — navegador forzaba https contra HTTP plano) y pidió trabajar con TLS sin ver puertos
 - **Estado**: ✅ sincronizado (commit+push)
@@ -302,7 +302,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~22:00] - vLLM reconfigured: concurrencia real (13x) + fix límite total del modelo
 - **Tipo**: infra | config | servicio
-- **Modificado**: contenedor nemoclaw-vllm (recreado: `--gpu-memory-utilization 0.5`, `--max-num-seqs 8`, `--max-num-batched-tokens 16384`), victoria-llm-gateway (patch: normaliza model id → evita 404 por alias), opencode.jsonc kalimete + victoria (context 262144→240000, output 32768→20000)
+- **Modificado**: contenedor nemoclaw-vllm en victoria (cambio del usuario, recreado: `--gpu-memory-utilization 0.5`, `--max-num-seqs 8`, `--max-num-batched-tokens 16384`), victoria-llm-gateway en victoria (cambio del usuario, patch: normaliza model id → evita 404 por alias), opencode.jsonc kalimete (cambio kalimete) + victoria (cambio del usuario: context 262144→240000, output 32768→20000)
 - **Afecta a**: kalimete, victoria, repo armada-sync
 - **Causa**: usuario reportó que el vLLM parecía tener 1 sola secuencia y se trancaba con requests al máximo de tokens. Diagnóstico: (1) util 0.4 → KV ~560K tokens → solo ~2 secuencias de contexto completo; (2) **clientes pedían context 262144 + output 32768 = 294912 > 262144 (límite total del modelo)** → vLLM rechaza con 400 = chat trancado; (3) gateway pasaba el model tal cual → 404 con alias.
 - **Estado**: ✅ sincronizado (commit+push)
@@ -313,7 +313,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [~21:00] - victoria.armada.do → SOLO API LLM (túnel :8010) + panel admin LAN-only + UIs fuera de internet
 - **Tipo**: red | seguridad | infra | config
-- **Modificado**: túnel victoria-armada (ingress → :8010), llm-gateway.py (middleware admin LAN-only), DNS (verificado), docs (kalimete.md, eco-cloudflare-tunnels.md, eco-accesos.md, SKILL, MAPAs, AGENTS.md), snapshots históricos borrados
+- **Modificado**: túnel victoria-armada en Cloudflare (kalimete: ingress → :8010), llm-gateway.py (cambio del usuario en victoria: middleware admin LAN-only), DNS (verificado), docs (kalimete.md, eco-cloudflare-tunnels.md, eco-accesos.md, SKILL, MAPAs, AGENTS.md — kalimete), snapshots históricos borrados (kalimete)
 - **Afecta a**: kalimete, victoria, repo armada-sync
 - **Causa**: usuario pidió (1) borrar los históricos con menciones del host antiguo, (2) victoria.armada.do SOLO para requests al vLLM (vía gateway con llaves + panel admin como el anterior), (3) UIs de ComfyUI y NemoClaw/OpenClaw SOLO en victoria.local (LAN) — no accesibles desde fuera de la casa
 - **Estado**: ✅ sincronizado (commit+push)
@@ -340,7 +340,7 @@ Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
 
 ### [23:35] - Red: host 10.0.0.5 renombrado → NUEVA victoria + fix RDP headless
 - **Tipo**: red | infra | servicio | config
-- **Modificado**: hosts, SSH configs, MAPA.md, kalimete.md, eco-accesos.md, AGENTS.md, perfil remmina, victoria (10.0.0.5): xrdp desactivado, grd RDP habilitado con credenciales + TLS
+- **Modificado**: kalimete — hosts, SSH configs, MAPA.md, kalimete.md, eco-accesos.md, AGENTS.md, perfil remmina / victoria (10.0.0.5) — usuario: xrdp desactivado, grd RDP habilitado con credenciales + TLS
 - **Afecta a**: kalimete, victoria (10.0.0.5), Alfredo (Windows en 10.0.0.64)
 - **Causa**: usuario reportó RDP rechazado tras credenciales; validación de logs mostró: (1) el host 10.0.0.5 es la NUEVA victoria (puerto 1666, user victoria), (2) xrdp validaba OK pero GNOME mataba la sesión ("Session manager already running" — sesión local activa), (3) grd tenía RDP disabled y sin credenciales
 - **Estado**: ✅ sincronizado

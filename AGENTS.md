@@ -19,7 +19,7 @@
 | Origen | Destino | Comando | Estado |
 |--------|---------|---------|--------|
 | kalimete → kalimete | ssh `kalimete` | llave: `id_ed25519_kalimete` | ✅ SSH 1111 |
-| kalimete → victoria | `ssh victoria` | llave: `~/.ssh/victoria` (warcold) | ✅ SSH 1666, rbash |
+| kalimete → victoria | `ssh victoria` | llave: `~/.ssh/id_ed25519_kalimete` (warcold) | ✅ SSH 1666, rbash |
 | kalimete → jonas | ⚠️ SSH ROTO (2026-08-12+) | llave no autorizada | 🔴 sin acceso |
 
 ## Sistema de Sincronización
@@ -71,8 +71,10 @@ Cada máquina ejecuta `sync.sh` cada 5 min vía cron. Arquitectura **Hub Único*
 - **Skill**: cloudflare → `~/.config/opencode/skills/cloudflare/` (PLURAL)
 
 ## Victoria — Servidor GPU/LLM
+#### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
+Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escribir/modificar/nomificar NADA en victoria. El usuario modifica archivos en victoria por su cuenta; kalimete SOLO los lee y actualiza la documentación en kalimete.
 
-- **Acceso SSH**: warcold, ssh 1666, llave `~/.ssh/victoria`
+- **Acceso SSH**: warcold, ssh 1666, llave `~/.ssh/id_ed25519_kalimete`
 - **Servicio principal**: vLLM `nvidia/Qwen3.6-35B-A3B-NVFP4` (GB10 GPU, max 262144 tokens)
   - Ejecuta como proceso standalone (no Docker) en :8000
   - Gateway LLM en :8010 (API keys, metering, proxy nginx en :443)

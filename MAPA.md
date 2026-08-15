@@ -29,7 +29,9 @@
 - opencode.jsonc usa gateway LLM de victoria vía túnel CF: `https://victoria.armada.do/v1`
 
 ### 2. victoria (10.0.0.5) — Servidor GPU/LLM
-- User: warcold (UID 1001, rbash), SSH 1666, llave `~/.ssh/victoria`
+#### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
+Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escribir/modificar/nomificar NADA en victoria. El usuario modifica archivos en victoria por su cuenta; kalimete SOLO los lee y actualiza la documentación en kalimete.
+- User: warcold (UID 1001, rbash), SSH 1666, llave `~/.ssh/id_ed25519_kalimete`
 - sudoers: solo `sqlite3ro_real` como victoria (NOPASSWD, requiere pty)
 - GPU: NVIDIA GB10 (~48GB VRAM, driver 580.159.03, CUDA 13.0)
 - vLLM: `nvidia/Qwen3.6-35B-A3B-NVFP4` (standalone, :8000, max-model-len 262144)
