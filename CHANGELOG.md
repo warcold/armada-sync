@@ -1,7 +1,70 @@
+## 2026-08-14
+
+### [~18:30] - Limpieza completa: eliminación de victoria/rootsource del ecosistema
+- **Tipo**: agente | config | infra | documentación
+- **Modificado**: 15+ archivos de agents/maps/docs (ver lista abajo)
+- **Afecta a**: kalimete (config opencode local)
+- **Causa**: el usuario eliminó victoria como máquina del ecosistema; solo se conserva opencode.jsonc para usar el gateway vLLM
+- **Estado**: ✅ sincronizado (commit+push pendiente)
+- **Notas**:
+  - opencode.jsonc INTACTO — el único archivo que se conserva relacionado con vLLM
+  - Los maps del ecosistema ahora solo incluyen kalimete + jonas
+  - CHANGELOG.md: histórico intacto (no se modificó para preservar historial de cambios)
+  - Git logs históricos: contienen menciones de victoria/rootsource (inmutables sin rebase)
+  - Artefactos VSCode History y Wine: no operativos, no se tocaron
+  - Tunnel victoria-armada y hostname victoria.armada.do se mantienen en Cloudflare (necesario para opencode vLLM)
+
+### Archivos modificados (15):
+- ~/.config/opencode/ecosistema-map/MAPA.md — rewrite completo, Kalimete+jonas
+- ~/.config/opencode/agent/kalimete.md — rewrite completo, sin victoria
+- armada-sync/MAPA.md — rewrite completo
+- armada-sync/agents/kalimete.md — rewrite completo
+- armada-sync/AGENTS.md — rewrite completo, serviciosVictoria removidos
+- armada-sync/sync.sh — Hub único (no follower)
+- armada-sync/daily-report/report.py — victoria removida de SERVERS y LLMGATE
+- dev/ops/AGENTS.md — fuera victoria/rootsource del índice
+- dev/ops/docs/infra.md — fuera victoria/rootsource
+- dev/ops/docs/network-topology.md — rewrite
+- dev/ops/README.md — fuera victoria
+- dev/ops/docs/local-dev.md — fuera victoria.local
+- dev/ops/agents/backups/AGENTS.md — fuera victoria/rootsource
+- dev/ops/agents/jonas/AGENTS.md — fuera victoria
+- dev/ops/agents/vpn/AGENTS.md — fuera victoria.armada.do
+- dev/ops/agents/legacy/AGENTS.md — fuera victoria/rootsource
+
+### Archivos eliminados:
+- dev/ops/agents/rootsource/ (directorio completo)
+- dev/ops/agents/victoria/ (directorio completo)
+
+### Archivos intencionalmente INTACTOS:
+- ~/.config/opencode/opencode.jsonc — config vLLM que se conserva
+- armada-sync/CHANGELOG.md — histórico de cambios
+- .git/ logs — historial de commits (no se toca)
+
+### Referencias mantenidas (necesarias para opencode):
+- victoria.armada.do (hostname del Cloudflare tunnel)
+- victoria-armada (nombre del tunnel CF)
+- VICTORIA_API_KEY (variable de entorno)
+- opencode.jsonc (provider vllm para Qwen3.6)
+
+---
+
 # CHANGELOG — Ecosistema Armada
 
 Registro de cambios que afectan infraestructura, agentes, servicios o configuración.
-Cada entrada se crea al finalizar una tarea que modifique algo en el ecosistema.
+Cada entrada se crea al terminar una tarea que modifique algo en el ecosistema.
+
+---
+
+## 2026-08-14
+
+### Gateway: soporte `reasoning_effort` + catálogo opencode
+- **Tipo**: servicio | config
+- **Modificado**: proxy del gateway para razonamiento, catálogo opencode kalimete (2 modelos: "Coding con" y "Thinking · Coding con")
+- **Afecta a**: servidor llm, kalimete (opencode), PC publica (plantilla)
+- **Causa**: el usuario queria usar las variantes de opencode con reasoning_effort
+- **Estado**: ✅ sincronizado
+- **Notas**: el modelo soporta `reasoning` en el campo `reasoning` de vLLM 0.21. El gateway sigue soportando sufijos para scripts/uso manual
 
 ## Formato de entrada
 

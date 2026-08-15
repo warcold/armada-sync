@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Reporte diario de actividad del ecosistema Armada.
 
-Recolecta las sesiones de opencode (SQLite) de los 4 servidores locales
-(kalimete, victoria, jonas) de las últimas 24 horas,
-genera un resumen ejecutivo con el LLM local (llmgate) y lo envía
-al canal de Discord Piso 14 (#general-chat).
+Recolecta las sesiones de opencode (SQLite) de los servidores locales
+(kalimete, jonas) de las últimas 24 horas,
+y lo envía al canal de Discord Piso 14 (#general-chat).
 
 Uso:
   report.py [--hours 24] [--dry-run] [--json]
@@ -21,12 +20,9 @@ from datetime import datetime, timedelta
 # ── Configuración ────────────────────────────────────────────────
 SERVERS = [
     {"name": "kalimete",  "user": "warcold",   "host": "127.0.0.1", "ssh": None},
-    {"name": "victoria",  "user": "victoria",  "host": "victoria.local",  "ssh": True},
     {"name": "jonas",     "user": "jonas",     "host": "jonas.local",     "ssh": True, "optional": True},
 ]
 DB_PATH = "~/.local/share/opencode/opencode.db"
-LLMGATE = "http://10.0.0.5:8010/v1/chat/completions"
-MODEL = "nvidia/Qwen3.6-35B-A3B-NVFP4"
 DISCORD_CHANNEL = "1492992262085546025"  # #general-chat Piso 14
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN", "")
 STATE_FILE = os.path.expanduser("~/.config/opencode/daily-report-state.json")
@@ -155,43 +151,8 @@ def build_report(data, hours):
 
 
 def llm_summary(report_md, hours):
-    """Genera un resumen ejecutivo con el LLM local (victoria-llm-gateway :8010)."""
-    api_key = os.environ.get("VICTORIA_API_KEY", "")
-    if not api_key:
-        return None
-    prompt = f"""Eres el analista de actividad del ecosistema Armada. Genera un RESUMEN EJECUTIVO
-en español de máximo 180 palabras sobre el trabajo realizado en las últimas {hours} horas,
-como si fuera el reporte diario de un equipo de trabajo. Estructura:
-1) Qué se hizo (2-4 líneas)
-2) Agentes/servidores más activos
-3) Logros destacados
-4) Pendientes o riesgos
-
-Datos brutos del día:
-{report_md[:6000]}"""
-    body = json.dumps({
-        "model": MODEL,
-        "messages": [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": "Genera el resumen ejecutivo del día."},
-        ],
-        "max_tokens": 2000,
-        "temperature": 0.4,
-        "chat_template_kwargs": {"enable_thinking": False},
-    }).encode()
-    req = urllib.request.Request(LLMGATE, data=body, headers={
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    })
-    try:
-        with urllib.request.urlopen(req, timeout=180) as r:
-            d = json.loads(r.read())
-            msg = d["choices"][0]["message"]
-            content = msg.get("content") or msg.get("reasoning") or ""
-            return content.strip() or None
-    except Exception as e:
-        print(f"  ⚠️ LLM summary: {e}", file=sys.stderr)
-        return None
+    """Eliminado: ya no hay gateway LLM remoto para generar resúmenes."""
+    return None
 
 
 def send_discord(text, embed_text=None):
@@ -244,15 +205,12 @@ def main():
         print("\n[Dry-run: no se envía a Discord]")
         return
 
-    # Resumen ejecutivo con llmgate
-    summary = llm_summary(report, args.hours)
-    if summary:
-        print("\n🤖 Resumen ejecutivo (llmgate):\n" + summary)
+    # Resumen ejecutivo remoto eliminado (no existe gateway LLM)
+    summary = None
 
     # Enviar a Discord (grid + resumen en mensajes separados)
     ok1 = send_discord("📊 **REPORTE DIARIO ARMADA**\n" + report)
-    ok2 = send_discord("🤖 **Resumen ejecutivo**\n\n" + summary) if summary else False
-    print(f"\n✅ Discord: {'OK' if ok1 else 'FALLÓ'} | Resumen: {'OK' if ok2 else 'n/a'}")
+    print(f"\n✅ Discord: {'OK' if ok1 else 'FALLÓ'} | Resumen: n/a (llmgate eliminado)")
 
     # Guardar estado (última ejecución)
     with open(STATE_FILE, "w") as f:

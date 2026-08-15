@@ -9,9 +9,9 @@ REPO_DIR="$MY_HOME/armada-sync"
 
 echo "=== Armada Sync — $(hostname) — $(date) ==="
 
-# ── Arquitectura Hub/Follower ──────────────────────────────────────
+# ── Arquitectura Hub Único ────────────────────────────────────────
 # kalimete = HUB (único push) → fuente de verdad
-# Victoria = FOLLOWER (solo pull+deploy, read-only)
+# No existen máquinas follower — sin arquitectura de follower
 #
 # collect: local opencode → repo dir (overwrite + delete)
 # deploy:  repo dir → local opencode (overwrite + delete)
