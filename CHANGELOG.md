@@ -1,3 +1,30 @@
+## 2026-08-27
+
+### [04:26] - Validación completa: pets.armada.do (PetSuite)
+- **Tipo**: infra | validación
+- **Modificado**: ninguno (solo lectura)
+- **Afecta a**: VPS preprod (154.53.35.102), Cloudflare
+- **Causa**: validar que todo funcione correctamente en https://pets.armada.do
+- **Estado**: ✅ TODO OK
+- **Notas**:
+  - **DNS**: A proxied → 154.53.35.102, comment "migrado desde alfredo.pro 2026-08-06" ✅
+  - **SSL**: Let's Encrypt wildcard `*.armada.do` (CN=armada.do, issuer=Let's Encrypt YE1), expires Oct 24 2026 ✅
+  - **HTTP**: 308 → HTTPS redirect ✅ (Cloudflare)
+  - **HTTPS**: 200 OK, HSTS, CSP, X-Frame-DENY, Permissions-Policy ✅
+  - **Backend API**: `/api/health` → `{"status":"ok"}` (200) ✅
+  - **Services API**: 200 OK, devuelve catálogo de servicios (Pet Sitting, Pet Walking, etc.) ✅
+  - **Bookings API**: 200 OK, paginación ✅
+  - **Users/me API**: 401 sin token (comportamiento correcto) ✅
+  - **WebSocket**: Socket.IO inicializado en logs ✅
+  - **Caddy**: en ejecución en `nextcloud-stack-caddy-1`, pets.armada.do en Caddyfile mapeado a `petsuite:80` (network ncweb) ✅
+  - **Caddy certs**: pets.armada.do cert validado, CN=armada.do SAN=*.armada.do, armada.do ✅
+  - **Container petsuite**: Up 2 weeks, running `petsuite:v2`, container_name=petsuite, network=ncweb ✅
+  - **Volumes**: data (/app/server/data), storage (/app/server/storage), logs (/app/server/logs), .env (ro) ✅
+  - **API escucha**: `http://127.0.0.1:4000` (localhost only) — correcto, solo accesible vía Caddy en network docker ✅
+  - **Backups**: cron muerto desde 2026-07-10 (sin cambios) ⚠️
+
+---
+
 ## 2026-08-14
 
 ### [22:00] - Mejora: permisos de agentes según doc oficial opencode

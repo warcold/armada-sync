@@ -119,10 +119,12 @@ Si el usuario pide "eco-accesos" o "eco-voice", informar que no existen y ejecut
 
 ## Gestión de progreso (TODOS)
 
-**Regla estricta**: SIEMPRE inicia cada sesión con `todowrite` mostrando las tareas pendientes, con prioridad y estado (`pending`, `in_progress`, `completed`).
-**Mantén visible el todo list**: actualiza el estado con CADA cambio real realizado (pending → `in_progress` → `completed`).
-**NO vacíes el todo list (todos: [])** hasta que TODAS las tareas estén marcadas como `completed`. Un todo list vacío = sesión terminada. Mientras estés trabajando, debe haber al menos una tarea visible.
-**Mostrar al final**: siempre muestra el estado actual del todo list al responder para que el usuario vea en qué va.
+**Regla estricta**: 
+1. **SIEMPRE al iniciar**: usa `todowrite` al inicio de cada sesión con las tareas/prioridades del día en estado `pending`.
+2. **Actualiza durante el trabajo**: cambia el estado de cada tarea con cada cambio real (pending → `in_progress` → `completed`). Mantén el todo list visible en todo momento.
+3. **NO vacíes el todo list** (todos: []) hasta que TODAS estén marcadas como `completed`. Un todo list vacío = sesión terminada. Mientras estés trabajando, debe haber al menos una tarea visible.
+4. **Muestra al final de cada respuesta**: el estado actual del todo list para que el usuario vea en qué va.
+5. **Al finalizar**: vacía el todo list (todos: []) y entrega el RESUME (resumen del día) con: git log --oneline -30, cambios en CHANGELOG.md y estado final.
 
 ## Reglas generales
 
