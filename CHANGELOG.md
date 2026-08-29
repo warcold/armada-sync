@@ -1,3 +1,21 @@
+## 2026-08-29
+
+### [03:00] - Creación: Armada Arcade (proyecto de juego multiplayer)
+- **Tipo**: proyecto | infra local
+- **Modificado**: nuevo repositorio `~/armada-arcade/` con motor TetriNET + Socket.IO
+- **Afecta a**: kalimete (desarrollo local), opencode (nuevo subagente)
+- **Causa**: clon fiel de TetriNET (1997) con arquitectura de plugins para agregar juegos (Dominó, etc.)
+- **Estado**: ✅ local, git commit inicial
+- **Notas**:
+  - Motor: TypeScript, campo 12x22, 9 especiales, 7-bag, ghost piece, Canvas rendering
+  - Server: Express + Socket.IO, namespaces (discover, chat, game), salas hasta 6 jugadores
+  - Cliente: Vite + Canvas, dark theme estilo TetriNET, lobby + juego
+  - Plugin system extensible para agregar nuevos juegos
+  - Subagente creado: `armada-arcade.md` (symlink → opencode agent/)
+  - No sincroniza con repo (proyecto standalone local)
+
+---
+
 ## 2026-08-27
 
 ### [04:26] - Validación completa: pets.armada.do (PetSuite)
