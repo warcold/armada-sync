@@ -14,17 +14,28 @@
   - Subagente creado: `armada-arcade.md` (symlink → opencode agent/)
   - No sincroniza con repo (proyecto standalone local)
 
-### [03:13] - Fix: route ordering — APIs before static/catch-all
+### [05:12] - Fix: server crash — room_name NOT NULL constraint error
 - **Tipo**: proyecto | infra local
-- **Modificado**: `server/src/index.ts` (rutas), `server/dist/` (rebuild), `start.sh`
+- **Modificado**: `server/src/index.ts` (DB schema)
 - **Afecta a**: kalimete (armada-arcade server)
-- **Causa**: el catch-all `app.get('*')` y `express.static()` iban ANTES que `/api/health` y `/api/rooms`, causando que las rutas API devolvieran HTML en lugar de JSON
+- **Causa**: El INSERT en game_records fallaba porque room_name tenía `NOT NULL` pero el INSERT no lo incluía
 - **Estado**: ✅ fix aplicado, rebuild OK, server corriendo
+- **Notas**: room_name ahora TEXT (nullable), data/ en .gitignore
+
+### [05:12] - Database: SQLite + records + leaderboard (armada-arcade)
+- **Tipo**: proyecto | infra local
+- **Modificado**: `server/src/index.ts` (SQLite), `client/src/main.ts` (stats UI), `client/index.html` (lobby UI)
+- **Afecta a**: kalimete (armada-arcade server + client)
+- **Causa**: Agregar persistencia de records de victorias y estadísticas individuales/equipo
+- **Estado**: ✅ SQLite con better-sqlite3, endpoints /api/stats, /api/leaderboard, /api/game-end
 - **Notas**:
-  - Routes ahora en orden: APIs primero → static → catch-all
-  - Server escuchando en `0.0.0.0:3000` (accesible LAN)
-  - Script `start.sh` creado para lanzar/reiniciar fácil
-  - Todos los endpoints verificados: /api/health, /api/rooms, /, manifest, sw.js, PWA icons, socket.io.js
+  - Tablas: players, game_records con todos los campos necesarios
+  - Lobby muestra: mis stats (partidas, victorias, win rate, mejor score), top 5 leaderboard
+  - Team tag selector en lobby (auto/blue/red)
+  - Nickname se guarda en localStorage
+  - .gitignore creado para node_modules/, data/, client/dist/, server/dist/
+  - Repo creado en GitHub: https://github.com/warcold/armada-arcade
+  - Vite build configurado correctamente para cliente PWA
 
 ---
 
