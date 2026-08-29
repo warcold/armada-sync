@@ -14,6 +14,18 @@
   - Subagente creado: `armada-arcade.md` (symlink → opencode agent/)
   - No sincroniza con repo (proyecto standalone local)
 
+### [03:13] - Fix: route ordering — APIs before static/catch-all
+- **Tipo**: proyecto | infra local
+- **Modificado**: `server/src/index.ts` (rutas), `server/dist/` (rebuild), `start.sh`
+- **Afecta a**: kalimete (armada-arcade server)
+- **Causa**: el catch-all `app.get('*')` y `express.static()` iban ANTES que `/api/health` y `/api/rooms`, causando que las rutas API devolvieran HTML en lugar de JSON
+- **Estado**: ✅ fix aplicado, rebuild OK, server corriendo
+- **Notas**:
+  - Routes ahora en orden: APIs primero → static → catch-all
+  - Server escuchando en `0.0.0.0:3000` (accesible LAN)
+  - Script `start.sh` creado para lanzar/reiniciar fácil
+  - Todos los endpoints verificados: /api/health, /api/rooms, /, manifest, sw.js, PWA icons, socket.io.js
+
 ---
 
 ## 2026-08-27
