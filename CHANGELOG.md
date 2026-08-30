@@ -1,5 +1,27 @@
 ## 2026-08-30
 
+### [17:30] - Victoria opencode: Agregar provider NVIDIA NIM (key propia) — config completa
+- **Tipo**: config | opencode | nvidia | vllm
+- **Modificado**: `/home/victoria/.config/opencode/opencode.jsonc` (backup: `opencode.jsonc.bkup-20260830-nvidia`)
+- **Afecta a**: victoria (opencode.jsonc)
+- **Causa**: Completar la config de victoria con el provider NVIDIA NIM usando su key propia (`nvapi-vZ9w...`, cuenta warcold@gmail.com, exportada como `NVIDIA_API_KEY` en `data.txt`). Autorización explícita del usuario (acceso SSH `victoria@victoria.local:1666`).
+- **Estado**: ✅ victoria configurada y verificada
+
+**Resultado victoria (109 modelos, sin duplicados):**
+- `nvidia` (101): catálogo NVIDIA NIM auto-descubierto (key propia de victoria)
+- `opencode` (6): modelos built-in free (nemotron, mimo, ling, etc.)
+- `vllm` (2): Qwen3.6 normal + thinking vía gateway local `:8010` (key `vllm-key-8111...`)
+
+**Límites vllm local (correctos):**
+- context: 228000 + output: 32000 = 260000 < 262144 (max_model_len real del vLLM) ✅
+- Gateway :8010 responde en `/models`; vLLM :8000 confirma `max_model_len: 262144`
+- Test chat exitoso (Qwen3.6 thinking responde con reasoning)
+
+**Notas:**
+- Victoria ya tenía las 2 variantes Qwen3.6 (agregadas por usuario hoy 03:31); solo faltaba el provider nvidia
+- Estructura idéntica a kalimete (misma config, cada máquina con sus propias keys)
+- "opencode zen" = modelos built-in de opencode (siempre disponibles, auto-discovery)
+
 ### [23:30] - Kalimete opencode: Eliminar duplicados NVIDIA + config objetivo para victoria
 - **Tipo**: config | opencode | nvidia | vllm
 - **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete) — removido bloque `models` manual del provider `nvidia`
