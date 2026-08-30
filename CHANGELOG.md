@@ -7,12 +7,12 @@
 - **Causa**: Victoria tiene formato moderno (`id` en vez de `modelID`, `attachment`, `tool_call`, `modalities`); kalimete usaba schema antiguo (`capabilities` anidado, `modelID`, solo `text` como input). Se alineó kalimete al formato de victoria.
 - **Cambios**:
   - `modelID` → `id` (campo obsoleto → moderno)
-  - `context`: 240000 → 230000 (total 262000, dentro del límite 262144)
+  - `context`: 240000 → 230000 → 228000 (receta canónica de victoria: 262144 - 32000 - 2144 headroom = 228000)
   - `capabilities: { tools, reasoning, input, output }` → campos flat: `attachment`, `tool_call`, `reasoning`, `modalities`
   - Agrega `modalities: { input: [text, image, video] }` (vLLM soporta multimodal)
   - Agrega `attachment: true` y `tool_call: true`
 - **Estado**: ✅ sync pendiente (cron 5 min)
-- **Notas**: output sigue en 32000 (máx posible ~22144). Si se requiere strict total ≤ 262144, ajustar output a ≤ 22000.
+- **Notas**: 228000 + 32000 = 260000, headroom ~2.1K tokens (evita VLLMValidationError + bucles de reintentos). output en 32000 (máx posible con headroom ~22144).
 
 
 ### [06:12] - WordPress Dev: Proxy SSL con Nginx (wordpress.kalimete.local) + Arreglo permisos SSL globales
