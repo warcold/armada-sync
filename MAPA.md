@@ -35,6 +35,18 @@
   - Se integra con vLLM de victoria para automatización de páginas Elementor
   - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
   - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
+  - SSL: `mkcert` con CA instalada en sistema y Firefox (trust store)
+  - Mu-plugin de protección: `/var/www/html/wp-content/mu-plugins/disable-mcp-host-guard.php`
+    → Deshabilita EMCP Tools MCP host guard (permite proxy `localhost:8090` → `wordpress.kalimete.local`)
+    → PERSISTE: los mu-plugins no se borran con updates de WordPress/plugins
+  - **Protección contra updates**:
+    - mcp-proxy.mod.js: `~/dev/wordpress/` (fuera del contenedor Docker)
+    - Nginx config: `/etc/nginx/sites-available/` (fuera del contenedor)
+    - Certificados: `/etc/ssl/local-certs/` (fuera del contenedor)
+    - Permisos SSL: `chown root:www-data 640` (persisten)
+    - Permisos WordPress: `chown -R www-data:www-data /var/www/html/wp-content` (persisten)
+    - Mu-plugins: `/var/www/html/wp-content/mu-plugins/` (no se borran con updates)
+  - **Política de updates**: NO actualizar `mcp-adapter` (manual), NO actualizar `elementor` sin probar, actualizar `emcp-tools` solo patch updates (3.14.0 → 3.14.1)
 - Systemd: ssh, nginx, docker, containerd, cron, sddm, waydroid, kalimete-tunnel, publish-kalimete-subdomains, dnsmasq
 - opencode config: `~/.config/opencode/`
 - opencode.jsonc usa gateway LLM de victoria vía túnel CF: `https://victoria.armada.do/v1`

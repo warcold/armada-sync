@@ -1,5 +1,60 @@
 ## 2026-08-30
 
+### [22:45] - WordPress Dev: Fix permisos, MCP host guard, Composer autoloader + política de updates
+- **Tipo**: infra | wordpress | permisos | mcp | plugins
+- **Modificado**: 
+  - `~/dev/wordpress/mcp-proxy.mod.js` (soporte HTTPS con `rejectUnauthorized: false` para mkcert)
+  - `/var/www/html/wp-content/mu-plugins/disable-mcp-host-guard.php` (mu-plugin nuevo)
+  - `/var/www/html/wp-content/` permisos corregidos (www-data:www-data)
+- **Afecta a**: kalimete (wordpress dev)
+- **Causa**: Múltiples errores tras cambiar la URL a SSL y actualizar WordPress
+- **Estado**: ✅ todos corregidos, MCP funcional, política de updates definida
+
+**Errores corregidos:**
+1. **Permisos root:root** → `ai1wm-backups`, `upgrade`, `storage` tenían `root:root`
+   → `chown -R www-data:www-data /var/www/html/wp-content` (WordPress corre como www-data)
+   → Ya no aparecen errores "Could not create directory/file"
+
+2. **MCP Host Guard de EMCP Tools** bloqueaba peticiones de `localhost:8090`
+   → WordPress ahora tiene `siteurl/home = https://wordpress.kalimete.local`
+   → EMCP Tools valida Host header: si no coincide con home_url, devuelve error 421
+   → Solución: `disable-mcp-host-guard.php` (mu-plugin) con `add_filter('emcp_tools_mcp_host_guard_enabled', '__return_false')`
+   → Mu-plugin se carga ANTES que todos los plugins, nunca se rompe con updates
+
+3. **Composer autoloader missing** en MCP Adapter
+   → Error: "The Composer autoloader was not found" (WARNING, no FATAL)
+   → El plugin usa **Jetpack Autoloader** (`vendor/autoload_packages.php`) que YA está incluido
+   → El `vendor/autoload.php` de Composer NO se necesita para el funcionamiento
+   → `composer install` falla por conflictos dev (php_codesniffer v3 vs v4) — irrelevantes para producción
+   → El error es un WARNING de debug que no afecta funcionalidad
+
+4. **Proxy no soportaba HTTPS** para conectar a `wordpress.kalimete.local`
+   → `mcp-proxy.mod.js` ahora usa `rejectUnauthorized: false` con `httpsRequest` para certificados autofirmados
+   → Permite conectar tanto a `http://localhost:8090` como a `https://wordpress.kalimete.local`
+
+**Política de Updates (CRÍTICO para mantener integración):**
+- **NO actualizar** `mcp-adapter` desde WP Admin → el plugin fue instalado manualmente (ZIP/manual), no desde WordPress.org
+  → WP Admin no detecta updates automáticos para este plugin (correcto)
+  → Si se actualiza manualmente, se pierde la integración con vLLM de victoria
+  
+- **mcp-basic-auth**: No requiere update (plugin custom de kalimete)
+- **akismet**: No actualizar (plugin INACTIVO, sin impacto)
+- **all-in-one-wp-migration**: No actualizar (funcionando correctamente, actualizaciones pueden cambiar estructura de storage)
+- **emcp-tools**: ✅ Puede actualizar a 3.14.1 (pequeño patch update)
+  → El mu-plugin `disable-mcp-host-guard.php` PERSISTE (no se borra con updates de plugins)
+  → El proxy `mcp-proxy.mod.js` PERSISTE en `~/dev/wordpress/` (fuera del contenedor Docker)
+  → **Protección**: el mu-plugin y el proxy sobreviven a cualquier update de WordPress/EMCP
+
+- **Elementor 4.2.3**: No actualizar sin probar primero (cambios mayores pueden romper EMCP Tools)
+
+**Protección de infraestructura:**
+- Mu-plugins sobreviven updates de WordPress (están fuera del ciclo de plugins)
+- mcp-proxy.mod.js está en `~/dev/wordpress/` (fuera del contenedor)
+- Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf` (fuera del contenedor)
+- Certificados SSL: `/etc/ssl/local-certs/` (fuera del contenedor)
+- Permisos SSL: `chown root:www-data 640` (persisten)
+- Permisos WordPress: `chown -R www-data:www-data /var/www/html/wp-content` (persisten)
+
 ### [22:15] - opencode.jsonc: align format moderno con victoria (id, multimodal, attachment, tool_call)
 - **Tipo**: config | opencode | vllm
 - **Modificado**: `~/.config/opencode/opencode.jsonc` (backup: `opencode.jsonc.bkup-20260830`)
