@@ -1,3 +1,23 @@
+## 2026-08-30
+
+### [05:40] - Creación: WordPress Dev Stack (WordPress + Elementor + EMCP Tools + MCP Adapter)
+- **Tipo**: proyecto | infra local | Docker
+- **Modificado**: `~/dev/wordpress/` — Stack Docker completo: wordpress-local (WP 7.1) + wordpress-db (MySQL)
+- **Afecta a**: kalimete (nuevo proyecto local, nuevo subagente wordpress-dev.md)
+- **Causa**: Necesidad de ambiente de desarrollo WordPress con herramientas Elementor expuestas vía MCP al LLM
+- **Estado**: ✅ stack operativo, MCP proxy funcional, ~60 herramientas EMCP Tools disponibles
+- **Notas**:
+  - WordPress 7.1 + Elementor 4.2.3 (atomic elements, v4) + EMCP Tools v3.14.0 + MCP Adapter 0.5.0
+  - URL: http://localhost:8090, DB: localhost:3307, Auth: admin:admin123
+  - Proxy MCP modificado: `mcp-proxy.mod.js` — usa ?rest_route= (plain permalinks), captura Mcp-Session-Id
+  - Proceso mensajes MCP serialmente (initialize → notifications/initialized → tools/call)
+  - Maneja Content-Length:0 + Keep-Alive (evita hang en responses 202)
+  - ~60+ herramientas EMCP Tools: Elementor page builder, atomic widgets, containers, global classes, media, templates
+  - Subagente creado: `wordpress-dev.md` (symlink → opencode agent/)
+  - Se integra con vLLM de victoria para automatización de páginas Elementor
+
+---
+
 ## 2026-08-29
 
 ### [03:00] - Creación: Armada Arcade (proyecto de juego multiplayer)

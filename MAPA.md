@@ -23,7 +23,13 @@
 ### 1. kalimete (10.0.0.106) — HUB / Cerebral
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
-- Docker: 7 containers (tapmap, woodly, micaserogou-restart, kalimete, taohemps-frontend, taohemps-backend, petsuite)
+- Docker: 9 containers (tapmap, woodly, micaserogou-restart, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
+- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1 + Elementor 4.2.3 + EMCP Tools v3.14.0 + MCP Adapter 0.5.0
+  - URL: `http://localhost:8090`, DB: localhost:3307
+  - Autenticación: `admin:admin123` (Basic Auth REST)
+  - Proxy MCP modificado: `mcp-proxy.mod.js` (usa ?rest_route=, captura Mcp-Session-Id)
+  - ~60+ herramientas EMCP Tools expuestas vía MCP (Elementor page builder)
+  - Se integra con vLLM de victoria para automatización de páginas Elementor
 - Systemd: ssh, nginx, docker, containerd, cron, sddm, waydroid, kalimete-tunnel, publish-kalimete-subdomains, dnsmasq
 - opencode config: `~/.config/opencode/`
 - opencode.jsonc usa gateway LLM de victoria vía túnel CF: `https://victoria.armada.do/v1`
@@ -64,6 +70,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-cloudflare-storage | KV, D1, Queues (NO R2) | ✅ |
 | eco-cloudflare-tunnels | Túneles cloudflared | ✅ |
 | eco-cloudflare-workers | Workers/Pages/deploy | ✅ |
+| wordpress-dev | WordPress+Elementor+EMCP+MCP stack | ✅ |
 | eco-accesos | ~~SSH/access management~~ | 🔴 roto (symlink sin target) |
 | eco-voice | ~~Voz/STT/TTS~~ | 🔴 roto (servicio ELIMINADO) |
 
