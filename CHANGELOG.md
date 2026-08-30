@@ -1,5 +1,20 @@
 ## 2026-08-30
 
+### [22:15] - opencode.jsonc: align format moderno con victoria (id, multimodal, attachment, tool_call)
+- **Tipo**: config | opencode | vllm
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (backup: `opencode.jsonc.bkup-20260830`)
+- **Afecta a**: kalimete (opencode.jsonc), sync
+- **Causa**: Victoria tiene formato moderno (`id` en vez de `modelID`, `attachment`, `tool_call`, `modalities`); kalimete usaba schema antiguo (`capabilities` anidado, `modelID`, solo `text` como input). Se alineó kalimete al formato de victoria.
+- **Cambios**:
+  - `modelID` → `id` (campo obsoleto → moderno)
+  - `context`: 240000 → 230000 (total 262000, dentro del límite 262144)
+  - `capabilities: { tools, reasoning, input, output }` → campos flat: `attachment`, `tool_call`, `reasoning`, `modalities`
+  - Agrega `modalities: { input: [text, image, video] }` (vLLM soporta multimodal)
+  - Agrega `attachment: true` y `tool_call: true`
+- **Estado**: ✅ sync pendiente (cron 5 min)
+- **Notas**: output sigue en 32000 (máx posible ~22144). Si se requiere strict total ≤ 262144, ajustar output a ≤ 22000.
+
+
 ### [06:12] - WordPress Dev: Proxy SSL con Nginx (wordpress.kalimete.local) + Arreglo permisos SSL globales
 - **Tipo**: infra | nginx | ssl | wordpress
 - **Modificado**: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`, `/etc/ssl/local-certs/*.key`
