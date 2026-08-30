@@ -1,5 +1,24 @@
 ## 2026-08-30
 
+### [06:12] - WordPress Dev: Proxy SSL con Nginx (wordpress.kalimete.local) + Arreglo permisos SSL globales
+- **Tipo**: infra | nginx | ssl | wordpress
+- **Modificado**: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`, `/etc/ssl/local-certs/*.key`
+- **Afecta a**: kalimete (wordpress dev con SSL, infraestructura SSL global)
+- **Causa**: Exponer WordPress vía HTTPS con certificado mkcert para desarrollo realista, simulando producción
+- **Estado**: ✅ wordpress.kalimete.local en HTTPS, certificado válido hasta 2028, permisos SSL corregidos
+- **Notas**:
+  - Certificado mkcert generado para `wordpress.kalimete.local` (CA: mkcert warcold@victoria)
+  - Nginx config: HTTP→HTTPS redirect (301), proxy_pass a localhost:8090, headers X-Forwarded-Proto
+  - WordPress URLs actualizadas: siteurl/home = `https://wordpress.kalimete.local` (sin puerto)
+  - SSL CA instalada en sistema (mkcert -CAROOT), navegador confía en el certificado local
+  - **Bugfix CRÍTICO**: Todas las llaves `.key` en `/etc/ssl/local-certs/` estaban en `root:600`
+    → nginx workers (www-data) NO podían leerlas → `nginx -t` fallaba con "Permission denied"
+    → Solución: `chown root:www-data 640` para TODAS las llaves .key (14 archivos corregidos)
+    → Nginx ahora opera correctamente, workers www-data pueden leer todos los certs
+  - Nginx -t: ✅ syntax ok, test successful con sudo (workers requieren www-data group read)
+  - Acceso: `https://wordpress.kalimete.local/wp-admin/` (login admin/admin123)
+  - Hosts file: `10.0.0.106 wordpress.kalimete.local` (LAN accesible desde otros hosts)
+
 ### [05:40] - Creación: WordPress Dev Stack (WordPress + Elementor + EMCP Tools + MCP Adapter)
 - **Tipo**: proyecto | infra local | Docker
 - **Modificado**: `~/dev/wordpress/` — Stack Docker completo: wordpress-local (WP 7.1) + wordpress-db (MySQL)

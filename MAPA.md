@@ -25,11 +25,16 @@
 - Sync hub: `~/armada-sync` (push/pull)
 - Docker: 9 containers (tapmap, woodly, micaserogou-restart, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
 - WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1 + Elementor 4.2.3 + EMCP Tools v3.14.0 + MCP Adapter 0.5.0
-  - URL: `http://localhost:8090`, DB: localhost:3307
+  - URL local: `http://localhost:8090` | URL LAN/SSL: `https://wordpress.kalimete.local`
+  - URL LAN: `http://wordpress.kalimete.local` (redirect 301 → HTTPS)
+  - DB: localhost:3307 (wordpress-db container)
   - Autenticación: `admin:admin123` (Basic Auth REST)
+  - SSL: mkcert CA instalada en sistema, certificado válido hasta 2028-11-30
   - Proxy MCP modificado: `mcp-proxy.mod.js` (usa ?rest_route=, captura Mcp-Session-Id)
   - ~60+ herramientas EMCP Tools expuestas vía MCP (Elementor page builder)
   - Se integra con vLLM de victoria para automatización de páginas Elementor
+  - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
+  - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
 - Systemd: ssh, nginx, docker, containerd, cron, sddm, waydroid, kalimete-tunnel, publish-kalimete-subdomains, dnsmasq
 - opencode config: `~/.config/opencode/`
 - opencode.jsonc usa gateway LLM de victoria vía túnel CF: `https://victoria.armada.do/v1`
