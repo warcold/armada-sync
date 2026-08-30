@@ -40,17 +40,30 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 ### Regla: NO delegar a agentes rotos
 Si el usuario pide "eco-accesos" o "eco-voice", informar que no existen y ejecutar directamente si es posible.
 
-## Red local Armada (2026-08-14, validado)
+## Red local Armada (2026-08-29, validado)
 
 | Host | IP | SSH | Usuario | Rol | Estado |
 |---|---|---|---|---|---|
 | **kalimete** | 10.0.0.106 | puerto 1111 | `warcold` | Hub principal, PC de trabajo | ✅ activo |
 | **victoria** | 10.0.0.5 | puerto 1666 | `warcold` (rbash) | GPU/LLM, Victoria Armada | ✅ activo |
+| **vps-preprod** | 154.53.35.102 | puerto 1333 | `root` | Servidor IRC, auth.armada.do | ✅ activo |
+| **vps-proxy** | 31.220.102.176 | puerto 1444 | `root` | Proxy/telecomm, InspIRCd DEAD | 🔴 FAILED (2026-03-17) |
 | **jonas** | 10.0.0.20 | puerto 1222 | `jonas` | NAS, backups | 🔴 SSH roto, fuera de servicio |
 | Windows | 10.0.0.64 | RDP | — | Cliente RDP de Alfredo | — |
 
+### SSH aliases configurados (kalimete)
+
+| Alias | Comando directo | Puerta de enlace |
+|---|---|---|
+| `ssh kalimete` | `ssh kalimete` (auto, SSH 1111) | local |
+| `ssh victoria` | `ssh victoria` (SSH 1666) | victoria.local (mDNS) |
+| `ssh vps-preprod` | `ssh vps-preprod` (SSH 1333, root) | 154.53.35.102 (auth.armada.do) |
+| `ssh vps-proxy` | `ssh vps-proxy` (SSH 1444, root) | 31.220.102.176 (proxy.us-east.armada.do) |
+
 - SSH kalimete → victoria: `ssh victoria` (key `~/.ssh/id_ed25519_kalimete`, warcold, SSH 1666)
 - SSH kalimete → jonas: **ROTO** (llave no autorizada) — no intentar operaciones
+- SSH kalimete → vps-preprod: `ssh vps-preprod` (key `~/.ssh/id_ed25519_kalimete`, root, SSH 1333)
+- SSH kalimete → vps-proxy: `ssh vps-proxy` (key `~/.ssh/id_ed25519_kalimete`, root, SSH 1444)
 - DNS local: mDNS/avahi (`.local`)
 
 ## Victoria — GPU/LLM Gateway
