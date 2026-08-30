@@ -1,5 +1,46 @@
 ## 2026-08-30
 
+### [23:00] - Kalimete opencode: Agregar provider NVIDIA NIM (DeepSeek V4 Flash/Pro)
+- **Tipo**: config | opencode | nvidia | deepseek
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (backup: `opencode.jsonc.bkup-20260830-nvidia`)
+- **Afecta a**: kalimete (opencode.jsonc)
+- **Causa**: Réplicar la configuración de NVIDIA NIM de victoria en kalimete para acceder a modelos de API externa (DeepSeek) con 1M de contexto nativo
+- **Estado**: ✅ NVIDIA NIM funcional, test exitoso con DeepSeek V4 Flash
+
+**Modelos agregados:**
+1. `deepseek-ai/deepseek-v4-flash-0731` — "DeepSeek V4 Flash"
+   - Context: 128000, Output: 32000
+   - Reasoning: true, Attachment: true, Tool call: true
+   - Input: text only
+   
+2. `deepseek-ai/deepseek-v4-pro-0813` — "DeepSeek V4 Pro"
+   - Context: 128000, Output: 32000
+   - Reasoning: true, Attachment: true, Tool call: true
+   - Input: text only
+
+**Configuración NVIDIA NIM:**
+- Provider: `nvidia` (npm: `@ai-sdk/openai-compatible`)
+- baseURL: `https://integrate.api.nvidia.com/v1`
+- API key: `nvapi-...` (desde `/home/victoria/Desktop/data.txt`)
+- Nombre: "NVIDIA NIM"
+
+**Modelos kalimete (ahora):**
+1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 (2 variantes) — Victoria local GB10
+   - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
+   - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)
+   
+2. **nvidia** (cloud): DeepSeek V4 Flash/Pro — NVIDIA API Catalog
+   - `deepseek-ai/deepseek-v4-flash-0731` → "DeepSeek V4 Flash"
+   - `deepseek-ai/deepseek-v4-pro-0813` → "DeepSeek V4 Pro"
+
+**Notas:**
+- La key NVIDIA fue compartida por usuario desde victoria (`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`)
+- NVIDIA NIM responde correctamente desde kalimete (test exitoso con DeepSeek V4 Flash)
+- Victoria también usa NVIDIA NIM (ref: victoria.md: "DeepSeek V4 Flash/Pro (vía NVIDIA NIM, key `nvapi-…` en auth.json)")
+- En victoria: key almacenada en `/home/victoria/Desktop/data.txt` (plaintext, 600 permissions)
+- En kalimete: key almacenada directamente en opencode.jsonc (misma key)
+- Los modelos DeepSeek tienen 1M de contexto nativo vs 262K del Qwen local
+
 ### [18:39] - Script cfmb25: clonación automática de tarjetas FMB25 via Proxmark3
 - **Tipo**: herramienta | proxmark3 | preproducción
 - **Modificado**: `/home/warcold/bin/cfmb25` (nuevo script)

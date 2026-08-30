@@ -24,6 +24,18 @@
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
 - Docker: 9 containers (tapmap, woodly, micaserogou-restart, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
+- **opencode.jsonc**: 2 providers configurados
+  1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
+     - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
+     - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)
+     - baseURL: `https://victoria.armada.do/v1`
+     - apiKey: `vllm-key-5d43...` (admin alfredo)
+  2. **nvidia** (cloud): DeepSeek V4 Flash/Pro via NVIDIA API Catalog
+     - `deepseek-ai/deepseek-v4-flash-0731` → "DeepSeek V4 Flash" (reasoning: true)
+     - `deepseek-ai/deepseek-v4-pro-0813` → "DeepSeek V4 Pro" (reasoning: true)
+     - baseURL: `https://integrate.api.nvidia.com/v1`
+     - apiKey: `nvapi-...` (key compartida desde victoria)
+     - Contexto nativo: 1M tokens (vs 262K del Qwen local)
 - WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1 + Elementor 4.2.3 + EMCP Tools v3.14.0 + MCP Adapter 0.5.0
   - URL local: `http://localhost:8090` | URL LAN/SSL: `https://wordpress.kalimete.local`
   - URL LAN: `http://wordpress.kalimete.local` (redirect 301 → HTTPS)
