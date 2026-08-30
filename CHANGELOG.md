@@ -1,5 +1,22 @@
 ## 2026-08-30
 
+### [23:30] - Kalimete opencode: Eliminar duplicados NVIDIA + config objetivo para victoria
+- **Tipo**: config | opencode | nvidia | vllm
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (kalimete) — removido bloque `models` manual del provider `nvidia`
+- **Afecta a**: kalimete (opencode.jsonc) + victoria (config objetivo documentado, pendiente de aplicar por usuario)
+- **Causa**: Los 2 modelos manuales (`deepseek-v4-flash-0731`, `deepseek-v4-pro-0813`) duplicaban los auto-descubiertos del catálogo NVIDIA. Se deja solo `options` (baseURL + apiKey) para auto-discovery completo.
+- **Estado**: ✅ kalimete sincronizado; ⚠️ victoria pendiente (read-only, usuario aplica manualmente)
+
+**Resultado kalimete (109 modelos, sin duplicados manuales):**
+- `nvidia` (101): catálogo NVIDIA NIM auto-descubierto (alias + versión con fecha son inherentes al catálogo)
+- `opencode` (6): modelos built-in
+- `vllm` (2): Qwen3.6 normal + thinking
+
+**Config objetivo victoria** (guardada en `/tmp/opencode/victoria-opencode.jsonc`):
+- vllm: baseURL `http://127.0.0.1:8000/v1` (local, sin key) + 2 variantes Qwen3.6 (normal + thinking)
+- nvidia: baseURL `https://integrate.api.nvidia.com/v1` + key propia de victoria (placeholder `nvapi-REEMPLAZAR...`)
+- ⚠️ victoria actualmente solo tiene 1 modelo Qwen3.6 (thinking, sin "normal") según backup 2026-08-14
+
 ### [23:00] - Kalimete opencode: Agregar provider NVIDIA NIM (DeepSeek V4 Flash/Pro)
 - **Tipo**: config | opencode | nvidia | deepseek
 - **Modificado**: `~/.config/opencode/opencode.jsonc` (backup: `opencode.jsonc.bkup-20260830-nvidia`)
