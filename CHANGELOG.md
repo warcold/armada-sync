@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [18:39] - Script cfmb25: clonación automática de tarjetas FMB25 via Proxmark3
+- **Tipo**: herramienta | proxmark3 | preproducción
+- **Modificado**: `/home/warcold/bin/cfmb25` (nuevo script)
+- **Afecta a**: kalimete (herramienta local)
+- **Causa**: Automatizar la clonación de imágenes FMB25 a tarjetas CUID para el ambiente de preproducción
+- **Estado**: ✅ funcional, clonación exitosa (64/64 bloques OK)
+- **Notas**: 
+  - Usa `hf mf restore --1k -f <dump> -k <keys> --ka` (comando probado en sesiones anteriores)
+  - Imagen original: `~/.victoria/pm3-dumps/FMB25.bin` (1024 bytes, MIFARE Classic 1K)
+  - Keys originales: `~/.victoria/pm3-dumps/FMB25-keys.bin` (192 bytes, 64 keys)
+  - Solo lee del Proxmark3, no modifica archivos remotos
+  - Tarjeta CUID detectada: UID 3295B67B, ATQA 00 04, SAK 08
+
 ### [22:45] - WordPress Dev: Fix permisos, MCP host guard, Composer autoloader + política de updates
 - **Tipo**: infra | wordpress | permisos | mcp | plugins
 - **Modificado**: 
