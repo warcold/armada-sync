@@ -1,5 +1,24 @@
 ## 2026-08-30
 
+### [00:30] - Infra: Servidor proxy Squid para clientes (vps-proxy)
+- **Tipo**: infra | servicio | seguridad
+- **Modificado**: vps-proxy (31.220.102.176) — Squid 6.14, autenticación NCSA, gestión de usuarios, logs
+- **Afecta a**: vps-proxy (nuevo servicio proxy), usuarios/carlos/maria/admin (acreditación individual)
+- **Causa**: migrar vps-proxy a proxy server internacional (EEUU) para dar acceso controlado a clientes, amigos y familia — cada usuario con credenciales únicas
+- **Estado**: ✅ activo, HTTPS proxy funcionando (HTTP 200 verificada)
+- **Notas**:
+  - **Servicio**: Squid 6.14 en puerto 3128 (HTTP/HTTPS), autenticación Basic NCSA (htpasswd)
+  - **Usuarios**: admin (armadaproxy2026), carlos (uzh/n4KzMh7jWZPU), maria (miClave123)
+  - **Scripts de gestión**: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats)
+  - **Config**: `/etc/squid/squid.conf`, usuarios: `/etc/squid/proxy-users.conf` (permisos 640 root:proxy)
+  - **UFW**: puerto 3128/tcp abierto (todos)
+  - **Logs**: `/var/log/squid/access.log` (tráfico por usuario)
+  - **Credenciales**: `/opt/proxy-configs/proxy-credenciales.txt`
+  - **Guías cliente**: `/opt/proxy-configs/` (Linux, Mac, Windows, navegador)
+  - **OpenVPN**: se mantiene sin cambios (puerto 1194/udp)
+  - **SSH**: se mantiene sin cambios (puerto 1444)
+  - **InspIRCd**: DEAD (desde 2026-03-17), sin impacto — proxy toma el lugar del servidor anterior
+
 ### [17:30] - Victoria opencode: Agregar provider NVIDIA NIM (key propia) — config completa
 - **Tipo**: config | opencode | nvidia | vllm
 - **Modificado**: `/home/victoria/.config/opencode/opencode.jsonc` (backup: `opencode.jsonc.bkup-20260830-nvidia`)

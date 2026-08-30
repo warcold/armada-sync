@@ -1,6 +1,6 @@
 # 🗺️ MAPA DE AGENTES — Ecosistema Armada
 
-## Topología (2026-08-14, validado)
+## Topología (2026-08-30, validado)
 
 ```
                     ┌─────────────────────────────────────────────┐
@@ -11,6 +11,11 @@
        │       1666│                                        │
        │           │      jonass local NAS (SSH roto)         │
        └───────────│─ 10.0.0.20:1222 ───⚠️ FUERA SERVICIO     │
+                    │                                          │
+                    │      vps-preprod (VPS prod)              │
+                    └── 154.53.35.102:1333 ─── IRC, auth.do   │
+                    │      vps-proxy (VPS proxy)               │
+                    └── 31.220.102.176:1444 ─── Squid Proxy   │
                     │                                          │
    Cloudflare: Alfred@armada.do                               │
    Zones: armada.do | micaserogou.com | taohemps.com          │
@@ -77,7 +82,32 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - DB: `/home/victoria/.victoria-llm/llm-gateway.db` (api_keys, usage_log, sqlite_sequence)
 - CA mkcert en kalimete: `~/.local/share/mkcert/rootCA.pem`
 
-### 3. jonass (10.0.0.20) — NAS/Respaldo — FUERA SERVICIO
+### 3. vps-preprod (154.53.35.102) — VPS Production
+- User: root, SSH 1333, llave `~/.ssh/id_ed25519_kalimete`
+- Alias: `ssh vps-preprod`
+- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do
+- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, ragnarok.cp.armada.do, scriberr.armada.do, whiteboard.armada.do, woodly.armada.do → 154.53.35.102 (CF proxied)
+- UFW: active (solo rangos CF en DOCKER-USER)
+- OpenVPN: active (openvpn@server.service)
+
+### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional
+- User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
+- Alias: `ssh vps-proxy`
+- Servicios: Squid Proxy 6.14 (puerto 3128), OpenVPN (puerto 1194/udp), SSH (puerto 1444)
+- DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF)
+- Squid Proxy:
+  - Puerto: 3128 (HTTP/HTTPS)
+  - Autenticación: Basic NCSA (htpasswd)
+  - Usuarios: admin (armadaproxy2026), carlos (uzh/n4KzMh7jWZPU), maria (miClave123)
+  - Scripts: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats)
+  - Config: `/etc/squid/squid.conf`, usuarios: `/etc/squid/proxy-users.conf`
+  - Logs: `/var/log/squid/access.log` (tráfico por usuario)
+  - Guías cliente: `/opt/proxy-configs/`
+  - UFW: puerto 3128/tcp abierto
+- InspIRCd: DEAD (desde 2026-03-17), sin impacto
+- UFW: active (1194/udp, 1444/tcp, 3128/tcp, 80/tcp, 53/tcp, 53/udp)
+
+### 5. jonass (10.0.0.20) — NAS/Respaldo — FUERA SERVICIO
 - User: jonas, SSH 1222, key rota desde 2026-08-12
 - Roles: NAS, backups (/srv/backups/), DDNS updater
 - Sin cron de sync, sin agentes
