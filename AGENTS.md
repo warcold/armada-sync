@@ -71,15 +71,19 @@ Cada máquina ejecuta `sync.sh` cada 5 min vía cron. Arquitectura **Hub Único*
 - **Skill**: cloudflare → `~/.config/opencode/skills/cloudflare/` (PLURAL)
 
 ## Victoria — Servidor GPU/LLM
-#### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
-Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escribir/modificar/nomificar NADA en victoria. El usuario modifica archivos en victoria por su cuenta; kalimete SOLO los lee y actualiza la documentación en kalimete.
+#### ⚠️ Regla: victoria = SOLO LECTURA por defecto; escritura SOLO con autorización explícita del usuario
+Acceso SSH con `warcold` (rbash) es SOLO lectura (monitorización). Existe acceso de escritura con `victoria@victoria.local:1666` (clave del usuario, 2026-08-30) que se usa ÚNICAMENTE cuando el usuario lo autoriza explícitamente. NUNCA escribir sin autorización. Siempre hacer backup (.bkup) antes de modificar.
 
-- **Acceso SSH**: warcold, ssh 1666, llave `~/.ssh/id_ed25519_kalimete`
+- **Acceso SSH**:
+  - Lectura: `warcold`, ssh 1666, llave `~/.ssh/id_ed25519_kalimete` (rbash)
+  - Escritura (autorizado): `victoria`, ssh 1666, `sshpass -p '<clave>' ssh -l victoria victoria.local -p1666`
+  - opencode en victoria: `/home/victoria/.opencode/bin/opencode` (node vía nvm v22.23.2)
 - **Servicio principal**: vLLM `nvidia/Qwen3.6-35B-A3B-NVFP4` (GB10 GPU, max 262144 tokens)
   - Ejecuta como proceso standalone (no Docker) en :8000
   - Gateway LLM en :8010 (API keys, metering, proxy nginx en :443)
   - Túnel Cloudflare: victoria.armada.do → :8010
-- **No tiene opencode, no tiene repo synced**
+- **opencode config**: `/home/victoria/.config/opencode/opencode.jsonc` — 3 providers (vllm local :8010 con 2 variantes Qwen3.6, nvidia NIM con key propia, opencode built-in). 109 modelos, sin duplicados (2026-08-30)
+- **No tiene repo synced**
 
 ## Jonas — NAS/Respaldo (fuera de servicio)
 

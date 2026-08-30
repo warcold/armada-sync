@@ -68,12 +68,12 @@ Si el usuario pide "eco-accesos" o "eco-voice", informar que no existen y ejecut
 
 ## Victoria — GPU/LLM Gateway
 
-#### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
-**NUNCA intentes escribir/modificar/nomificar NADA en victoria.** Tu acceso SSH a victoria (warcold, rbash) es SOLO LECTURA.
-- Solo puedes leer: `cat`, `ls`, `ps`, `curl`, `ss`, `nvidia-smi`, `sqlite3ro_real`, `systemctl is-*`, `timedatectl`, `df`, `uptime` (lectura de services)
-- NUNCA: editar archivos, instalar paquetes, reiniciar servicios, crear/copiar archivos, `sed -i`, `tee` (escritura), `sudo -S` (escritura)
-- El usuario modifica archivos en victoria por su cuenta. Kalimete SOLO los lee y actualiza la documentación en kalimete.
-- Si el CHANGELOG dice "Modificado: /home/victoria/..." eran cambios del usuario, NO de kalimete.
+#### ⚠️ Regla: victoria = SOLO LECTURA por defecto; escritura SOLO con autorización explícita del usuario
+Tu acceso SSH con `warcold` (rbash) es SOLO LECTURA. Existe acceso de escritura con `victoria@victoria.local:1666` (clave del usuario, 2026-08-30) que se usa ÚNICAMENTE cuando el usuario lo autoriza explícitamente. NUNCA escribir sin autorización. Siempre hacer backup (.bkup) antes de modificar.
+- Solo puedes leer (warcold/rbash): `cat`, `ls`, `ps`, `curl`, `ss`, `nvidia-smi`, `sqlite3ro_real`, `systemctl is-*`, `timedatectl`, `df`, `uptime` (lectura de services)
+- Escritura (autorizado): `sshpass -p '<clave>' ssh -l victoria victoria.local -p1666` — editar archivos, instalar paquetes, reiniciar servicios
+- El usuario modifica archivos en victoria por su cuenta. Kalimete SOLO escribe cuando el usuario lo autoriza explícitamente.
+- Si el CHANGELOG dice "Modificado: /home/victoria/..." pueden ser cambios del usuario o de kalimete (autorizado).
 
 - **Acceso**: `ssh victoria` → warcold, ssh 1666, llave `~/.ssh/id_ed25519_kalimete`
 - **GPU**: NVIDIA GB10 (Blackwell), driver 580.159.03, CUDA 13.0
@@ -105,13 +105,19 @@ Si el usuario pide "eco-accesos" o "eco-voice", informar que no existen y ejecut
 - **⚠️ UFW no verificado** (no puedo ejecutar sin root)
 - opencode usa provider: `vllm` de opencode.jsonc → `https://victoria.armada.do/v1` con API key alfredo
 
-## opencode.jsonc — vLLM config
+## opencode.jsonc — Config providers (kalimete y victoria)
 
-`~/.config/opencode/opencode.jsonc` configura el provider vllm que apunta a Victoria:
-- baseURL: `https://victoria.armada.do/v1` (via túnel Cloudflare)
-- apiKey: `vllm-key-5d43...` (key alfredo, admin)
-- context: 240000 / output: 32000 (**⚠️ total 272000 excede el límite real de 262144** — output max posible es ~22144)
-- 2 modelos: "nvidia/Qwen3.6-35B-A3B-NVFP4-normal" (reasoning=false), "nvidia/Qwen3.6-35B-A3B-NVFP4" (reasoning=true)
+`~/.config/opencode/opencode.jsonc` (kalimete) — 3 providers, 109 modelos sin duplicados (2026-08-30):
+- **vllm** → `https://victoria.armada.do/v1` (via túnel Cloudflare), apiKey `vllm-key-5d43...` (key alfredo, admin)
+  - 2 modelos: "nvidia/Qwen3.6-35B-A3B-NVFP4-normal" (reasoning=false), "nvidia/Qwen3.6-35B-A3B-NVFP4" (reasoning=true)
+  - context: 228000 / output: 32000 (total 260000 < 262144 ✅)
+- **nvidia** → `https://integrate.api.nvidia.com/v1` (NIM, catálogo auto-discovery, sin models manuales)
+- **opencode** → modelos built-in free (auto-discovery)
+
+`/home/victoria/.config/opencode/opencode.jsonc` (victoria) — misma estructura, keys propias (2026-08-30):
+- **vllm** → `http://127.0.0.1:8010/v1` (gateway local), apiKey `vllm-key-8111...` (key victoria, admin)
+- **nvidia** → NIM con key propia de victoria (`nvapi-vZ9w...`, cuenta warcold@gmail.com)
+- **opencode** → built-in free
 
 ## Cloudflare (cuenta Alfredo@armada.do)
 - Account ID: `432949306735261bec2ca45a0a2719c7`
