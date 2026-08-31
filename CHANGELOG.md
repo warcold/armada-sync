@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [18:30] - Fix: Eliminar rate limiting (delay_pools) que causaba latencia extrema
+- **Tipo**: infra | servicio | bugfix
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (eliminado delay_pools)
+- **Afecta a**: vps-proxy (proxy server), usuarios del proxy (jovtransport, admin)
+- **Causa**: el usuario jovtransport reportó que no podía navegar ("el correo no carga y las apps no abren, como si no tuviera Internet"). Los logs de Squid mostraron latencia extrema: mail.google.com tardaba 283s, ms-cookie-sync 902s. El delay_pools (rate limiting) que agregué causaba un cuello de botella severo.
+- **Estado**: ✅ resuelto y verificado
+- **Notas**:
+  - **Causa raíz**: delay_pools (agregado 10 MB/s, individual 5 MB/s) limitaba severamente el ancho de banda, causando tiempos de respuesta de minutos
+  - **Fix**: eliminado delay_pools de squid.conf
+  - **Verificado**: velocidad 12.2 MB/s (antes 5.9-8.2 MB/s), Gmail HTTP 301 en 0.1s (antes 283s), Google HTTP 200 en 0.1s, SOCKS5 HTTP 200 en 0.2s
+  - **Filtros intactos**: YouTube/Netflix bloqueados, GitHub/Google permitidos
+  - **Backup**: /etc/squid/squid.conf.bkup-delaypools-20260830
+
 ### [08:30] - Agentes: Crear subagentes para todos los sistemas/proyectos/servicios
 - **Tipo**: agente | config | documentación
 - **Modificado**: agents/eco-vps.md, eco-victoria.md, eco-petsuite.md, eco-woodly.md, eco-taohemps.md, eco-ragnarok.md, eco-nextcloud.md, eco-authentik.md, eco-docuseal.md, eco-scriberr.md, eco-micaserogou.md (nuevos), agents/kalimete.md (permission.task + tabla), AGENTS.md, MAPA.md

@@ -57,7 +57,7 @@ Gestión del servidor proxy internacional en EEUU (`vps-proxy`, 31.220.102.176).
 
 ## Rate limiting
 
-- delay_pools: agregado 10 MB/s, individual 5 MB/s por usuario autenticado
+- ⚠️ **ELIMINADO 2026-08-30**: el delay_pools causaba latencia extrema (mail.google.com tardaba 283s). Se eliminó para no limitar el ancho de banda. Si se necesita rate limiting en el futuro, configurar con cuidado y probar la velocidad.
 - Config: `/etc/squid/squid.conf`
 
 ## Monitoreo
