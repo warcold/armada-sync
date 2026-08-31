@@ -94,7 +94,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-proxy`
 - Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
-- DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF)
+- DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF); jovtransport.prx.armada.do → 31.220.102.176 (gris, dedicado jovtransport)
 - **Squid Proxy (HTTP/HTTPS)**:
   - Puerto: 3128
   - Autenticación: Basic NCSA (htpasswd)

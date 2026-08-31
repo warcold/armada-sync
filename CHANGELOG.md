@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [06:30] - Infra: Hostname dedicado proxy jovtransport.prx.armada.do
+- **Tipo**: infra | dns | cloudflare
+- **Modificado**: Cloudflare DNS armada.do — nuevo registro A `jovtransport.prx.armada.do` → 31.220.102.176 (gris, TTL 300)
+- **Afecta a**: vps-proxy (31.220.102.176), usuario jovtransport
+- **Causa**: el usuario pidió un hostname dedicado para el cliente jovtransport además del acceso por IP directa
+- **Estado**: ✅ creado y verificado
+- **Notas**:
+  - Registro A gris (proxied:false) — necesario porque el proxy usa puertos 3128 (HTTP) y 1080 (SOCKS5) que Cloudflare NO proxya (solo 80/443)
+  - Verificado: resolución DNS → 31.220.102.176, HTTP proxy via hostname HTTP 200, SOCKS5 via hostname HTTP 200, IP salida 31.220.102.176
+  - Zone ID armada.do: 17badff7f918b4e02eea8533fac4dc9f
+  - Record ID: 34cf3213f0c6ef17b82efc3caa0da5dc
+  - Ya existía `proxy.us-east.armada.do` → misma IP (gris); el nuevo es dedicado para jovtransport
+
 ### [06:00] - Infra: Cambiar clave admin proxy (ProxyColadorEUA)
 - **Tipo**: config | seguridad
 - **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/proxy-users.conf, /usr/local/bin/socks5-proxy.py, /opt/proxy-configs/proxy-credenciales.txt
