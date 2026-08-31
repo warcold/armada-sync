@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [18:45] - Infra: Confirmar sin límite de velocidad (filtros bastan)
+- **Tipo**: infra | servicio | validación
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (limpiado comentario residual delay_pools)
+- **Afecta a**: vps-proxy (proxy server), usuarios del proxy
+- **Causa**: el usuario confirmó que no hace falta límite de velocidad porque los filtros de contenido ya bloquean lo que consume mucho (streaming, juegos, etc.). Se valida que no hay límite y se limpia el comentario residual.
+- **Estado**: ✅ validado — sin límite de velocidad, filtros activos
+- **Notas**:
+  - **Sin delay_pools**: el proxy no tiene límite de velocidad (confirmado)
+  - **Velocidad**: 18.4 MB/s (sin límite)
+  - **Filtros activos**: YouTube/Netflix bloqueados (HTTP 000), GitHub permitido (HTTP 200)
+  - **Estrategia**: con el tiempo auditar los logs para detectar si algún usuario usa algo que consuma mucho y bloquearlo de ser necesario
+  - **Auditoría**: usar `/usr/local/bin/proxy-monitor.sh` para ver uso por usuario
+
 ### [18:30] - Fix: Eliminar rate limiting (delay_pools) que causaba latencia extrema
 - **Tipo**: infra | servicio | bugfix
 - **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (eliminado delay_pools)

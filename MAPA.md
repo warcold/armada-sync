@@ -101,7 +101,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
   - Usuarios: `admin` (ProxyColadorEUA), `jovtransport` (jovproxyeeuu1)
   - Scripts: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats), `/usr/local/bin/proxy-monitor.sh` (monitor uso)
   - Config: `/etc/squid/squid.conf`, usuarios: `/etc/squid/proxy-users.conf`
-  - Rate limiting: ELIMINADO 2026-08-30 (causaba latencia extrema)
+  - Rate limiting: SIN límite (filtros de contenido bastan, confirmado 2026-08-30)
   - Filtros de contenido: `/etc/squid/blocked-domains.txt` (bloquea streaming/consumo: YouTube, Netflix, Twitch, Spotify, TikTok, Instagram, Facebook, juegos, Discord, etc.)
   - Multi-IP: preparado en squid.conf (tcp_outgoing_address comentado)
   - Logs: `/var/log/squid/access.log` (tráfico por usuario)
