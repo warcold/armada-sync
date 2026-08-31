@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [21:00] - Diagnóstico: Proxy funcional, problema es la ruta RD-EEUU del usuario
+- **Tipo**: infra | servicio | diagnóstico
+- **Modificado**: ninguno (solo diagnóstico)
+- **Afecta a**: vps-proxy (proxy server), usuario jovtransport (RD)
+- **Causa**: el cliente jovtransport reportó que el servicio no le funciona. Se hizo diagnóstico completo.
+- **Estado**: ✅ proxy funcional — el problema es la ruta de red del usuario
+- **Notas**:
+  - **Servidor sano**: carga 0.11, memoria OK, sin errores de red, sin conexiones colgadas
+  - **Conectividad saliente perfecta**: mail.google.com 0.09s, whatsapp 0.17s, intercom 0.08s, superdispatch 0.12s, velocidad 19.8 MB/s
+  - **Proxy funcional desde kalimete**: Gmail 0.14s, Google 0.33s, velocidad 16.2 MB/s
+  - **Problema**: la conexión del usuario (181.36.176.87, RD/Altice) tarda minutos en establecerse (101 min, 124 min en logs) pero eventualmente funciona (TCP_TUNNEL/200). Es la ruta de red RD-EEUU inestable con pérdida de paquetes.
+  - **Recomendación al usuario**: (1) verificar su conexión a internet (Altice RD), (2) probar con otra red (móvil), (3) usar el hostname jovtransport.prx.armada.do, (4) configurar credenciales en todas las apps
+
 ### [20:35] - Fix: Optimizar Squid para latencia RD-EEUU (timeouts, keepalive)
 - **Tipo**: infra | servicio | optimización
 - **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (timeouts, keepalive, persistent connections)
