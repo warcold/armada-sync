@@ -1,5 +1,22 @@
 ## 2026-08-30
 
+### [05:35] - Infra: Limpieza total vps-proxy (solo proxy + acceso)
+- **Tipo**: infra | limpieza | seguridad
+- **Modificado**: vps-proxy (31.220.102.176) — eliminados usuarios SO, proyectos viejos, paquetes IRC, OpenVPN, weechat
+- **Afecta a**: vps-proxy (servidor proxy), kalimete (acceso SSH)
+- **Causa**: el usuario pidió limpiar el servidor dejando solo nuestro acceso y todo lo relacionado al proxy
+- **Estado**: ✅ servidor limpio, proxy verificado
+- **Notas**:
+  - **Usuarios SO eliminados**: ircd, justin, kboom, ubuntu (quedan solo root + warcold)
+  - **Proyectos eliminados**: /opt/google (chrome), /opt/inspircd, /opt/proxy-infra (openvpn), /home/ircd, /home/justin, /home/kboom, /home/ubuntu
+  - **Procesos detenidos**: weechat (cliente IRC), OpenVPN (openvpn@server detenido y deshabilitado)
+  - **Paquetes purgados**: inspircd, dante-server, redsocks, shadowsocks-libev, simple-obfs, weechat*
+  - **Puertos UFW cerrados**: 80/tcp, 1194/udp (OpenVPN)
+  - **UFW final**: solo 1444 (SSH), 53 (DNS), 3128 (Squid), 1080 (SOCKS5)
+  - **Servicios finales**: squid, socks5-proxy, ssh, fail2ban
+  - **Se conserva**: /opt/proxy-configs (credenciales), /home/warcold (acceso), /usr/local/bin/proxy-manage.sh, /usr/local/bin/socks5-proxy.py
+  - **Verificado**: SOCKS5 clientes/admin HTTP 200, HTTP clientes HTTP 200, IP salida 31.220.102.176, fail2ban activo (1 IP baneada)
+
 ### [03:10] - Infra: Limpieza y aseguramiento vps-proxy (proxy server final)
 - **Tipo**: infra | servicio | seguridad | limpieza
 - **Modificado**: vps-proxy (31.220.102.176) — usuarios proxy, SOCKS5, UFW, SSH, fail2ban

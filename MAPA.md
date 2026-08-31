@@ -93,7 +93,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-proxy`
-- Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), OpenVPN (:1194/udp), SSH (:1444)
+- Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
 - DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF)
 - **Squid Proxy (HTTP/HTTPS)**:
   - Puerto: 3128
@@ -110,15 +110,13 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
   - Usuarios: mismos que Squid (clientes/admin)
   - Logs: `/var/log/socks5-proxy.log`
 - **Seguridad**:
-  - UFW: activo — solo 1194/udp (OpenVPN), 1444 (SSH), 53 (DNS), 80, 3128 (Squid), 1080 (SOCKS5)
+  - UFW: activo — solo 1444 (SSH), 53 (DNS), 3128 (Squid), 1080 (SOCKS5)
   - SSH: `PermitRootLogin prohibit-password`, `PasswordAuthentication no` (solo llaves)
   - fail2ban: activo (jail sshd, port 1444, maxretry 3, bantime 2h)
   - unattended-upgrades: activo
-- **Usuarios SO**: root, ubuntu, ircd, justin, warcold, kboom (carlos/maria eliminados 2026-08-30)
-- **Proyectos en /opt**: google, inspircd, proxy-configs, proxy-infra
-- **weechat**: cliente IRC corriendo como warcold (proceso viejo desde Feb 2026)
-- **OpenVPN**: activo (openvpn@server, 10.8.0.0/24, redirect-gateway)
-- InspIRCd: DEAD (desde 2026-03-17), sin impacto
+- **Usuarios SO**: root, warcold (solo acceso propio; eliminados ircd/justin/kboom/ubuntu 2026-08-30)
+- **Proyectos en /opt**: solo `proxy-configs` (credenciales + guías)
+- **Limpieza 2026-08-30**: eliminados OpenVPN, weechat, inspircd, dante, redsocks, shadowsocks, /opt/google, /opt/inspircd, /opt/proxy-infra
 - Credenciales: `/opt/proxy-configs/proxy-credenciales.txt`
 - Guías cliente: `/opt/proxy-configs/`
 
