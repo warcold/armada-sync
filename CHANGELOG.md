@@ -1,5 +1,17 @@
 ## 2026-08-30
 
+### [06:00] - Infra: Cambiar clave admin proxy (ProxyColadorEUA)
+- **Tipo**: config | seguridad
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/proxy-users.conf, /usr/local/bin/socks5-proxy.py, /opt/proxy-configs/proxy-credenciales.txt
+- **Afecta a**: vps-proxy (proxy server), usuario admin
+- **Causa**: evitar problemas con caracteres especiales (`@`) en la clave anterior `Proxy@Colador` — la nueva `ProxyColadorEUA` es alfanumérica, compatible con URLs
+- **Estado**: ✅ verificado (SOCKS5 + HTTP funcionando)
+- **Notas**:
+  - **Usuarios finales**: `admin` (clave `ProxyColadorEUA`), `jovtransport` (clave `jovproxyeeuu1`)
+  - Verificado: SOCKS5 admin HTTP 200, SOCKS5 jovtransport HTTP 200, HTTP admin HTTP 200
+  - Clave vieja `Proxy@Colador` rechazada (HTTP 000)
+  - IP de salida: 31.220.102.176 (EEUU)
+
 ### [05:50] - Infra: Renombrar usuarios proxy (clientes → jovtransport, admin nueva clave)
 - **Tipo**: config | seguridad
 - **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/proxy-users.conf, /usr/local/bin/socks5-proxy.py, /opt/proxy-configs/proxy-credenciales.txt

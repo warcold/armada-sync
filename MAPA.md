@@ -98,7 +98,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - **Squid Proxy (HTTP/HTTPS)**:
   - Puerto: 3128
   - Autenticación: Basic NCSA (htpasswd)
-  - Usuarios: `admin` (Proxy@Colador), `jovtransport` (jovproxyeeuu1)
+  - Usuarios: `admin` (ProxyColadorEUA), `jovtransport` (jovproxyeeuu1)
   - Scripts: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats)
   - Config: `/etc/squid/squid.conf`, usuarios: `/etc/squid/proxy-users.conf`
   - Logs: `/var/log/squid/access.log` (tráfico por usuario)
