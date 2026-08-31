@@ -1,5 +1,19 @@
 ## 2026-08-30
 
+### [07:20] - Infra: Mejoras proxy — rate limiting, monitor, análisis Cloudflare
+- **Tipo**: infra | servicio | mejora
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (delay_pools), /usr/local/bin/proxy-monitor.sh (nuevo)
+- **Afecta a**: vps-proxy (proxy server), usuarios del proxy
+- **Causa**: el usuario preguntó si activar Cloudflare proxy haría que funcione "como si estuviera en EEUU" y pidió analizar oportunidades de mejora (pensando en más clientes e IPs futuras)
+- **Estado**: ✅ mejoras aplicadas y verificadas
+- **Notas**:
+  - **Cloudflare proxy NO aplica**: Cloudflare solo proxya 80/443; el proxy usa 3128 (HTTP) y 1080 (SOCKS5) que CF no reenvía. Además CF no cambia la IP de salida del proxy — el servidor ya está en EEUU (31.220.102.176). Registro debe quedarse gris (proxied:false)
+  - **Rate limiting (delay_pools)**: clase 2, agregado 10 MB/s, individual 5 MB/s por usuario autenticado. Ajustable según plan de cada cliente
+  - **Preparación multi-IP**: comentado en squid.conf `tcp_outgoing_address` para cuando se agreguen más IPs al servidor
+  - **Monitor**: `/usr/local/bin/proxy-monitor.sh` — muestra servicios, usuarios, uso por usuario, fail2ban, IP de salida
+  - **Backup config**: `/etc/squid/squid.conf.bkup-20260830`
+  - Verificado: SOCKS5 HTTP 200, HTTP HTTP 200, monitor funciona, fail2ban activo (1 IP baneada)
+
 ### [06:30] - Infra: Hostname dedicado proxy jovtransport.prx.armada.do
 - **Tipo**: infra | dns | cloudflare
 - **Modificado**: Cloudflare DNS armada.do — nuevo registro A `jovtransport.prx.armada.do` → 31.220.102.176 (gris, TTL 300)
