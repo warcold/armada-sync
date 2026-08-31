@@ -93,19 +93,34 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-proxy`
-- Servicios: Squid Proxy 6.14 (puerto 3128), OpenVPN (puerto 1194/udp), SSH (puerto 1444)
+- Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), OpenVPN (:1194/udp), SSH (:1444)
 - DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF)
-- Squid Proxy:
-  - Puerto: 3128 (HTTP/HTTPS)
+- **Squid Proxy (HTTP/HTTPS)**:
+  - Puerto: 3128
   - Autenticación: Basic NCSA (htpasswd)
-  - Usuarios: admin (armadaproxy2026), carlos (uzh/n4KzMh7jWZPU), maria (miClave123)
+  - Usuarios: `admin` (armadaproxy2026), `clientes` (armadaclientes2026)
   - Scripts: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats)
   - Config: `/etc/squid/squid.conf`, usuarios: `/etc/squid/proxy-users.conf`
   - Logs: `/var/log/squid/access.log` (tráfico por usuario)
-  - Guías cliente: `/opt/proxy-configs/`
-  - UFW: puerto 3128/tcp abierto
+- **SOCKS5 Proxy**:
+  - Puerto: 1080
+  - Servicio: `socks5-proxy.service` (Python, RFC 1929 username/password auth)
+  - Script: `/usr/local/bin/socks5-proxy.py`
+  - Backend: redirige a Squid HTTP local (:3128)
+  - Usuarios: mismos que Squid (clientes/admin)
+  - Logs: `/var/log/socks5-proxy.log`
+- **Seguridad**:
+  - UFW: activo — solo 1194/udp (OpenVPN), 1444 (SSH), 53 (DNS), 80, 3128 (Squid), 1080 (SOCKS5)
+  - SSH: `PermitRootLogin prohibit-password`, `PasswordAuthentication no` (solo llaves)
+  - fail2ban: activo (jail sshd, port 1444, maxretry 3, bantime 2h)
+  - unattended-upgrades: activo
+- **Usuarios SO**: root, ubuntu, ircd, justin, warcold, kboom (carlos/maria eliminados 2026-08-30)
+- **Proyectos en /opt**: google, inspircd, proxy-configs, proxy-infra
+- **weechat**: cliente IRC corriendo como warcold (proceso viejo desde Feb 2026)
+- **OpenVPN**: activo (openvpn@server, 10.8.0.0/24, redirect-gateway)
 - InspIRCd: DEAD (desde 2026-03-17), sin impacto
-- UFW: active (1194/udp, 1444/tcp, 3128/tcp, 80/tcp, 53/tcp, 53/udp)
+- Credenciales: `/opt/proxy-configs/proxy-credenciales.txt`
+- Guías cliente: `/opt/proxy-configs/`
 
 ### 5. jonass (10.0.0.20) — NAS/Respaldo — FUERA SERVICIO
 - User: jonas, SSH 1222, key rota desde 2026-08-12

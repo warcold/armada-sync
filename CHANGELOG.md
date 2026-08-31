@@ -1,5 +1,26 @@
 ## 2026-08-30
 
+### [03:10] - Infra: Limpieza y aseguramiento vps-proxy (proxy server final)
+- **Tipo**: infra | servicio | seguridad | limpieza
+- **Modificado**: vps-proxy (31.220.102.176) — usuarios proxy, SOCKS5, UFW, SSH, fail2ban
+- **Afecta a**: vps-proxy (servidor proxy), clientes (acceso SOCKS5 + HTTP)
+- **Causa**: el usuario pidió dejar solo admin + un usuario genérico "clientes" que funcione tanto SOCKS5 como HTTP, validar protección del servidor y auditar accesos
+- **Estado**: ✅ todo configurado y verificado
+- **Notas**:
+  - **Usuarios proxy finales**: `admin` (armadaproxy2026) + `clientes` (armadaclientes2026) — eliminados carlos/maria
+  - **SOCKS5**: servicio `socks5-proxy.service` (Python, RFC 1929 auth) en puerto **1080** — funciona con clientes/admin, rechaza passwords incorrectos
+  - **HTTP**: Squid 6.14 en puerto **3128** — funciona con clientes/admin
+  - **IP de salida verificada**: 31.220.102.176 (EEUU) tanto por SOCKS5 como por HTTP ✅
+  - **redsocks**: DETENIDO y deshabilitado (ya no se necesita, SOCKS5 Python lo reemplaza)
+  - **shadowsocks-libev**: falló (JSON config error), no se usa
+  - **dante**: falló (config compleja), no se usa
+  - **Usuarios SO eliminados**: carlos (1005), maria (1006) — eran de pruebas
+  - **UFW limpiado**: eliminados puertos IRC obsoletos (6667, 6697, 7209, 6900, 7022, 18789, 50743, 7200); quedan solo 1194/udp (OpenVPN), 1444 (SSH), 53 (DNS), 80, 3128 (Squid), 1080 (SOCKS5)
+  - **SSH asegurado**: `PermitRootLogin prohibit-password` (solo llaves), `PasswordAuthentication no`
+  - **fail2ban**: instalado y activo (jail sshd, port 1444, maxretry 3, bantime 2h) — ya baneó 1 IP atacante (103.137.184.170)
+  - **Scripts**: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats) — actualizado con usuarios finales
+  - **Credenciales**: `/opt/proxy-configs/proxy-credenciales.txt` (actualizado)
+
 ### [00:30] - Infra: Servidor proxy Squid para clientes (vps-proxy)
 - **Tipo**: infra | servicio | seguridad
 - **Modificado**: vps-proxy (31.220.102.176) — Squid 6.14, autenticación NCSA, gestión de usuarios, logs
