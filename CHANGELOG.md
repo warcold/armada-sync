@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [07:45] - Infra: Filtros de contenido proxy (bloquear streaming/consumo)
+- **Tipo**: infra | servicio | seguridad | política
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/blocked-domains.txt (nuevo), /etc/squid/squid.conf (ACL blocked_domains)
+- **Afecta a**: vps-proxy (proxy server), usuarios del proxy (jovtransport, admin)
+- **Causa**: el usuario pidió filtros para que el proxy sea solo para trabajar — bloquear plataformas de streaming y consumo de datos (política de empresa)
+- **Estado**: ✅ filtros activos y verificados
+- **Notas**:
+  - **Bloqueados** (TCP_DENIED/403): YouTube, Netflix, Twitch, Spotify, TikTok, Instagram, Facebook, Prime Video, Disney+, HBO Max, Hulu, Vimeo, Dailymotion, SoundCloud, Apple Music, Steam, Epic Games, Roblox, Discord, Peacock, Paramount+, Crunchyroll, Pluto, Tubi, Pandora, Deezer, Tidal, Audible, Kick, Rumble, Odysee, Bitchute, DLive
+  - **Permitidos** (HTTP 200/302): Google, Google Docs, Gmail, GitHub, StackOverflow, LinkedIn
+  - **Lista de dominios**: `/etc/squid/blocked-domains.txt` (fácil de editar para agregar/quitar)
+  - **ACL**: `http_access deny blocked_domains` antes de `allow authenticated`
+  - Verificado: YouTube/Netflix/Twitch/Spotify/TikTok/Instagram/Facebook/Steam/Discord → 403; Google/Docs/Gmail/GitHub/StackOverflow/LinkedIn → 200
+
 ### [07:20] - Infra: Mejoras proxy — rate limiting, monitor, análisis Cloudflare
 - **Tipo**: infra | servicio | mejora
 - **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (delay_pools), /usr/local/bin/proxy-monitor.sh (nuevo)

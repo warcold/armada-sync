@@ -102,6 +102,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
   - Scripts: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats), `/usr/local/bin/proxy-monitor.sh` (monitor uso)
   - Config: `/etc/squid/squid.conf`, usuarios: `/etc/squid/proxy-users.conf`
   - Rate limiting: delay_pools (agregado 10 MB/s, individual 5 MB/s por usuario)
+  - Filtros de contenido: `/etc/squid/blocked-domains.txt` (bloquea streaming/consumo: YouTube, Netflix, Twitch, Spotify, TikTok, Instagram, Facebook, juegos, Discord, etc.)
   - Multi-IP: preparado en squid.conf (tcp_outgoing_address comentado)
   - Logs: `/var/log/squid/access.log` (tráfico por usuario)
 - **SOCKS5 Proxy**:
