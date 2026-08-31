@@ -55,6 +55,13 @@ Gestión del servidor proxy internacional en EEUU (`vps-proxy`, 31.220.102.176).
 - Permite: Google, Docs, Gmail, GitHub, StackOverflow, LinkedIn (trabajo)
 - ACL en Squid: `http_access deny blocked_domains` (antes de `allow authenticated`)
 
+## Optimización de latencia
+
+- **Timeouts generosos** (2026-08-30): connect_timeout 60s, read_timeout 15min, request_timeout 5min, pconn_timeout 2min
+- **Persistent connections**: client_persistent_connections on, server_persistent_connections on
+- **Motivo**: usuarios en RD (República Dominicana) tienen latencia de red hacia EEUU; los timeouts generosos evitan que las conexiones se corten prematuramente
+- **Nota**: el servidor y el proxy están sanos (Gmail 0.07s desde el servidor); la latencia RD-EEUU es normal
+
 ## Rate limiting
 
 - **SIN límite de velocidad** (confirmado 2026-08-30): el delay_pools se eliminó porque causaba latencia extrema y los filtros de contenido ya bloquean lo que consume mucho (streaming, juegos, etc.)

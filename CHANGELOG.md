@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [20:35] - Fix: Optimizar Squid para latencia RD-EEUU (timeouts, keepalive)
+- **Tipo**: infra | servicio | optimización
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (timeouts, keepalive, persistent connections)
+- **Afecta a**: vps-proxy (proxy server), usuario jovtransport (RD)
+- **Causa**: el usuario jovtransport (República Dominicana, Altice) reportó fallas al navegar. Los logs mostraron latencia extrema (mail.google.com 440s, ans.oobesaas 1645s). El servidor está sano (carga 0.03, sin errores de red), el proxy funciona rápido desde el servidor (0.07s). El problema es la latencia de red entre RD y EEUU.
+- **Estado**: ✅ optimizado — tiempos mejorados (66s vs 1506s antes)
+- **Notas**:
+  - **Diagnóstico**: el servidor y el proxy están sanos (Gmail 0.07s desde el servidor). El problema es la ruta de red RD-EEUU (traceroute muestra pérdida de paquetes hacia RD)
+  - **Optimizaciones aplicadas**: connect_timeout 60s, read_timeout 15min, request_timeout 5min, client_idle_pconn_timeout 2min, pconn_timeout 2min, client_persistent_connections on, server_persistent_connections on
+  - **Resultado**: tiempos del usuario mejoraron (signaler-pa 66s vs 1506s, whatsapp 70s vs 164s, google 10s vs 283s)
+  - **TCP_DENIED/407**: algunas conexiones del usuario (teams.live.com, api.msn.com, activity.windows.com) llegan sin autenticación — el usuario debe configurar las credenciales en TODAS las apps, no solo el navegador
+  - **Recomendación al usuario**: (1) configurar credenciales en todas las apps, (2) usar el hostname jovtransport.prx.armada.do, (3) limpiar caché del navegador, (4) la latencia RD-EEUU es normal (~60-80s en conexiones iniciales)
+
 ### [19:20] - Fix: Verificar proxy tras reporte de jovtransport (took too long)
 - **Tipo**: infra | servicio | validación
 - **Modificado**: vps-proxy (31.220.102.176) — reiniciado SOCKS5, limpiado log
