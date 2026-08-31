@@ -98,7 +98,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - **Squid Proxy (HTTP/HTTPS)**:
   - Puerto: 3128
   - Autenticación: Basic NCSA (htpasswd)
-  - Usuarios: `admin` (armadaproxy2026), `clientes` (armadaclientes2026)
+  - Usuarios: `admin` (Proxy@Colador), `jovtransport` (jovproxyeeuu1)
   - Scripts: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats)
   - Config: `/etc/squid/squid.conf`, usuarios: `/etc/squid/proxy-users.conf`
   - Logs: `/var/log/squid/access.log` (tráfico por usuario)
@@ -107,7 +107,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
   - Servicio: `socks5-proxy.service` (Python, RFC 1929 username/password auth)
   - Script: `/usr/local/bin/socks5-proxy.py`
   - Backend: redirige a Squid HTTP local (:3128)
-  - Usuarios: mismos que Squid (clientes/admin)
+  - Usuarios: mismos que Squid (jovtransport/admin)
   - Logs: `/var/log/socks5-proxy.log`
 - **Seguridad**:
   - UFW: activo — solo 1444 (SSH), 53 (DNS), 3128 (Squid), 1080 (SOCKS5)

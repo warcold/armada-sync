@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [05:50] - Infra: Renombrar usuarios proxy (clientes → jovtransport, admin nueva clave)
+- **Tipo**: config | seguridad
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/proxy-users.conf, /usr/local/bin/socks5-proxy.py, /opt/proxy-configs/proxy-credenciales.txt
+- **Afecta a**: vps-proxy (proxy server), usuarios del proxy
+- **Causa**: el usuario pidió renombrar el usuario genérico a `jovtransport` y cambiar la clave de admin
+- **Estado**: ✅ verificado (SOCKS5 + HTTP funcionando)
+- **Notas**:
+  - **Usuarios finales**: `admin` (clave `Proxy@Colador`), `jovtransport` (clave `jovproxyeeuu1`)
+  - Eliminado usuario `clientes` (armadaclientes2026)
+  - Verificado: SOCKS5 jovtransport HTTP 200, SOCKS5 admin HTTP 200, HTTP jovtransport HTTP 200, HTTP admin HTTP 200
+  - IP de salida: 31.220.102.176 (EEUU)
+  - ⚠️ La clave de admin contiene `@` — en URLs de curl usar `--proxy-user 'admin:Proxy@Colador'` o URL-encode `%40`; los clientes (navegadores/apps) lo manejan automáticamente
+
 ### [05:35] - Infra: Limpieza total vps-proxy (solo proxy + acceso)
 - **Tipo**: infra | limpieza | seguridad
 - **Modificado**: vps-proxy (31.220.102.176) — eliminados usuarios SO, proyectos viejos, paquetes IRC, OpenVPN, weechat
