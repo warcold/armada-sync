@@ -145,6 +145,9 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-cloudflare-storage | KV, D1, Queues (NO R2) | ✅ |
 | eco-cloudflare-tunnels | Túneles cloudflared | ✅ |
 | eco-cloudflare-workers | Workers/Pages/deploy | ✅ |
+| eco-irc | Servidor IRC InspIRCd (vps-preprod) | ✅ |
+| eco-proxy | Servidor proxy internacional (vps-proxy) | ✅ |
+| armada-arcade | Proyecto juego multiplayer (TetriNET) | ✅ |
 | wordpress-dev | WordPress+Elementor+EMCP+MCP stack | ✅ |
 | eco-accesos | ~~SSH/access management~~ | 🔴 roto (symlink sin target) |
 | eco-voice | ~~Voz/STT/TTS~~ | 🔴 roto (servicio ELIMINADO) |

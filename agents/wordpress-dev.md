@@ -1,3 +1,13 @@
+---
+description: Subagente del stack WordPress Dev (WordPress + Elementor + EMCP Tools + MCP Adapter) en kalimete. Usado cuando kalimete delega: desarrollo, mantenimiento, pruebas del sistema WordPress automatizado que se comunica vía MCP con el LLM local (victoria).
+mode: subagent
+temperature: 0.1
+steps: 15
+permission:
+  edit: allow
+  write: allow
+---
+
 # WordPress Dev — Subagente de Desarrollo
 
 ## Visión General

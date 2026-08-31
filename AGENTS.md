@@ -60,6 +60,10 @@ Cada máquina ejecuta `sync.sh` cada 5 min vía cron. Arquitectura **Hub Único*
 | **eco-cloudflare-storage.md** | ✅ | subagent, hidden | ❌ TAB | KV, D1, Queues (NO R2 descártado) |
 | **eco-cloudflare-tunnels.md** | ✅ | subagent, hidden | ❌ TAB | Túneles cloudflared, ingress, hostnames |
 | **eco-cloudflare-workers.md** | ✅ | subagent, hidden | ❌ TAB | Workers/Pages: deploy, rollback, tail, secrets |
+| **eco-irc.md** | ✅ | subagent, hidden | ❌ TAB | Servidor IRC InspIRCd "El Corito" (vps-preprod) |
+| **eco-proxy.md** | ✅ | subagent, hidden | ❌ TAB | Servidor proxy internacional (vps-proxy): usuarios, filtros, rate limiting, monitor |
+| **armada-arcade.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto juego multiplayer (TetriNET + plugins) |
+| **wordpress-dev.md** | ✅ | subagent, hidden | ❌ TAB | Stack WordPress + Elementor + EMCP + MCP |
 | ~~eco-accesos.md~~ | 🔴 | — | ❌ | roto (symlink sin target, eliminado) |
 | ~~eco-voice.md~~ | 🔴 | — | ❌ | roto (symlink sin target, servicio ELIMINADO) |
 | **plan** | ✅ | built-in | ✅ TAB | Planificar proyectos nuevos |

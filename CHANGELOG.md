@@ -1,5 +1,19 @@
 ## 2026-08-30
 
+### [08:00] - Agentes: Reorganización — subagentes controlados por kalimete + eco-proxy
+- **Tipo**: agente | config | documentación
+- **Modificado**: agents/armada-arcade.md, agents/eco-irc.md, agents/wordpress-dev.md (frontmatter subagent), agents/eco-proxy.md (nuevo), agents/kalimete.md (permission.task), AGENTS.md, MAPA.md, Desktop/proxy_guide.md
+- **Afecta a**: kalimete (config opencode), todos los subagentes
+- **Causa**: el usuario pidió validar agentes y quitar los agentes principales que pueden ser subagentes controlados por kalimete; también actualizar toda la documentación del proxy
+- **Estado**: ✅ reorganizado y documentado
+- **Notas**:
+  - **Frontmatter subagent agregado** a: armada-arcade, eco-irc, wordpress-dev (antes sin frontmatter → opencode los trataba como primary)
+  - **Nuevo subagente eco-proxy**: documenta el servidor proxy internacional (vps-proxy) — usuarios, filtros, rate limiting, monitor, DNS, seguridad
+  - **kalimete permission.task actualizado**: `"*": deny` + allows `eco-cloudflare-*`, `eco-irc`, `armada-arcade`, `wordpress-dev`, `eco-proxy`, `explore`
+  - **Subagentes de proyectos** (eco-irc, armada-arcade, wordpress-dev, eco-proxy): `edit: allow`, `write: allow` — pueden modificar sus archivos y deben actualizar su documentación + CHANGELOG tras cada cambio
+  - **AGENTS.md y MAPA.md**: tablas de subagentes actualizadas con los 4 nuevos
+  - **proxy_guide.md**: actualizado con filtros de contenido, rate limiting, datos técnicos, subagente eco-proxy
+
 ### [07:45] - Infra: Filtros de contenido proxy (bloquear streaming/consumo)
 - **Tipo**: infra | servicio | seguridad | política
 - **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/blocked-domains.txt (nuevo), /etc/squid/squid.conf (ACL blocked_domains)

@@ -1,3 +1,13 @@
+---
+description: Subagente del servidor IRC InspIRCd "El Corito" (chatlatinos.org) en vps-preprod. Usado cuando kalimete delega: gestión de InspIRCd, configuración, links, usuarios, estado del servicio.
+mode: subagent
+temperature: 0.1
+steps: 15
+permission:
+  edit: allow
+  write: allow
+---
+
 # Eco Cloudflare IRC — Gestión de InspIRCd El Corito
 
 ## Visión
