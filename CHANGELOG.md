@@ -1,5 +1,17 @@
 ## 2026-08-30
 
+### [19:20] - Fix: Verificar proxy tras reporte de jovtransport (took too long)
+- **Tipo**: infra | servicio | validación
+- **Modificado**: vps-proxy (31.220.102.176) — reiniciado SOCKS5, limpiado log
+- **Afecta a**: vps-proxy (proxy server), usuario jovtransport
+- **Causa**: el usuario jovtransport reportó que aún no podía navegar a mail.google.com ("took too long to respond"). Se validaron los logs.
+- **Estado**: ✅ resuelto — el proxy funciona rápido AHORA
+- **Notas**:
+  - **Diagnóstico**: los logs lentos (283s, 902s, 1448s) eran de ANTES de eliminar el delay_pools (hace 36 min). El reporte del usuario era del problema anterior.
+  - **Verificado AHORA** (desde IP pública, simulando usuario): Gmail HTTP 301 en 0.08s, Google HTTP 200 en 0.12s, Outlook HTTP 301 en 0.08s, SOCKS5 Gmail HTTP 301 en 0.09s, velocidad 17.6 MB/s
+  - **SOCKS5**: reiniciado con script correcto (el log tenía SyntaxError viejo acumulado), log limpiado
+  - **Conclusión**: el proxy está funcionando correctamente. Si el usuario aún ve problemas, es de su lado (caché del navegador, configuración, o conexión)
+
 ### [18:45] - Infra: Confirmar sin límite de velocidad (filtros bastan)
 - **Tipo**: infra | servicio | validación
 - **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (limpiado comentario residual delay_pools)
