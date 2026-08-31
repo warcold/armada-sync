@@ -62,6 +62,17 @@ Cada máquina ejecuta `sync.sh` cada 5 min vía cron. Arquitectura **Hub Único*
 | **eco-cloudflare-workers.md** | ✅ | subagent, hidden | ❌ TAB | Workers/Pages: deploy, rollback, tail, secrets |
 | **eco-irc.md** | ✅ | subagent, hidden | ❌ TAB | Servidor IRC InspIRCd "El Corito" (vps-preprod) |
 | **eco-proxy.md** | ✅ | subagent, hidden | ❌ TAB | Servidor proxy internacional (vps-proxy): usuarios, filtros, rate limiting, monitor |
+| **eco-vps.md** | ✅ | subagent, hidden | ❌ TAB | Servidor VPS producción (vps-preprod): Docker, caddy, servicios |
+| **eco-victoria.md** | ✅ | subagent, hidden | ❌ TAB | Servidor GPU/LLM (victoria): vLLM, gateway, nginx, cloudflared (solo lectura) |
+| **eco-petsuite.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto PetSuite (pets.armada.do) |
+| **eco-woodly.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto Woodly (woodly.armada.do) |
+| **eco-taohemps.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto Taohemps (taohemps.com) |
+| **eco-ragnarok.md** | ✅ | subagent, hidden | ❌ TAB | Servidor de juego Ragnarok (ragnarok.armada.do) |
+| **eco-nextcloud.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto Nextcloud + whiteboard (nextcloud.armada.do) |
+| **eco-authentik.md** | ✅ | subagent, hidden | ❌ TAB | SSO Authentik (auth.armada.do) |
+| **eco-docuseal.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto DocuSeal (docuseal.armada.do) |
+| **eco-scriberr.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto Scriberr (scriberr.armada.do) |
+| **eco-micaserogou.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto Micaserogou (micaserogou.com) |
 | **armada-arcade.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto juego multiplayer (TetriNET + plugins) |
 | **wordpress-dev.md** | ✅ | subagent, hidden | ❌ TAB | Stack WordPress + Elementor + EMCP + MCP |
 | ~~eco-accesos.md~~ | 🔴 | — | ❌ | roto (symlink sin target, eliminado) |

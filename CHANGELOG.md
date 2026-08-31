@@ -1,5 +1,19 @@
 ## 2026-08-30
 
+### [08:30] - Agentes: Crear subagentes para todos los sistemas/proyectos/servicios
+- **Tipo**: agente | config | documentación
+- **Modificado**: agents/eco-vps.md, eco-victoria.md, eco-petsuite.md, eco-woodly.md, eco-taohemps.md, eco-ragnarok.md, eco-nextcloud.md, eco-authentik.md, eco-docuseal.md, eco-scriberr.md, eco-micaserogou.md (nuevos), agents/kalimete.md (permission.task + tabla), AGENTS.md, MAPA.md
+- **Afecta a**: kalimete (config opencode), todos los subagentes
+- **Causa**: el usuario notó que faltaban subagentes para los devs, proyectos, sistemas y servicios (Docker, VPS, victoria, etc.)
+- **Estado**: ✅ subagentes creados y documentados
+- **Notas**:
+  - **11 subagentes nuevos** creados: eco-vps, eco-victoria, eco-petsuite, eco-woodly, eco-taohemps, eco-ragnarok, eco-nextcloud, eco-authentik, eco-docuseal, eco-scriberr, eco-micaserogou
+  - **Total subagentes**: 21 (5 cloudflare + 16 sistemas/proyectos)
+  - **kalimete permission.task**: actualizado con todos los nuevos allows
+  - **Symlinks**: creados en ~/.config/opencode/agent/ para los 11 nuevos
+  - **AGENTS.md y MAPA.md**: tablas de subagentes actualizadas con los 11 nuevos
+  - Cada subagente documenta: acceso, infraestructura, DNS, servicios, reglas de operación
+
 ### [08:00] - Agentes: Reorganización — subagentes controlados por kalimete + eco-proxy
 - **Tipo**: agente | config | documentación
 - **Modificado**: agents/armada-arcade.md, agents/eco-irc.md, agents/wordpress-dev.md (frontmatter subagent), agents/eco-proxy.md (nuevo), agents/kalimete.md (permission.task), AGENTS.md, MAPA.md, Desktop/proxy_guide.md

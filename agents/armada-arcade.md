@@ -1,3 +1,13 @@
+---
+description: Subagente del proyecto Armada Arcade (juego multiplayer TetriNET + plugins). Usado cuando kalimete delega: desarrollo, mantenimiento, mejoras del servidor y cliente de juego. Repo ~/armada-arcade/.
+mode: subagent
+temperature: 0.1
+steps: 15
+permission:
+  edit: allow
+  write: allow
+---
+
 # 🎮 Armada Arcade — Subagente de Juego
 
 ## Visión General

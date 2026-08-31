@@ -147,6 +147,17 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-cloudflare-workers | Workers/Pages/deploy | ✅ |
 | eco-irc | Servidor IRC InspIRCd (vps-preprod) | ✅ |
 | eco-proxy | Servidor proxy internacional (vps-proxy) | ✅ |
+| eco-vps | Servidor VPS producción (vps-preprod) | ✅ |
+| eco-victoria | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
+| eco-petsuite | Proyecto PetSuite (pets.armada.do) | ✅ |
+| eco-woodly | Proyecto Woodly (woodly.armada.do) | ✅ |
+| eco-taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
+| eco-ragnarok | Servidor de juego Ragnarok | ✅ |
+| eco-nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
+| eco-authentik | SSO Authentik (auth.armada.do) | ✅ |
+| eco-docuseal | Proyecto DocuSeal | ✅ |
+| eco-scriberr | Proyecto Scriberr | ✅ |
+| eco-micaserogou | Proyecto Micaserogou | ✅ |
 | armada-arcade | Proyecto juego multiplayer (TetriNET) | ✅ |
 | wordpress-dev | WordPress+Elementor+EMCP+MCP stack | ✅ |
 | eco-accesos | ~~SSH/access management~~ | 🔴 roto (symlink sin target) |

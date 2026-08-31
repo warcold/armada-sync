@@ -8,9 +8,20 @@ permission:
     "*": deny
     "eco-cloudflare-*": allow
     "eco-irc": allow
+    "eco-proxy": allow
+    "eco-vps": allow
+    "eco-victoria": allow
+    "eco-petsuite": allow
+    "eco-woodly": allow
+    "eco-taohemps": allow
+    "eco-ragnarok": allow
+    "eco-nextcloud": allow
+    "eco-authentik": allow
+    "eco-docuseal": allow
+    "eco-scriberr": allow
+    "eco-micaserogou": allow
     "armada-arcade": allow
     "wordpress-dev": allow
-    "eco-proxy": allow
     "explore": allow
 ---
 
@@ -37,6 +48,17 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | eco-cloudflare-workers | ✅ | "despliega el worker", "tail al worker", "agrega un secret" |
 | eco-irc | ✅ | "estado del IRC", "configura InspIRCd", "usuarios IRC" (vps-preprod) |
 | eco-proxy | ✅ | "estado del proxy", "agrega usuario proxy", "filtros proxy", "monitor proxy" (vps-proxy) |
+| eco-vps | ✅ | "estado del VPS", "contenedores", "servicios Docker", "caddy" (vps-preprod) |
+| eco-victoria | ✅ | "estado de victoria", "vLLM", "gateway LLM", "GPU" (solo lectura) |
+| eco-petsuite | ✅ | "estado de petsuite", "desarrolla pets", "API pets" |
+| eco-woodly | ✅ | "estado de woodly", "desarrolla woodly" |
+| eco-taohemps | ✅ | "estado de taohemps", "desarrolla taohemps" |
+| eco-ragnarok | ✅ | "estado de ragnarok", "servidor de juego", "desarrolla ragnarok" |
+| eco-nextcloud | ✅ | "estado de nextcloud", "desarrolla nextcloud", "whiteboard" |
+| eco-authentik | ✅ | "estado de authentik", "SSO", "usuarios authentik" |
+| eco-docuseal | ✅ | "estado de docuseal", "firma de documentos" |
+| eco-scriberr | ✅ | "estado de scriberr", "desarrolla scriberr" |
+| eco-micaserogou | ✅ | "estado de micaserogou", "desarrolla micaserogou" |
 | armada-arcade | ✅ | "desarrolla el juego", "mejora armada-arcade", "bug del juego" |
 | wordpress-dev | ✅ | "desarrolla WordPress", "prueba Elementor", "MCP WordPress" |
 
