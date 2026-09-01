@@ -55,6 +55,12 @@ Gestión del servidor proxy internacional en EEUU (`vps-proxy`, 31.220.102.176).
 - Permite: Google, Docs, Gmail, GitHub, StackOverflow, LinkedIn (trabajo)
 - ACL en Squid: `http_access deny blocked_domains` (antes de `allow authenticated`)
 
+## ⚠️ IMPORTANTE — Caché deshabilitado (2026-09-01)
+
+- El caché de Squid fue **deshabilitado** (`cache deny all`) porque causaba crashes (`FATAL: assertion failed: store.cc:1911: "sd"` — 9 crashes documentados)
+- Un proxy no necesita caché de disco — solo redirige el tráfico
+- Si alguno reactiva el caché, el crash puede reaparecer
+
 ## Optimización de latencia
 
 - **Timeouts generosos** (2026-08-30): connect_timeout 60s, read_timeout 15min, request_timeout 5min, pconn_timeout 2min

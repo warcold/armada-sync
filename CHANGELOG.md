@@ -1,4 +1,17 @@
-## 2026-08-30
+## 2026-09-01
+
+### [22:00] - Fix CRÍTICO: Squid crasheaba con `store.cc:1911` — deshabilitar caché
+- **Tipo**: infra | servicio | bugfix crítico
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (deshabilitado cache_dir ufs, agregado `cache deny all`), permisos proxy-users.conf
+- **Afecta a**: vps-proxy (proxy server), todos los clientes del proxy
+- **Causa**: Squid crasheaba **9 veces** con `FATAL: assertion failed: store.cc:1911: "sd"` (bug del sistema de caché). Cada crash causaba que el proxy "se cayera" y el servicio SOCKS5 se reiniciaba constantemente (342 veces). El usuario reportaba caídas frecuentes.
+- **Estado**: ✅ resuelto — sin crashes desde el fix
+- **Notas**:
+  - **Causa raíz**: el caché de Squid (cache_dir ufs) tiene un bug (`store.cc:1911: "sd"`) que causa crashes aleatorios. Un proxy no necesita caché, así que se deshabilitó por completo.
+  - **Fix**: eliminado `cache_dir ufs` y agregado `cache deny all` — sin caché = sin bug
+  - **Resultado**: SOCKS5 ya no se reinicia constantemente, Squid estable, Gmail 0.08s, Google 0.00s, SOCKS5 Gmail 0.10s
+  - **Adicional**: errores `Permission denied` en proxy-users.conf — permisos verificados (root:proxy 640, proxy puede leer correctamente)
+  - **Monitorear**: si vuelve a crashear, el bug puede reaparecer en upgrades de Squid
 
 ### [21:30] - Fix CRÍTICO: Aumentar límite de filedescriptors de Squid (1024 → 65536)
 - **Tipo**: infra | servicio | bugfix crítico
