@@ -62,6 +62,13 @@ Gestión del servidor proxy internacional en EEUU (`vps-proxy`, 31.220.102.176).
 - **Motivo**: usuarios en RD (República Dominicana) tienen latencia de red hacia EEUU; los timeouts generosos evitan que las conexiones se corten prematuramente
 - **Nota**: el servidor y el proxy están sanos (Gmail 0.07s desde el servidor); la latencia RD-EEUU es normal
 
+## Filedescriptors (CRÍTICO)
+
+- **Límite aumentado a 65536** (2026-08-30): antes era 1024 (default), lo que saturaba con usuarios que tienen muchas conexiones abiertas (websockets, apps, pestañas)
+- Config: `max_filedescriptors 65536` en squid.conf + `LimitNOFILE=65536` en `/etc/systemd/system/squid.service.d/override.conf`
+- **Síntoma de saturación**: `error:transaction-end-before-headers` en logs y tiempos enormes (minutos) en conexiones
+- **Verificar**: `cat /proc/$(pgrep -f 'squid-1' | head -1)/limits | grep 'open files'` debe mostrar 65536
+
 ## Rate limiting
 
 - **SIN límite de velocidad** (confirmado 2026-08-30): el delay_pools se eliminó porque causaba latencia extrema y los filtros de contenido ya bloquean lo que consume mucho (streaming, juegos, etc.)

@@ -1,5 +1,18 @@
 ## 2026-08-30
 
+### [21:30] - Fix CRÍTICO: Aumentar límite de filedescriptors de Squid (1024 → 65536)
+- **Tipo**: infra | servicio | bugfix crítico
+- **Modificado**: vps-proxy (31.220.102.176) — /etc/squid/squid.conf (max_filedescriptors 65536), /etc/systemd/system/squid.service.d/override.conf (LimitNOFILE 65536)
+- **Afecta a**: vps-proxy (proxy server), usuario jovtransport (RD)
+- **Causa**: el cliente jovtransport reportó que el servicio no le funciona. Diagnóstico: el usuario tiene 172 conexiones abiertas (websockets, apps, pestañas) y Squid tenía un límite de filedescriptors de solo 1024. Al saturarse, las nuevas conexiones se colgaban → "no funciona".
+- **Estado**: ✅ resuelto — límite aumentado a 65536
+- **Notas**:
+  - **Causa raíz**: Squid soft limit de filedescriptors = 1024 (default). El usuario con muchas conexiones (websockets de intercom, whatsapp, google, apps) saturaba el límite.
+  - **Fix**: `max_filedescriptors 65536` en squid.conf + `LimitNOFILE=65536` en systemd override
+  - **Verificado**: límite ahora 65536 (antes 1024), Gmail 0.07s, SOCKS5 0.10s, usuario con 81 conexiones (antes 172)
+  - **Síntoma en logs**: `error:transaction-end-before-headers` (conexiones que se cortan antes de enviar headers) y tiempos enormes (101 min, 124 min) por conexiones que se colgaban
+  - **Este era el problema real** — no la latencia RD-EEUU, sino la saturación de filedescriptors
+
 ### [21:00] - Diagnóstico: Proxy funcional, problema es la ruta RD-EEUU del usuario
 - **Tipo**: infra | servicio | diagnóstico
 - **Modificado**: ninguno (solo diagnóstico)
