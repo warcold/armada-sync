@@ -1,3 +1,28 @@
+## 2026-09-03
+
+### [00:55] - MaganTech Store v2.0: llave API corregida + plugin e-commerce completo
+- **Tipo**: proyecto | plugin | wordpress
+- **Modificado**: `/home/warcold/dev/wordpress/wp-content/plugins/erpecomm-alfredo-pro/` (v1.0.0 → v2.0.0)
+- **Afecta a**: kalimete (WordPress local, localhost:8090)
+- **Causa**: MaganTech tenía API key errónea; inventario de 400 productos requería paginación + búsqueda + carrito + checkout funcional
+- **Estado**: ✅ completado y probado end-to-end
+- **Detalles**:
+  - API key reemplazada: `iak_hT0RO7VnY2UpPT9q0tbqdfgEaTgkEQRYoeQGTaDM` (backup en `flowapi-ecommerce.php.bkup` dentro del contenedor)
+  - Paginación AJAX de 15 productos + botón "Cargar más" (API de MaganTech no soporta paginación nativa — se pagina en PHP)
+  - Buscador con parámetro `?buscar=` (evita colisión con WP search nativo `?s=`)
+  - Carrito persistente vía **cookie** (sessions PHP rotas en contenedor: `session.save_path` vacío)
+  - Checkout guest probado contra ERP: creó `cliente_id:56`, pedido registrado OK
+  - Template engine corregido (ahora respeta `wp_head()`/`wp_footer()` para cargar assets)
+  - URLs del sitio corregidas a `http://localhost:8090`
+  - Páginas: /productos/ [flowapi_productos], /carrito/ [flowapi_carrito], /checkout/ [flowapi_checkout]
+- **Limitaciones encontradas en API MaganTech**:
+  - No hay endpoints de auth (/auth/login, /auth/register → 404). Usuarios = WordPress nativo.
+  - Sin parámetros limit/page — devuelve los 400 productos siempre
+  - /tienda/categorias devuelve HTML (Laravel view), no JSON — select de categorías queda pendiente
+  - Varios productos tienen precio RD$ 0.00 (dato del ERP, no bug del plugin)
+  - `"No hay usuarios activos en la instancia"` en algunas respuestas (config del ERP MaganTech)
+
+
 ## 2026-09-02
 
 ### [01:00] - Restaurar acceso SSH de justin_t en vps-preprod (llave ED25519)
