@@ -1,23 +1,11 @@
 ---
-description: Subagente del proyecto Woodly (woodly.armada.do) — landing + e-commerce apoyado en Alfredo Pro Ecomm. Corre en vps-preprod (Docker) y kalimete (desarrollador).
-tools:
-  - bash
-  - read
-  - write
-  - edit
-  - glob
-  - grep
-  - webfetch
-model: nvidia/moonshotai/kimi-k3
-mode: agent
+description: Subagente del proyecto Woodly (woodly.armada.do) — landing + e-commerce apoyado en Alfredo Pro Ecomm. Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del frontend Woodly. Corre en vps-preprod (Docker) y kalimete (desarrollo).
+mode: subagent
+temperature: 0.1
+steps: 15
 permission:
   edit: allow
   write: allow
-  bash: allow
-  webfetch: allow
-temperature: 0.1
-max_steps: 15
-hidden: true
 ---
 
 # Woodly — Landing Page E-commerce
