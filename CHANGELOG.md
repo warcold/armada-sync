@@ -1,5 +1,42 @@
 ## 2026-09-06
 
+### [16:05] - MaganTech Store: revalidación ERP tras fixes del backend (v2.2)
+- **Tipo**: proyecto | api | wordpress
+- **Modificado**: `/home/warcold/dev/wordpress/wp-content/plugins/erpecomm-alfredo-pro/`
+- **Afecta a**: kalimete (localhost:8090)
+- **Causa**: El dueño del ERPipos reportó haber corregido los issues reportados
+- **Estado**: ✅ flujo completo validado
+
+**Qué mejoró el ERP (confirmado vía API)**:
+- ✅ `/tienda/categorias` ahora devuelve JSON limpio con **18 categorías** (antes: HTML basura)
+- ✅ `ecomm/carts` enriquecido: ahora devuelve data completa de productos (precio_compra, marca, especialización, etc.)
+- ✅ `tenant_id: 10` ahora se resuelve correctamente en endpoints ecomm (MaganTech = tenant 10)
+- ✅ Inventario limpiado: 400 → **101 productos** (sin duplicados)
+- ✅ Checkout funciona con usuario logueado WP (cliente_id: 59, 60, 61 creados en pruebas)
+
+**Mejoras que hice en el plugin**:
+- ✅ Endpoint AJAX nuevo `flowapi_get_categorias` — el select de filtros ahora carga las 18 categorías reales del ERP
+- ✅ Bug fix: `mb_strcasecmp()` no existe en PHP → reemplazado por `strcasecmp()` (categorías ASCII)
+- ✅ Bug fix: null-safety en filtro de categoría (`categoria` puede venir null del ERP)
+
+**Sigue pendiente en el ERP (reportado, no crítico)**:
+- 🔴 `/erpipos/v3/customers` (GET/POST) sigue devolviendo "No se pudo resolver la instancia del tenant" — los endpoints v3 de clientes admin quedan rotos, pero **el flujo e-commerce completo no los necesita** (checkout_guest crea el cliente solo)
+- ⚠️ `APP_DEBUG=true` sigue activo — stack traces expuestos en errores (riesgo seguridad)
+- ⚠️ de las 18 categorías del ERP, solo 3 tienen productos (Computadoras 52, Cables 47, Almacenamiento 1) — el admin de MaganTech decide qué publicar
+
+**Nota comportamiento ERP**: cada checkout guest crea un cliente NUEVO (56, 59, 60, 61). El plugin siempre vincula el más reciente al usuario WP.
+
+**Flujo completo probado OK (2026-09-06)**:
+1. Login WP (cliente.prueba) ✅
+2. Productos paginados 15/101 + "Cargar más" ✅
+3. Búsqueda "laptop" → 36 ✅
+4. Filtro categoría "Cables" → 47 ✅
+5. Carrito cookie persiste ✅
+6. Checkout → ERP cliente_id:61 creado ✅
+7. Mi Cuenta muestra 2 pedidos con fechas y totales ✅
+
+## 2026-09-06
+
 ### [02:55] - Fix: frontmatter inválido en eco-woodly y eco-alfredo-ecomm rompía el arranque de opencode
 - **Tipo**: agente | config
 - **Modificado**: `agents/eco-woodly.md`, `agents/eco-alfredo-ecomm.md`, symlinks en `~/.config/opencode/agent/`
