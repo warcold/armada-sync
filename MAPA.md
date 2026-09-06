@@ -85,8 +85,11 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### 3. vps-preprod (154.53.35.102) — VPS Production
 - User: root, SSH 1333, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-preprod`
-- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do
+- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do, **alfredo-pro-ecomm (ERP backend)**
 - DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, ragnarok.cp.armada.do, scriberr.armada.do, whiteboard.armada.do, woodly.armada.do → 154.53.35.102 (CF proxied)
+- **NUEVO 2026-09-05**: Backend Ecomm ERP — Node.js (3004) + Postgres + Redis
+- **NUEVO 2026-09-05**: Frontend Woodly (cliente Principal del ERP)
+- Proyectos locales: kalimete, victoria, jonas (fuera), Windows (10.0.0.64)
 - UFW: active (solo rangos CF en DOCKER-USER)
 - OpenVPN: active (openvpn@server.service)
 
@@ -150,8 +153,10 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-vps | Servidor VPS producción (vps-preprod) | ✅ |
 | eco-victoria | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
 | eco-petsuite | Proyecto PetSuite (pets.armada.do) | ✅ |
-| eco-woodly | Proyecto Woodly (woodly.armada.do) | ✅ |
+| eco-woodly | Proyecto Woodly (woodly.armada.do) — cliente principal ERP | ✅ |
+| eco-alfredo-ecomm | Backend ERP Alfredo Pro Ecomm (multin tenant) — NUEVO (2026-09-05) | ✅ |
 | eco-taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
+| eco-micaserogou | Proyecto Micaserogou (micaserogou.com) | — ERP comicionado por separado |
 | eco-ragnarok | Servidor de juego Ragnarok | ✅ |
 | eco-nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
 | eco-authentik | SSO Authentik (auth.armada.do) | ✅ |

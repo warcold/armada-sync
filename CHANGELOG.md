@@ -1,6 +1,39 @@
-## 2026-09-03
+## 2026-09-05
 
-### [00:35] - MaganTech Store v2.1: integración usuarios WP ↔ clientes ERP + hallazgos API
+### [17:00] - Alfredo Pro Ecomm: nuevo backend ERP + integración con Woodly
+- **Tipo**: infra | proyecto | backend | docker
+- **Modificado**: `~/projects/alfredo-pro-ecomm/` + `~/projects/woodly/` (frontend)
+- **Afecta a**: kalimete, vps-preprod
+- **Causa**: Necesitamos backend propio para e-commerce multi-tenant (antes el API era de terceros FlowHub)
+- **Estado**: ✅ Backend operativo en Docker (API :3004, Postgres:5432, Redis:6379)
+- **Notas**: 
+  - Backend completo: stores, products, carts, orders, customers, deals, admin panel
+  - Woodly adaptado: api.ts, StoreContext, CartContext → consume API en lugar de mocks
+  - Puertos: API→3004, DB→5432, Redis→6379
+  - Próximo despliegue: VPS (dockerizado + reverse proxy por Caddy)
+  - Documentación: `~/projects/alfredo-pro-ecomm/docs/DESIGN.md`, flowhub API de referencia
+  - Dockerfile del ERP: postgres + redis + api (HEALTHCHECK incluídos)
+  - Test local (y credenciales para demo):
+    - Store slug: "woodly-park" — tenant de prueba
+    - Admin: admin@woodly.armada.do / admin123
+    - Customer: juan@example.com / password123
+  - Endpoint `GET /v1/stores/woodly-park/config` added
+  - Cart: create + add items + update + submit dedicado a cada tenant
+  - Carnoversión frontend: http://localhost:5174/
+  - Frontend changes:
+    - `src/services/api.ts` (nuevo)
+    - `src/context/StoreContext.tsx` (nuevo)
+    - `src/hooks/useProducts.ts` (nuevo)
+    - `mockProducts.ts` (legacy — reemplazado por API)
+    - `CartDrawer.tsx` — actualizado con submit vía API
+    - `App.tsx` — actualizado con provider StoreContext
+  - El framework base en el frontend es referencia para futuros tenants (micaserogou, wisp, etc.)
+  - Ruta en Docker: alfredo-ecomm-api (contenedor) — expone puerto 3004
+  - Proyectos verificados corren sobre: npm run dev; docker compose up -d
+
+---
+
+## 2026-09-03
 - **Tipo**: proyecto | plugin | wordpress | api
 - **Modificado**: `/home/warcold/dev/wordpress/wp-content/plugins/erpecomm-alfredo-pro/`
 - **Afecta a**: kalimete (WordPress local, localhost:8090)
