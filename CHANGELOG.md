@@ -1,3 +1,18 @@
+## 2026-09-07
+
+### [12:09] - Proxmark3: subagente `proxmark-cards` creado en kalimete
+- **Tipo**: agente | infra
+- **Modificado**: `agents/proxmark-cards.md`, `agents/kalimete.md`, `~/.config/opencode/agent/proxmark-cards.md`
+- **Afecta a**: kalimete (PM3 en /dev/ttyACM0)
+- **Causa**: Proxmark dejó de ser parte de Victoria, ahora es tool local de kalimete. Se crea subagente dedicado con documentación completa de todas las capacidades (cards + tokens + LF + HF + emulation + sniffing).
+- **Estado**: ✅ sincronizado
+- **Notas**:
+  - Dumps migrados: `~/.victoria/pm3-dumps/` → `~/.proxmark3/dumps/` (limpia ref a Victoria)
+  - `pm3` alias verificada (`/usr/bin/pm3`)
+  - Subagente incluye: MIFARE Classic/Ultralight/DESFire/Plus, HID, EM4100, T55xx, NFC, iClass, Wiegand, EMV, FeliCa, LEGIC, Tesla, Gallagher, trace, hw, data analysis
+  - ⚠️ **Bug conocido**: en non-interactive mode, el campo HF se apaga entre invocations → "Can't select card". Solución: encadenar `hf 14a reader ; <comando>`
+  - Agrega `proxmark-cards` al `permission.task` de kalimete
+
 ## 2026-09-06
 
 ### [16:05] - MaganTech Store: revalidación ERP tras fixes del backend (v2.2)

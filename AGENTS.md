@@ -75,6 +75,7 @@ Cada máquina ejecuta `sync.sh` cada 5 min vía cron. Arquitectura **Hub Único*
 | **eco-micaserogou.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto Micaserogou (micaserogou.com) |
 | **armada-arcade.md** | ✅ | subagent, hidden | ❌ TAB | Proyecto juego multiplayer (TetriNET + plugins) |
 | **wordpress-dev.md** | ✅ | subagent, hidden | ❌ TAB | Stack WordPress + Elementor + EMCP + MCP |
+| **proxmark-cards.md** | ✅ | subagent, hidden | ❌ TAB | Proxmark3 RFID/NFC — lectura, clonado, sniffing, tokens (kalimete /dev/ttyACM0) |
 | ~~eco-accesos.md~~ | 🔴 | — | ❌ | roto (symlink sin target, eliminado) |
 | ~~eco-voice.md~~ | 🔴 | — | ❌ | roto (symlink sin target, servicio ELIMINADO) |
 | **plan** | ✅ | built-in | ✅ TAB | Planificar proyectos nuevos |

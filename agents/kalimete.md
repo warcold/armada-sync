@@ -22,6 +22,7 @@ permission:
     "eco-micaserogou": allow
     "armada-arcade": allow
     "wordpress-dev": allow
+    "proxmark-cards": allow
     "explore": allow
 ---
 
@@ -61,6 +62,7 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | eco-micaserogou | ✅ | "estado de micaserogou", "desarrolla micaserogou" |
 | armada-arcade | ✅ | "desarrolla el juego", "mejora armada-arcade", "bug del juego" |
 | wordpress-dev | ✅ | "desarrolla WordPress", "prueba Elementor", "MCP WordPress" |
+| proxmark-cards | ✅ | "lee la tarjeta", "clona tarjeta", "dump", "sniff", "audita", "mifare", "hid", "em4100", "t55xx", "rfid", "nfc", "proxmark", "pm3" |
 
 ### Subagentes rotos (no funcionan)
 | Agente | Estado | Razón |
