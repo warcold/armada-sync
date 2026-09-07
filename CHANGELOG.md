@@ -1,10 +1,17 @@
 ## 2026-09-07
 
-### [12:09] - Proxmark3: subagente `proxmark-cards` creado en kalimete
+### [12:50] - Proxmark: renombrado proxmark-cards → proxmark
+- **Tipo**: agente | refactor
+- **Modificado**: `agents/proxmark.md`, `agents/kalimete.md`, `AGENTS.md`
+- **Afecta a**: kalimete (opencode)
+- **Causa**: El nombre `proxmark-cards` era limitante — el agente cubre tokens, LF 125kHz, sniffing, emulation, data analysis. Mucho más que "cards". Se generaliza el nombre.
+- **Estado**: ✅ sincronizado
+
+### [12:09] - Proxmark3: subagente `proxmark` creado en kalimete
 - **Tipo**: agente | infra
-- **Modificado**: `agents/proxmark-cards.md`, `agents/kalimete.md`, `~/.config/opencode/agent/proxmark-cards.md`
+- **Modificado**: `agents/proxmark.md`, `agents/kalimete.md`, `~/.config/opencode/agent/proxmark.md`
 - **Afecta a**: kalimete (PM3 en /dev/ttyACM0)
-- **Causa**: Proxmark dejó de ser parte de Victoria, ahora es tool local de kalimete. Se crea subagente dedicado con documentación completa de todas las capacidades (cards + tokens + LF + HF + emulation + sniffing).
+- **Causa**: Proxmark dejó de ser parte de Victoria, ahora es tool local de kalimete. Se crea subagente dedicado con documentación completa de todas las capacidades (cards + tokens + LF + HF + emulation + sniffing). Renombrado de `proxmark-cards` a `proxmark` en sesión misma tarde para reflejar alcance completo del agente.
 - **Estado**: ✅ sincronizado
 - **Notas**:
   - Dumps migrados: `~/.victoria/pm3-dumps/` → `~/.proxmark3/dumps/` (limpia ref a Victoria)
