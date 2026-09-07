@@ -18,7 +18,7 @@
   - `pm3` alias verificada (`/usr/bin/pm3`)
   - Subagente incluye: MIFARE Classic/Ultralight/DESFire/Plus, HID, EM4100, T55xx, NFC, iClass, Wiegand, EMV, FeliCa, LEGIC, Tesla, Gallagher, trace, hw, data analysis
   - ⚠️ **Bug conocido**: en non-interactive mode, el campo HF se apaga entre invocations → "Can't select card". Solución: encadenar `hf 14a reader ; <comando>`
-  - Agrega `proxmark-cards` al `permission.task` de kalimete
+  - Agrega `proxmark` al `permission.task` de kalimete
 
 ## 2026-09-06
 
