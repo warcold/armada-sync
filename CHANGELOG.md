@@ -1,5 +1,26 @@
 ## 2026-09-09
 
+### [13:00] - ERP E-Commerce Connector: optimización rendimiento — carrito localStorage + caché productos (v2.3.0)
+- **Tipo**: proyecto | wordpress | frontend | performance
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - `assets/js/connector.js` — carrito en localStorage (instantáneo), caché de productos, toast, sync background
+  - `includes/class-erpc-cart.php` — nuevo endpoint `erpc_sync_cart`
+  - `includes/class-erpc-shortcodes.php` — nuevo endpoint `erpc_get_products_json` (133 productos)
+  - `erp-ecomm-connector.php` — añadido `placeholder` al config
+  - `assets/css/connector.css` — toast, botón agregado, skeleton
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: El flujo anterior hacía múltiples round-trips AJAX por acción y cada consulta al carrito llamaba a la ERP. Navegación lenta y sin actualización en tiempo real.
+- **Estado**: ✅ optimización completa, PHP/JS syntax OK, página HTTP 200, endpoint JSON devuelve 133 productos
+- **Notas**:
+  - Carrito movido a localStorage: agregar/actualizar/eliminar es instantáneo (sin round-trip)
+  - Sync al servidor en background (`erpc_sync_cart`) para persistencia entre sesiones
+  - Caché de productos en localStorage (TTL 5 min) para filtros instantáneos
+  - Precarga del caché en background al cargar la página
+  - Toast notification + feedback visual al agregar al carrito
+  - Git push OK: commit `387d07d` (v2.3.0)
+
+## 2026-09-09
+
 ### [12:00] - ERP E-Commerce Connector: rediseño profesional frontend + fix navegación (v2.2.0)
 - **Tipo**: proyecto | wordpress | frontend | bugfix
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
