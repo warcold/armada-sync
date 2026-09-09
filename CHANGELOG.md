@@ -1,5 +1,29 @@
 ## 2026-09-09
 
+### [14:00] - ERP E-Commerce Connector: rediseño completo de todas las páginas + landing profesional (v2.4.0)
+- **Tipo**: proyecto | wordpress | frontend | diseño
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - `templates/partials/page-wrapper.php` — NUEVO wrapper header/footer
+  - `templates/landing.php` — NUEVO landing (hero imagen, beneficios, categorías, destacados, CTA)
+  - `templates/auth/form.php` — login/registro rediseñado (card, tabs, iconos)
+  - `templates/ecomm/checkout.php` — checkout 2 columnas con resumen sticky
+  - `templates/customer/profile.php` — perfil con sidebar + contenido
+  - `templates/customer/orders.php`, `loyalty.php` — rediseñados
+  - `includes/class-erpc-templates.php` — checkout/login/mi-cuenta envueltos con header/footer
+  - `includes/class-erpc-shortcodes.php` — nuevo shortcode `[erpc_landing]`
+  - `assets/css/connector.css` — estilos para todas las páginas nuevas
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: Solo productos y carrito tenían estilo. Checkout, login, mi-cuenta, órdenes y lealtad se veían "peladas" (sin header/footer del plugin).
+- **Estado**: ✅ rediseño completo, PHP syntax OK, todas las páginas HTTP 200, JS IDs intactos
+- **Notas**:
+  - Landing con hero de imagen Unsplash + overlay gradiente + CTA
+  - Página de inicio (magantech-inicio) actualizada con `[erpc_landing]`
+  - Checkout/login/mi-cuenta ahora incluyen header/footer del plugin (antes peladas)
+  - Inputs con iconos, cards, sticky summary, sidebar de perfil
+  - Git push OK: commit `05f5b37` (v2.4.0)
+
+## 2026-09-09
+
 ### [13:00] - ERP E-Commerce Connector: optimización rendimiento — carrito localStorage + caché productos (v2.3.0)
 - **Tipo**: proyecto | wordpress | frontend | performance
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
