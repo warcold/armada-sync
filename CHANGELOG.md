@@ -1,5 +1,25 @@
 ## 2026-09-09
 
+### [12:00] - ERP E-Commerce Connector: rediseño profesional frontend + fix navegación (v2.2.0)
+- **Tipo**: proyecto | wordpress | frontend | bugfix
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - `assets/css/connector.css` — rediseño completo profesional (variables CSS, header sticky, hero gradiente, categorías pills, grid responsive, cards hover)
+  - `assets/js/connector.js` — handlers de categorías, búsqueda debounce, load more con estado
+  - `templates/ecomm/products.php` — usa `#erpc-grid` (el que el JS espera)
+  - `templates/partials/product-grid.php` — emite solo cards (sin wrapper)
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: El frontend no se veía profesional y las categorías + "cargar más" no funcionaban por desconexión template↔JS
+- **Estado**: ✅ rediseño completo, PHP/JS syntax OK, página HTTP 200, 15 cards server-rendered
+- **Notas**:
+  - Fix crítico: template usaba `#erpc-products-container` pero JS esperaba `#erpc-grid`
+  - Categorías `.erpc-cat-btn` ahora usan nombre real en `data-category` (el handler AJAX compara con strcasecmp)
+  - Load more lee estado actual de búsqueda/categoría y resetea a página 1 al filtrar
+  - Búsqueda con debounce 400ms
+  - Estilo inspirado en twinstechd.com (tienda moderna)
+  - Git push OK: commit `5df4344` (v2.2.0)
+
+## 2026-09-09
+
 ### [10:00] - ERP E-Commerce Connector: refactor crítico — Auth token-based → email-based (v2.1.0)
 - **Tipo**: proyecto | wordpress | api | bugfix
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecmm-connector/
