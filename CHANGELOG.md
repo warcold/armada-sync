@@ -1,5 +1,22 @@
 ## 2026-09-09
 
+### [15:00] - WordPress dev: dominio local wordpress.kalimete.local configurado
+- **Tipo**: red | config | wordpress
+- **Modificado**: WordPress dev (kalimete, contenedor wordpress-local)
+- **Afecta a**: kalimete + máquinas de la red local
+- **Causa**: Facilitar el acceso al WordPress dev desde cualquier máquina de la red con un dominio local en lugar de localhost.
+- **Estado**: ✅ configurado, HTTP 200
+- **Notas**:
+  - Dominio: `http://wordpress.kalimete.local:8090`
+  - `/etc/hosts` en kalimete: `10.0.0.106 wordpress.kalimete.local`
+  - WordPress `home_url`/`site_url` actualizados a `http://wordpress.kalimete.local:8090`
+  - Los enlaces internos ahora usan el dominio (no localhost)
+  - Para otras máquinas: añadir `10.0.0.106 wordpress.kalimete.local` a su `/etc/hosts`
+  - ⚠️ `FORCE_SSL_ADMIN: yes` en wp-config — el admin redirige a HTTPS (solo afecta wp-admin)
+  - Plan: al terminar, hacer backup con plugin y subir a producción WordPress real
+
+## 2026-09-09
+
 ### [14:00] - ERP E-Commerce Connector: rediseño completo de todas las páginas + landing profesional (v2.4.0)
 - **Tipo**: proyecto | wordpress | frontend | diseño
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
