@@ -1,19 +1,20 @@
 ## 2026-09-09
 
-### [15:00] - WordPress dev: dominio local wordpress.kalimete.local configurado
-- **Tipo**: red | config | wordpress
-- **Modificado**: WordPress dev (kalimete, contenedor wordpress-local)
-- **Afecta a**: kalimete + máquinas de la red local
-- **Causa**: Facilitar el acceso al WordPress dev desde cualquier máquina de la red con un dominio local en lugar de localhost.
-- **Estado**: ✅ configurado, HTTP 200
+### [15:30] - WordPress dev: package de deploy completo (plugin + guía)
+- **Tipo**: wordpress | deploy | proyecto
+- **Modificado**: /home/warcold/dev/wordpress/erp-ecmm-deploy.zip
+  - `deploy-package/erp-ecmm-connector.zip` — Plugin completo v2.4.0 listo para instalar (48K)
+  - `deploy-package/DEPLOY-GUIA.md` — Guía de instalación en 3 pasos para cualquier WordPress
+- **Afecta a**: kalimete (WordPress dev)
+- **Causa**: Facilitar deploy rápido a producción sin Elementor ni configuraciones manuales.
+- **Estado**: ✅ package listo, ZIP descargable
 - **Notas**:
-  - Dominio: `http://wordpress.kalimete.local:8090`
-  - `/etc/hosts` en kalimete: `10.0.0.106 wordpress.kalimete.local`
-  - WordPress `home_url`/`site_url` actualizados a `http://wordpress.kalimete.local:8090`
-  - Los enlaces internos ahora usan el dominio (no localhost)
-  - Para otras máquinas: añadir `10.0.0.106 wordpress.kalimete.local` a su `/etc/hosts`
-  - ⚠️ `FORCE_SSL_ADMIN: yes` en wp-config — el admin redirige a HTTPS (solo afecta wp-admin)
-  - Plan: al terminar, hacer backup con plugin y subir a producción WordPress real
+  - Package: `/home/warcold/dev/wordpress/erp-ecmm-deploy.zip` (50K)
+  - Incluye: plugin ZIP + guía de deploy
+  - Deploy en 3 pasos: instalar plugin → configurar API → crear páginas con shortcodes
+  - NO requiere Elementor (usa shortcodes del plugin)
+  - Páginas: Inicio/[erpc_landing], Productos/[erpc_products], Carrito/[erpc_cart], Checkout/[erpc_checkout], Login/[erpc_login], Mi Cuenta/[erpc_profile]
+  - Los shortcodes se registran automáticamente al activar el plugin
 
 ## 2026-09-09
 
