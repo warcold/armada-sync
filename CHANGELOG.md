@@ -1,3 +1,28 @@
+## 2026-09-08
+
+### [22:24] - ERP E-Commerce Connector: plugin reescrito (WordPress frontend + ERP backend)
+- **Tipo**: proyecto | wordpress | api
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: Reemplazo del plugin MaganTech antiguo (erpecomm-alfredo-pro) por nuevo connector genérico multi-tenant
+- **Estado**: ✅ activado, conectado al ERP
+- **Notas**:
+  - WordPress = capa de presentación ONLY (HTML + CSS + JS + shortcodes)
+  - ERP FlowApi = toda la lógica de negocio (productos, auth, carrito, checkout, clientes)
+  - 22 archivos creados (plugin completo, PHP syntax OK)
+  - Plugin activado en WordPress (reemplaza erpecomm-alfredo-pro)
+  - Páginas actualizadas: /productos/, /carrito/, /checkout/, /mi-cuenta/, /login/
+  - API ERP conectada: 132 productos, 18 categorías
+  - AJAX endpoints funcionando (erpc_get_products, erpc_get_categories, erpc_checkout)
+  - CSS/JS cargando correctamente (connector.css, connector.js)
+  - Shortcodes: [erpc_products], [erpc_cart], [erpc_checkout], [erpc_auth], [erpc_customer], [erpc_orders], [erpc_loyalty]
+  - Template redirect funcional (products.php incluye header.php con wp_head/wp_footer)
+  - Sanitización de categorías corregida (clean copy approach para evitar PHP references)
+  - Configurar: api_url=https://erpipos.armada.do/api, api_key=iak_hT0RO7..., tenant_id=10
+  - Branding: MaganTech Store, moneda DOP, símbolo RD$
+  - Compatible con Elementor (shortcodes funcionan en widgets Elementor)
+  - Multi-tenant: un plugin puede servir a múltiples clientes del ERPipos
+
 ## 2026-09-07
 
 ### [12:50] - Proxmark: renombrado proxmark-cards → proxmark
