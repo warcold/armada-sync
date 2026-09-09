@@ -1,3 +1,31 @@
+## 2026-09-09
+
+### [10:00] - ERP E-Commerce Connector: refactor crítico — Auth token-based → email-based (v2.1.0)
+- **Tipo**: proyecto | wordpress | api | bugfix
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecmm-connector/
+  - `class-erpc-auth.php` — register/login ahora usa endpoints reales de la ERP
+  - `class-erpc-api.php` — endpoints corregidos (sin duplicar /api/ en la URL)
+  - `connector.js` — localStorage ahora guarda email + customer_id (no JWT token)
+  - `CHANGELOG.md` — documentación completa v1.0.0 → v2.0.0 → v2.1.0
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: La ERP FlowApi NO usa JWT tokens. Los endpoints `/erpipos/v3/auth/login` y `/erpipos/v3/auth/register` retornan 404. Se implementa email-based lookup.
+- **Estado**: ✅ refactor completo, PHP syntax OK, git push OK (2 commits: v2.0.0 + v2.1.0)
+- **Notas**:
+  - **BREAKING**: `erpc_auth_token` (JWT) → `erpc_auth_email` + `erpc_customer`
+  - **BUG FIX**: base_url + `/api/customers` = `/api/api/customers` → 404 corregido
+  - Endpoints reales confirmados:
+    - ✅ `POST /customers` → registro (201)
+    - ✅ `GET /customers?email=X` → login (200, pero NO filtra — devuelve todos)
+    - ✅ `GET /tienda/productos?limit=100` → 133 productos (200)
+    - ✅ `GET /tienda/categorias` → 18 categorías (200)
+    - ✅ `POST /ecomm/carts` → crear carrito (201, body exacto requerido)
+    - ❌ `/erpipos/v3/auth/*` → 404 (no existen)
+    - ❌ `/customers/:id` → 404 (no existe GET individual)
+  - ⚠️ `?email=X` devuelve TODOS los clientes (35 en tenant) — se debe filtrar manualmente en PHP/JS
+  - Repo GitHub creado: `github.com/warcold/erp-ecmm-connector` (2 commits: v2.0.0 + v2.1.0)
+  - CHANGELOG.md completo con diagramas de arquitectura y flujos
+  - Checkout endpoints no encontrados — se usan mocks/placeholder por ahora
+
 ## 2026-09-08
 
 ### [22:24] - ERP E-Commerce Connector: plugin reescrito (WordPress frontend + ERP backend)
