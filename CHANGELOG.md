@@ -1,5 +1,36 @@
 ## 2026-09-10
 
+### [18:10] - Authentik: integración OIDC centralizada (Nextcloud + DocuSeal)
+- **Tipo**: infra | sso | oidc | seguridad
+- **Modificado**: vps-preprod (Authentik + Nextcloud + DocuSeal)
+  - `akadmin` → agregado al grupo `authentik Admins` (superuser corregido)
+  - Signing key RS256 creada: `authentik OIDC RS256 Signing Key`
+  - Providers OIDC Nextcloud y DocuSeal: `authentication_flow` = `default-authentication-flow` + `signing_key` asignada
+  - Nextcloud `user_oidc`: provider_url, client_id, client_secret configurados
+  - Cron `*/15 * * * *` para `/opt/authentik/sync_users.sh`
+- **Afecta a**: auth.armada.do, nextcloud.armada.do, docuseal.armada.do
+- **Causa**: Centralizar todo el login del ecosistema Armada vía Authentik (SSO OIDC). Antes Nextcloud usaba login interno y los providers OIDC estaban sin flujo de autenticación.
+- **Estado**: ✅ integración operativa
+- **Notas**:
+  - DocuSeal ya tenía OIDC configurado (env vars) — solo se corrigió el authentication_flow en Authentik.
+  - Patrón repetible establecido para futuros servicios: Application + Provider OIDC → asignar `default-authentication-flow` + signing key RS256 → en el servicio `provider_url=https://auth.armada.do/application/o/<slug>/` + client_id/secret.
+  - Ningún client_secret expuesto en reportes.
+
+### [18:05] - Nextcloud: fix SSRF para OIDC/Authentik (allow_local_remote_servers)
+- **Tipo**: proyecto | nextcloud | oidc | seguridad
+- **Modificado**: vps-preprod (config Nextcloud vía occ)
+  - `allow_local_remote_servers` → `true` (boolean)
+- **Afecta a**: nextcloud.armada.do (contenedor `nextcloud-stack-nextcloud-1`)
+- **Causa**: El flujo OIDC con Authentik fallaba por la protección SSRF de Nextcloud 33 (`DnsPinMiddleware`). Dentro del contenedor, `auth.armada.do` resuelve a `172.18.0.8` (IP interna del contenedor Caddy), que Nextcloud bloqueaba por ser IP privada/local.
+- **Estado**: ✅ fix aplicado y verificado
+- **Notas**:
+  - Comando: `docker exec nextcloud-stack-nextcloud-1 php occ config:system:set allow_local_remote_servers --value=true --type=boolean`
+  - Verificación: `config:system:get allow_local_remote_servers` → `true`
+  - Flujo OIDC OK: `/apps/user_oidc/login/2` → **303** a `auth.armada.do/application/o/authorize/...` (PKCE S256)
+  - Root `/` → **302** a `/index.php/login`
+  - Logs limpios: 0 coincidencias de errores OIDC/SSRF en los últimos 200 registros
+  - Provider `authentik` (id 2) configurado correctamente (clientSecret enmascarado)
+
 ### [11:50] - ERP E-Commerce Connector: textos profesionales + seguridad en admin (v2.6.2)
 - **Tipo**: proyecto | wordpress | ui | seguridad
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/

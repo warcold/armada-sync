@@ -35,6 +35,17 @@ Gestión del proyecto **Nextcloud** (`nextcloud.armada.do`) y su whiteboard.
 
 - Config OK y verificado (mail_smtpauthtype=LOGIN, envío de prueba 250 por mail.armada.do)
 
+## OIDC / Authentik (SSO)
+
+- App `user_oidc` configurada en Nextcloud con provider `authentik` (id 2).
+- Provider OIDC en Authentik: `auth.armada.do/application/o/nextcloud/`.
+- **Fix SSRF (Nextcloud 33)**: `allow_local_remote_servers = true` (boolean).
+  - Causa: dentro del contenedor Nextcloud, `auth.armada.do` resuelve a `172.18.0.8` (IP interna del contenedor Caddy). Nextcloud 33 bloquea IPs privadas vía `DnsPinMiddleware`.
+  - Comando: `docker exec nextcloud-stack-nextcloud-1 php occ config:system:set allow_local_remote_servers --value=true --type=boolean`
+- Flujo verificado: `/apps/user_oidc/login/2` → **303** a `auth.armada.do/application/o/authorize/...` (PKCE S256).
+- Root `/` → **302** a `/index.php/login` (página de login con botón SSO).
+- Listar providers: `docker exec nextcloud-stack-nextcloud-1 php occ user_oidc:providers` (NOTA: no existe `user_oidc:provider:list`).
+
 ## Reglas de operación
 
 1. **NUNCA** modificar configs sin backup (.bkup)
