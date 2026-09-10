@@ -1,5 +1,27 @@
 ## 2026-09-09
 
+### [23:55] - ERP E-Commerce Connector: API URL fija + solo API Key editable (v2.6.0)
+- **Tipo**: proyecto | wordpress | api | arquitectura
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - `erp-ecomm-connector.php`: Constante `ERPC_API_URL` = `https://erpipos.armada.do/api` (FIJA)
+  - `class-erpc-admin.php`: Eliminado campo API URL del admin; solo API Key + Tenant ID + Brand editables
+  - `class-erpc-admin.php`: `ajax_test_connection()` usa constante `ERPC_API_URL`
+  - `class-erpc-admin.php`: `sanitize_settings()` elimina `api_url`
+  - `load_settings()`: Defaults sin `api_url`
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: Arquitectura multi-tenant: **API URL FIJA** (mismo ERP para todos), solo **API Key + Tenant ID + Brand** por negocio
+- **Estado**: ✅ API URL hardcodeada (`https://erpipos.armada.do/api`), solo API Key + Tenant ID + Brand editables, Test Connection funcional
+- **Notas**:
+  - **Arquitectura validada**: Un ERP (FlowApi/ERPipos) → Múltiples negocios
+  - Cada negocio = Su API Key (iak_...) + Tenant ID (sucursal) + Brand
+  - ERP detecta negocio por API Key → carga SU inventario
+  - Admin panel: Solo **API Key** + **Tenant ID** + **Brand/Colores** editables
+  - API URL hardcodeada: `https://erpipos.armada.do/api` (constante `ERPC_API_URL`)
+  - Test Connection: ✅ Conectado (HTTP 200)
+  - Plugin 100% genérico: Un WordPress = Un negocio = Su Key = Su Inventario
+
+## 2026-09-09
+
 ### [23:30] - ERP E-Commerce Connector: Template Kit genérico "tech-ecomm-template" (single import)
 - **Tipo**: proyecto | wordpress | elementor | template-kit | deploy
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
