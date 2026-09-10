@@ -45,9 +45,32 @@ Authentik es el proveedor central de login para todo el ecosistema. Servicios in
 ### Patrón repetible para NUEVOS servicios
 1. Crear **Application** (slug = nombre corto) + **Provider OIDC** con el redirect URI del servicio.
 2. Asignar `authentication_flow` = `default-authentication-flow` y `signing_key` = `authentik OIDC RS256 Signing Key`.
-3. En el servicio: `provider_url` = `https://auth.armada.do/application/o/<slug>/` + client_id + client_secret.
-4. Verificar discovery endpoint: `curl -sk https://auth.armada.do/application/o/<slug>/.well-known/openid-configuration`.
-5. Verificar redirect URI exacto (matching_mode strict).
+3. **Asignar scopes `openid`, `email`, `profile`** al provider (⚠️ NO se asignan automáticamente; sin ellos el ID token sale sin claim `email` y el servicio no puede provisionar el usuario → "Failed to provision the user").
+4. En el servicio: `provider_url` = `https://auth.armada.do/application/o/<slug>/` + client_id + client_secret.
+5. Verificar discovery endpoint: `curl -sk https://auth.armada.do/application/o/<slug>/.well-known/openid-configuration`.
+6. Verificar redirect URI exacto (matching_mode strict).
+
+### Asignar scopes a un provider OIDC (shell)
+```bash
+docker exec authentik-server ak shell -c "
+from authentik.providers.oauth2.models import OAuth2Provider, ScopeMapping
+p = OAuth2Provider.objects.filter(name__icontains='<slug>').first()
+for sn in ['openid', 'email', 'profile']:
+    sm = ScopeMapping.objects.filter(scope_name=sn).first()
+    if sm:
+        p.property_mappings.add(sm)
+p.save()
+"
+```
+Verificar scopes (⚠️ `scope_name` NO está en `PropertyMapping`; acceder vía relación `scopemapping`):
+```bash
+docker exec authentik-server ak shell -c "
+from authentik.providers.oauth2.models import OAuth2Provider
+for p in OAuth2Provider.objects.all():
+    scopes = [getattr(pm, 'scopemapping').scope_name for pm in p.property_mappings.all() if getattr(pm, 'scopemapping', None)]
+    print(p.name, '->', scopes)
+"
+```
 
 ### Notas
 - `akadmin` pertenece al grupo `authentik Admins` (superuser).

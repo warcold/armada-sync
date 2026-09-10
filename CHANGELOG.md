@@ -1,5 +1,20 @@
 ## 2026-09-10
 
+### [23:49] - Authentik: fix "Failed to provision the user" (scopes OIDC vacíos en providers)
+- **Tipo**: infra | sso | oidc
+- **Modificado**: vps-preprod (Authentik)
+  - Asignados scopes `openid`, `email`, `profile` a los providers OIDC **Nextcloud** y **DocuSeal OIDC** (ambos estaban con `property_mappings` vacío).
+- **Afecta a**: auth.armada.do, nextcloud.armada.do, docuseal.armada.do
+- **Causa**: Los providers OIDC no tenían scopes configurados. El log de Authentik mostraba `"Application requested scopes not configured, setting to overlap"` con `scope_allowed: set()` (vacío). Al no tener scopes, el ID token salía sin el claim `email`, y Nextcloud (que usa `mappingUid=email`) no podía provisionar el usuario → "Failed to provision the user".
+- **Estado**: ✅ fix aplicado y verificado
+- **Notas**:
+  - Scope mappings por defecto disponibles: `openid`, `email`, `profile`, `entitlements`, `offline_access`, `goauthentik.io/api`, `ak_proxy`.
+  - Antes: `Nextcloud -> []`, `DocuSeal OIDC -> []`.
+  - Después: `Nextcloud -> ['openid', 'email', 'profile']`, `DocuSeal OIDC -> ['openid', 'email', 'profile']`.
+  - Redirect de login ahora incluye `scope=openid+email+profile` (antes no incluía scopes).
+  - Warning "scopes not configured" desapareció (últimos registros: 23:04, anteriores al fix).
+  - **LECCIÓN**: al crear un provider OIDC en Authentik, asignar SIEMPRE los scopes `openid`, `email`, `profile` (no se asignan automáticamente).
+
 ### [22:45] - Authentik↔Nextcloud: fix REAL "Client authentication failed" (secret en DB, no appconfig)
 - **Tipo**: infra | sso | oidc | seguridad
 - **Modificado**: vps-preprod (Nextcloud DB `oc_user_oidc_providers`)
