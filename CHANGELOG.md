@@ -1,3 +1,20 @@
+## 2026-09-10
+
+### [11:50] - ERP E-Commerce Connector: textos profesionales + seguridad en admin (v2.6.2)
+- **Tipo**: proyecto | wordpress | ui | seguridad
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - `includes/class-erpc-admin.php` — Textos profesionales + eliminación de info sensible
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: Mejorar profesionalismo de los textos guía y cuidar la seguridad (no exponer URL del ERP ni detalles internos).
+- **Estado**: ✅ textos actualizados, sin info sensible en admin, PHP syntax OK
+- **Notas**:
+  - Renombrado: "Configuración del ERP (Solo Lectura)" → "Estado de configuración del ERP"
+  - Eliminado: "La URL del ERP está preconfigurada" y "erpipos.armada.do" del admin UI
+  - API Key: `autocomplete="off"`, placeholder seguro sin pista de URL
+  - Botones: "Test Connection" → "Verificar conexión", "Obtener Config" → "Sincronizar configuración"
+  - Secciones: "Conexión con el ERP", "Personalización visual", "Preferencias de la tienda"
+  - Git push OK: commit `9f09269` (v2.6.2)
+
 ## 2026-09-09
 
 ### [23:55] - ERP E-Commerce Connector: API URL fija + solo API Key editable (v2.6.0)
