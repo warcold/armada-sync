@@ -1,5 +1,20 @@
 ## 2026-09-10
 
+### [19:58] - Authentik↔Nextcloud: fix "Client authentication failed" (client_secret con caracteres especiales)
+- **Tipo**: infra | sso | oidc | seguridad
+- **Modificado**: vps-preprod (Authentik + Nextcloud)
+  - Regenerado `client_secret` del provider OIDC Nextcloud → **hex 64 chars** (sin caracteres especiales)
+  - Actualizado en Authentik (`OAuth2Provider.client_secret`) y en Nextcloud `user_oidc` (`client_secret` + clave duplicada `clientsecret`)
+- **Afecta a**: auth.armada.do, nextcloud.armada.do
+- **Causa**: El client_secret anterior (128 chars) contenía caracteres especiales (`$`, `'`, `"`, `|`, `&`, `^`, `%`, etc.) que se corrompían al enviarse vía URL-encoding al token endpoint OIDC, provocando "Client authentication failed" / "Invalid client secret". El secret almacenado coincidía byte a byte (SHA256 idéntico) entre ambos lados, pero Nextcloud enviaba un valor distinto por el encoding.
+- **Estado**: ✅ fix aplicado y verificado
+- **Notas**:
+  - Nuevo secret: longitud 64, prefijo `89ce` (valor completo NO expuesto).
+  - SHA256 idéntico en ambos lados: `54e907b7...beeb251`.
+  - Clave duplicada `clientsecret` (sin guion bajo) también actualizada y verificada.
+  - Flujo login OK: `/apps/user_oidc/login/2` → **303** a `auth.armada.do/application/o/authorize/...` (PKCE S256).
+  - Logs: los únicos 2 "Invalid client secret" son históricos (19:25:09 y 19:25:20), anteriores al fix. 0 errores nuevos tras el cambio.
+
 ### [18:10] - Authentik: integración OIDC centralizada (Nextcloud + DocuSeal)
 - **Tipo**: infra | sso | oidc | seguridad
 - **Modificado**: vps-preprod (Authentik + Nextcloud + DocuSeal)

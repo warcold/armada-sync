@@ -53,6 +53,8 @@ Authentik es el proveedor central de login para todo el ecosistema. Servicios in
 - `akadmin` pertenece al grupo `authentik Admins` (superuser).
 - El superuser en Authentik se determina por pertenencia al grupo `authentik Admins`, no por campo en el modelo User.
 - Shell de gestión: `docker exec authentik-server ak shell -c "..."`.
+- **client_secret**: usar SIEMPRE secretos alfanuméricos simples (hex, ej. `openssl rand -hex 32`). Los caracteres especiales (`$`, `'`, `"`, `|`, `&`, `^`, `%`, etc.) se corrompen vía URL-encoding al token endpoint y provocan "Client authentication failed" / "Invalid client secret" (caso Nextcloud, 2026-09-10).
+- Nextcloud `user_oidc` guarda el secret en DOS claves: `client_secret` y `clientsecret` (sin guion bajo). Actualizar AMBAS al rotar el secret.
 
 ## Reglas de operación
 
