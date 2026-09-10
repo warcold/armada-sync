@@ -1,5 +1,32 @@
 ## 2026-09-09
 
+### [23:20] - ERP E-Commerce Connector: Template Kit Elementor genérico (single import)
+- **Tipo**: proyecto | wordpress | elementor | template-kit | deploy
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - Plugin v2.5.0: auto-crea 6 páginas + Elementor Canvas + shortcodes corregidos
+- **Agregado**: Template Kit Elementor genérico (single import)
+  - `~/Desktop/MaganTech-Connector-Deploy/ecomm-store-kit.zip` (3.5K)
+    - `manifest.json` — Kit "E-Commerce Store Kit" (nombres genéricos)
+    - `site-settings.json` — Configuración global (colores, tipografía, canvas)
+    - `templates/*.json` — 6 templates válidos Elementor 4.x
+      - `inicio` → `[erpc_landing]` (Landing con hero, beneficios, categorías, destacados)
+      - `productos` → `[erpc_products]` (Grid + filtros + load more)
+      - `carrito` → `[erpc_cart]` (Tabla + resumen)
+      - `checkout` → `[erpc_checkout]` (2 cols + resumen sticky)
+      - `login` → `[erpc_login]` (Tabs login/registro + iconos)
+      - `mi-cuenta` → `[erpc_profile]` (Sidebar + contenido + órdenes + lealtad)
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: Usuario pidió **un solo import** + nombres genéricos (reutilizable para cualquier e-commerce, no solo tech)
+- **Estado**: ✅ Kit ZIP válido (manifest + 6 templates + site-settings), JSON validado con Elementor 4.x
+- **Notas**:
+  - Importación: **Elementor → Plantillas → Importar Kit** → subir `ecomm-store-kit.zip`
+  - Nombres genéricos: "E-Commerce Store Kit", "Inicio (Landing)", "Productos (Tienda)", etc.
+  - Reutilizable para cualquier cliente/vertical (tech, moda, comida, etc.)
+  - Plugin ERP auto-crea páginas + aplica Elementor Canvas al activar
+  - Shortcodes: `[erpc_landing]`, `[erpc_products]`, `[erpc_cart]`, `[erpc_checkout]`, `[erpc_login]`, `[erpc_profile]`
+
+## 2026-09-09
+
 ### [22:50] - ERP E-Commerce Connector: Template Elementor 4.x válido + auto-páginas (v2.5.0)
 - **Tipo**: proyecto | wordpress | elementor | template | deploy
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
