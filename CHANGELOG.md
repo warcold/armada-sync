@@ -1,5 +1,34 @@
 ## 2026-09-09
 
+### [23:30] - ERP E-Commerce Connector: Template Kit genérico "tech-ecomm-template" (single import)
+- **Tipo**: proyecto | wordpress | elementor | template-kit | deploy
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - Plugin v2.5.0: auto-crea 6 páginas + Elementor Canvas + shortcodes corregidos
+- **Agregado**: Template Kit Elementor genérico **tech-ecomm-template.zip** (single import)
+  - `~/Desktop/MaganTech-Connector-Deploy/tech-ecomm-template.zip` (3.5K)
+    - `manifest.json` — Kit "Tech E-Commerce Template" (nombres genéricos, sin marca)
+    - `site-settings.json` — Config global (colores, tipografía, Elementor Canvas)
+    - `templates/*.json` — 6 templates válidos Elementor 4.x (formato exacto: `content` root, `elType` camelCase, `widgetType`, `version: 0.4`)
+      - `01-inicio-landing.json` → `[erpc_landing]`
+      - `02-productos-tienda.json` → `[erpc_products]`
+      - `03-carrito.json` → `[erpc_cart]`
+      - `04-checkout.json` → `[erpc_checkout]`
+      - `05-iniciar-sesion---registro.json` → `[erpc_login]`
+      - `06-mi-cuenta---perfil.json` → `[erpc_profile]`
+    - `site-settings.json` — Config global (colores, tipografía, Elementor Canvas)
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: Usuario pidió **un solo import** + nombres genéricos (reutilizable para cualquier e-commerce, sin marca "MaganTech")
+- **Estado**: ✅ Kit ZIP limpio (8 archivos), JSON validado con Elementor 4.x (`prepare_import_template_data()`)
+- **Notas**:
+  - Importación: **Elementor → Plantillas → Importar Kit** → subir `tech-ecomm-template.zip`
+  - Nombres genéricos: "Tech E-Commerce Template", "Inicio (Landing)", "Productos (Tienda)", etc.
+  - **Sin marca "MaganTech"** — el cliente pone su marca editando en Elementor
+  - Reutilizable para cualquier cliente/vertical (tech, moda, comida, servicios, etc.)
+  - Plugin ERP auto-crea páginas + aplica Elementor Canvas al activar
+  - Shortcodes: `[erpc_landing]`, `[erpc_products]`, `[erpc_cart]`, `[erpc_checkout]`, `[erpc_login]`, `[erpc_profile]`
+
+## 2026-09-09
+
 ### [23:20] - ERP E-Commerce Connector: Template Kit Elementor genérico (single import)
 - **Tipo**: proyecto | wordpress | elementor | template-kit | deploy
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
