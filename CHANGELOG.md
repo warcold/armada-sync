@@ -1,5 +1,28 @@
 ## 2026-09-09
 
+### [22:50] - ERP E-Commerce Connector: Template Elementor 4.x válido + auto-páginas (v2.5.0)
+- **Tipo**: proyecto | wordpress | elementor | template | deploy
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - `includes/class-erpc-activation.php` — Auto-crea 6 páginas al activar + aplica Elementor Canvas
+  - `includes/class-erpc-templates.php` — Shortcodes actualizados (`[erpc_login]`, `[erpc_profile]`)
+  - `includes/class-erpc-shortcodes.php` — Shortcodes corregidos
+  - `erp-ecomm-connector.php` — Hook de activación actualizado
+- **Agregado**: Template Elementor 4.x válido (6 JSON + guía)
+  - `~/Desktop/MaganTech-Connector-Deploy/template/` — 6 JSON válidos (formato Elementor 4.x)
+  - `magantech-elementor-templates.zip` — 6 templates + guía (3.9K)
+  - `erp-ecmm-connector.zip` — Plugin v2.5.0 (51K)
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: El template JSON anterior era inválido (formato incorrecto). Se corrigió al formato exacto de Elementor 4.x (`content` root, `elType` camelCase, `widgetType`, `version: 0.4`).
+- **Estado**: ✅ JSON validado con `prepare_import_template_data()` de Elementor, plugin crea 6 páginas auto, Elementor Canvas aplicado
+- **Notas**:
+  - Formato correcto: `content` root, `elType` (section/column/widget), `widgetType: shortcode`, `version: 0.4`
+  - 6 templates: Inicio, Productos, Carrito, Checkout, Login, Mi Cuenta
+  - Plugin auto-crea páginas al activar + aplica Elementor Canvas
+  - Shortcodes corregidos: `[erpc_login]`, `[erpc_profile]`
+  - ZIPs en `~/Desktop/MaganTech-Connector-Deploy/`
+
+## 2026-09-09
+
 ### [15:30] - WordPress dev: package de deploy completo (plugin + guía)
 - **Tipo**: wordpress | deploy | proyecto
 - **Modificado**: /home/warcold/dev/wordpress/erp-ecmm-deploy.zip
