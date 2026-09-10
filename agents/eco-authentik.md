@@ -53,6 +53,18 @@ Authentik es el proveedor central de login para todo el ecosistema. Servicios in
 - `akadmin` pertenece al grupo `authentik Admins` (superuser).
 - El superuser en Authentik se determina por pertenencia al grupo `authentik Admins`, no por campo en el modelo User.
 - Shell de gestión: `docker exec authentik-server ak shell -c "..."`.
+
+### ⚠️ Rotación de secretos OIDC en Nextcloud (lección crítica)
+- La app `user_oidc` v8.10.1 **NO lee appconfig** (`client_secret`/`clientsecret`). Lee el secret de la **tabla `oc_user_oidc_providers`** (encriptado con ICrypto).
+- Al rotar el client_secret, actualizar SIEMPRE la DB con el comando oficial:
+  ```bash
+  docker exec nextcloud-stack-nextcloud-1 php occ user_oidc:provider authentik \
+    --clientid=<CLIENT_ID> --clientsecret=<SECRET> \
+    --discoveryuri=https://auth.armada.do/application/o/nextcloud/.well-known/openid-configuration
+  ```
+- El comando encripta automáticamente el secret y actualiza solo los campos no-null.
+- Usar secretos **hex simples** (sin caracteres especiales) para evitar problemas de URL-encoding.
+- Backup previo: `mysqldump ... oc_user_oidc_providers` antes de tocar.
 - **client_secret**: usar SIEMPRE secretos alfanuméricos simples (hex, ej. `openssl rand -hex 32`). Los caracteres especiales (`$`, `'`, `"`, `|`, `&`, `^`, `%`, etc.) se corrompen vía URL-encoding al token endpoint y provocan "Client authentication failed" / "Invalid client secret" (caso Nextcloud, 2026-09-10).
 - Nextcloud `user_oidc` guarda el secret en DOS claves: `client_secret` y `clientsecret` (sin guion bajo). Actualizar AMBAS al rotar el secret.
 

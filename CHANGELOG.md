@@ -1,5 +1,20 @@
 ## 2026-09-10
 
+### [22:45] - Authentik↔Nextcloud: fix REAL "Client authentication failed" (secret en DB, no appconfig)
+- **Tipo**: infra | sso | oidc | seguridad
+- **Modificado**: vps-preprod (Nextcloud DB `oc_user_oidc_providers`)
+  - Actualizado el client_secret del provider `authentik` (id=2) en la tabla `oc_user_oidc_providers` vía `occ user_oidc:provider authentik --clientsecret=...`
+- **Afecta a**: nextcloud.armada.do
+- **Causa**: La app `user_oidc` v8.10.1 NO lee las claves de appconfig (`client_secret`/`clientsecret`). Lee el client_secret de la tabla de base de datos `oc_user_oidc_providers` (encriptado con ICrypto). Los fixes anteriores actualizaban appconfig, que la app ignora. La DB seguía con el secret viejo (172 chars) mientras Authentik tenía el nuevo (hex 64 chars) → "Invalid client secret".
+- **Estado**: ✅ fix aplicado y verificado
+- **Notas**:
+  - Backup DB: `/tmp/oc_user_oidc_providers.bkup-20260910-224434.sql`
+  - Comando oficial: `occ user_oidc:provider authentik --clientid=... --clientsecret=... --discoveryuri=...` (encripta automáticamente)
+  - Secret en DB cambió: longitud 352→324, prefijo `7dcb4500`→`ad547302`
+  - Flujo login OK: `/apps/user_oidc/login/2` → 303 a `auth.armada.do/application/o/authorize/...`
+  - Logs: 0 "Invalid client secret" nuevos
+  - **LECCIÓN**: al rotar secretos OIDC en Nextcloud, actualizar SIEMPRE la DB (`occ user_oidc:provider`), NO appconfig.
+
 ### [19:58] - Authentik↔Nextcloud: fix "Client authentication failed" (client_secret con caracteres especiales)
 - **Tipo**: infra | sso | oidc | seguridad
 - **Modificado**: vps-preprod (Authentik + Nextcloud)
