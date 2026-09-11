@@ -1,5 +1,13 @@
 ## 2026-09-10
 
+### [23:55] - Nextcloud: cuenta `alfredo@armada.do` habilitada
+- **Tipo**: infra | nextcloud
+- **Modificado**: vps-preprod (Nextcloud)
+  - `occ user:enable alfredo@armada.do` → cuenta habilitada
+- **Afecta a**: nextcloud.armada.do
+- **Causa**: El usuario se creó automáticamente por OIDC provisioning (`auto_create_user=1`), pero Nextcloud deshabilita los usuarios nuevos por defecto.
+- **Estado**: ✅ desbloqueada
+
 ### [23:49] - Authentik: fix "Failed to provision the user" (scopes OIDC vacíos en providers)
 - **Tipo**: infra | sso | oidc
 - **Modificado**: vps-preprod (Authentik)
