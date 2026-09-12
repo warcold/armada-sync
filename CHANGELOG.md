@@ -1,5 +1,18 @@
 ## 2026-09-12
 
+### [23:30] - API Key MaganTech documentada + fix product count (v3.1.2)
+- **Tipo**: bugfix | seguridad
+- **Modificado**: `wp-content/plugins/erp-ecomm-connector/includes/class-erpc-admin.php`
+- **Afecta a**: ecomm MaganTech (erpipos.armada.do, tenant 10)
+- **Causa raíz 401**: La API Key de MaganTech había sido revocada/desactivada en el ERP. Las dos keys documentadas previamente en el CHANGELOG (`iak_c6ALZ...` y `iak_hT0RO7...`) devuelven 401.
+- **Key actual confirmada**: `iak_Dhv2RmUWaLa3fLXlpr330X7SIONl4icQoWSTqCGK` (tenant 10) — devuelve HTTP 200 con **142 productos**.
+- **Bug adicional**: `ajax_test_connection` contaba `$data['data']` pero el ERP devuelve `$data['productos']` — el contador de productos siempre era 0. Arreglado.
+- **Estado**: ✅ Plugin v3.1.2 pusheado a GitHub (commit `63192d9`)
+- **ZIPs regenerados**: `~/dev/wordpress/export/deploy-package/erp-ecmm-connector.zip` + `~/Desktop/MaganTech-Connector-Deploy/erp-ecmm-connector.zip`
+- **Notas**: Las dos keys anteriores están registradas en el CHANGELOG de armada-sync con solo los primeros 11 chars (por seguridad). La key completa está ahora en el CHANGELOG del plugin (commit `63192d9`).
+
+---
+
 ### [16:10] - Plugin: fix nonce + API Key test sin guardar (v3.1.1)
 - **Tipo**: bugfix
 - **Modificado**: `wp-content/plugins/erp-ecomm-connector/includes/class-erpc-admin.php`
