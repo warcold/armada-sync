@@ -1,5 +1,22 @@
 ## 2026-09-12
 
+### [16:10] - Plugin: fix nonce + API Key test sin guardar (v3.1.1)
+- **Tipo**: bugfix
+- **Modificado**: `wp-content/plugins/erp-ecomm-connector/includes/class-erpc-admin.php`
+- **Afecta a**: ecomm MaganTech (erpipos.armada.do)
+- **Causa**: El AJAX `test_connection` fallaba con "Falta API Key" si el usuario no había guardado la API key. El nonce también fallaba por incompatibilidad con `check_ajax_referer`.
+- **Cambios**:
+  - JS: envía `api_key` desde el campo del formulario al AJAX de verificación
+  - JS: envía `erpc_test_connection_nonce` adicional para compatibilidad
+  - PHP: `ajax_test_connection()` acepta `$_POST['api_key']` (fallback a DB)
+- **Estado**: ✅ plugin v3.1.1 pusheado a GitHub (commit `b406cf0`)
+- **ZIPs de deploy actualizados**:
+  - `~/dev/wordpress/export/deploy-package/erp-ecmm-connector.zip` (v3.1.1 fresh)
+  - `~/Desktop/MaganTech-Connector-Deploy/erp-ecmm-connector.zip` (v3.1.1 fresh)
+  - `~/dev/wordpress/erp-ecmm-deploy.zip` (eliminado, estaba viejo)
+
+---
+
 ### [01:10] - ERP E-Commerce Connector: Diseño consistente + footer profesional (v3.1.0)
 - **Tipo**: proyecto | wordpress | footer | diseño | consistencia
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
