@@ -1,3 +1,22 @@
+## 2026-09-12
+
+### [01:10] - ERP E-Commerce Connector: Diseño consistente + footer profesional (v3.1.0)
+- **Tipo**: proyecto | wordpress | footer | diseño | consistencia
+- **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
+  - `templates/partials/footer.php` — Footer profesional 4 columnas (brand/tienda/ayuda/legal) + newsletter
+  - `templates/partials/page-wrapper.php` — Wrapper unificado para todas las páginas
+  - `assets/css/connector.css` — CSS footer completo (gradiente, grid responsive, badges)
+  - `erp-ecomm-connector.php` — Version bumped to 3.1.0
+  - `CHANGELOG.md` — Documentado v3.1.0
+- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Causa**: Las páginas no se veían coherentes con el profesionalismo del landing, y faltaban links legales en el footer.
+- **Estado**: ✅ Footer completo, todas las páginas consistentes, 0 emojis, 11 templates con PHP limpio
+- **Notas**:
+  - Footer ahora incluye: logo, tagline, enlaces a Tienda/Ayuda/Legal, newsletter, redes sociales, badges SSL
+  - Legal links: Términos y condiciones, Política de privacidad, Política de cookies, Sobre nosotros, Trabaja con nosotros
+  - Todas las páginas unificadas con mismo header/trustbar/footer
+  - Git push OK: `f28a51e` (v3.1.0)
+
 ## 2026-09-10
 
 ### [23:55] - Nextcloud: cuenta `alfredo@armada.do` habilitada
