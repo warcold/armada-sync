@@ -1,3 +1,24 @@
+## 2026-09-13
+
+### [00:45] - ERP E-Commerce Connector v3.2.0: multi-instancia + landing fix
+- **Tipo**: proyecto | wordpress | feature
+- **Modificado**: `wp-content/plugins/erp-ecomm-connector/`
+  - `erp-ecomm-connector.php` — `api_url` y `tenant_id` configurables (antes hardcodeados)
+  - `includes/class-erpc-admin.php` — campos "URL de la API" y "Tenant ID" en el admin panel
+  - `assets/img/placeholder.svg` — reparado (tenía texto basura)
+- **Afecta a**: ecomm MaganTech (erpipos.armada.do) + cualquier instancia ERP
+- **Causa**: El plugin estaba atado a `erpipos.armada.do` y tenant 10. Ahora es un template base multi-instancia: el usuario pone la URL de SU ERP + su key + su tenant ID.
+- **Landing fix**: La home (page 8) tenía override de Elementor (diseño oscuro viejo). Se eliminó el override → ahora renderiza el template moderno del plugin (`[erpc_landing]` con hero, trust bar, categorías, destacados, newsletter).
+- **Estado**: ✅ v3.2.0 pusheado (commits `e0e4f16`, `d41d092`, `8475b9d`), ZIPs regenerados
+- **Validación e2e**:
+  - ✅ Key correcta `iak_Dhv2...` → 142 productos, 18 categorías
+  - ✅ Landing: hero + trust bar + 8 categorías + 8 destacados + newsletter
+  - ✅ Productos: cards con imagen, badge stock, precio RD$, botón carrito
+  - ✅ Carrito/Checkout/Login/Mi Cuenta renderizan
+  - ✅ Responsive (375px y 1280px)
+
+---
+
 ## 2026-09-12
 
 ### [23:30] - API Key MaganTech documentada + fix product count (v3.1.2)
