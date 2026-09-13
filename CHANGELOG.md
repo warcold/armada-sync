@@ -1,5 +1,18 @@
 ## 2026-09-13
 
+### [17:00] - ERP E-Commerce Connector: página contacto llenada + template con contenido real
+- **Tipo**: proyecto | wordpress | fix
+- **Modificado**: WordPress localhost:8090 + `tech-ecomm-template.zip`
+- **Afecta a**: ecomm MaganTech (erpipos.armada.do)
+- **Causa**: La página "contacto" (ID 17) estaba vacía — el usuario no veía contenido al hacer click. El template de importación tenía contenido placeholder genérico en las páginas estáticas.
+- **Cambios**:
+  - Página "contacto" llenada con contenido estándar (correo, teléfono, horario, soporte)
+  - Template `tech-ecomm-template.zip` regenerado con el **contenido real** de las 8 páginas estáticas (extraído de WordPress, duplicando el patrón de las páginas que funcionan)
+- **Verificación**: las 13 páginas renderizan HTTP 200 con header + footer + contenido.
+- **Estado**: ✅ sincronizado
+
+---
+
 ### [14:55] - Proxmark3: flash firmware Iceman v4.21611 + cfmb25 corregido
 - **Tipo**: infra | hardware | fix
 - **Modificado**:
