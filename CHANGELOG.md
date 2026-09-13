@@ -1,5 +1,21 @@
 ## 2026-09-13
 
+### [14:55] - Proxmark3: flash firmware Iceman v4.21611 + cfmb25 corregido
+- **Tipo**: infra | hardware | fix
+- **Modificado**:
+  - `/opt/proxmark3/` — compilado desde fuente: Iceman/master/v4.21611-1575-g64b5db4dd (2026-09-13)
+  - `pm3-flash-all` — flash completo exitoso (bootrom + armsrc + FPGA)
+  - `/home/warcold/bin/cfmb25` — rutas corregidas: `~/.proxmark3/dumps/` (antes apuntaba a `/home/warcold/.victoria/pm3-dumps/` que ya no existe); binario actualizado a `/opt/proxmark3/client/proxmark3` (antes `/usr/bin/proxmark3` viejo de Kali); fix bug `grep -c || echo 0` (doble "0" rompía comparaciones numéricas)
+- **Afecta a**: kalimete (pm3 en /dev/ttyACM0)
+- **Causa**: El pm3 estaba en ciclo de reinicio (EPROTO, bootloader corrupto) — no respondía por serial. Tras flash quedó 100% operativo (hw ping 1ms, antena LF/HF ok).
+- **Validación**: `cfmb25` clonó FMB25 a la tarjeta actual → 64/64 bloques OK, 0 auth errors, 0 fail. Dump FMB25 verificado (UID 32 95 B6 7B, md5 dbb0aa91... idéntico en 3 copias).
+- **Estado**: ✅ sincronizado
+- **Notas**: El binario viejo `/usr/bin/proxmark3` (Kali 4.18994) no responde con el firmware nuevo — usar siempre `/opt/proxmark3/client/proxmark3`.
+
+---
+
+## 2026-09-13
+
 ### [13:35] - ERP E-Commerce Connector v3.2.1: URL/Tenant fijos, solo API Key editable
 - **Tipo**: proyecto | wordpress | fix
 - **Modificado**: `wp-content/plugins/erp-ecomm-connector/`
