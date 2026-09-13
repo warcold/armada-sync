@@ -16,6 +16,33 @@
 
 ## 2026-09-13
 
+### [16:30] - ERP E-Commerce Connector v3.3.1: template completo + políticas + flujo ecomm validado
+- **Tipo**: proyecto | wordpress | feature
+- **Modificado**: `wp-content/plugins/erp-ecomm-connector/`
+  - `templates/static.php` — NUEVO: renderiza páginas legales/info con layout unificado
+  - `includes/class-erpc-templates.php` — mapea 8 páginas estáticas (terminos, privacidad, cookies, sobre-nosotros, envios, devoluciones, faq, contacto)
+  - `templates/partials/footer.php` — links reales (antes `#`), categorías reales de tecnología
+  - `templates/partials/header.php` — nav con "Nosotros" y "Contacto" (desktop-only)
+  - `templates/ecomm/cart.php` — fix: agregado header.php (antes solo footer)
+  - `assets/css/connector.css` — estilos `.erpc-static-page` + nav responsive
+- **Afecta a**: ecomm MaganTech (erpipos.armada.do) + cualquier instancia ERP
+- **Páginas creadas en WordPress** (7 nuevas): terminos, privacidad, cookies, sobre-nosotros, envios, devoluciones, faq — con contenido estándar de e-commerce adaptable por el propietario.
+- **Menú de navegación** creado y asignado a ubicación `menu-1`.
+- **Shortcodes corregidos**: `mi-cuenta` usaba `[erpc_profile]` (inexistente) → `[erpc_customer]`; `login` usaba `[erpc_login]` → `[erpc_auth]`.
+- **Flujo ecomm validado end-to-end**:
+  - ✅ Registro cliente: POST /customers → 201 (cliente id 133, tenant 10)
+  - ✅ Carrito: POST /ecomm/carts → 201 (cart id 14, total RD$ 1,100.00)
+  - ✅ Checkout guest: POST /ecomm/checkout/guest → 200 ("Guest customer created")
+  - ✅ Login por email: GET /customers?email= → 200
+- **Aislamiento por key confirmado**: la key determina el tenant; `X-Tenant-ID` es ignorado (productos idénticos con 1/10/999/sin header).
+- **Template de importación regenerado**: `tech-ecomm-template.zip` con 14 páginas (6 shortcode + 8 estáticas).
+- **Estado**: ✅ v3.3.1 pusheado (commits `e0fa0d8`, `ab3157c`, `4aae706`, `f44ad87`), ZIPs regenerados
+- **DEPLOY-GUIA.md** actualizado (solo API Key, 14 páginas, shortcodes correctos).
+
+---
+
+## 2026-09-13
+
 ### [13:35] - ERP E-Commerce Connector v3.2.1: URL/Tenant fijos, solo API Key editable
 - **Tipo**: proyecto | wordpress | fix
 - **Modificado**: `wp-content/plugins/erp-ecomm-connector/`
