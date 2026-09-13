@@ -1,5 +1,23 @@
 ## 2026-09-13
 
+### [13:35] - ERP E-Commerce Connector v3.2.1: URL/Tenant fijos, solo API Key editable
+- **Tipo**: proyecto | wordpress | fix
+- **Modificado**: `wp-content/plugins/erp-ecomm-connector/`
+  - `erp-ecomm-connector.php` — `get_api_url()` vuelve a la constante fija; `get_tenant_id()` solo usa erp_config
+  - `includes/class-erpc-admin.php` — eliminados campos "URL de la API" y "Tenant ID"; solo API Key editable
+- **Afecta a**: ecomm MaganTech (erpipos.armada.do) + cualquier instancia ERP
+- **Causa**: El usuario confirmó que la URL es fija para todas las instancias y que la key es lo que aísla el contenido por tenant. Los campos URL/Tenant ID configurables (v3.2.0) eran innecesarios y arriesgados (el cliente podría tocar lo que no debe).
+- **Validación de aislamiento por key**:
+  - ✅ La key `iak_Dhv2...` devuelve 142 productos y 18 categorías, todas de tecnología (MaganTech)
+  - ✅ El header `X-Tenant-ID` es **ignorado** por el ERP: con valor 1, 10, 999 o sin header, los productos son idénticos
+  - ✅ La key es lo único que determina el tenant — no se mezclan keys ni contenido
+- **Estado**: ✅ v3.2.1 pusheado (commits `9751a73`, `60d22ef`, `11be069`), ZIPs regenerados limpios
+- **Notas**: Se eliminó el header `X-Tenant-ID` del `ajax_test_connection` (era ignorado por el ERP).
+
+---
+
+## 2026-09-13
+
 ### [00:45] - ERP E-Commerce Connector v3.2.0: multi-instancia + landing fix
 - **Tipo**: proyecto | wordpress | feature
 - **Modificado**: `wp-content/plugins/erp-ecomm-connector/`
