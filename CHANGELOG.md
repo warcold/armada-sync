@@ -1,5 +1,22 @@
 ## 2026-09-14
 
+### [12:45] - ERP E-Commerce Connector v3.3.6: filtro categoría vía URL + registro/login reparados
+- **Tipo**: proyecto | wordpress | bugfix
+- **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (6 archivos, commit `a1c35e0`, push `main` OK), ZIPs regenerados y verificados por dentro (86K, `Version: 3.3.6`)
+  - `templates/ecomm/products.php` — respeta `?categoria=` en servidor (grilla filtrada + pill activa + conteo); estado vacío visible con "Ver todo el catálogo" si 0 productos
+  - `assets/js/connector.js` — lee `?categoria=` al cargar, sincroniza URL al filtrar (`replaceState`); fix `bindAuthForms()` nunca corría (`$(".erpc-auth")` vs template `erpc-auth-page`); fix `$(this)` en callbacks ajax (errores invisibles + botón trabado)
+  - `templates/auth/form.php` — eliminadas contraseñas decorativas (ERP email-only); `includes/class-erpc-auth.php` — 404 login traducido a mensaje útil
+- **Afecta a**: ecomm MaganTech
+- **Causa**: JS ignoraba querystring; selector auth inexistente + contexto `$(this)` + campos password nunca enviados
+- **Verificación**: `php -l` OK, `node --check` OK, `?categoria=Cables` → 15 cards solo Cables + "Mostrando 15 de 47", `?categoria=Redes` → vacío visible, `erpc_register` validación JSON OK, `erpc_login` email inexistente → mensaje útil (solo lectura ERP), login sin passwords
+- **Hallazgo**: ERP solo tiene productos en 7/18 categorías (Cables 47, Computadoras 52, Impresoras 22, Monitores 9, Almacenamiento 1, Herramientas 1, 10 sin categoría) — categorías vacías muestran "Sin resultados" correctamente
+- **Estado**: ✅ sincronizado (plugin push + ZIPs)
+- **Notas**: en remoto subir ZIP 3.3.6
+
+---
+
+## 2026-09-14
+
 ### [12:35] - ERP E-Commerce Connector v3.3.5: sección config imposible de llenar → rehecha como efectiva (local+ERP)
 - **Tipo**: proyecto | wordpress | bugfix
 - **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (3 archivos, commit `162010a`, push `main` OK), ZIPs regenerados y verificados por dentro (84K, `Version: 3.3.5`)
