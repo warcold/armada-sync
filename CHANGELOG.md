@@ -1,5 +1,19 @@
 ## 2026-09-14
 
+### [12:35] - ERP E-Commerce Connector v3.3.5: sección config imposible de llenar → rehecha como efectiva (local+ERP)
+- **Tipo**: proyecto | wordpress | bugfix
+- **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (3 archivos, commit `162010a`, push `main` OK), ZIPs regenerados y verificados por dentro (84K, `Version: 3.3.5`)
+  - `includes/class-erpc-admin.php` — sección 2 rehecha como "Configuración de la tienda": valores efectivos (local gana, ERP respaldo, defaults etiquetados), cada fila con fuente y hint; badge por `config_fetched_at`; `ajax_fetch_config` con mensaje honesto si el ERP no envía identidad
+- **Afecta a**: ecomm MaganTech
+- **Causa raíz (reproducida)**: `get_business_config()` devuelve `name:""` siempre — el ERP no tiene endpoint de config (6 candidatos → 404). La sección anterior era imposible de llenar por diseño. Además en remoto < v3.3.3 cada Guardar borraba `erp_config` → "Pendiente" eterno
+- **Verificación**: `php -l` OK, `wp eval` efectivo `eff_name=[MaganTech Store]`, `/productos/` 200, ZIP contiene 3.3.5 + fixes
+- **Estado**: ✅ sincronizado (plugin push + ZIPs)
+- **Notas**: en remoto subir ZIP 3.3.5, Guardar clave, Sincronizar, rellenar Nombre/Logo en Personalización visual
+
+---
+
+## 2026-09-14
+
 ### [12:35] - ERP E-Commerce Connector v3.3.4: newsletter duplicado fuera, logo+nombre siempre visibles, campos negocio por instancia
 - **Tipo**: proyecto | wordpress | bugfix+feature
 - **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (6 archivos, commit `c89832a`, push `main` OK), ZIPs regenerados (83K)
