@@ -1,5 +1,20 @@
 ## 2026-09-14
 
+### [12:50] - ERP E-Commerce Connector v3.3.7: quick view modal + badge en vivo + En carrito (N)
+- **Tipo**: proyecto | wordpress | feature+bugfix
+- **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (6 archivos, commit `1fc82d9`, push `main` OK), ZIPs regenerados y verificados por dentro (88K, `Version: 3.3.7`)
+  - Nuevo modal vista rápida (foto, categoría, precio, stock, stepper cantidad, agregar, Esc/overlay/× para cerrar) — cards tenían `href="#"` muertos; sin endpoint nuevo (ERP detalle por id → 404, usa catálogo en caché/DOM)
+  - `header.php` badge siempre en DOM + JS lo crea si falta y lo actualiza en cada mutación (antes invisible hasta recargar)
+  - Botones con estado persistente "✓ En carrito (N)" resincronizado en cada cambio (antes revertía a los 1.2s)
+- **Afecta a**: ecomm MaganTech
+- **Verificación**: `php -l` OK, `node --check` OK, badge en DOM, 30 `card-open`, `erpc_sync_cart` 200 count 2, ZIP con 3.3.7 + modal JS/CSS
+- **Estado**: ✅ sincronizado (plugin push + ZIPs)
+- **Notas**: en remoto subir ZIP 3.3.7
+
+---
+
+## 2026-09-14
+
 ### [12:45] - ERP E-Commerce Connector v3.3.6: filtro categoría vía URL + registro/login reparados
 - **Tipo**: proyecto | wordpress | bugfix
 - **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (6 archivos, commit `a1c35e0`, push `main` OK), ZIPs regenerados y verificados por dentro (86K, `Version: 3.3.6`)
