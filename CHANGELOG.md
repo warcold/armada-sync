@@ -1,5 +1,22 @@
 ## 2026-09-14
 
+### [11:33] - Docs: AGENTS.md adelgazado a reglas globales, kalimete.md fuente única operativa + fix eco-alfredo-ecomm
+- **Tipo**: docs | agente | config
+- **Modificado**: `AGENTS.md` (132→41 líneas), `agents/kalimete.md`, `MAPA.md`
+- **Afecta a**: kalimete (todas las sesiones opencode)
+- **Causa**: AGENTS.md y kalimete.md duplicaban topología, SSH, tabla de agentes y límites de contexto (ya habían derivado: decían 228000/240000 y baseURL por túnel, lo real es 220000/32000 en LAN). MAPA.md tenía fila duplicada y le faltaba proxmark. `eco-alfredo-ecomm` existía en `agents/` pero kalimete no podía delegarle (faltaba en `permission.task` y en la tabla).
+- **Cambios**:
+  - `AGENTS.md` → solo reglas globales + punteros a la fuente única (MAPA.md / kalimete.md / skill cloudflare). Cero tablas duplicadas.
+  - `agents/kalimete.md` → agregado `eco-alfredo-ecomm` a frontmatter + tabla; la lista de permisos ya no se duplica en el cuerpo (vive solo en el frontmatter); snapshot `opencode.jsonc` corregido contra lo real (context 220000/output 32000, `http://victoria.local:8010/v1`); puntero a MAPA.md como fuente de topología.
+  - `MAPA.md` → eliminada fila duplicada `eco-micaserogou`, agregada fila `proxmark`, corregido bloque `opencode.jsonc` (3 providers, baseURL LAN, limits).
+  - Backups pre-cambio en `~/backups/armada-docs-20260914/` (fuera del repo para no ensuciar el sync).
+- **Estado**: ✅ sincronizado
+- **Notas**: salir y reiniciar opencode para que tome la nueva config (no hay hot-reload).
+
+---
+
+## 2026-09-14
+
 ### [00:20] - ERP E-Commerce Connector: eliminada plantilla Elementor redundante
 - **Tipo**: proyecto | wordpress | refactor
 - **Modificado**: `wp-content/plugins/erp-ecomm-connector/`

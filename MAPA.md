@@ -29,12 +29,13 @@
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
 - Docker: 9 containers (tapmap, woodly, micaserogou-restart, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
-- **opencode.jsonc**: 2 providers configurados
+- **opencode.jsonc**: 3 providers (verificado 2026-09-14; el archivo es la fuente única)
   1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
-     - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
-     - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)
-     - baseURL: `https://victoria.armada.do/v1`
-     - apiKey: `vllm-key-5d43...` (admin alfredo)
+      - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
+      - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)
+      - baseURL: `http://victoria.local:8010/v1` (LAN directo al gateway)
+      - limit: context 220000 / output 32000 (total 252000 < 262144 ✅)
+      - apiKey: `vllm-key-5d43...` (admin alfredo)
   2. **nvidia** (cloud): DeepSeek V4 Flash/Pro via NVIDIA API Catalog
      - `deepseek-ai/deepseek-v4-flash-0731` → "DeepSeek V4 Flash" (reasoning: true)
      - `deepseek-ai/deepseek-v4-pro-0813` → "DeepSeek V4 Pro" (reasoning: true)
@@ -66,7 +67,7 @@
   - **Política de updates**: NO actualizar `mcp-adapter` (manual), NO actualizar `elementor` sin probar, actualizar `emcp-tools` solo patch updates (3.14.0 → 3.14.1)
 - Systemd: ssh, nginx, docker, containerd, cron, sddm, waydroid, kalimete-tunnel, publish-kalimete-subdomains, dnsmasq
 - opencode config: `~/.config/opencode/`
-- opencode.jsonc usa gateway LLM de victoria vía túnel CF: `https://victoria.armada.do/v1`
+- opencode.jsonc usa gateway LLM de victoria en LAN: `http://victoria.local:8010/v1` (verificado 2026-09-14)
 
 ### 2. victoria (10.0.0.5) — Servidor GPU/LLM
 #### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
@@ -156,15 +157,15 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-woodly | Proyecto Woodly (woodly.armada.do) — cliente principal ERP | ✅ |
 | eco-alfredo-ecomm | Backend ERP Alfredo Pro Ecomm (multin tenant) — NUEVO (2026-09-05) | ✅ |
 | eco-taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
-| eco-micaserogou | Proyecto Micaserogou (micaserogou.com) | — ERP comicionado por separado |
+| eco-micaserogou | Proyecto Micaserogou (micaserogou.com) | ✅ |
 | eco-ragnarok | Servidor de juego Ragnarok | ✅ |
 | eco-nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
 | eco-authentik | SSO Authentik (auth.armada.do) | ✅ |
 | eco-docuseal | Proyecto DocuSeal | ✅ |
 | eco-scriberr | Proyecto Scriberr | ✅ |
-| eco-micaserogou | Proyecto Micaserogou | ✅ |
 | armada-arcade | Proyecto juego multiplayer (TetriNET) | ✅ |
 | wordpress-dev | WordPress+Elementor+EMCP+MCP stack | ✅ |
+| proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
 | eco-accesos | ~~SSH/access management~~ | 🔴 roto (symlink sin target) |
 | eco-voice | ~~Voz/STT/TTS~~ | 🔴 roto (servicio ELIMINADO) |
 
