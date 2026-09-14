@@ -1,3 +1,21 @@
+## 2026-09-14
+
+### [03:30] - ERP E-Commerce Connector v3.3.2: activation crea las 14 páginas (fix "not found")
+- **Tipo**: proyecto | wordpress | bugfix
+- **Modificado**: `wp-content/plugins/erp-ecomm-connector/includes/class-erpc-activation.php`
+- **Afecta a**: ecomm MaganTech + cualquier instalación limpia del plugin
+- **Causa raíz**: Al instalar el plugin en un WordPress limpio, `create_default_pages()` solo creaba 6 páginas (inicio, productos, carrito, checkout, login, mi-cuenta) y usaba shortcodes incorrectos (`[erpc_login]` y `[erpc_profile]` que NO existen). Las páginas estáticas (sobre-nosotros, contacto, terminos, privacidad, cookies, envios, devoluciones, faq) NO se creaban → "not found".
+- **Cambios**:
+  - `create_default_pages()` ahora crea **14 páginas** (6 shortcode + 8 estáticas)
+  - Shortcodes corregidos: `[erpc_login]`→`[erpc_auth]`, `[erpc_profile]`→`[erpc_customer]`
+  - Slug inicio: `inicio`→`magantech-inicio` (coincide con header/footer)
+  - Nuevo `get_static_content()` con contenido estándar para las 8 páginas legales
+  - `apply_elementor_canvas()` y `handle_template_generation()` actualizados a 14 slugs
+- **Estado**: ✅ v3.3.2 pusheado (commits `7ec0b58`, `fc9a034`), ZIPs regenerados
+- **Verificación**: las 14 páginas responden HTTP 200 con header + footer + contenido.
+
+---
+
 ## 2026-09-13
 
 ### [17:00] - ERP E-Commerce Connector: página contacto llenada + template con contenido real
