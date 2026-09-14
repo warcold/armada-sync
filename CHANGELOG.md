@@ -1,5 +1,20 @@
 ## 2026-09-14
 
+### [13:05] - ERP E-Commerce Connector v3.3.8: rutas sin doble /api + login real + pedido admin ERP redactado
+- **Tipo**: proyecto | wordpress | bugfix crítico
+- **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (4 archivos, commit `ac0b0d2`, push `main` OK), ZIPs regenerados y verificados (89K, `Version: 3.3.8`)
+  - Rutas sin doble `/api` (`/customers`, `/ecomm/carts`, `/ecomm/checkout/*`) — login/crear-carrito/checkout estaban muertos (404)
+  - `find_customer_by_email()` con paginado local (ERP ignora `?email=` y `per_page`; `page` sí funciona, 78 clientes/6 págs)
+  - Guest sin `cliente_id` (422 antes) → 201 verificado; `update_customer` error honesto (PUT 404)
+- **Verificación**: login email real → success id 71; `erpc_get_customer` OK; checkout guest → 200; `PUT :id` 404; `OPTIONS` 200 en rutas
+- **Residuo de pruebas en tenant 10** (notificar al admin para anular): carts 14 (checked-out) y 15, customers 133 (Validacion Final), 136 (checkout-test), +1 ABANICO vendido en checkout de prueba
+- **Estado**: ✅ sincronizado (plugin push + ZIPs)
+- **Notas**: en remoto subir ZIP 3.3.8 — login y checkout invitado quedan operativos
+
+---
+
+## 2026-09-14
+
 ### [12:50] - ERP E-Commerce Connector v3.3.7: quick view modal + badge en vivo + En carrito (N)
 - **Tipo**: proyecto | wordpress | feature+bugfix
 - **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (6 archivos, commit `1fc82d9`, push `main` OK), ZIPs regenerados y verificados por dentro (88K, `Version: 3.3.7`)
