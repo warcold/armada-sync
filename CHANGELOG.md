@@ -1,5 +1,27 @@
 ## 2026-09-14
 
+### [00:20] - ERP E-Commerce Connector: eliminada plantilla Elementor redundante
+- **Tipo**: proyecto | wordpress | refactor
+- **Modificado**: `wp-content/plugins/erp-ecomm-connector/`
+  - Eliminado `includes/generate-template.php` (archivo huérfano)
+  - Eliminados `maybe_generate_template()`, `handle_template_generation()`, `gen_id()`, `esc_xml()` de `class-erpc-activation.php`
+  - Eliminado hook `?erpc_generate_template=1` (riesgo de seguridad)
+  - `DEPLOY-GUIA.md` reescrito (solo plugin, sin template)
+- **Afecta a**: ecomm MaganTech + cualquier instalación del plugin
+- **Causa**: La plantilla Elementor (`tech-ecomm-template.zip`) era redundante — el plugin ya crea las 14 páginas automáticamente al activarse y las renderiza con su propio CSS/JS. La plantilla era un formato JSON custom sin importador real.
+- **Archivos de plantilla eliminados**:
+  - `~/Desktop/MaganTech-Connector-Deploy/tech-ecomm-template.zip`
+  - `~/dev/wordpress/export/erp-connector-template.xml`
+  - `~/dev/wordpress/export/magantech-erp-template.zip`
+  - `~/dev/wordpress/export/wp-export-all.xml` y `wp-export-pages.xml` (vacíos)
+  - `~/dev/wordpress/export/deploy-package/template/` (directorio)
+- **Estado**: ✅ v3.3.2 pusheado (commit `f588b0d`), ZIP regenerado sin template
+- **Verificación**: las 14 páginas responden HTTP 200 tras la limpieza.
+
+---
+
+## 2026-09-14
+
 ### [03:30] - ERP E-Commerce Connector v3.3.2: activation crea las 14 páginas (fix "not found")
 - **Tipo**: proyecto | wordpress | bugfix
 - **Modificado**: `wp-content/plugins/erp-ecomm-connector/includes/class-erpc-activation.php`
