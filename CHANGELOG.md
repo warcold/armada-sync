@@ -1,5 +1,23 @@
 ## 2026-09-14
 
+### [12:35] - ERP E-Commerce Connector v3.3.4: newsletter duplicado fuera, logo+nombre siempre visibles, campos negocio por instancia
+- **Tipo**: proyecto | wordpress | bugfix+feature
+- **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (6 archivos, commit `c89832a`, push `main` OK), ZIPs regenerados (83K)
+  - `templates/landing.php` — eliminado bloque newsletter "Ofertas exclusivas" (el home renderizaba 2 seguidos: landing + footer; el footer queda como única fuente)
+  - `templates/partials/header.php` — antes logo O nombre (if/else); ahora ambos (logo + `get_brand_name()`), logo enlaza al inicio, agregado enlace "Inicio" al nav de tienda
+  - `includes/class-erpc-admin.php` — nuevos campos editables por instancia: Nombre del negocio + Eslogan (sección Personalización visual); `sanitize_settings()` los preserva; texto engañoso "se actualiza automáticamente al verificar" corregido (Verificar nunca guardaba)
+  - `includes/class-erpc-api.php` — `get_business_config()` intenta `/tienda/config` antes que `/config` (futuro; hoy todos 404 verificados: `/tienda/config`, `/tienda/info`, `/tienda`, `/negocio`, `/config`, `/tienda/negocio`)
+  - Bump `3.3.3→3.3.4` + CHANGELOG plugin
+- **Afecta a**: ecomm MaganTech (tenant 10)
+- **Causa**: duplicado visual landing+footer; header ocultaba nombre si había logo y el nav de tienda no tenía Inicio; ERP sin endpoint de config → nombre/logo deben gestionarse en admin WP con fallback local→erp_config→default
+- **Verificación**: `php -l` OK x5, home `ofertas exclusivas` 2→1, `newsletter-section` 0, `footer-newsletter` 1, `erpc-brand-name` 1, `/productos/` 104 cards / 19 pills, logs sin fatal
+- **Estado**: ✅ sincronizado (plugin push + ZIPs)
+- **Notas**: en el WP remoto subir ZIP 3.3.4 y rellenar Nombre/Logo/Eslogan en ERP Connector → Personalización visual
+
+---
+
+## 2026-09-14
+
 ### [12:05] - ERP E-Commerce Connector v3.3.3: preserva erp_config, categorías robustas + paginación sin repetir + limpieza viejas
 - **Tipo**: proyecto | wordpress | bugfix
 - **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (7 archivos, commit `81b7860`, push `main` OK), ZIPs regenerados `export/*.zip` (83K)
