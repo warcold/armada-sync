@@ -1,5 +1,24 @@
 ## 2026-09-14
 
+### [12:05] - ERP E-Commerce Connector v3.3.3: preserva erp_config, categorías robustas + paginación sin repetir + limpieza viejas
+- **Tipo**: proyecto | wordpress | bugfix
+- **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (7 archivos, commit `81b7860`, push `main` OK), ZIPs regenerados `export/*.zip` (83K)
+  - `includes/class-erpc-admin.php` — `sanitize_settings()` preserva `erp_config` + `config_fetched_at` (fix desync cada Guardar)
+  - `templates/ecomm/products.php`, `templates/landing.php` — aceptan `categorias/data/lista`, normalizan `categoria:{id,nombre}` vs string, fallback derivando únicas, `sanitize_text_field`, añadidos `#erpc-count-info` + `data-total`
+  - `includes/class-erpc-shortcodes.php` — `ajax_get_categories()` normaliza a `[{id,nombre}]`
+  - `assets/js/connector.js` — `seen{}` dedup por `id`, contador `Mostrando X de Y`, toggle Cargar más, fallback pills `erpcEnsureCategories()` si solo Todo
+  - Bump `3.3.2→3.3.3` + CHANGELOG plugin
+- **Limpieza**: borrados `erpecomm-alfredo-pro/`, `erpecomm-alfredo-pro.bak/` (144K c/u, inactivos, key vieja revocada 401) y duplicado anidado `erp-ecomm-connector/erp-ecomm-connector/` (1.3M artefacto docker cp). Backups en `~/backups/magantech-cleanup-20260914/` + `*.bkup-20260914` por archivo.
+- **Afecta a**: ecomm MaganTech (tenant 10, 142 productos, 18 categorías)
+- **Causa**: Verificar≠Guardar + `/config` y `/tenants/10` 404 + `sanitize` borraba sync + filtro categoria-objeto + paginación slice(0,15) sin contador/dedup
+- **Verificación**: `php -l` OK x5, `node --check` OK, `/productos/` 104 `erpc-card`, 19 `erpc-cat-btn` (Todo+18), 2 `erpc-count-info`, logs sin fatal
+- **Estado**: ✅ sincronizado (plugin push + ZIPs)
+- **Notas**: purgar caché navegador para probar Cargar más pág.2 sin repetidos; `Guardar` + `Sincronizar` requerido tras update
+
+---
+
+## 2026-09-14
+
 ### [11:33] - Docs: AGENTS.md adelgazado a reglas globales, kalimete.md fuente única operativa + fix eco-alfredo-ecomm
 - **Tipo**: docs | agente | config
 - **Modificado**: `AGENTS.md` (132→41 líneas), `agents/kalimete.md`, `MAPA.md`
