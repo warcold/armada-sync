@@ -1,5 +1,24 @@
 ## 2026-09-17
 
+### [13:10] - WordPress MaganTech: SSL verificado OK + limpieza archivos huérfanos + cadena ERP validada
+- **Tipo**: infra | limpieza | wordpress-dev
+- **Modificado**: `~/dev/wordpress/` (12 archivos eliminados + 3 dirs vacíos/dups); `MAPA.md` (versiones + estado tienda)
+- **Afecta a**: kalimete (stack wordpress-local/wordpress-db)
+- **Causa**: Reporte `ERR_SSL_PROTOCOL_ERROR` en `https://wordpress.kalimete.local` + archivos huérfanos de la saga de debug SSL (Sep 16) + duplicados en `export/`
+- **Verificación**: Servidor 100% OK — curl 200 con verificación TLS completa; headless Chrome renderiza la tienda sin flags inseguros. Causa del error: perfil Chrome del usuario (proxy/extensión/HSTS en caché), NO el servidor. CA mkcert reinstalada en sistema + NSS (Chrome/Chromium/Firefox). Cadena end-to-end validada: WP "MaganTech Store" → erp-ecomm-connector v3.3.8 → `https://erpipos.armada.do/api` tenant 10 → 18 categorías / 157 productos en vivo. Sitio post-limpieza: `/` 200, `/wp-login.php` 200.
+- **Eliminado** (backup en `/tmp/opencode/wp-cleanup-20260917/`): `00-ssl-fix.conf`, `ssl-fix.conf`, `ssl-fix.php`, `wp-config.php.patched`, `docker-entrypoint-{custom,ssl}.sh` (compose nunca los usó), `debug-{headers,ssl}.php`, `test-headers.php`, `hello.php` (ninguno activo), `magantech-erp-template.zip` (contenido ya importado en vivo), `export/deploy-package/` (dups idénticos por md5), dirs vacíos `erp-validation/`, `export-package/`. Commit local `9f0d7ba` en repo `~/dev/wordpress` (sin remoto).
+- **Conservado**: `backups/magantech/magantech.wpress` (137MB, único DR full-site) + `RESTAURAR.md`, `export/erp-ecmm-connector.zip` (v3.3.8 distribuible), `export/DEPLOY-GUIA.md`, `mcp-proxy*.js` (referenciados por wordpress-dev).
+- **Estado**: ✅ verificado local (sync por cron)
+- **Notas**: (1) Solo `elementor` + `erp-ecomm-connector` activos. (2) El `wp-config.php` vivo (volumen Docker) tiene bloques SSL inyectados duplicados pero funcionales; ante recreate del volumen el bloque stock de la imagen oficial + `WORDPRESS_CONFIG_EXTRA` cubren HTTPS. (3) RIESGO: el plugin no tiene remoto git — código solo en disco kalimete + volumen Docker + zip export. Recomendado push a GitHub. (4) `RESTAURAR.md` documenta credencial dev admin/admin123 en texto plano.
+
+### [12:05] - kalimete vuelve a aparecer como agente primary en opencode (fix selector TAB)
+- **Tipo**: infra | config | opencode
+- **Modificado**: `agents/kalimete.md` (frontmatter)
+- **Afecta a**: kalimete (opencode TUI)
+- **Causa**: La clave `"eco-taohemps": allow` estaba duplicada en `permission.task` (líneas 16 y 22). El parser de frontmatter de opencode rechaza el archivo completo ante claves YAML duplicadas: kalimete no aparecía en `opencode agent list` ni en el selector TAB (solo plan/build). Se eliminó la segunda ocurrencia; backup en `~/backups/kalimete.md.bkup-20260917-dupkey`.
+- **Verificación**: `opencode agent list` → `kalimete (primary)`; `opencode debug agent kalimete` → mode primary, temperature 0.2, color, 19 reglas task (`*` deny + allows, `general` denegado).
+- **Estado**: ✅ verificado local (sync por cron)
+
 ### [03:05] - Caddyfile de preprod: bloque micaserogou.com eliminado (corrección)
 - **Tipo**: infra | limpieza | preprod
 - **Modificado**: `/opt/nextcloud-stack/Caddyfile` (vps-preprod)

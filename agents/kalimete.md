@@ -19,7 +19,6 @@ permission:
     "eco-authentik": allow
     "eco-docuseal": allow
     "eco-scriberr": allow
-    "eco-taohemps": allow
     "eco-alfredo-ecomm": allow
     "armada-arcade": allow
     "wordpress-dev": allow

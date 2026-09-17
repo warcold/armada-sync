@@ -42,7 +42,7 @@
      - baseURL: `https://integrate.api.nvidia.com/v1`
      - apiKey: `nvapi-...` (key compartida desde victoria)
      - Contexto nativo: 1M tokens (vs 262K del Qwen local)
-- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1 + Elementor 4.2.3 + EMCP Tools v3.14.0 + MCP Adapter 0.5.0
+- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1 + Elementor 4.2.4 + EMCP Tools v3.14.1 + MCP Adapter 0.5.0
   - URL local: `http://localhost:8090` | URL LAN/SSL: `https://wordpress.kalimete.local`
   - URL LAN: `http://wordpress.kalimete.local` (redirect 301 → HTTPS)
   - DB: localhost:3307 (wordpress-db container)
@@ -53,7 +53,8 @@
   - Se integra con vLLM de victoria para automatización de páginas Elementor
   - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
   - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
-  - SSL: `mkcert` con CA instalada en sistema y Firefox (trust store)
+  - Tienda viva: "MaganTech Store" + plugin `erp-ecomm-connector` v3.3.8 → ERP `https://erpipos.armada.do/api` (tenant 10, 18 cat / 157 prod, verificado 2026-09-17)
+  - SSL: `mkcert` con CA instalada en sistema, Firefox y Chrome/Chromium (NSS) — verificado 2026-09-17
   - Mu-plugin de protección: `/var/www/html/wp-content/mu-plugins/disable-mcp-host-guard.php`
     → Deshabilita EMCP Tools MCP host guard (permite proxy `localhost:8090` → `wordpress.kalimete.local`)
     → PERSISTE: los mu-plugins no se borran con updates de WordPress/plugins
