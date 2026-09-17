@@ -54,6 +54,7 @@
   - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
   - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
   - Tienda viva: "MaganTech Store" + plugin `erp-ecomm-connector` v3.3.8 → ERP `https://erpipos.armada.do/api` (tenant 10, 18 cat / 157 prod, verificado 2026-09-17)
+  - Repo plugin: `github.com/warcold/erp-ecomm-connector` (privado, rama `main`) — README con contrato API + guía despliegue
   - SSL: `mkcert` con CA instalada en sistema, Firefox y Chrome/Chromium (NSS) — verificado 2026-09-17
   - Mu-plugin de protección: `/var/www/html/wp-content/mu-plugins/disable-mcp-host-guard.php`
     → Deshabilita EMCP Tools MCP host guard (permite proxy `localhost:8090` → `wordpress.kalimete.local`)

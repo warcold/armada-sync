@@ -1,5 +1,14 @@
 ## 2026-09-17
 
+### [13:30] - Plugin erp-ecomm-connector con repo GitHub propio + baseline best-practices
+- **Tipo**: proyecto | git | wordpress-dev
+- **Modificado**: nuevo repo `github.com/warcold/erp-ecomm-connector` (privado, rama `main`); `MAPA.md` (línea repo plugin)
+- **Afecta a**: kalimete (`~/dev/wordpress/wp-content/plugins/erp-ecomm-connector`, gitlink actualizado en repo padre)
+- **Causa**: El plugin solo existía en disco local + volumen Docker + ZIP (riesgo documentado 13:10). Ahora con remoto, README, uninstall.php, .distignore.
+- **Verificación**: push OK (commits `c616677` + `2b43d78`); sitio post-cambio `/` 200, `/wp-json/` 200; `php -l` limpio en archivos tocados.
+- **Estado**: ✅ sincronizado
+- **Notas**: Incluye fix real (cart TTL ignoraba el ajuste por `$GLOBALS` indefinido). Auditoría completa + roadmap entregados en chat. Riesgo remanente: auth solo-email sin verificación (propuesta OTP) y sin rate limiting — ver roadmap.
+
 ### [13:10] - WordPress MaganTech: SSL verificado OK + limpieza archivos huérfanos + cadena ERP validada
 - **Tipo**: infra | limpieza | wordpress-dev
 - **Modificado**: `~/dev/wordpress/` (12 archivos eliminados + 3 dirs vacíos/dups); `MAPA.md` (versiones + estado tienda)
