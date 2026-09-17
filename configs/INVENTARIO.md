@@ -15,18 +15,17 @@
 | Máquina de trabajo de este agente | la máquina local de warcold (kalimete) |
 | Herramientas | `wrangler` 4.119.0 (global) + API v4 con `curl`/`jq` |
 
-## 2. Zonas (3 activas) — verificadas 2026-08-14
+## 2. Zonas (2 activas) — verificadas 2026-08-14
 
 | Zona | Zone ID | Status | SSL mode |
 |---|---|---|---|
 | **armada.do** | `17badff7f918b4e02eea8533fac4dc9f` | active | **strict** |
-| **micaserogou.com** | `fdebf4707c11ec49d9a73204457ba19c` | active | **strict** |
 | **taohemps.com** | `080b3e78b1b420f477009c5374652103` | active | **full** (migrada 2026-08-07) |
 
 > SSL strict = todo origin proxied debe servir HTTPS:443 con cert válido (ver reglas aprendidas en skill).
 > taohemps.com es la zona de banahosting migrada; su DNS de correo (autoconfig/autodiscover/cpanel/webmail/whm/MX/SRV/DKIM/DMARC/SPF) NO se toca.
 >
-> **WAF Managed Free Ruleset** (`77454fe2d30c4220b5701f6fdfb893ba`): desplegado en **armada.do** y **micaserogou.com** (2026-08-06). **taohemps.com: NO desplegado (verificado 2026-08-14)** — pendiente si el usuario lo pide.
+> **WAF Managed Free Ruleset** (`77454fe2d30c4220b5701f6fdfb893ba`): desplegado en **armada.do** (2026-08-06). **taohemps.com: NO desplegado (verificado 2026-08-14)** — pendiente si el usuario lo pide.
 
 ## 3. Recursos de la cuenta (verificados 2026-08-14)
 
@@ -48,7 +47,7 @@
 |---|---|---|
 | `b9076e84545b65db035dc7328d0c5286` | **opencode-dns-cleanup** | DNS Read/Write armada.do → `$CLOUDFLARE_DNS_TOKEN` (en uso por DDNS de jonas, cron */5 — NO borrar) |
 | `4142d2e99b73d6873262a263cf125b50` | **spring-dream-d681** | Token de CUENTA → `$CLOUDFLARE_API_TOKEN`. Hace TODO: túneles, workers, DNS Edit all zones, settings SSL, bot mgmt, crear zonas |
-| `6d9959e277ae228473ff5562358953f7` | **erpipos-server-dns** | DNS+SSL en armada.do y micaserogou.com (en uso por el server erpipos) |
+| `6d9959e277ae228473ff5562358953f7` | **erpipos-server-dns** | DNS+SSL en armada.do (en uso por el server erpipos) |
 | `d9a90759bbc5f7e5cba11b06ac7c091a` | **damp-surf-3478-fusion** | DNS armada.do — **EN USO: proyecto VPS-telecomm (confirmado 2026-08-14). NO tocar, NO borrar** (documentación completa pendiente) |
 
 ### Alcances probados del token de cuenta (spring-dream-d681) — 2026-08-07
@@ -105,22 +104,7 @@
 - TXT: SPF (mailchannels), DMARC p=none, DKIM default._domainkey, caldav/carddav SRVs (cPanel), `_acme-challenge` (cPanel LE)
 - SRV: _autodiscover, _caldav(s), _carddav(s) → cPanel
 
-## 6. Mapa DNS micaserogou.com (verificado 2026-08-14, 27 records)
-
-### A records
-| Name | Content | Proxied |
-|---|---|---|
-| micaserogou.com (root) | 154.53.35.102 | ✅ VPS prod |
-| erpipos.micaserogou.com | 147.93.6.112 | ✅ erpipos |
-| autoconfig / autodiscover / cpanel / cpcalendars / cpcontacts / webdisk / webmail / whm | 66.225.201.198 | ❌ cPanel email |
-
-### CNAME
-- www → micaserogou.com (✅ proxied), ftp → micaserogou.com, mail → micaserogou.com
-
-### Email/otros
-- MX → micaserogou.com, TXT: **2 SPF duplicados** (uno con mailchannels, otro simple), DMARC, DKIM, SRVs cPanel
-
-## 7. Mapa DNS taohemps.com (verificado 2026-08-14, 27 records)
+## 6. Mapa DNS taohemps.com (verificado 2026-08-14, 27 records)
 
 - A root → 154.53.35.102 (✅ proxied) + cPanel records (66.225.201.198, ahora **proxied**)
 - CNAME www/ftp/mail → taohemps.com
@@ -132,13 +116,12 @@
 - **VPS prod** `vps-preprod`: 154.53.35.102 (auth.armada.do) — Docker + caddy, firewall DOCKER-USER solo rangos CF
 - **erpipos**: 147.93.6.112 — nginx con LE
 - **kalimete** (esta máquina): 10.0.0.106, dev apps solo `.local`
-- **victoria**: 10.0.0.5 — GPU GB10, vLLM :8000, victoria-llm-gateway :8010 (loopback), túnel victoria.armada.do → :8010 (solo API LLM); RDP headless :3389; panel admin https://victoria.local/admin (nginx TLS). **ComfyUI NO existe; OpenClaw :18789 NO responde; voz ELIMINADA (2026-08-14)**
+- **victoria**: 10.0.0.5 — GPU GB10, vLLM :8000, victoria-llm-gateway :8010 (loopback), túnel victoria.armada.do → :8010 (solo API LLM); RDP headless :3389; panel admin https://victoria.local/admin (nginx TLS). **ComfyUI en victoria.local:8188; OpenClaw :18789 NO responde; voz ELIMINADA (2026-08-14)**
 - **jonas**: 10.0.0.20 — NAS backups + DDNS updater + dnsmasq + WireGuard server
 - **Windows Alfredo**: 10.0.0.64 (cliente RDP; la victoria vieja ya no existe)
 - WireGuard: jonas=10.0.100.1, kalimete=10.0.100.2, vps=10.0.100.3; Endpoint `home.armada.do:51820`
 - ⚠️ **OJO DDNS**: el updater de jonas actualiza `home.armada.do` (A) y ANTES también `victoria.armada.do` — desde 2026-08-13 `victoria.armada.do` es CNAME del túnel; si el updater recrea el A lo pisa (verificar en jonas cuando el SSH se arregle)
 - ⚠️ **Registros del proyecto VPS-telecomm (2026-08-14, NO tocar)**: `proxy.us-east.armada.do` (31.220.102.176, gris), `telecomm.armada.do` + `*.telecomm.armada.do` (207.244.236.223, gris), `whiteboard.nextcloud.armada.do` (gris) — pertenecen al proyecto de servidores telecomm (token `damp-surf-3478-fusion`); se documentarán correctamente después.
-- ⚠️ **SPF duplicado en micaserogou.com**: persisten 2 registros SPF (uno con mailchannels, otro simple) — no tocar sin confirmación.
 
 ## 9. Cómo actualizar este inventario
 

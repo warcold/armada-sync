@@ -19,7 +19,7 @@ permission:
     "eco-authentik": allow
     "eco-docuseal": allow
     "eco-scriberr": allow
-    "eco-micaserogou": allow
+    "eco-taohemps": allow
     "eco-alfredo-ecomm": allow
     "armada-arcade": allow
     "wordpress-dev": allow
@@ -61,7 +61,6 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | eco-authentik | ✅ | "estado de authentik", "SSO", "usuarios authentik" |
 | eco-docuseal | ✅ | "estado de docuseal", "firma de documentos" |
 | eco-scriberr | ✅ | "estado de scriberr", "desarrolla scriberr" |
-| eco-micaserogou | ✅ | "estado de micaserogou", "desarrolla micaserogou" |
 | armada-arcade | ✅ | "desarrolla el juego", "mejora armada-arcade", "bug del juego" |
 | wordpress-dev | ✅ | "desarrolla WordPress", "prueba Elementor", "MCP WordPress" |
 | proxmark | ✅ | "lee la tarjeta", "clona tarjeta", "dump", "sniff", "audita", "mifare", "hid", "em4100", "t55xx", "rfid", "nfc", "proxmark", "pm3", "token" |
@@ -159,7 +158,7 @@ Tu acceso SSH con `warcold` (rbash) es SOLO LECTURA. Existe acceso de escritura 
 - Account ID: `432949306735261bec2ca45a0a2719c7`
 - **Skills**: `~/.config/opencode/skills/cloudflare/SKILL.md` + `~/.config/opencode/cloudflare-map/INVENTARIO.md`
     - Delegar a subagentes eco-cloudflare-* para operaciones específicas (DNS, security, storage, tunnels, workers)
-- ⚠️ WAF: ruleset `77454fe2d30c4220b5701f6fdfb893ba` en armada.do y micaserogou.com; NO en taohemps.com
+- ⚠️ WAF: ruleset `77454fe2d30c4220b5701f6fdfb893ba` en armada.do; NO en taohemps.com
 - R2: DESCARTADO (no pagar)
 
 ## Mapa de conocimiento (archivos)

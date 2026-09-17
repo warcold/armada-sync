@@ -1,6 +1,6 @@
 ---
 name: cloudflare
-description: Gestión de la cuenta Cloudflare de Alfredo@armada.do vía terminal. Usa SIEMPRE esta skill cuando el usuario mencione cloudflare, wrangler, r2, workers, dns, zonas, dominios, armada.do, micaserogou.com, buckets, kv, d1, pages, certificates, tunnels, o cualquier recurso de la cuenta. Contiene credenciales, comandos y ejemplos de la API.
+description: Gestión de la cuenta Cloudflare de Alfredo@armada.do vía terminal. Usa SIEMPRE esta skill cuando el usuario mencione cloudflare, wrangler, r2, workers, dns, zonas, dominios, armada.do, buckets, kv, d1, pages, certificates, tunnels, o cualquier recurso de la cuenta. Contiene credenciales, comandos y ejemplos de la API.
 ---
 
 # Cloudflare — Gestión desde terminal
@@ -25,7 +25,7 @@ El archivo `~/.config/cloudflare/env` (permisos 600) contiene:
 
 - Cuenta: **Alfredo@armada.do's Account**
 - Account ID: `432949306735261bec2ca45a0a2719c7`
-- Zonas (dominios): **armada.do** y **micaserogou.com**
+- Zonas (dominios): **armada.do** y **taohemps.com**
 - R2: las credenciales S3 existen pero **el usuario descartó R2 (decisión 2026-08-07: no pagar)** — backups en casa, disco físico separado en jonas. NO activar R2 ni proponerlo; no tocar R2.
 - Workers: **ninguno desplegado** (revisado 2026-08-05)
 - D1: **ninguna base** creada (revisado 2026-08-05)
@@ -45,7 +45,7 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 
 ### Orígenes directos proxied (no túnel) — cada uno con TLS propio
 - **VPS prod** 154.53.35.102 (armada.do y taohemps.com): TLS por caddy (Let's Encrypt), origin cerrado a solo rangos CF (DOCKER-USER).
-- **erpipos** 147.93.6.112: `erpipos.armada.do` + `erpipos.micaserogou.com` (A proxied → 147.93.6.112). **TLS por Let's Encrypt en el propio nginx** desde 2026-08-07 (cert CN=erpipos.armada.do, SAN ambos dominios, certbot.timer renueva). Detalles: `ops/agents/legacy/AGENTS.md` (vps-erpipo).
+- **erpipos** 147.93.6.112: `erpipos.armada.do` (A proxied → 147.93.6.112). **TLS por Let's Encrypt en el propio nginx** desde 2026-08-07 (cert CN=erpipos.armada.do, certbot.timer renueva). Detalles: `ops/agents/legacy/AGENTS.md` (vps-erpipo).
 
 ### Red local / acceso remoto
 - VPN WireGuard: servidor **jonas (10.0.0.20, wg0=10.0.100.1)**, clientes kalimete (10.0.100.2) y vps-preprod (10.0.100.3). Port-forward del router: UDP 51820 → jonas.
@@ -79,14 +79,14 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 ### Credenciales y tokens
 - `CLOUDFLARE_API_TOKEN` (spring-dream-d681, en env): cuenta entera (túneles, R2, workers) — NO DNS de zona
 - `CLOUDFLARE_DNS_TOKEN` (opencode-dns-cleanup, en env): **DNS Read/Write solo armada.do** — creado 2026-08-06 vía API, para operaciones de DNS
-- Otros tokens del inventario: `erpipos-server-dns` (DNS+SSL en armada.do y micaserogou.com, en uso) y `damp-surf-3478-fusion` (DNS armada.do, SIN uso desde 27-jul — candidato a borrar)
+- Otros tokens del inventario: `erpipos-server-dns` (DNS+SSL en armada.do, en uso) y `damp-surf-3478-fusion` (DNS armada.do, SIN uso desde 27-jul — candidato a borrar)
 - `VICTORIA_API_KEY` (env shell, ~/.zshrc): bearer del gateway LLM de victoria (`victoria-llm-gateway` :8010, auth por NOMBRE de key — la key activa se llama `demo`; validado 2026-08-13)
-- La zona `micaserogou.com` (fdebf4707c11ec49d9a73204457ba19c) aún NO tiene token de DNS propio (erpipos-server-dns la cubre)
+- La zona `micaserogou.com` fue eliminada (proyecto borrado 2026-09-17, ver CHANGELOG)
 
 ### Reglas aprendidas
 - **NUNCA registrar un A proxied (nube naranja) apuntando a un origin sin 443 si la zona está en SSL=strict**: Cloudflare exige HTTPS:443 con cert válido al origin → si no existe, timeout total (caso erpipos 2026-08-07: el origin solo servía HTTP; con flexible funcionaba, strict lo tumbó). Al emitir cert LE en un origin proxied, **grisar temporalmente el registro** (challenge HTTP-01 directo) y volver a naranja después.
 - **NUNCA subdominios de 2 niveles** (api.x.armada.do): Universal SSL gratis no los cubre → handshake_failure. Usar `x-api.armada.do`
-- DNS CNAME: crear con `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (usa cert.pem de `~/.cloudflared/`, cubre armada.do y micaserogou.com)
+- DNS CNAME: crear con `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (usa cert.pem de `~/.cloudflared/`, cubre armada.do)
 - **PENDIENTE (dashboard)**: NADA en DNS — los 9 CNAME muertos del túnel kalimete ya fueron borrados 2026-08-06 (API con token opencode-dns-cleanup). `kalimete.armada.do` ELIMINADO 2026-08-06 (era CNAME al túnel borrado). El CNAME activo es `victoria.armada.do` (túnel victoria-armada)
 - ufw victoria: SOLO LAN (4000, 443, 1666, 8000, 8010, 18789, 127.0.0.1) — nada abierto a internet (el túnel no lo necesita)
 
@@ -136,7 +136,7 @@ curl -s "https://api.cloudflare.com/client/v4/zones?per_page=50" \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | jq -r '.result[] | "\(.id) \(.name) \(.status)"'
 ```
 
-### DNS (records de armada.do o micaserogou.com)
+### DNS (records de armada.do o taohemps.com)
 ```sh
 # Obtener zone_id: usar el listado de zonas y el .result[].id correspondiente
 ZONE_ID="<id de la zona>"
@@ -161,7 +161,7 @@ curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_recor
 ```
 
 ### Configuración de zona (SSL, caché, seguridad)
-- **SSL por zona (2026-08-07)**: `armada.do` y `micaserogou.com` = **strict** (PATCH 2026-08-06; antes flexible); `taohemps.com` = **full**. Con strict, TODO origin proxied debe servir 443 con cert válido (ver "Reglas aprendidas" — caso erpipos).
+- **SSL por zona (2026-08-07)**: `armada.do` = **strict** (PATCH 2026-08-06; antes flexible); `taohemps.com` = **full**. Con strict, TODO origin proxied debe servir 443 con cert válido (ver "Reglas aprendidas" — caso erpipos).
 - **WAF Managed Free Ruleset DEPLOYADO en ambas zonas** (2026-08-06): plan Free usa el ruleset **`77454fe2d30c4220b5701f6fdfb893ba`** ("Cloudflare Managed Free Ruleset"), NO el ID estándar `efb7b8c949ac4650a09736fc376e9aee` (da error "not entitled"). Deploy: PUT /zones/{id}/rulesets/phases/http_request_firewall_managed/entrypoint `{"rules":[{"action":"execute","action_parameters":{"id":"77454fe2d30c4220b5701f6fdfb893ba"},"expression":"true","description":"Execute Cloudflare Managed Free Ruleset"}]}`. Verificar: GET .../entrypoint → 1 regla execute
 - **Bot Fight Mode: NO tiene API en plan Free** ("Method not allowed"/sin endpoint /bots) → solo dashboard, 2 clics
 - **R2: NO USAR (decisión 2026-08-07)** — usuario descartó el servicio; backups locales en NAS jonas (disco sdb). Ignorar error 10042.
@@ -207,7 +207,7 @@ Esta skill es parte de un sistema de agentes. El agente principal es `cloudflare
 | Agente | Modo | Rol |
 |---|---|---|
 | `cloudflare` | primary | Coordinador: decide, delega, verifica, responde |
-| `cf-dns` | subagent | DNS y zonas de armada.do / micaserogou.com / taohemps.com |
+| `cf-dns` | subagent | DNS y zonas de armada.do / taohemps.com |
 | `cf-workers` | subagent | Workers/Pages: deploy, versiones, rollback, tail, secrets, CRON |
 | `cf-storage` | subagent | KV, D1, Queues (R2: NO usar) |
 | `cf-security` | subagent | SSL, WAF, bot mgmt, tokens, firewall, certificados |

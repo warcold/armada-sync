@@ -18,7 +18,7 @@ TÚ (Alfredo/warcold)
 │ verifica resultados, responde al usuario   │
 └────────────────────────────────────────────┘
    │  (subagentes hidden — delegación vía tool task)
-   ├──► eco-cloudflare-dns     → DNS, zonas, records (armada.do / micaserogou.com / taohemps.com)
+   ├──► eco-cloudflare-dns     → DNS, zonas, records (armada.do / taohemps.com)
    ├──► eco-cloudflare-workers → Workers, Pages, CRON, secrets
    ├──► eco-cloudflare-storage → KV, D1, Queues (R2: NO USAR — desactivado)
    ├──► eco-cloudflare-security→ SSL, WAF, firewall, bot mgmt, tokens, certificados
@@ -73,7 +73,6 @@ Todos los agentes comparten la misma base de conocimiento:
 
 - Account ID: `432949306735261bec2ca45a0a2719c7`
 - armada.do → `17badff7f918b4e02eea8533fac4dc9f` (SSL strict)
-- micaserogou.com → `fdebf4707c11ec49d9a73204457ba19c` (SSL strict)
 - taohemps.com → `080b3e78b1b420f477009c5374652103` (SSL full, NO tocar DNS de correo)
 - Túnel único: victoria-armada `d9abe241-fcbb-40a6-9202-36d0cfa7a95a` → victoria.armada.do → http://127.0.0.1:8010 (victoria-llm-gateway — SOLO API LLM con llaves, validado 2026-08-13; panel /admin y UIs solo LAN)
 - Tokens: spring-dream-d681 (cuenta=env), opencode-dns-cleanup (DNS=env), erpipos-server-dns, damp-surf-3478-fusion (sin uso)

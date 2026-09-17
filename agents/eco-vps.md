@@ -33,7 +33,6 @@ Gestión del servidor VPS de producción (`vps-preprod`, 154.53.35.102). Este su
 | **Scriberr** | scriberr | Servicio Scriberr |
 | **DocuSeal** | docuseal | Firma de documentos |
 | **Taohemps** | taohemps-frontend-1, taohemps-backend-1 | Proyecto Taohemps |
-| **Micaserogou** | micaserogou-frontend-1 | Proyecto Micaserogou |
 | **Whiteboard** | nextcloud-whiteboard-ws | Pizarra Nextcloud |
 | **Staging** | staging-postgres-1, staging-minio-1, staging-adminer-1, staging-redis-1 | Entorno staging |
 | **Apps** | apps-postgres, apps-redis | Bases de datos apps |

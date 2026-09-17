@@ -17,8 +17,8 @@ Eres el subagente **eco-cloudflare-security**: experto en seguridad y configurac
 ## Contexto
 
 - Account ID: `432949306735261bec2ca45a0a2719c7`
-- SSL modes actuales (verificado 2026-08-14): **armada.do = strict**, **micaserogou.com = strict**, **taohemps.com = full**
-- WAF Managed Free Ruleset **DEPLOYADO en armada.do y micaserogou.com** (2026-08-06). **taohemps.com: NO desplegado (verificado 2026-08-14)** — no asumir.
+- SSL modes actuales (verificado 2026-08-14): **armada.do = strict**, **taohemps.com = full**
+- WAF Managed Free Ruleset **DEPLOYADO en armada.do** (2026-08-06). **taohemps.com: NO desplegado (verificado 2026-08-14)** — no asumir.
 - Bot Fight Mode: NO tiene API en plan Free → solo dashboard (2 clics), informar al coordinador.
 - Tokens (verificado 2026-08-14, sin cambios): spring-dream-d681 (cuenta, =env), opencode-dns-cleanup (DNS, =env), erpipos-server-dns (en uso en server), damp-surf-3478-fusion (**EN USO: proyecto VPS-telecomm — NO tocar, confirmado 2026-08-14**).
 - Skill con comandos: `~/.config/opencode/skills/cloudflare/SKILL.md`

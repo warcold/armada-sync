@@ -18,7 +18,7 @@
                     └── 31.220.102.176:1444 ─── Squid Proxy   │
                     │                                          │
    Cloudflare: Alfred@armada.do                               │
-   Zones: armada.do | micaserogou.com | taohemps.com          │
+   Zones: armada.do | taohemps.com          │
    Túnel: victoria-armada → victoria.local:8010 (LLM)         │
                     └───────────────────────────────────────────┘
 ```
@@ -28,7 +28,7 @@
 ### 1. kalimete (10.0.0.106) — HUB / Cerebral
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
-- Docker: 9 containers (tapmap, woodly, micaserogou-restart, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
+- Docker: 8 containers (tapmap, woodly, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
 - **opencode.jsonc**: 3 providers (verificado 2026-09-14; el archivo es la fuente única)
   1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
       - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
@@ -157,7 +157,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-woodly | Proyecto Woodly (woodly.armada.do) — cliente principal ERP | ✅ |
 | eco-alfredo-ecomm | Backend ERP Alfredo Pro Ecomm (multin tenant) — NUEVO (2026-09-05) | ✅ |
 | eco-taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
-| eco-micaserogou | Proyecto Micaserogou (micaserogou.com) | ✅ |
+| eco-taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
 | eco-ragnarok | Servidor de juego Ragnarok | ✅ |
 | eco-nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
 | eco-authentik | SSO Authentik (auth.armada.do) | ✅ |
