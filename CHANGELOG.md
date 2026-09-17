@@ -1,3 +1,29 @@
+## 2026-09-17
+
+### [03:05] - Caddyfile de preprod: bloque micaserogou.com eliminado (corrección)
+- **Tipo**: infra | limpieza | preprod
+- **Modificado**: `/opt/nextcloud-stack/Caddyfile` (vps-preprod)
+- **Afecta a**: vps-preprod
+- **Causa**: El bloque `micaserogou.com` del Caddyfile no fue eliminado en la limpieza inicial (el subagente no lo reportó). Se corrigió manualmente: backup `.bkup`, `sed -i` eliminando el bloque, verificación `grep` OK, Caddy recargado.
+- **Estado**: ✅ sincronizado
+- **Notas**: Caddyfile limpio ahora. No quedan rastros de micaserogou en preprod.
+
+### [03:00] - Micaserogou eliminado de kalimete y preprod
+- **Tipo**: infra | limpieza | proyecto eliminado
+- **Modificado**: kalimete (Docker + código fuente + nginx), vps-preprod (Docker + certificados), docs (MAPA.md, CHANGELOG.md, INVENTARIO.md, agent files)
+- **Afecta a**: kalimete, vps-preprod, toda la documentación armada-sync
+- **Causa**: El usuario decidió no continuar con el proyecto Micaserogou. Se eliminó:
+  - **kalimete**: Docker container `micaserogou-frontend-1`, directorio `~/dev/apps/micaserogou/` (docker-compose, Dockerfile, frontend, nginx.conf, deploy.sh)
+  - **preprod**: Docker container `micaserogou-frontend-1`, directorio `/opt/micaserogou/` (clon Git, docker-compose.yaml)
+  - **Preprod certs**: certificados SSL `micaserogou.com` eliminados del volumen Caddy
+  - **Docker**: red `micaserogou_default` borrada, imagen `micaserogou-frontend:latest` eliminada
+  - **Documentación**: borrado `agents/eco-micaserogou.md`, eliminadas todas las referencias en MAPA.md, INVENTARIO.md, kalimete.md, eco-cloudflare-dns.md, eco-cloudflare-security.md, eco-vps.md, SKILL.md (Cloudflare), configs/MAPA.md, configs/INVENTARIO.md
+  - **Cloudflare**: zona `micaserogou.com` NO eliminada (solo se quitaron referencias locales — el usuario puede borrarla del dashboard si desea)
+- **Estado**: ✅ sincronizado
+- **Notas**: WordPress `wordpress.kalimete.local` ✅ funcionando. ComfyUI se queda en victoria.local:8188 (kalimete sin GPU).
+
+---
+
 ## 2026-09-14
 
 ### [13:05] - ERP E-Commerce Connector v3.3.8: rutas sin doble /api + login real + pedido admin ERP redactado
