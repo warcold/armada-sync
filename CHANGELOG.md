@@ -1,5 +1,14 @@
 ## 2026-09-17
 
+### [16:40] - NVIDIA NIM: auth.json en kalimete + sistema de rotación + llaves separadas
+- **Tipo**: infra | config | opencode | seguridad
+- **Modificado**: `~/.local/share/opencode/auth.json` (nuevo en kalimete), `~/.armada-custom/secrets/nvapi-keys.json` (nuevo), `~/.armada-custom/bin/nvapi-rotate.sh` (nuevo)
+- **Afecta a**: kalimete (opencode provider nvidia), victoria (sin cambios — su llave intacta)
+- **Causa**: El provider `nvidia` en opencode usa `auth.json` (no apiKey en JSONC). Victoria tenía su auth.json pero kalimete no — opencode no podía autenticar contra NVIDIA NIM. Cada nodo ahora usa su propia llave NVIDIA: kalimete = victoria-1 (me@alfredo.pro, nvapi-AuHob...), victoria = victoria-2 (warcold@gmail.com, nvapi-vZ9w...). Se replicó el script de rotación `nvapi-rotate.sh` a kalimete con `--resolve` (DNS jonas caído) y probes en paralelo.
+- **Verificación**: Ambas keys dan HTTP 200 al POST `chat/completions` desde kalimete (modelo `openai/gpt-oss-20b` como probe, 3 modelos de NIM dan 404/timeout desde kalimete por restricción regional). auth.json legible, permisos 600 warcold:warcold.
+- **Estado**: ✅ sincronizado
+- **Notas**: Modelo de prueba cambiado de `moonshotai/kimi-k3` a `openai/gpt-oss-20b` (el único que responde 200 consistentemente desde kalimete). Sistema de rotación: `nvapi-rotate.sh status|test|rotate|auto` en kalimete. 3 llaves disponibles, rotación automática si falla la activa.
+
 ### [15:00] - Plugin v3.4.0: deploy multi-tenant + spec formal para el admin ERP
 - **Tipo**: proyecto | feature | wordpress-dev
 - **Modificado**: repo `github.com/warcold/erp-ecomm-connector` (commit `a423734`, 11 archivos); gitlink padre actualizado
