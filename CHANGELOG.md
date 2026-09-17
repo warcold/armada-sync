@@ -1,5 +1,14 @@
 ## 2026-09-17
 
+### [14:00] - Plugin v3.3.9: Mis Pedidos reales + catálogo server-side + caché + rate limiting
+- **Tipo**: proyecto | feature | wordpress-dev
+- **Modificado**: repo `github.com/warcold/erp-ecomm-connector` (commit `319aab7`, 8 archivos); gitlink padre actualizado
+- **Afecta a**: kalimete (tienda MaganTech viva)
+- **Causa**: Mapeo real del API ERP (solo GETs read-only): `/orders` y `/ecomm/carts/:id` SÍ existen; `search/categoria_id/page/limit` funcionan server-side; `?email=` se ignora en `/orders` y `/customers`
+- **Verificación**: `/productos/` 200 "Mostrando 15 de 157"; transients `erpc_c_*_v1` creados en DB; harness unitario OK (normalizadores + rate limit 5p/1b); `php -l` limpio; push GitHub OK
+- **Estado**: ✅ sincronizado
+- **Notas**: Journey compra con cuentas: registro/login/perfil/checkout guest+auth/Mis Pedidos funcionan; falta del ERP: auth con contraseña, PUT perfil, lealtad, /config, detalle /orders/:id, filtro ?email= real. Sin probar end-to-end: checkout_auth (crearía pedido real).
+
 ### [13:30] - Plugin erp-ecomm-connector con repo GitHub propio + baseline best-practices
 - **Tipo**: proyecto | git | wordpress-dev
 - **Modificado**: nuevo repo `github.com/warcold/erp-ecomm-connector` (privado, rama `main`); `MAPA.md` (línea repo plugin)
