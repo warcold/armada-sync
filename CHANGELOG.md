@@ -1,5 +1,14 @@
 ## 2026-09-17
 
+### [15:00] - Plugin v3.4.0: deploy multi-tenant + spec formal para el admin ERP
+- **Tipo**: proyecto | feature | wordpress-dev
+- **Modificado**: repo `github.com/warcold/erp-ecomm-connector` (commit `a423734`, 11 archivos); gitlink padre actualizado
+- **Afecta a**: kalimete (modelo ZIP+llave=tienda por cliente)
+- **Causa**: Visión producto: cada cliente ERP despliega su WordPress + plugin + su key. Faltaba hardening tenant + spec para completar funciones del lado ERP.
+- **Verificación**: `php -l` limpio; fallback por shortcode probado en vivo (página tmp-* renderizó carrito, eliminada); override por tema probado en harness; home/productos/carrito/checkout/login/mi-cuenta todos 200; push OK.
+- **Estado**: ✅ sincronizado
+- **Notas**: Docs nuevos en el repo: `docs/PEDIDO-ERP.md` (P0: auth OTP/password, PUT perfil, ?email= real, /tienda/config, GET cliente; P1: lealtad, detalle pedido, ofertas, webhook) y `docs/DEPLOY-TENANT.md` (runbook ~20min + troubleshooting). Riesgo remanente: auth solo-email (P0-1) hasta que el ERP lo implemente.
+
 ### [14:00] - Plugin v3.3.9: Mis Pedidos reales + catálogo server-side + caché + rate limiting
 - **Tipo**: proyecto | feature | wordpress-dev
 - **Modificado**: repo `github.com/warcold/erp-ecomm-connector` (commit `319aab7`, 8 archivos); gitlink padre actualizado
