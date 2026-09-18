@@ -1,5 +1,17 @@
 ## 2026-09-18
 
+### [03:30] - Plugin v3.5.1: Elementor override funcional + multi-color en ambas plantillas + auditoría limpia
+- **Tipo**: proyecto | fix | seguridad | elementor | mcp
+- **Modificado**: plugin `erp-ecomm-connector` v3.5.1 (commit `169514b`, 8 archivos); página demo Elementor ID 53; imágenes Pexels en media library (IDs 49-50)
+- **Afecta a**: kalimete (tienda + modelo multi-tenant)
+- **Causa**: Validación integral pedida: (1) el override Elementor no funcionaba de verdad — el router secuestraba páginas Elementor vía fallback de shortcode antes que Elementor renderizara; (2) labels de presets con adornos; (3) plantilla Elementor con imágenes multi-uso.
+- **Auditoría**: 0 XSS (echo sin escape), 0 SQL sin prepare, 0 dead code, 0 duplicados, todos los AJAX con nonce (verificado handler por handler), rate limiting en register/login/checkout, colores con sanitize_hex_color + esc_html en inline CSS. Fix adicional: dir uploads/2026/09 era root (uploads fallaban).
+- **Fix arquitectura**: router respeta `_elementor_edit_mode=builder` (jamás intercepta); `[erpc_products]` rinde content-only (`products-content.php`); frame flag global (wp_footer solo si header abrió); labels simples azul/rosa/gris.
+- **Plantilla Elementor**: "Portada Elementor — Tienda Pro" (ID 53, canvas, publicada) con estructura best-practices (hero/trust/productos/USP/CTA/footer), widgets NATIVOS (el HTML widget es Pro-only — hallazgo), clases `erpc-el-*` que heredan el preset del plugin via CSS vars → multi-color verificado en vivo en AMBAS plantillas (rosa aplicó a Elementor y plugin, restaurado a azul).
+- **Verificación**: home/productos sin regresión (frame completo, 1 doctype); página 53: 44 widgets renderizados, 71 cards embebidas, 0 chrome plugin, 1 footer, 1 doctype; sintaxis OK; push GitHub OK.
+- **Estado**: ✅ sincronizado
+- **Notas**: Imágenes Pexels (libres, uso comercial, sin atribución) subidas a media library. El modelo usado: Qwen3.6-35B vía victoria (GLM no existe en el stack).
+
 ### [02:00] - Plugin v3.5.0: 3 presets color + hero editable + modo Elementor + landing MCP
 - **Tipo**: proyecto | feature | wordpress-dev | mcp | elementor
 - **Modificado**: plugin `erp-ecomm-connector` v3.5.0 (commit `dae78b5`, 11 archivos); página Elementor 47 (draft)
