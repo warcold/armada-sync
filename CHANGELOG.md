@@ -1,5 +1,14 @@
 ## 2026-09-18
 
+### [09:00] - Plugin v3.7.0: desktop full-width + columnas configurables (menos scroll en PC)
+- **Tipo**: proyecto | feature | ux | responsive
+- **Modificado**: plugin `erp-ecomm-connector` v3.7.0 (commit `b163149`, 4 archivos); home Elementor reestructurada
+- **Afecta a**: kalimete (experiencia desktop de la tienda)
+- **Causa**: En PC todo iba en caja ~1140px centrada (mucho scroll, márgenes vacíos). Best practice e-commerce: full-bleed + más columnas en desktop.
+- **Implementado**: (1) `data-columns` cablea el attr `columns` (estaba muerto): ≥1200px → 4/5/6 cols, 993-1199 → 3, resto intacto. (2) Home Elementor: hero/trust/CTA `layout:full`, trust 4 columnas, USP 2 columnas (apilan solas en móvil).
+- **Verificación**: home 200 con 3 secciones full, 12 cards con data-columns=4, CSS 3.7.0 servido con las reglas; screenshots 1440+375; móvil/tablet intactos (media queries existentes).
+- **Estado**: ✅ sincronizado
+
 ### [08:00] - Home muestra Elementor de verdad + lección SQL/JSON documentada
 - **Tipo**: proyecto | fix | elementor | docs
 - **Modificado**: página 8 (home) con diseño Elementor nativo; modo elementor ACTIVO en el sitio
