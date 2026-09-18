@@ -1,3 +1,15 @@
+## 2026-09-18
+
+### [00:30] - WordPress: fix duplicación visual landing (v3.4.1) + pipeline MCP Elementor operativo
+- **Tipo**: proyecto | fix | wordpress-dev | mcp
+- **Modificado**: plugin `erp-ecomm-connector` v3.4.1 (commit `ba92f2a`); `mcp-adapter` + `emcp-tools` activados con fix autoloader; app password MCP creada
+- **Afecta a**: kalimete (tienda MaganTech + stack MCP)
+- **Causa**: (1) Usuario reportó header/footer "duplicados" en la landing: el hero repetía la marca del header, la sección trust repetía la trustbar, y había un `</div>` huérfano tras `</html>` en landing/products/cart. (2) Plugins MCP (mcp-adapter + emcp-tools) inactivos; al activarlos, fatal por jetpack-autoloader duplicado (ambos bundlean el mismo namespace).
+- **Fix**: (1) Hero con headline promocional, trust-grid eliminado, footer tras cierre de .erpc-page — HTML validado 52/52 divs. (2) Guard `class_exists` en `vendor/autoload_packages.php` de AMBOS plugins (mismo namespace hash → redeclaración). (3) `active_plugins` re-serializado con longitudes correctas (mi UPDATE anterior tenía s:19/s:41 erróneos → unserialize fallaba silenciosamente).
+- **Verificación**: Landing 200 con hero promocional, 1 header, 1 footer, 0 trust-grid; productos/carrito/mi-cuenta 200; MCP REST `/wp-abilities/v1/abilities` → **151 abilities (148 emcp-tools Elementor: create-page, build-page, add-container, add-flexbox, atomic widgets, global classes, templates, batch-update)**; auth Basic con app password `mcp-kalimete-2026` (admin).
+- **Estado**: ✅ sincronizado
+- **Notas**: Arquitectura confirmada: plugin=datos (shortcodes), Elementor=diseño, MCP=control programático. Los fixes de autoloader viven en `vendor/` (se pierden en update de plugin — documentar en upstream). El endpoint REST de abilities tiene per_page max 100 (paginar). App password guardada en wp-cli style: NO commitear.
+
 ## 2026-09-17
 
 ### [16:30] - Fix ERR_SSL_PROTOCOL_ERROR: puerto 8090 cedido a nginx-TLS (redirects envenenados)
