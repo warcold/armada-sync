@@ -1,5 +1,15 @@
 ## 2026-09-18
 
+### [08:00] - Home muestra Elementor de verdad + lección SQL/JSON documentada
+- **Tipo**: proyecto | fix | elementor | docs
+- **Modificado**: página 8 (home) con diseño Elementor nativo; modo elementor ACTIVO en el sitio
+- **Afecta a**: kalimete (portada de la tienda)
+- **Causa**: Usuario veía el template del plugin aun con elementor "activo": (1) el modo seguía en plugin en DB (nunca se guardó el cambio); (2) aunque activo, los tripletes de shortcodes rinden markup del plugin → se veía igual.
+- **Fix**: modo elementor activado (round-trip PHP limpio) + home reconstruida como diseño nativo (hero/trust/productos/USP/CTA + [erpc_header]/[erpc_footer]) con el copy comercial e imágenes del inventario.
+- **Verificación**: home elementor: 74 widgets, hero nativo, 71 cards, USP+CTA, topbar/footer 1x, 1 doctype, 200.
+- **Estado**: ✅ sincronizado
+- **Notas**: LECCIÓN — inserts SQL directos con JSON que contenga `\"` se corrompen (backslash colapsa/duplica según capas). Regla: SQL solo con JSON sin backslashes (assert en el generador) + contenido rico vía REST `batch-update`. Los tripletes de los otros 5 slugs no tienen comillas → intactos.
+
 ### [07:30] - Plugin v3.6.0: plantilla dual completa + hamburguesa + aislamiento total de templates
 - **Tipo**: proyecto | feature | fix | elementor | responsive
 - **Modificado**: plugin `erp-ecomm-connector` v3.6.0 (commit `9bd187b`, 6 archivos); 6 slugs con datos Elementor; demo 53 eliminada; home dup 30 + Sample a draft
