@@ -1,5 +1,15 @@
 ## 2026-09-17
 
+### [16:30] - Fix ERR_SSL_PROTOCOL_ERROR: puerto 8090 cedido a nginx-TLS (redirects envenenados)
+- **Tipo**: infra | red | seguridad
+- **Modificado**: `/etc/nginx/sites-available/wordpress.kalimete.local.conf` (bkup `.bkup-20260917`); `~/dev/wordpress/docker-compose.yml` (bkup, `127.0.0.1:8091:80`)
+- **Afecta a**: kalimete (stack wordpress-local)
+- **Causa**: Chrome del usuario redirigía solo a `https://wordpress.kalimete.local:8090` → ERR_SSL_PROTOCOL_ERROR. Causa raíz: el 8090 era el backend HTTP directo del container; en la época del bounce de login el servidor emitió URLs con `:8090` que quedaron cacheadas/autocompletadas en el browser. El 8090 hablaba HTTP plano → handshake TLS imposible.
+- **Fix**: (1) compose re-bind a `127.0.0.1:8091` (backend solo loopback); (2) nginx ahora escucha TLS en 8090/443/80 con el mismo cert mkcert → la URL envenenada responde 200 con TLS válido y WP canoniza al dominio sin puerto (redirect_to de wp-admin verificado limpio).
+- **Verificación**: `https://wordpress.kalimete.local:8090/` → 200 con verificación TLS completa (sin -k); headless Chrome renderiza MaganTech por 8090; principal 200 sin regresión; loopback 8091 200; `nginx -t` OK; container healthy.
+- **Estado**: ✅ sincronizado
+- **Notas**: Ambas URLs (con y sin puerto) funcionan ahora. Limpieza previa: 4 transients erpc_* borrados (solo proyecto). Si el usuario sigue viendo el error: perfil Chrome (21 extensiones) — probar incógnito.
+
 ### [16:40] - NVIDIA NIM: auth.json en kalimete + sistema de rotación + llaves separadas
 - **Tipo**: infra | config | opencode | seguridad
 - **Modificado**: `~/.local/share/opencode/auth.json` (nuevo en kalimete), `~/.armada-custom/secrets/nvapi-keys.json` (nuevo), `~/.armada-custom/bin/nvapi-rotate.sh` (nuevo)
