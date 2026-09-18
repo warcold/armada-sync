@@ -1,5 +1,15 @@
 ## 2026-09-18
 
+### [14:55] - Tienda MaganTech v3.8.1: carrito flotante + hero desktop + centrado (UX)
+- **Tipo**: proyecto | feature | fix | ux | wordpress-dev
+- **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (connector.css, connector.js, footer.php, nuevo parcial cart-float.php, bump 3.8.1); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.8.1, 48 archivos, top-level estándar)
+- **Afecta a**: kalimete (tienda MaganTech, modos plugin + Elementor)
+- **Causa**: Usuario pidió: (1) hero desktop con blancos excesivos (mobile bien); (2) carrito flotante con contador visible siempre; (3) productos/catálogo/textos sin centrar
+- **Implementado**: (1) Float fixed inferior-derecha con icono + badge en vivo (fuente real localStorage, sincronizado vía updateCartBadge), 1x por página con guard global (cubre shortcodes Elementor). (2) Fix bloque v2.7.0 (overlay absolute, min-height, contenido 760px centrado); .erpc-el-hero 56px desktop / 90px mobile. (3) Centrado cards, hero+buscador catálogo (sin CSS antes), section headers.
+- **Verificación**: 200 en /, /productos/, /carrito/, /checkout/; 1 header + 1 footer + 1 float por página; php -l + node --check limpios; sin fatales; commit `665d7d4` push main OK
+- **Notas**: (1) wordpress-dev (subagente) agotó 2×15 pasos solo explorando — implementado directo por kalimete. (2) `_elementor_data` de home ID 8 tiene JSON inválido (char 742): NO se tocó por SQL (riesgo); el fix del hero Elementor fue solo CSS. Pendiente reparar ese JSON por editor. (3) Catálogo sigue en 0 por bloqueo ERP impago (alerta 10:30 vigente) — verificación fue estructural.
+- **Estado**: ✅ sincronizado
+
 ### [10:30] - 🚨 ERP BLOQUEÓ AL TENANT (impago) + Plugin v3.8.0: forms + SMTP + hamburguesa
 - **Tipo**: proyecto | feature | fix | alerta-negocio | email
 - **Modificado**: plugin `erp-ecomm-connector` v3.8.0 (commit `3d95c8d`, 9 archivos); páginas contacto/cotizar con diseño; SMTP tenant configurado
