@@ -1,5 +1,13 @@
 ## 2026-09-18
 
+### [09:30] - Header/footer Elementor a full-width (secciones boxed los encajonaban)
+- **Tipo**: proyecto | fix | elementor | ux
+- **Modificado**: página 8 (home) — secciones de `[erpc_header]` y `[erpc_footer]` a `layout:full` vía MCP `batch-update`
+- **Afecta a**: kalimete (portada en modo elementor)
+- **Causa**: El topbar y footer del plugin (fondos sólidos) quedaban dentro de secciones Elementor `boxed` → se veían como caja centrada en PC.
+- **Verificación**: 5 secciones full en el render; fondos pintan a borde de pantalla; screenshot 1440px.
+- **Estado**: ✅ sincronizado
+
 ### [09:00] - Plugin v3.7.0: desktop full-width + columnas configurables (menos scroll en PC)
 - **Tipo**: proyecto | feature | ux | responsive
 - **Modificado**: plugin `erp-ecomm-connector` v3.7.0 (commit `b163149`, 4 archivos); home Elementor reestructurada
