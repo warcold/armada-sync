@@ -1,5 +1,15 @@
 ## 2026-09-18
 
+### [10:30] - 🚨 ERP BLOQUEÓ AL TENANT (impago) + Plugin v3.8.0: forms + SMTP + hamburguesa
+- **Tipo**: proyecto | feature | fix | alerta-negocio | email
+- **Modificado**: plugin `erp-ecomm-connector` v3.8.0 (commit `3d95c8d`, 9 archivos); páginas contacto/cotizar con diseño; SMTP tenant configurado
+- **Afecta a**: kalimete + NEGOCIO (tienda sin productos hasta resolver pago)
+- **🚨 ALERTA**: `GET /tienda/*`, `/orders`, `/customers` responden `{"message":"Esta instancia ha sido bloqueada.","motivo":"Impago de suscripción"}`. Catálogo en 0 (verificado tras flush de caché — antes se veía por caché vieja). El tenant debe pagar la suscripción ERPiPOS. Sumar al PEDIDO-ERP.
+- **Implementado**: (1) Forms `[erpc_contact]`/`[erpc_quote]` con nonce+honeypot+rate, accesibles, email con Reply-To; páginas /contacto/ (form agregado) y /cotizar/ (nueva) con diseño Elementor completo. (2) SMTP propio sin plugins (phpmailer_init + settings + botón de prueba); configurado mail.armada.do:465 con no-reply; **correo de prueba + submit real entregados** (success:true end-to-end). (3) Hamburguesa ≤768px + footer mobile centrado + `.erpc-el-pagehero`. (4) Fix doble-documento en shortcodes embebidos (`erpc_should_print_frame()` + flag) y doble-render en contacto (estáticas Elementor-built se libran). (5) `users_can_register=0`; verificado 0 creación de usuarios WP — arquitectura confirmada: cuentas solo en ERP, WP solo admin.
+- **Casi-incidente**: un round-trip serialize por pipe corrompió `erpc_settings` (solo quedó template_mode) — restaurado desde respaldo + SMTP reconfigurado. REGLA: transforms de options serializados solo en scripts PHP con archivos, jamás pipes.
+- **Verificación**: 7/7 páginas Elementor con chrome simple; forms render + submit real OK; plugin-mode sin regresión (home/productos frame simple); sintaxis + JS OK; push OK.
+- **Estado**: ✅ sincronizado (pero tienda sin catálogo hasta pago ERP)
+
 ### [09:30] - Header/footer Elementor a full-width (secciones boxed los encajonaban)
 - **Tipo**: proyecto | fix | elementor | ux
 - **Modificado**: página 8 (home) — secciones de `[erpc_header]` y `[erpc_footer]` a `layout:full` vía MCP `batch-update`
