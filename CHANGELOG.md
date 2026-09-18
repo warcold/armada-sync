@@ -1,5 +1,15 @@
 ## 2026-09-18
 
+### [02:00] - Plugin v3.5.0: 3 presets color + hero editable + modo Elementor + landing MCP
+- **Tipo**: proyecto | feature | wordpress-dev | mcp | elementor
+- **Modificado**: plugin `erp-ecomm-connector` v3.5.0 (commit `dae78b5`, 11 archivos); página Elementor 47 (draft)
+- **Afecta a**: kalimete (tienda MaganTech + tenants futuros)
+- **Causa**: Pedido usuario: (1) 3 temas de color seleccionables, (2) hero editable desde plugin, (3) switch plantilla plugin|Elementor sin mezcla, (4) diseñar plantilla Elementor, (5) qué modelo usar.
+- **Implementado**: presets azul/rosa/neutro + pickers override (¡los colores del admin ahora SÍ se aplican! estaban guardados pero ignorados); hero con botón de medios; `template_mode` con gate central `erpc_is_elementor_mode()` (router se aparta, frames condicionales); shortcodes `[erpc_header]`/`[erpc_footer]`; sección admin Apariencia.
+- **Verificación**: preset rosa en vivo (#d6336c + derivados), modo elementor verificado (theme render, 0 chrome plugin) + restore a plugin (topbar de vuelta); sintaxis OK; home/productos/login 200; landing Elementor creada vía MCP REST (`create-page/run`, draft 47 canvas con hero+botón+[erpc_products]).
+- **Estado**: ✅ sincronizado
+- **Notas**: GLM no existe en nuestro stack (sin provider ni llave) — recomendación de modelo en chat: Qwen3.6-35B vía victoria (220k ctx, local, sin bloqueo regional).
+
 ### [01:10] - Plugin v3.4.2: footer social alineado + cómo funciona la landing (arquitectura)
 - **Tipo**: proyecto | fix | wordpress-dev | docs
 - **Modificado**: plugin `erp-ecomm-connector` v3.4.2 (commit `26fcd5e`)
