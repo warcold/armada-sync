@@ -1,5 +1,14 @@
 ## 2026-09-18
 
+### [07:30] - Plugin v3.6.0: plantilla dual completa + hamburguesa + aislamiento total de templates
+- **Tipo**: proyecto | feature | fix | elementor | responsive
+- **Modificado**: plugin `erp-ecomm-connector` v3.6.0 (commit `9bd187b`, 6 archivos); 6 slugs con datos Elementor; demo 53 eliminada; home dup 30 + Sample a draft
+- **Afecta a**: kalimete (modelo dual plugin|elementor por tenant)
+- **Causa**: Usuario: Elementor incompleto (solo landing, sin carrito/etc), fuga entre templates al navegar, sin hamburguesa responsive, alinear textos.
+- **Implementado**: (1) Hamburguesa ≤768px con dropdown + aria + auto-cierre (header compartido, sirve a `[erpc_header]`). (2) 6 slugs duales (inicio/productos/carrito/checkout/login/mi-cuenta): mismas URLs en ambos modos — plugin hijacka en modo plugin, Elementor renderiza en modo elementor. (3) Router refinado (plugin gana en mapeados). (4) Fix JSON inválido en productos/elementor (comillas SQL). (5) Textos: sistema coherente (héroes centro, contenido izquierda) — validado.
+- **Verificación**: plugin mode 4/4 páginas frame completo; elementor mode 6/6 con chrome Elementor (topbar vía shortcode, footer 1x, 0 fugas); 15 productos render; hamburguesa en DOM + CSS + JS válido (node --check); sintaxis OK; push OK.
+- **Estado**: ✅ sincronizado
+
 ### [06:30] - Plugin v3.5.2: copy comercial/SEO + imágenes acordes al inventario + responsive validado
 - **Tipo**: proyecto | ux | seo | elementor
 - **Modificado**: plugin `erp-ecomm-connector` v3.5.2 (commit `6f31f6d`); página Elementor 53 (batch-update 6 widgets); media library (IDs 55-56 nuevas, 49-50 sin referencias)
