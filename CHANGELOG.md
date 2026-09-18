@@ -1,5 +1,15 @@
 ## 2026-09-18
 
+### [01:10] - Plugin v3.4.2: footer social alineado + cómo funciona la landing (arquitectura)
+- **Tipo**: proyecto | fix | wordpress-dev | docs
+- **Modificado**: plugin `erp-ecomm-connector` v3.4.2 (commit `26fcd5e`)
+- **Afecta a**: kalimete (tienda MaganTech)
+- **Causa**: Iconos sociales del footer flotando a la derecha del texto. Raíz: regla legacy `.erpc-footer { text-align:center }` (línea ~849, de un footer viejo) que seguía cascando porque el bloque moderno nunca la neutralizó → texto centrado, iconos flex a la izquierda.
+- **Fix**: `text-align:left` en bloque moderno + `.erpc-footer-social` con `justify-content:flex-start` y gap reducido (44px→16px). Bump v3.4.2 para cache-bust (`?ver=`).
+- **Verificación**: CSS 3.4.2 servido; screenshot footer OK.
+- **Estado**: ✅ sincronizado
+- **Notas**: Explicación de arquitectura (plugin vs Elementor vs MCP) entregada en chat.
+
 ### [00:30] - WordPress: fix duplicación visual landing (v3.4.1) + pipeline MCP Elementor operativo
 - **Tipo**: proyecto | fix | wordpress-dev | mcp
 - **Modificado**: plugin `erp-ecomm-connector` v3.4.1 (commit `ba92f2a`); `mcp-adapter` + `emcp-tools` activados con fix autoloader; app password MCP creada
