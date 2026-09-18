@@ -1,5 +1,15 @@
 ## 2026-09-18
 
+### [06:30] - Plugin v3.5.2: copy comercial/SEO + imágenes acordes al inventario + responsive validado
+- **Tipo**: proyecto | ux | seo | elementor
+- **Modificado**: plugin `erp-ecomm-connector` v3.5.2 (commit `6f31f6d`); página Elementor 53 (batch-update 6 widgets); media library (IDs 55-56 nuevas, 49-50 sin referencias)
+- **Afecta a**: kalimete (tienda MaganTech)
+- **Causa**: Pedido usuario: imágenes no iban con el inventario real, textos debían ser comerciales/SEO sin mencionar "ERP", validar responsive.
+- **Cambios**: (1) Inventario real mapeado (18 categorías: cables, componentes, computadoras, accesorios laptop, redes). (2) Hero: "Componentes, cables y accesorios para tu PC y oficina" + "Stock real, precios competitivos y envío a toda RD" — keywords del inventario. (3) Imágenes Pexels acordes: display de computadoras (hero, ID 55) + tarjetas de video (USP, ID 56). (4) USP sin "ERP": "verificados en nuestro inventario". (5) CTA: "¿Listo para equipar tu setup?".
+- **Responsive**: validado 375/768/1280px en ambas plantillas — 0 overflow, meta viewport, media queries 992/768/480 con grids 3→2→1, Elementor containers renderizan en todos los breakpoints. Screenshots en /tmp/opencode/resp-*.png.
+- **Verificación**: home + Elementor 200 con nuevo copy/imágenes; 0 referencias a imágenes viejas; 0 "ERP" visible; push OK.
+- **Estado**: ✅ sincronizado
+
 ### [03:30] - Plugin v3.5.1: Elementor override funcional + multi-color en ambas plantillas + auditoría limpia
 - **Tipo**: proyecto | fix | seguridad | elementor | mcp
 - **Modificado**: plugin `erp-ecomm-connector` v3.5.1 (commit `169514b`, 8 archivos); página demo Elementor ID 53; imágenes Pexels en media library (IDs 49-50)
