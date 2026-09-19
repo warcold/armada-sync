@@ -1,5 +1,12 @@
 ## 2026-09-19
 
+### [00:35] - Auditoría read-only vps-erpipo (plan backup + dockerización preprod)
+- **Tipo**: infra | auditoría | plan
+- **Modificado**: ninguno (solo lectura en 147.93.6.112:1888; cero cambios en el servidor)
+- **Afecta a**: futuro preprod en kalimete + repo GitHub del proyecto ERP
+- **Hallazgos**: 2 Laravel 8.3 (sistema-facturacion 3.9G con storage/ 3.5G + karaoke 489M con ffmpeg/yt-dlp) sobre nginx+php-fpm+MySQL 8.0 nativos; stack dev Docker (7 contenedores, compose en /opt/erpipos) montando el código de prod con .env propio; MySQL nativo: facturacion_db 746MB/203tbl (PROD) + karaoke_db 1MB + backup_temp 8.9MB; dev MySQL 712MB (copia de prod); backup diario cron 08:00 a /var/backups/facturacion_db (4.3G acumulados, log OK hasta 20260918); UFW activo (1888 + Nginx + fail2ban sshd/nginx-http-auth); huella total a respaldar ~9GB (4.3G código + 4.3G dumps + 1.6G volúmenes dev opcionales)
+- **Estado**: 📋 plan entregado, pendiente aprobación para ejecutar
+
 ### [00:20] - Auditoría completa de conexiones SSH + registro de vps-erpipo + vps-proxy vivo
 - **Tipo**: infra | red | accesos | docs
 - **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919`, agregados `vps-proxy` y `vps-erpipo`); `MAPA.md` (nodo 6 nuevo + topología); `agents/kalimete.md` (tabla de red); este CHANGELOG
