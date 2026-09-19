@@ -1,5 +1,14 @@
 ## 2026-09-19
 
+### [19:50] - WordPress local: connector v3.9.3 — cards automáticos en páginas de texto
+- **Tipo**: proyecto | feature | ux | wordpress-dev
+- **Modificado**: plugin `erp-ecomm-connector` (static.php + connector.css, bump 3.9.3, commit `bdb535d`, push main OK); `_elementor_data` página 61 /cotizar/ (backup doble: postmeta + /tmp); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.3); repo padre commit
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech)
+- **Causa**: Usuario pidió "cuadritos" con la info dentro en vez de texto plano en todas las landings, como quedó /contacto/, en ambos templates (plugin default y Elementor).
+- **Implementado**: (1) Sistema de cards automático en static.php: contenido dividido por secciones `<h2>`, cada sección = card; grid 2 col desktop si todas las secciones son cortas (≤700 chars, última impar full-width), apiladas si hay largas, render clásico sin h2 — cubre sobre-nosotros, terminos, privacidad, cookies, envios, devoluciones, faq y cualquier página futura, en modo plugin Y elementor (fallback v3.9.1). (2) CSS cards con vars (3 presets) + alias `.erpc-info-card`. (3) /cotizar/ reestructurada con el patrón de contacto: hero pagehero + grid 40/60 (info "Cómo funciona" + [erpc_quote]).
+- **Verificación CDP**: sobre 1280 = 5 cards 2×2 + última 780px (regla impar), 375 = apiladas 311px; terminos 1280 = 9 cards grid; cotizar = info 412px + form 628px (desktop) / apilados (móvil); contacto 375 sin regresión; 0 overflow horizontal en todas; 200 en modo plugin Y elementor (switch ida/vuelta). Screenshots /tmp/opencode/val-{sobre,terminos,cotizar,contacto}-*.png.
+- **Estado**: ✅ sincronizado
+
 ### [18:40] - WordPress local: connector v3.9.2 — /contacto/ reestructurada con validación CDP
 - **Tipo**: proyecto | fix | ux | wordpress-dev
 - **Modificado**: `_elementor_data` página 17 (backup doble: postmeta `_elementor_data_bak_v391` + archivo /tmp); plugin `erp-ecomm-connector` (connector.css, bump 3.9.2, commit `edab089`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.2, 48 archivos); repo padre commit
