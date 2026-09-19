@@ -1,5 +1,12 @@
 ## 2026-09-19
 
+### [00:45] - Backup completo sistema-facturación descargado al Escritorio de kalimete
+- **Tipo**: infra | backup | erpipo
+- **Modificado**: `/root/erpipo-facturacion-20260919.tar.gz` en erpipo (staging en `/root/erpipo-backup-20260919/`); copia en `/home/warcold/Desktop/erpipo-facturacion-20260919.tar.gz` (555M, sha256 verificado, tar íntegro)
+- **Afecta a**: vps-erpipo (solo lecturas + mysqldump --single-transaction, servicio intacto) + kalimete (listo para deploy preprod)
+- **Contenido**: dump fresco `facturacion_db` 528M (Laravel 12.16, PHP 8.3.6, MySQL 8.0.46) + código `sistema-facturacion` 3.8G (sin `node_modules`, con `vendor` + `.env` + `storage/` 3.5G) + dev-stack `/opt/erpipos` (compose, Dockerfile, nginx, php conf) + nginx sites + htpasswd + pool php-fpm + certs LE + script de backup + versions.txt. Karaoke EXCLUIDO a pedido. Compresión 87% (4.3G → 555M)
+- **Estado**: ✅ en Escritorio, listo para dockerizar en preprod
+
 ### [00:35] - Auditoría read-only vps-erpipo (plan backup + dockerización preprod)
 - **Tipo**: infra | auditoría | plan
 - **Modificado**: ninguno (solo lectura en 147.93.6.112:1888; cero cambios en el servidor)
