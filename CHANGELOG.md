@@ -1,5 +1,15 @@
 ## 2026-09-19
 
+### [17:20] - WordPress local: connector v3.9.1 — forms responsive + newsletter funcional + cero páginas huérfanas
+- **Tipo**: proyecto | fix | ux | wordpress-dev
+- **Modificado**: plugin `erp-ecomm-connector` (6 archivos, commit `5d969b1`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.1, 48 archivos); repo padre 2 commits (`8b37c3e` + `a18bd63`, este último arrastra pendientes de sesiones previas: compose loopback 8091 + limpieza assets tema); `erpc_settings.tenant.contact_email` seteado en DB local
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, ambos modos de template)
+- **Causa**: Usuario reportó /sobre-nosotros/ y /contacto/ sin responsive/diseño y form "roto". Causas raíz: (1) inputs del form a ancho default del navegador (~150px) y sin contenedor/notice styling — cero reglas .erpc-form en CSS; (2) router apagado por completo en modo elementor → sobre-nosotros (Gutenberg, sin meta Elementor) quedaba huérfana sin chrome; (3) newsletter del footer con submit muerto (input sin name, sin handler); (4) contact_email ausente.
+- **Implementado**: (1) CSS: card centrada + inputs 100%/box-sizing + notice .erpc-ok/.erpc-err + media 768/480, solo vars (3 presets). (2) Router v3.9.1: en modo elementor, estáticas mapeadas SIN diseño Elementor reciben chrome del plugin (flag `erpc_router_hijacked` + `erpc_should_print_frame()` imprime frame en hijack); guard v3.8.0 (builder manda) intacto. (3) Newsletter: AJAX `erpc_newsletter_submit` (nonce+rate limit, opción `erpc_newsletter_subscribers` tope 5000, notifica a contact_email) + JS + feedback visible. (4) contact_email explícito. (5) Commit incluye v3.9.0 (auth OTP real ERP) que estaba deployado sin commit.
+- **Verificación**: php -l ×4 + node --check OK; ambas páginas 200 en modo elementor Y plugin (switch ida/vuelta), sobre-nosotros con trustbar+topbar+static+footer en ambos modos; AJAX contacto/newsletter success:true end-to-end, suscriptor persistido, SMTP wp_mail OK; sin regresión home/productos/carrito/cotizar; assets cache-bust ver=3.9.1; screenshots móviles en /tmp/opencode/resp-{contacto,sobre}-*.png.
+- **Notas**: Subagente wordpress-dev agotó 3×15 pasos en diagnóstico — implementado directo por kalimete (mismo criterio que v3.8.1). Home ID 8 intacta (orden respetada). Pendiente conocido: JSON inválido en `_elementor_data` de home (reparar por editor, no SQL).
+- **Estado**: ✅ sincronizado
+
 ### [03:28] - Desvinculación total del servidor ERP externo (prod no se toca)
 - **Tipo**: seguridad | red | accesos | docs
 - **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919-unlink`, bloque `Host vps-erpipo` eliminado); `MAPA.md` + copia local (topología y nodo retirados); `agents/kalimete.md` (fila, alias y bullet retirados); `agents/erp-dev.md` (sección Producción → nota de desvinculación); entradas CHANGELOG de hoy saneadas (IP/detalles SSH redactados); `~/dev/erpipo-preprod/.env.preprod` y `dev-stack/` eliminados (copias de config de terceros, 68K, nadie los usaba); `preprod.env` MAIL_FROM → `dev@erp.kalimete.local`; comentario docker-compose reworded
