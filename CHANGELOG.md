@@ -1,5 +1,15 @@
 ## 2026-09-19
 
+### [18:40] - WordPress local: connector v3.9.2 — /contacto/ reestructurada con validación CDP
+- **Tipo**: proyecto | fix | ux | wordpress-dev
+- **Modificado**: `_elementor_data` página 17 (backup doble: postmeta `_elementor_data_bak_v391` + archivo /tmp); plugin `erp-ecomm-connector` (connector.css, bump 3.9.2, commit `edab089`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.2, 48 archivos); repo padre commit
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech)
+- **Causa**: Usuario reportó /contacto/ mal estructurada tras v3.9.1. Validación programática nueva (chromium headless + CDP vía Node 22 WebSocket, métricas DOM reales en 1280/768/375) confirmó 3 defectos: (1) `\n` literales visibles en pantalla, (2) blob de texto full-width 658px con líneas de ~1265px (ilegible), (3) form flotando solo sin jerarquía.
+- **Implementado**: Reestructura con el patrón de /cotizar/ (schema JSON copiado de página construida por el editor Elementor — garantiza compatibilidad editor): hero `.erpc-el-pagehero` (h1 "Contáctanos" + subtítulo, gradiente primary→dark) + grid 2 columnas `.erpc-el-contact-grid` (info card 40% + form 60%, apila <767px) + shortcodes header/footer intactos. CSS con vars (3 presets).
+- **Verificación**: CDP post-fix: 0 overflow horizontal en 1280/768/375 (solo honeypot offscreen intencional); `\n` literales 0; form 628px col derecha (desktop) / 408px (tablet) / 323px full-width (móvil); inputs ~100% del card; 200 en modo plugin Y elementor (switch ida/vuelta); /cotizar/ y /sobre-nosotros/ re-validadas limpias. Screenshots: /tmp/opencode/val-{contacto,sobre,cotizar}-*.png.
+- **Notas**: Herramienta de validación reutilizable: /tmp/opencode/validate.mjs + run-validation.sh (CDP sin puppeteer, Node 22 WebSocket global). El modelo de kalimete no soporta input de imagen — la confirmación visual es por métricas DOM + screenshots para revisión del usuario.
+- **Estado**: ✅ sincronizado
+
 ### [17:20] - WordPress local: connector v3.9.1 — forms responsive + newsletter funcional + cero páginas huérfanas
 - **Tipo**: proyecto | fix | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (6 archivos, commit `5d969b1`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.1, 48 archivos); repo padre 2 commits (`8b37c3e` + `a18bd63`, este último arrastra pendientes de sesiones previas: compose loopback 8091 + limpieza assets tema); `erpc_settings.tenant.contact_email` seteado en DB local
