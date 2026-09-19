@@ -1,3 +1,18 @@
+## 2026-09-19
+
+### [00:20] - Auditoría completa de conexiones SSH + registro de vps-erpipo + vps-proxy vivo
+- **Tipo**: infra | red | accesos | docs
+- **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919`, agregados `vps-proxy` y `vps-erpipo`); `MAPA.md` (nodo 6 nuevo + topología); `agents/kalimete.md` (tabla de red); este CHANGELOG
+- **Afecta a**: kalimete (aliases SSH), documentación del ecosistema
+- **Causa**: Usuario pidió validar todas las conexiones y re-documentar
+- **Validación en vivo** (todos los SSH probados):
+  - ✅ kalimete (local, uptime 1d) | ✅ victoria (gw :8010 → 200, GB10 OK) | ✅ vps-preprod (uptime 67d, 16 contenedores)
+  - ✅ vps-proxy (uptime 228d, Squid 200 en 0.08s) — la marca FAILED 2026-03-17 era **obsoleta**, corregida
+  - ✅ vps-erpipo NUEVO (root@:1888 con llave del ecosistema; puerto 22 filtrado; Ubuntu 24.04, nginx 443, uptime 44d)
+  - 🔴 jonas (No route to host — sigue fuera de servicio)
+- **Observaciones**: (1) vps-preprod: `caddy` del sistema inactivo (TLS lo sirve contenedor caddy) y `openvpn@server` inactivo — revisar si importa. (2) vps-erpipo es de terceros (dueño ERPipos); tenant sigue bloqueado por impago. (3) kalimete local: UFW inactivo, sin proxy local (solo docker-proxies).
+- **Estado**: ✅ sincronizado (pendiente commit+push)
+
 ## 2026-09-18
 
 ### [14:55] - Tienda MaganTech v3.8.1: carrito flotante + hero desktop + centrado (UX)

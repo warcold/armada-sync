@@ -1,26 +1,28 @@
 # 🗺️ MAPA DE AGENTES — Ecosistema Armada
 
-## Topología (2026-08-30, validado)
+## Topología (2026-09-19, validado — todos los SSH probados en vivo)
 
 ```
-                    ┌─────────────────────────────────────────────┐
-                    │            REDES INTERNAS (LAN)              │
-                    │                                            │
-  kalimete ─── LAN ─┼── victoria ─── RDP/SSH tunneled ── Alfredo│
-  (10.0.0.106) SSH │  (10.0.0.5)                             │
-       │       1666│                                        │
-       │           │      jonass local NAS (SSH roto)         │
-       └───────────│─ 10.0.0.20:1222 ───⚠️ FUERA SERVICIO     │
-                    │                                          │
-                    │      vps-preprod (VPS prod)              │
-                    └── 154.53.35.102:1333 ─── IRC, auth.do   │
-                    │      vps-proxy (VPS proxy)               │
-                    └── 31.220.102.176:1444 ─── Squid Proxy   │
-                    │                                          │
-   Cloudflare: Alfred@armada.do                               │
-   Zones: armada.do | taohemps.com          │
-   Túnel: victoria-armada → victoria.local:8010 (LLM)         │
-                    └───────────────────────────────────────────┘
+                     ┌─────────────────────────────────────────────┐
+                     │            REDES INTERNAS (LAN)              │
+                     │                                            │
+   kalimete ─── LAN ─┼── victoria ─── RDP/SSH tunneled ── Alfredo│
+   (10.0.0.106) SSH │  (10.0.0.5)                             │
+        │       1666│                                        │
+        │           │      jonass local NAS (SSH roto)         │
+        └───────────│─ 10.0.0.20:1222 ───⚠️ FUERA SERVICIO     │
+                     │                                          │
+                     │      vps-preprod (VPS prod)              │
+                     └── 154.53.35.102:1333 ─── IRC, auth.do   │
+                     │      vps-proxy (proxy Squid/SOCKS5)      │
+                     └── 31.220.102.176:1444 ─── ✅ ACTIVO     │
+                     │      vps-erpipo (ERP externo, NUEVO)     │
+                     └── 147.93.6.112:1888 ─── erpipos.do    │
+                     │                                          │
+    Cloudflare: Alfred@armada.do                               │
+    Zones: armada.do | taohemps.com          │
+    Túnel: victoria-armada → victoria.local:8010 (LLM)         │
+                     └───────────────────────────────────────────┘
 ```
 
 ## Nodos
@@ -97,7 +99,11 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - UFW: active (solo rangos CF en DOCKER-USER)
 - OpenVPN: active (openvpn@server.service)
 
-### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional
+### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional — ✅ ACTIVO (verificado 2026-09-19)
+- User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
+- Alias: `ssh vps-proxy` (restaurado 2026-09-19 en `/etc/ssh/ssh_config.d/10-armada-hosts.conf`)
+- Uptime 228 días, load 0.10; Squid funcional (Google vía proxy → 200 en 0.08s)
+- NOTA: la marca "FAILED 2026-03-17" era obsoleta — servidor sano, corrección 2026-09-19
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-proxy`
 - Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
@@ -134,6 +140,16 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - User: jonas, SSH 1222, key rota desde 2026-08-12
 - Roles: NAS, backups (/srv/backups/), DDNS updater
 - Sin cron de sync, sin agentes
+- Verificado 2026-09-19: `No route to host` — no intentar operaciones
+
+### 6. vps-erpipo (147.93.6.112) — Servidor ERP externo — ✅ ACTIVO (NUEVO, registrado 2026-09-19)
+- User: root, SSH **1888** (el 22 está filtrado), llave `~/.ssh/id_ed25519_kalimete`
+- Alias: `ssh vps-erpipo`
+- Hostname: `erpipos`, Ubuntu 24.04.4 LTS, uptime 44 días
+- Servicios: nginx (80/443/8080, TLS Let's Encrypt `erpipos.armada.do` hasta 2026-11-05), Docker (8082/8083), sshd :1888
+- Disco 26% usado, RAM 8GB (~4GB libres)
+- Servidor de terceros (dueño de ERPipos); nuestra relación es vía API `https://erpipos.armada.do/api` (tenant 10)
+- ⚠️ ALERTA vigente: tenant bloqueado por impago (ver CHANGELOG 2026-09-18 [10:30])
 
 ## Agentes (solo kalimete)
 
