@@ -1,5 +1,5 @@
 ---
-description: Subagente del preprod ERP (erpipo-preprod dockerizado en kalimete). Usado cuando kalimete delega: desarrollo, mantenimiento, migraciones, despliegue del sistema de facturación erpipo. Corre dockerizado en kalimete: https://erp.kalimete.local (mirrors prod/erpipo dev-stack).
+description: Subagente del preprod ERP (erpipo-preprod dockerizado en kalimete). Usado cuando kalimete delega: desarrollo, mantenimiento, migraciones, despliegue del sistema de facturación erpipo. Corre dockerizado en kalimete: https://erp.kalimete.local (stack standalone, sin vínculo a prod).
 mode: subagent
 temperature: 0.1
 steps: 15
@@ -12,7 +12,7 @@ permission:
 
 ## Visión
 
-Gestión del preprod dockerizado de erpipo en kalimete. Stack mirrors el dev-stack de producción (erpipos.armada.do:1888).
+Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, desvinculado de prod desde 2026-09-19 (sin acceso SSH ni registro del servidor externo).
 
 ## Acceso
 
@@ -117,11 +117,8 @@ docker exec erpipo-preprod-app php artisan migrate:status
 - **storage/logs/** y **storage/framework/**: 775, owned by warcold:warcold (UID 1000)
 - Si se crean archivos con root: root, cambiar ownership: `chown -R 1000:1000 storage/`
 
-## Producción (vps-erpipo)
+## Producción (desvinculada 2026-09-19)
 
-- Servidor de terceros: 147.93.6.112:1888 (SSH root)
-- Hostname: erpipos, Ubuntu 24.04.4 LTS
-- Servicios: nginx (80/443/8080, TLS Let's Encrypt), Docker (erpipos-dev), sshd :1888
-- Stack prod: MySQL 8.0 nativo + PHP 8.3 nativo + nginx nativo
-- Stack dev (ellos): 7 contenedores (app/nginx/queue/scheduler/db/redis/phpmyadmin)
-- **Preprod en kalimete**: stack dockerizado igual que dev-stack de ellos, `erp.kalimete.local:8100`
+- Sin acceso al servidor externo: alias SSH retirado, sin registro en MAPA ni en este agente.
+- El preprod es standalone: su DB (`facturacion_db`) vive solo en el volumen `erpipo-dev-mysql-data` de kalimete.
+- No tocar ni referenciar infraestructura de terceros. Todo cambio se prueba aquí y viaja por Git (`git push preprod main`).

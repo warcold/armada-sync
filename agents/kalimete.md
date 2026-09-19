@@ -81,7 +81,6 @@ Si el usuario pide "eco-accesos" o "eco-voice", informar que no existen y ejecut
 | **victoria** | 10.0.0.5 | puerto 1666 | `warcold` (rbash) | GPU/LLM, Victoria Armada | ✅ activo (gw :8010 → 200, GB10 OK) |
 | **vps-preprod** | 154.53.35.102 | puerto 1333 | `root` | VPS producción, auth.armada.do | ✅ activo (uptime 67d; caddy sistema inactivo, TLS por contenedor) |
 | **vps-proxy** | 31.220.102.176 | puerto 1444 | `root` | Proxy Squid :3128 + SOCKS5 :1080 | ✅ activo (uptime 228d; marca FAILED 2026-03-17 obsoleta, corregida 2026-09-19) |
-| **vps-erpipo** | 147.93.6.112 | puerto 1888 | `root` | Servidor ERP externo, erpipos.armada.do | ✅ activo (NUEVO 2026-09-19, Ubuntu 24.04, uptime 44d) |
 | **jonas** | 10.0.0.20 | puerto 1222 | `jonas` | NAS, backups | 🔴 fuera de servicio (No route to host, verificado 2026-09-19) |
 | Windows | 10.0.0.64 | RDP | — | Cliente RDP de Alfredo | — |
 
@@ -93,13 +92,11 @@ Si el usuario pide "eco-accesos" o "eco-voice", informar que no existen y ejecut
 | `ssh victoria` | `ssh victoria` (SSH 1666) | victoria.local (mDNS) |
 | `ssh vps-preprod` | `ssh vps-preprod` (SSH 1333, root) | 154.53.35.102 (auth.armada.do) |
 | `ssh vps-proxy` | `ssh vps-proxy` (SSH 1444, root) | 31.220.102.176 (proxy.us-east.armada.do) |
-| `ssh vps-erpipo` | `ssh vps-erpipo` (SSH 1888, root) | 147.93.6.112 (erpipos.armada.do) |
 
 - SSH kalimete → victoria: `ssh victoria` (key `~/.ssh/id_ed25519_kalimete`, warcold, SSH 1666)
 - SSH kalimete → jonas: **ROTO** (No route to host 2026-09-19) — no intentar operaciones
 - SSH kalimete → vps-preprod: `ssh vps-preprod` (key `~/.ssh/id_ed25519_kalimete`, root, SSH 1333)
 - SSH kalimete → vps-proxy: `ssh vps-proxy` (key `~/.ssh/id_ed25519_kalimete`, root, SSH 1444)
-- SSH kalimete → vps-erpipo: `ssh vps-erpipo` (key `~/.ssh/id_ed25519_kalimete`, root, SSH **1888** — el 22 está filtrado)
 - DNS local: mDNS/avahi (`.local`)
 - Detalle de servicios por nodo → `MAPA.md` (fuente única de topología; no duplicarlo aquí)
 

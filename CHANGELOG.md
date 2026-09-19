@@ -1,5 +1,15 @@
 ## 2026-09-19
 
+### [03:28] - Desvinculación total del servidor ERP externo (prod no se toca)
+- **Tipo**: seguridad | red | accesos | docs
+- **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919-unlink`, bloque `Host vps-erpipo` eliminado); `MAPA.md` + copia local (topología y nodo retirados); `agents/kalimete.md` (fila, alias y bullet retirados); `agents/erp-dev.md` (sección Producción → nota de desvinculación); entradas CHANGELOG de hoy saneadas (IP/detalles SSH redactados); `~/dev/erpipo-preprod/.env.preprod` y `dev-stack/` eliminados (copias de config de terceros, 68K, nadie los usaba); `preprod.env` MAIL_FROM → `dev@erp.kalimete.local`; comentario docker-compose reworded
+- **Afecta a**: kalimete (alias SSH fuera, docs limpios); preprod intacto y verificado (LOGIN 200 tras restart)
+- **Causa**: usuario pidió desvincularse: prod no se toca, sin registro del servidor externo en ningún lado
+- **Verificación**: `ssh -G vps-erpipo` ya no resuelve (alias fuera); `ssh -G vps-proxy` OK (1444); grep alias/IP en MAPA+agentes+local = 0; preprod LOGIN 200
+- **Se deja intacto a propósito**: historial ecomm antiguo que cita la API pública (otro workstream); inventario Cloudflare/SKILL del registro DNS (la zona no cambió; borrar el registro rompería la tienda — no autorizado); branding `erpipos` dentro del código app (DB name, README, CORS — es el producto, no info de acceso); backup tar del Desktop (semilla del preprod, sin datos de conexión)
+- **Nota**: nuestra pubkey podría seguir en el `authorized_keys` de ese servidor (no tocamos prod para quitarla); si importa, pedir al dueño que la rote/elimine
+- **Estado**: ✅ sincronizado
+
 ### [03:23] - Repo GitHub privado erpipo-preprod + auditoría aislamiento preprod
 - **Tipo**: infra | git | seguridad | preprod | erpipo
 - **Modificado**: repo nuevo `github.com/warcold/erpipo-preprod` (PRIVATE); `.gitignore` endurecido en el código; `agents/erp-dev.md` (repo + workflow + reglas); `MAPA.md` (nodo 6: repo); este CHANGELOG
@@ -10,7 +20,7 @@
 - **Limpieza pre-push**: eliminado dup `sistema-facturacion/sistema-facturacion/` (3.8G, untracked); untracked `.env.backup_audit` (tenía APP_KEY), dumps `*.sql` (68M: releases/ 51M + solo_inserts 7.8M + app/backups 8.8M), views compilados (27 archivos), `*.backup`; placeholders storage restaurados
 - **Repo**: `main` = upstream `05b3323` + 2 commits limpieza (`163839b`, `cc24bf7`); remotos: `origin`=upstream (RO), `preprod`=privado (push); árbol remoto verificado: 0 archivos `.sql`/secrets/`releases/`
 - **DB real** (db.sql 528M + storage 3.5G) nunca entró a git — solo vive en kalimete + contenedor
-- **Workflow confirmado**: GitHub privado → preprod kalimete (pruebas) → prod vps-erpipo
+- **Workflow confirmado**: GitHub privado → preprod kalimete (pruebas) → prod (vía Git, sin acceso directo; vínculo SSH retirado)
 - **Estado**: ✅ sincronizado
 - **Notas**: historial upstream puede contener secretos viejos (repo es PRIVATE, riesgo contenido); si se rota APP_KEY de prod avisar; infra docker (compose/Dockerfile) queda local + documentada en erp-dev, no en el repo de código
 
@@ -18,7 +28,7 @@
 - **Tipo**: infra | docker | preprod | erpipo
 - **Modificado**: `MAPA.md` (nodo kalimete-preprod añadido); `CHANGELOG.md`; `agents/erp-dev.md` (subagente creado); `docker-compose.yml` (stack preprod); `preprod.env` (.env preprod); `nginx` TLS config (erp.kalimete.local.conf + mkcert); symlink `~/.config/opencode/agent/erp-dev.md`
 - **Afecta a**: kalimete (preprod ERP dockerizado)
-- **Stack dockerizado** (mirrors dev-stack de erpipo prod): app (erpipo-preprod), nginx (:8100), db (mysql:8.0, :3310), redis (redis:7-alpine, :6390), queue, scheduler, phpmyadmin (:8102)
+- **Stack dockerizado** standalone (sin vínculo a prod): app (erpipo-preprod), nginx (:8100), db (mysql:8.0, :3310), redis (redis:7-alpine, :6390), queue, scheduler, phpmyadmin (:8102)
 - **Dump importado**: 601 migraciones, batch 145 (facturacion_db, 528MB)
 - **Código**: ~/dev/erpipo-preprod/code/sistema-facturacion/ (3.8G, uid 1000:1000 en storage/)
 - **SSL**: mkcert erp.kalimete.local.pem (exp 2028-12-18), nginx TLS en :443
@@ -30,29 +40,29 @@
 
 ### [00:45] - Backup completo sistema-facturación descargado al Escritorio de kalimete
 - **Tipo**: infra | backup | erpipo
-- **Modificado**: `/root/erpipo-facturacion-20260919.tar.gz` en erpipo (staging en `/root/erpipo-backup-20260919/`); copia en `/home/warcold/Desktop/erpipo-facturacion-20260919.tar.gz` (555M, sha256 verificado, tar íntegro)
-- **Afecta a**: vps-erpipo (solo lecturas + mysqldump --single-transaction, servicio intacto) + kalimete (listo para deploy preprod)
+- **Modificado**: `/root/erpipo-facturacion-20260919.tar.gz` en servidor externo (staging en `/root/erpipo-backup-20260919/`); copia en `/home/warcold/Desktop/erpipo-facturacion-20260919.tar.gz` (555M, sha256 verificado, tar íntegro)
+- **Afecta a**: servidor ERP externo (acceso solo-lectura, retirado 2026-09-19) + kalimete (listo para deploy preprod)
 - **Contenido**: dump fresco `facturacion_db` 528M (Laravel 12.16, PHP 8.3.6, MySQL 8.0.46) + código `sistema-facturacion` 3.8G (sin `node_modules`, con `vendor` + `.env` + `storage/` 3.5G) + dev-stack `/opt/erpipos` (compose, Dockerfile, nginx, php conf) + nginx sites + htpasswd + pool php-fpm + certs LE + script de backup + versions.txt. Karaoke EXCLUIDO a pedido. Compresión 87% (4.3G → 555M)
 - **Estado**: ✅ en Escritorio, listo para dockerizar en preprod
 
-### [00:35] - Auditoría read-only vps-erpipo (plan backup + dockerización preprod)
+### [00:35] - Auditoría read-only servidor ERP externo (acceso retirado 2026-09-19)
 - **Tipo**: infra | auditoría | plan
-- **Modificado**: ninguno (solo lectura en 147.93.6.112:1888; cero cambios en el servidor)
+- **Modificado**: ninguno (solo lectura en servidor externo; cero cambios en el servidor)
 - **Afecta a**: futuro preprod en kalimete + repo GitHub del proyecto ERP
 - **Hallazgos**: 2 Laravel 8.3 (sistema-facturacion 3.9G con storage/ 3.5G + karaoke 489M con ffmpeg/yt-dlp) sobre nginx+php-fpm+MySQL 8.0 nativos; stack dev Docker (7 contenedores, compose en /opt/erpipos) montando el código de prod con .env propio; MySQL nativo: facturacion_db 746MB/203tbl (PROD) + karaoke_db 1MB + backup_temp 8.9MB; dev MySQL 712MB (copia de prod); backup diario cron 08:00 a /var/backups/facturacion_db (4.3G acumulados, log OK hasta 20260918); UFW activo (1888 + Nginx + fail2ban sshd/nginx-http-auth); huella total a respaldar ~9GB (4.3G código + 4.3G dumps + 1.6G volúmenes dev opcionales)
 - **Estado**: 📋 plan entregado, pendiente aprobación para ejecutar
 
-### [00:20] - Auditoría completa de conexiones SSH + registro de vps-erpipo + vps-proxy vivo
+### [00:20] - Auditoría completa de conexiones SSH + vps-proxy vivo (vínculo ERP retirado 2026-09-19)
 - **Tipo**: infra | red | accesos | docs
-- **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919`, agregados `vps-proxy` y `vps-erpipo`); `MAPA.md` (nodo 6 nuevo + topología); `agents/kalimete.md` (tabla de red); este CHANGELOG
+- **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919`, agregado `vps-proxy`; alias de tercero retirado el mismo día); `MAPA.md` (nodo 6 nuevo + topología, luego retirado); `agents/kalimete.md` (tabla de red, fila retirada); este CHANGELOG
 - **Afecta a**: kalimete (aliases SSH), documentación del ecosistema
 - **Causa**: Usuario pidió validar todas las conexiones y re-documentar
 - **Validación en vivo** (todos los SSH probados):
   - ✅ kalimete (local, uptime 1d) | ✅ victoria (gw :8010 → 200, GB10 OK) | ✅ vps-preprod (uptime 67d, 16 contenedores)
   - ✅ vps-proxy (uptime 228d, Squid 200 en 0.08s) — la marca FAILED 2026-03-17 era **obsoleta**, corregida
-  - ✅ vps-erpipo NUEVO (root@:1888 con llave del ecosistema; puerto 22 filtrado; Ubuntu 24.04, nginx 443, uptime 44d)
+  - ❌ ex-vps-erpipo DESVINCULADO 2026-09-19 (alias SSH retirado, sin acceso, fuera de MAPA y agentes)
   - 🔴 jonas (No route to host — sigue fuera de servicio)
-- **Observaciones**: (1) vps-preprod: `caddy` del sistema inactivo (TLS lo sirve contenedor caddy) y `openvpn@server` inactivo — revisar si importa. (2) vps-erpipo es de terceros (dueño ERPipos); tenant sigue bloqueado por impago. (3) kalimete local: UFW inactivo, sin proxy local (solo docker-proxies).
+- **Observaciones**: (1) vps-preprod: `caddy` del sistema inactivo (TLS lo sirve contenedor caddy) y `openvpn@server` inactivo — revisar si importa. (2) servidor ERP de terceros: vínculo retirado 2026-09-19 (sin acceso SSH ni registro en red; prod no se toca). (3) kalimete local: UFW inactivo, sin proxy local (solo docker-proxies).
 - **Estado**: ✅ sincronizado (pendiente commit+push)
 
 ## 2026-09-18
