@@ -147,8 +147,9 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - **Puertos**: :8100 (Nginx proxy), :3310 (DB MySQL), :6390 (Redis), :8102 (phpMyAdmin)
 - **Stack**: php:8.3-fpm + mysql:8.0 + redis:7-alpine + nginx (mirrors dev-stack de erpipo)
 - **Dump importado**: `facturacion_db-20260919.sql` (528M, 601 migraciones, batch 145)
-- **Código**: `~/dev/erpipo-preprod/code/sistema-facturacion/` (3.8G)
-- **.env**: preprod.env (APP_URL=https://erp.kalimete.local, APP_DEBUG=true, uid 1000:1000)
+- **Código**: `~/dev/erpipo-preprod/code/sistema-facturacion/`
+- **Repo privado**: `github.com/warcold/erpipo-preprod` (PRIVATE, sin DB ni secrets; remotos: origin=upstream RO, preprod=push)
+- **.env**: preprod.env (APP_URL=https://erp.kalimete.local, APP_DEBUG=false, uid 1000:1000)
 - **SSL**: mkcert (erp.kalimete.local.pem, expira 2028-12-18)
 - **Permisos**: storage/logs/ y storage/framework/ con 775 (warcold:warcold = UID 1000)
 - **Workers**: queue + scheduler en Redis (mirrors dev-stack prod)

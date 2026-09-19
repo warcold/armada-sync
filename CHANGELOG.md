@@ -1,5 +1,19 @@
 ## 2026-09-19
 
+### [03:23] - Repo GitHub privado erpipo-preprod + auditoría aislamiento preprod
+- **Tipo**: infra | git | seguridad | preprod | erpipo
+- **Modificado**: repo nuevo `github.com/warcold/erpipo-preprod` (PRIVATE); `.gitignore` endurecido en el código; `agents/erp-dev.md` (repo + workflow + reglas); `MAPA.md` (nodo 6: repo); este CHANGELOG
+- **Afecta a**: kalimete (workflow GitHub → preprod → prod habilitado)
+- **Causa**: usuario pidió validar aislamiento/funcionalidad y subir a GitHub privado sin DB
+- **Auditoría aislamiento** (verificado contra lo real): red dedicada `erpipo-dev-network` (172.22.0.x, no compartida); volúmenes propios `erpipo-dev-mysql-data`/`erpipo-dev-redis-data`; puertos :8100/:8102/:3310/:6390 sin colisión (6379=alfredo-ecomm, 3307=wordpress-db, 5432=postgres); vhost nginx dedicado `erp.kalimete.local.conf` (otros 11 sites intactos); resto de contenedores (12) sin afectación
+- **Funcionalidad** (verificado): `/` 302→/login, `/login` 200 (18KB), `/phpmyadmin` 200; `artisan about`: Laravel 12.16, PHP 8.3.33, env preprod, debug OFF; DB 203 tablas; Redis PONG; scheduler corriendo; cert mkcert hasta 2028-12-18
+- **Limpieza pre-push**: eliminado dup `sistema-facturacion/sistema-facturacion/` (3.8G, untracked); untracked `.env.backup_audit` (tenía APP_KEY), dumps `*.sql` (68M: releases/ 51M + solo_inserts 7.8M + app/backups 8.8M), views compilados (27 archivos), `*.backup`; placeholders storage restaurados
+- **Repo**: `main` = upstream `05b3323` + 2 commits limpieza (`163839b`, `cc24bf7`); remotos: `origin`=upstream (RO), `preprod`=privado (push); árbol remoto verificado: 0 archivos `.sql`/secrets/`releases/`
+- **DB real** (db.sql 528M + storage 3.5G) nunca entró a git — solo vive en kalimete + contenedor
+- **Workflow confirmado**: GitHub privado → preprod kalimete (pruebas) → prod vps-erpipo
+- **Estado**: ✅ sincronizado
+- **Notas**: historial upstream puede contener secretos viejos (repo es PRIVATE, riesgo contenido); si se rota APP_KEY de prod avisar; infra docker (compose/Dockerfile) queda local + documentada en erp-dev, no en el repo de código
+
 ### [03:08] - Preprod ERP dockerizado en kalimete (erp.kalimete.local)
 - **Tipo**: infra | docker | preprod | erpipo
 - **Modificado**: `MAPA.md` (nodo kalimete-preprod añadido); `CHANGELOG.md`; `agents/erp-dev.md` (subagente creado); `docker-compose.yml` (stack preprod); `preprod.env` (.env preprod); `nginx` TLS config (erp.kalimete.local.conf + mkcert); symlink `~/.config/opencode/agent/erp-dev.md`

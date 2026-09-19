@@ -20,6 +20,9 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack mirrors el dev-sta
 - **phpMyAdmin**: `https://erp.kalimete.local/phpmyadmin`
 - **Stack Docker**: `~/dev/erpipo-preprod/` (docker-compose.yml)
 - **Código**: `~/dev/erpipo-preprod/code/sistema-facturacion/`
+- **Repo privado**: `github.com/warcold/erpipo-preprod` (mirror sin DB ni secrets, visibility PRIVATE)
+- **Remotos**: `origin` = upstream soycarlosjerez-hub (solo lectura) | `preprod` = nuestro privado (push)
+- **Workflow**: editar en kalimete → probar en `https://erp.kalimete.local` → `git push preprod main` → deploy a prod
 
 ## Stack (docker-compose.yml)
 
@@ -37,7 +40,7 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack mirrors el dev-sta
 
 - **User app**: 1000:1000 (mismo UID que warcold en kalimete)
 - **DB**: facturacion_db / factura_dev / devpass123 (user creado al importar dump)
-- **.env**: preprod.env (APP_URL=https://erp.kalimete.local, APP_DEBUG=true)
+- **.env**: preprod.env (APP_URL=https://erp.kalimete.local, APP_DEBUG=false, verificado con `artisan about`)
 - **SSL**: mkcert (erp.kalimete.local.pem + -key.pem, expira 2028-12-18)
 
 ## Servicios
@@ -63,10 +66,13 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack mirrors el dev-sta
 ## Reglas de operación
 
 1. **NUNCA** modificar el dump original (`db.sql` en `/tmp/`)
-2. **BACKUP** de configs antes de modificar (`.bkup-YYYYMMDD`)
-3. **Siempre** verificar que el preprod funciona después de cambios (`curl -sk https://erp.kalimete.local/login`)
-4. **Actualizar** docker-compose.yml si se agregan servicios o puertos
-5. **Documentar** cambios en CHANGELOG.md tras cada modificación
+2. **NUNCA** `migrate:refresh` ni `migrate:fresh` — destruyen todos los datos (ver AGENTS.md del proyecto)
+3. **NUNCA** commitear `.env*`, `*.sql`, `releases/`, `storage/*` (el .gitignore ya los cubre; verificar con `git status`)
+4. **BACKUP** de configs antes de modificar (`.bkup-YYYYMMDD`)
+5. **Siempre** verificar que el preprod funciona después de cambios (`curl -sk https://erp.kalimete.local/login`)
+6. **Actualizar** docker-compose.yml si se agregan servicios o puertos
+7. **Documentar** cambios en CHANGELOG.md tras cada modificación
+8. **Push** solo a `preprod` (`git push preprod main`); `origin` es solo lectura
 
 ## Comandos útiles
 
