@@ -142,14 +142,34 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - Sin cron de sync, sin agentes
 - Verificado 2026-09-19: `No route to host` — no intentar operaciones
 
-### 6. vps-erpipo (147.93.6.112) — Servidor ERP externo — ✅ ACTIVO (NUEVO, registrado 2026-09-19)
+### 6. kalimete-preprod (erp.kalimete.local) — Preprod ERP dockerizado — ✅ ACTIVO (2026-09-19)
+- **URL**: `https://erp.kalimete.local` (nginx TLS local + reverse proxy)
+- **Puertos**: :8100 (Nginx proxy), :3310 (DB MySQL), :6390 (Redis), :8102 (phpMyAdmin)
+- **Stack**: php:8.3-fpm + mysql:8.0 + redis:7-alpine + nginx (mirrors dev-stack de erpipo)
+- **Dump importado**: `facturacion_db-20260919.sql` (528M, 601 migraciones, batch 145)
+- **Código**: `~/dev/erpipo-preprod/code/sistema-facturacion/` (3.8G)
+- **.env**: preprod.env (APP_URL=https://erp.kalimete.local, APP_DEBUG=true, uid 1000:1000)
+- **SSL**: mkcert (erp.kalimete.local.pem, expira 2028-12-18)
+- **Permisos**: storage/logs/ y storage/framework/ con 775 (warcold:warcold = UID 1000)
+- **Workers**: queue + scheduler en Redis (mirrors dev-stack prod)
+- **Subagente**: erp-dev (gestiona preprod, código, migraciones)
+
+### 7. vps-erpipo (147.93.6.112) — Servidor ERP externo — ✅ ACTIVO (NUEVO, registrado 2026-09-19)
 - User: root, SSH **1888** (el 22 está filtrado), llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-erpipo`
-- Hostname: `erpipos`, Ubuntu 24.04.4 LTS, uptime 44 días
-- Servicios: nginx (80/443/8080, TLS Let's Encrypt `erpipos.armada.do` hasta 2026-11-05), Docker (8082/8083), sshd :1888
+- Hostname: `erpipos`, Ubuntu 24.04.4 LTS, uptime 44d
+- Servicios: nginx (80/443/8080, TLS Let's Encrypt `erpipos.armada.do` hasta 2026-11-05), Docker (erpipos-dev app/nginx/queue/scheduler/db/redis, 7 contenedores)
 - Disco 26% usado, RAM 8GB (~4GB libres)
 - Servidor de terceros (dueño de ERPipos); nuestra relación es vía API `https://erpipos.armada.do/api` (tenant 10)
 - ⚠️ ALERTA vigente: tenant bloqueado por impago (ver CHANGELOG 2026-09-18 [10:30])
+- **Preprod en kalimete**: stack dockerizado igual que dev-stack de ellos, `erp.kalimete.local:8100`, ver subagente erp-dev
+
+### 7. kalimete — Preprod ERP (erpipo) — ✅ ACTIVO (2026-09-19)
+- URL: `https://erp.kalimete.local` (nginx TLS local + reverse proxy)
+- Puertos: :8100 (DB MySQL), :6390 (Redis), :8101 (app FPM), :8102 (phpMyAdmin)
+- Stack: php:8.3-fpm + mysql:8.0 + redis:7-alpine + nginx (mirrors dev-stack de erpipo)
+- Dump importado: `facturacion_db-20260919.sql` (528M)
+- Subagente: erp-dev (gestiona preprod, código, migraciones)
 
 ## Agentes (solo kalimete)
 

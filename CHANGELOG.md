@@ -1,5 +1,19 @@
 ## 2026-09-19
 
+### [03:08] - Preprod ERP dockerizado en kalimete (erp.kalimete.local)
+- **Tipo**: infra | docker | preprod | erpipo
+- **Modificado**: `MAPA.md` (nodo kalimete-preprod añadido); `CHANGELOG.md`; `agents/erp-dev.md` (subagente creado); `docker-compose.yml` (stack preprod); `preprod.env` (.env preprod); `nginx` TLS config (erp.kalimete.local.conf + mkcert); symlink `~/.config/opencode/agent/erp-dev.md`
+- **Afecta a**: kalimete (preprod ERP dockerizado)
+- **Stack dockerizado** (mirrors dev-stack de erpipo prod): app (erpipo-preprod), nginx (:8100), db (mysql:8.0, :3310), redis (redis:7-alpine, :6390), queue, scheduler, phpmyadmin (:8102)
+- **Dump importado**: 601 migraciones, batch 145 (facturacion_db, 528MB)
+- **Código**: ~/dev/erpipo-preprod/code/sistema-facturacion/ (3.8G, uid 1000:1000 en storage/)
+- **SSL**: mkcert erp.kalimete.local.pem (exp 2028-12-18), nginx TLS en :443
+- **Nginx host**: erp.kalimete.local.conf (proxy_pass :8100 app, :8102 phpMyAdmin)
+- **Workers**: queue (`queue:work --tries=3`) + scheduler (`schedule:work`) en Redis
+- **App**: uid 1000:1000, storage/logs/ y storage/framework/ con 775 (warcold:warcold)
+- **Estado**: ✅ erp.kalimete.local funciona (HTTP 302 → LOGIN 200), stack completo UP
+- **Subagente**: erp-dev creado (`agents/erp-dev.md`), linked en opencode (symlink)
+
 ### [00:45] - Backup completo sistema-facturación descargado al Escritorio de kalimete
 - **Tipo**: infra | backup | erpipo
 - **Modificado**: `/root/erpipo-facturacion-20260919.tar.gz` en erpipo (staging en `/root/erpipo-backup-20260919/`); copia en `/home/warcold/Desktop/erpipo-facturacion-20260919.tar.gz` (555M, sha256 verificado, tar íntegro)
