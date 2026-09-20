@@ -1,5 +1,14 @@
 ## 2026-09-19
 
+### [21:10] - WordPress local: connector v3.9.4 — home optimizada (items, textos, huecos)
+- **Tipo**: proyecto | feature | ux | wordpress-dev
+- **Modificado**: `_elementor_data` página 8 home (backup: postmeta `_elementor_data_bak_v393` + /tmp/elementor-8-bak-v393.json — el JSON de home ya era válido, el alerta de "char 742" quedó obsoleta tras la reestructuración del 09-18); plugin `erp-ecomm-connector` (connector.css, landing.php, bump 3.9.4, commit `9f01b66`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.4); repo padre commit
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, home en ambos modos)
+- **Causa**: Usuario: reducir items de la home, textos acordes a imágenes, espacios grandes por falta de texto. CDP: 12 productos (sección 2172px), USP imagen 825px vs texto corto (hueco gigante), textos genéricos vs imagen de componentes/tarjetas de video.
+- **Implementado**: (1) `[erpc_products per_page='8']` (2 filas de 4; landing.php ya renderizaba 8 → consistencia ambos templates). (2) USP: heading+intro+5 items acordes a la imagen + botón "Ver componentes". (3) CSS img cap 420px/280px (sección 965→577px). (4) Hero/destacados/CTA con textos concretos. (5) landing.php default subtitle alineado (tagline tenant manda).
+- **Verificación**: CDP 8 cards en DOM (1280/375), USP img 420/280px, 0 overflow horizontal, 200 en modo plugin y elementor. Screenshots /tmp/opencode/val-home-*.png.
+- **Estado**: ✅ sincronizado
+
 ### [19:50] - WordPress local: connector v3.9.3 — cards automáticos en páginas de texto
 - **Tipo**: proyecto | feature | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (static.php + connector.css, bump 3.9.3, commit `bdb535d`, push main OK); `_elementor_data` página 61 /cotizar/ (backup doble: postmeta + /tmp); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.3); repo padre commit
