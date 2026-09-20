@@ -1,5 +1,14 @@
 ## 2026-09-20
 
+### [01:30] - WordPress local: connector v3.9.8 — auditoría integral responsive + cross-browser
+- **Tipo**: proyecto | fix | ux | compat | wordpress-dev
+- **Modificado**: plugin `erp-ecomm-connector` (CSS: contador en su línea + hamburguesa ≤991px + 11 prefixes `-webkit-`/`100dvh`/`sticky`; JS: resize a 991; bump 3.9.8, commit `c8f0190`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.8); repo padre commit
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, ambos templates — header/botones compartidos)
+- **Causa**: Usuario: validar desktop/móviles/dispositivos + multi-navegador + botones centrados en ambos templates. Hallazgos de la matriz CDP (7 páginas × 7 viewports 1920→360): (1) overflow horizontal en tablet 769-991px — nav completo no cabe, afectaba todas las páginas; (2) "Cargar más productos" descentrado en desktop — contador inline en la misma línea; (3) bug de cascada en el propio fix (bloque 991px antes de la regla base → tablet sin nav ni hamburguesa).
+- **Implementado**: Hamburguesa a ≤991px (mismo dropdown probado + search móvil + JS resize); contador en bloque propio; bloque 991 movido tras el 768 (cascada correcta); 11 prefixes de compatibilidad; auditoría confirma cero `:has()`/`color-mix`/exóticos.
+- **Verificación**: 12 runs CDP con 0 overflow en todos los viewports; hamburguesa 820px abre dropdown con 7 links sin overflow; 100% botones con `text-align:center` + posición verificada uno por uno (los no-centrados son por diseño: pills, search, tabs, USP, newsletter desktop); Firefox real bajo Xvfb con CA mkcert: 5 screenshots con contenido íntegro (Gecko OK); Safari no existe en Linux → cubierto con auditoría CSS estática + prefijos. Screenshots audit-*.png + fx-*.png en /tmp/opencode/.
+- **Estado**: ✅ sincronizado
+
 ### [00:30] - WordPress local: connector v3.9.7 — buscador funcional + settings contacto/redes/mapa
 - **Tipo**: proyecto | feature | fix | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (JS: wiring header search desktop+móvil, `?buscar=`, home_url en erpc_cfg; shortcodes: filtro server-side + `[erpc_map]` nuevo + docs; products.php: paridad; admin: sanitización + sección Contacto/redes/mapa; footer dinámico; CSS; helper `erpc_social_link()`; bump 3.9.7, commit `14b1f4a`, push main OK); `_elementor_data` contacto (sección mapa, backup `_elementor_data_bak_v396`); `map_address` = ciudad (refinar); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.7); repo padre commit
