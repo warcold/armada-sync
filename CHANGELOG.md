@@ -1,5 +1,14 @@
 ## 2026-09-19
 
+### [21:45] - WordPress local: connector v3.9.5 — home 6 destacados + botón tienda + hero centrado
+- **Tipo**: proyecto | feature | ux | wordpress-dev
+- **Modificado**: plugin `erp-ecomm-connector` (shortcodes + products-content.php: attr `show_more`; connector.css `.erpc-el-featured`; bump 3.9.5, commit `c9c29b5`, push main OK); `_elementor_data` home (backup `_elementor_data_bak_v394` + /tmp); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.5); repo padre commit
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech)
+- **Causa**: Usuario: hero con subtítulo descentrado (h1 centrado vs p sin centrar); home con 6 destacados + botón a la tienda en vez de "cargar más".
+- **Implementado**: (1) Hero subtitle `text-align:center` (patrón /cotizar/). (2) Home `[erpc_products columns='3' per_page='6' show_more='0']` (2×3) + botón "Ver todos los productos"→/productos/. (3) `show_more` default 1: /productos/ conserva su load-more, cero regresión.
+- **Verificación**: home 200 con load-more ausente + botón presente + subtítulo centrado (HTML); CDP 6 cards en DOM (1280/375), 0 overflow. Screenshots /tmp/opencode/val-home-*.png.
+- **Estado**: ✅ sincronizado
+
 ### [21:10] - WordPress local: connector v3.9.4 — home optimizada (items, textos, huecos)
 - **Tipo**: proyecto | feature | ux | wordpress-dev
 - **Modificado**: `_elementor_data` página 8 home (backup: postmeta `_elementor_data_bak_v393` + /tmp/elementor-8-bak-v393.json — el JSON de home ya era válido, el alerta de "char 742" quedó obsoleta tras la reestructuración del 09-18); plugin `erp-ecomm-connector` (connector.css, landing.php, bump 3.9.4, commit `9f01b66`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.4); repo padre commit
