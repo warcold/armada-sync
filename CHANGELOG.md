@@ -1,5 +1,14 @@
 ## 2026-09-19
 
+### [22:10] - WordPress local: home con 4 destacados en 1 línea + CTA centrado (contenido, sin bump)
+- **Tipo**: proyecto | contenido | ux | wordpress-dev
+- **Modificado**: `_elementor_data` home (backup: postmeta `_elementor_data_bak_v395` + `backups/elementor/page-8-home-*.json` commiteado al repo padre para trazabilidad)
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech)
+- **Causa**: Usuario: "Explora el catálogo completo..." descentrado (h1 y botón center, texto no); 4 destacados en 1 línea en vez de 6.
+- **Implementado**: CTA text `text-align:center`; home `[erpc_products columns='4' per_page='4' show_more='0']` + botón a la tienda intacto.
+- **Verificación**: home 200; CDP 4 cards en DOM (1280 y 375), sección 1640→1162px, 0 overflow. Screenshots /tmp/opencode/val-home-*.png. Sin cambios de código → no requiere bump de versión ni regenerar ZIP.
+- **Estado**: ✅ sincronizado
+
 ### [21:45] - WordPress local: connector v3.9.5 — home 6 destacados + botón tienda + hero centrado
 - **Tipo**: proyecto | feature | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (shortcodes + products-content.php: attr `show_more`; connector.css `.erpc-el-featured`; bump 3.9.5, commit `c9c29b5`, push main OK); `_elementor_data` home (backup `_elementor_data_bak_v394` + /tmp); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.5); repo padre commit
