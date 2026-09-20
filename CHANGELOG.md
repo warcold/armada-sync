@@ -1,5 +1,14 @@
 ## 2026-09-19
 
+### [23:15] - WordPress local: connector v3.9.6 — títulos sin duplicar + carrito auditado responsive
+- **Tipo**: proyecto | fix | ux | wordpress-dev
+- **Modificado**: plugin `erp-ecomm-connector` (shortcodes: flag `force_content_only` en 5 renders de contenido; cart/checkout/auth/profile: h1 condicionales; CSS links huérfanos; bump 3.9.6, commit `f451621`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.6); repo padre commit
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech: carrito, checkout, login, mi-cuenta)
+- **Causa**: Usuario: "Tu carrito de compras" no centrado en /carrito/ + auditar todo en móvil. Raíz: doble título apilado (heading Elementor centrado + h1 interno del plugin a la izquierda); mismo patrón en checkout ("Finalizar compra"/"Finalizar pedido"), login ("Bienvenido..."/marca) y mi-cuenta ("Mi cuenta"×2).
+- **Implementado**: Regla v3.9.6 — todo shortcode de contenido marca render embebido; los templates suprimen su h1 interno embebido (el título lo pone Elementor) y lo conservan en standalone (modo plugin). Header vacío no se imprime; link huérfano a la derecha por CSS. Profile conserva subtítulo; orders/loyalty intactos (eran títulos de sección, no duplicados).
+- **Verificación**: 1 solo h1 (centrado) en las 4 páginas modo elementor; h1 standalone intacto en modo plugin (switch). CDP con carrito vacío + lleno real (cookie Y localStorage sembrados, IDs reales) en 1280/768/375: 0 overflow horizontal; tabla 692px→353px sin romper; thead visible; empty state centrado sin hueco; footer 1 fila→apilado; qty/checkout/continue OK. Hallazgo de test (no bug real): el JS rinde desde localStorage y oculta la tabla si está vacío — el flujo real mantiene ambos en sync vía `erpc_sync_cart`. Screenshots /tmp/opencode/val-carrito-{empty,full}-*.png.
+- **Estado**: ✅ sincronizado
+
 ### [22:10] - WordPress local: home con 4 destacados en 1 línea + CTA centrado (contenido, sin bump)
 - **Tipo**: proyecto | contenido | ux | wordpress-dev
 - **Modificado**: `_elementor_data` home (backup: postmeta `_elementor_data_bak_v395` + `backups/elementor/page-8-home-*.json` commiteado al repo padre para trazabilidad)
