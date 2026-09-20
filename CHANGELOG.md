@@ -1,3 +1,15 @@
+## 2026-09-20
+
+### [00:30] - WordPress local: connector v3.9.7 — buscador funcional + settings contacto/redes/mapa
+- **Tipo**: proyecto | feature | fix | ux | wordpress-dev
+- **Modificado**: plugin `erp-ecomm-connector` (JS: wiring header search desktop+móvil, `?buscar=`, home_url en erpc_cfg; shortcodes: filtro server-side + `[erpc_map]` nuevo + docs; products.php: paridad; admin: sanitización + sección Contacto/redes/mapa; footer dinámico; CSS; helper `erpc_social_link()`; bump 3.9.7, commit `14b1f4a`, push main OK); `_elementor_data` contacto (sección mapa, backup `_elementor_data_bak_v396`); `map_address` = ciudad (refinar); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.7); repo padre commit
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, ambos templates)
+- **Causa**: Usuario: validar buscador contra inventario en ambos templates + settings de redes/contacto/mapa. Hallazgos: (1) buscador del header muerto (HTML sin handlers); (2) `?s=` colisiona con búsqueda nativa de WP (mayúsculas/espacios → 404 del tema) → parámetro propio `?buscar=`; (3) products.php (router plugin) ignoraba el filtro en render inicial; (4) footer con 4× `href="#"` muertos y cero settings de redes/contacto/mapa.
+- **Implementado**: Header search → `/productos/?buscar=` (Enter desktop/móvil + botón); catálogo lee el parámetro (server pre-filtra en ERP + JS pre-llena y filtra al escribir); admin con teléfono/dirección/horario/6 redes/dirección-mapa (XSS y basura rechazadas); footer con redes configuradas + contacto + icono contacto siempre; `[erpc_map]` (Google embed sin key, responsive) agregado a /contacto/.
+- **Verificación**: `?buscar=` filtra inventario real (cable 15/41, laptop 15/38, hdmi 4, mouse 1, inexistente 0); CDP: header desktop+móvil → navegación + resultados correctos; footer con valores (links reales) y vacío (ocultos, 0 muertos); mapa 1060×382 desktop / 307×282 móvil; 200 en modo plugin Y elementor (switch ida/vuelta); php -l ×6 + node --check OK. Screenshots val-search-*.png, val-contacto-map-*.png.
+- **Pendiente usuario**: refinar `map_address` a dirección exacta (ERP Connector → Contacto, redes y mapa); poner URLs reales de redes sociales; USP menciona tarjetas de video pero el inventario actual no las tiene — alinear catálogo ERP o copies.
+- **Estado**: ✅ sincronizado
+
 ## 2026-09-19
 
 ### [23:15] - WordPress local: connector v3.9.6 — títulos sin duplicar + carrito auditado responsive
