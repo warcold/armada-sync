@@ -1,5 +1,119 @@
 ## 2026-09-20
 
+### [02:40] - WordPress local: connector v3.11.3 — soporte centrado, mapa en box, tagline sin solapamiento
+- **Tipo**: proyecto | fix | ux | wordpress-dev
+- **Modificado**: `templates/contacto.php` (soporte técnico centrado + mapa en box dentro del container); `templates/partials/header.php` + CSS (tagline apilado centrado bajo el logo — el absolute al 50% se solapaba con el buscador); bump 3.11.3 + CHANGELOG plugin.
+- **Afecta a**: kalimete (stack wordpress-local, contacto + header home)
+- **Causa**: Usuario: soporte técnico debe quedar centralizado, mapa mejor en box, validar centralizado de texto en header. Hallado: tagline absolute se solapaba con el buscador (search 300-820px vs tagline 600px).
+- **Verificación**: contacto 200 (soporte centrado, mapa en box, chrome único); home 200 (tagline renderiza, CSS 3.11.3); productos/nosotros/cotizar/términos 200; php -l ×3 OK; log limpio.
+- **Estado**: ✅ sincronizado
+
+### [02:30] - WordPress local: connector v3.11.2 — contacto/nosotros/cotizar full width como la home
+- **Tipo**: proyecto | fix | layout | responsive | wordpress-dev
+- **Modificado**: templates full-page nuevos (`contacto.php` hero foto + info real + form + soporte + mapa; `about.php` [erpc_about]; `cotizar.php` hero foto + form); router (mapeos + shortcode fallbacks + full_page_templates ×3); bump 3.11.2 + CHANGELOG plugin.
+- **Afecta a**: kalimete (stack wordpress-local, contacto/sobre-nosotros/cotizar)
+- **Causa**: Usuario: contacto y nosotros no full width como la inicio; responsive en todos los dispositivos. Causa: las 3 renderizaban vía wrapper (main-container) — hero con foto dentro del container.
+- **Verificación**: 3 páginas 200 con main-container=0 (full width), hero=4, chrome único; home 200; términos 200 (wrapper intacto para lectura); media queries cubren desktop/laptop/tablet/mobile; php -l ×5 OK.
+- **Estado**: ✅ sincronizado
+
+### [02:20] - WordPress local: connector v3.11.1 — contacto real, nosotros rico, tagline centrado
+- **Tipo**: proyecto | fix | feature | ux | wordpress-dev
+- **Modificado**: `[erpc_contact_info]` (datos reales del tenant, dinámico) + `contact-info.php`; `[erpc_about]` (hero con foto about-team.jpg, 4 pilares con iconos, stats animados, USP, CTA) + `about.php`; contenido pág. 17 reescrito limpio (tenía 'n' literales + placeholders); pág. 36 `[erpc_about]`; activación actualizada (ambos shortcodes); CSS (tagline centrado absolute, contact-info cards, about); `assets/img/about-team.jpg` (Unsplash validada); bump 3.11.1 + CHANGELOG plugin. Backups: `contact-page17-content-backup2.txt`, `about-page36-content-backup.txt`, CSS `.bkup-20260920c`.
+- **Afecta a**: kalimete (stack wordpress-local, contacto/sobre-nosotros/header)
+- **Causa**: Usuario: contacto no correcto (placeholders soporte@tudominio.com en vez de datos del tenant), nosotros pobre (sin imágenes, cards planas), tagline "tecnología al mejor precio" no centrado en header.
+- **Verificación**: contacto 200 (2 info-cards email real, 0 placeholders, form+mapa, chrome único); nosotros 200 (hero foto, 4 pilares, stats, USP, CTA); home tagline centrado; productos/términos/faq 200; php -l ×4 OK.
+- **Estado**: ✅ sincronizado
+
+### [02:10] - WordPress local: connector v3.11.0 — modo Elementor retirado, una sola plantilla (plugin default)
+- **Tipo**: proyecto | refactor | limpieza | decisión | wordpress-dev
+- **Modificado**: eliminado `kit/` (8 JSON + manifest) + `class-erpc-kit.php` + menú Kit; meta Elementor de 8 páginas (data/edit_mode/template_type/caches/6 baks); draft huérfano 30; plugin Elementor DESACTIVADO (reactivable); `template_mode='plugin'` permanente; pág. 8 `[erpc_landing]`; `_wp_page_template='default'`; README/docs actualizados; bump 3.11.0 + CHANGELOG plugin. Backups: `backups/elementor-cleanup-20260920/` (8 JSON).
+- **Afecta a**: kalimete (stack wordpress-local — arquitectura de una sola plantilla)
+- **Causa**: Usuario: el template en Elementor está de más (son shortcodes, no se puede editar lo hecho) — borrarlo y quedarse solo con el template del plugin, que se vea tan bien como Elementor. Validado: el home Elementor era solo contenedor de los mismos shortcodes; 2 plantillas = 2 fuentes de divergencia.
+- **Verificación**: 8 páginas 200; home completa (hero=5, usp=4, cards=4, proof=5, cta=1, doctype, CSS 3.11.0); productos 15 chrome único; contacto form+mapa; cotizar form; admin 200 sin menú Kit; php -l OK.
+- **Estado**: ✅ sincronizado
+
+### [02:00] - WordPress local: connector v3.10.3 — fix home plugin sin estilos (frame omitido)
+- **Tipo**: proyecto | fix | regresión | wordpress-dev
+- **Modificado**: `templates/landing.php` (frame check restaurado al inicio — include header.php); bump 3.10.3 + CHANGELOG plugin.
+- **Afecta a**: kalimete (stack wordpress-local, home modo plugin)
+- **Causa**: Usuario: "la página de inicio del plugin está rota, no tiene estilo". Causa raíz: el refactor v3.10.2 de landing.php olvidó el include del header (frame doctype/head/wp_head) — la home salía como contenido crudo sin CSS (26KB, sin doctype). Regresión del propio refactor.
+- **Verificación**: home plugin 200/55KB con doctype + 14 stylesheets + trustbar + todas las secciones; 1 header + 1 footer; modo elementor restaurado idéntico; php -l OK.
+- **Estado**: ✅ sincronizado
+
+### [01:50] - WordPress local: connector v3.10.2 — paridad total home (fuente única de secciones)
+- **Tipo**: proyecto | fix | paridad | arquitectura | wordpress-dev
+- **Modificado**: 5 shortcodes duales nuevos (`erpc_hero/usp/categories/featured/cta`) + parciales (`hero-landing.php`, `categories-landing.php`, `featured.php`, `usp.php`, `cta-landing.php`); `landing.php` refactorizado a shortcodes; home Elementor reconstruido con la misma secuencia (backup `elementor-8-before-v3102.json`); CSS `.erpc-usp*`; bump 3.10.2 + CHANGELOG plugin.
+- **Afecta a**: kalimete (stack wordpress-local, home en ambos modos)
+- **Causa**: Usuario: la home del plugin se ve mejor que la de Elementor; ambos deben ser iguales (mismas imágenes/textos, mínimas discrepancias). Causa: Elementor tenía `[erpc_products]` que rinde el catálogo completo (hero Catálogo + buscador + filtro + quick-view) dentro de la home.
+- **Verificación**: 12 marcadores de paridad TODOS OK idénticos (hero=5, usp=4, cats=17, cards=4, proof=5, cta=3, avatars=3 + 5 textos); catálogo completo eliminado de la home Elementor; home 200, catálogo 200; log limpio.
+- **Estado**: ✅ sincronizado
+
+### [01:40] - WordPress local: connector v3.10.1 — fix 403 en Kit Elementor (orden admin_menu)
+- **Tipo**: proyecto | fix | admin | wordpress-dev
+- **Modificado**: `erp-ecomm-connector.php` (`ERPC_Kit::init()` movido de parse-time a `init_admin()`, después del menú padre); bump 3.10.1 + CHANGELOG plugin.
+- **Afecta a**: kalimete (stack wordpress-local, wp-admin → ERP Connector → Kit Elementor)
+- **Causa**: Usuario: "no puedo entrar a la configuración en wp-admin, está roto". Diagnóstico end-to-end (login real con usuario temporal): página principal 200 OK, dashboard OK, pero Kit Elementor 403 "Sorry, you are not allowed". Causa raíz: Kit registrado en parse-time (antes de plugins_loaded) → add_submenu_page sin padre registrado → hook con nombre incorrecto → 403 con menú visible.
+- **Verificación**: kit-page 200 (106KB, contenido, sin 403); main-page 200; dashboard con ambos menús; usuario de prueba eliminado (limpio).
+- **Estado**: ✅ sincronizado
+
+### [01:30] - WordPress local: connector v3.10.0 — Kit Elementor instalable + prueba social + imágenes locales
+- **Tipo**: proyecto | feature | kit | ux | wordpress-dev
+- **Modificado**: `kit/elementor-kit/*.json` (8 páginas) + `manifest.json` + `kit/assets/hero-home.jpg`; importador `ERPC_Kit` (menú Kit Elementor, manual, no pisa diseños); `assets/img/` (hero-home, cta-band, contact-side, 3 avatares — Unsplash License validadas); `ERPC_DEFAULT_HERO` → asset local; `[erpc_social_proof]` (shortcode + partial con contadores animados EN VIVO + testimonios + reveal); CSS (`.erpc-proof*`, hero catálogo con foto, sheen estáticas, CTA con overlay); JS (count-up rAF + IntersectionObserver); home Elementor (hero imagen attachment 73 + sección proof, backup `elementor-8-before-v310.json`); contenido pág. 8 (`[erpc_social_proof][erpc_footer]`); bump 3.10.0 + CHANGELOG plugin.
+- **Afecta a**: kalimete (stack wordpress-local, ambos modos, todas las páginas)
+- **Causa**: Usuario: opción A (el trabajo viene con la plantilla base), imagen en header plugin vs Elementor, imágenes gratuitas validadas en internet, páginas más dinámicas/profesionales (iconos, efectos, social proof).
+- **Verificación**: elementor → home 4 cards + proof 5 counters + 3 avatares + hero en post-8.css + CTA; plugin → home 4 + proof + hero local + CTA; contacto/cotizar chrome único; kit import: skipped en diseño vivo, completed en draft 30; php -l ×6 + node --check OK; log sin entradas nuevas.
+- **Pendiente usuario**: draft huérfano 30 (slug `inicio`) recibió el kit — borrar o dejar (confirmar); testimonios son copy de ejemplo (editar a clientes reales); contadores 2500+/4.9 son estáticos (editar a métricas reales).
+- **Estado**: ✅ sincronizado
+
+### [01:20] - WordPress local: connector v3.9.13 — paridad plugin/Elementor (mapa, chrome único, cotizar)
+- **Tipo**: proyecto | fix | paridad | wordpress-dev
+- **Modificado**: página 17 (`[erpc_map]` agregado al contenido); `static.php` (retira header/footer espejo → chrome único); router (`cotizar`→static, `erpc_contact/quote/map`→static); bump 3.9.13 + CHANGELOG plugin. Backups: `static.php.bkup-20260920b`, `templates.php.bkup-20260920b`, `backups/contact-page17-content-backup.txt`. `template_mode` en `elementor` (original).
+- **Afecta a**: kalimete (stack wordpress-local, contacto/cotizar/legales en ambos modos)
+- **Causa**: Usuario: mejoras en ambos defaults (plugin y Elementor) semejantes; el cliente edita Elementor a gusto después. Divergencias: mapa solo en Elementor; doble chrome en plugin; cotizar sin router.
+- **Verificación**: plugin → contacto form+mapa, cotizar form, términos 11 cards, catálogo 15, 1 header+1 footer en las 3; elementor → home 4, contacto form+mapa, cotizar form; log limpio.
+- **Estado**: ✅ sincronizado
+
+### [01:15] - WordPress local: connector v3.9.12 — filtro stock<=1 oculto del ecommerce
+- **Tipo**: proyecto | feature | regla-negocio | wordpress-dev
+- **Modificado**: helper `erpc_con_stock()` en `erp-ecomm-connector.php`; filtro en `landing.php`, `products.php`, `render_products`, `ajax_get_products` (+total ajustado), `ajax_get_products_json`; bump 3.9.12 + CHANGELOG plugin. Backups `*.bkup-20260920b`. Carrito/checkout sin cambios (validan con ERP).
+- **Afecta a**: kalimete (stack wordpress-local, home + catálogo + buscar + cargar más, ambos modos)
+- **Causa**: Usuario: stock 0/1 no debe presentarse en el ecommerce.
+- **Verificación**: 162 ERP → 58 visibles / 104 ocultos; home 4 cards, catálogo 15 cards, cero "Agotado", testigo stock-1 ausente; CSS ver=3.9.12; log sin entradas nuevas.
+- **Estado**: ✅ sincronizado
+
+### [01:10] - WordPress local: connector v3.9.11 — causa raíz home plugin (15→landing 4+CTA en modo plugin)
+- **Tipo**: proyecto | fix | root-cause | wordpress-dev
+- **Modificado**: `includes/class-erpc-templates.php` (portada en modo plugin → `landing`; fallback shortcode honra `per_page/columns/show_more/categoria`); `templates/ecomm/products.php` (consume `erpc_tpl_*`, load-more respeta `$show_more`); página 8 `post_content` (`per_page='12'`→`'4' show_more='0'`); bump 3.9.11 + CHANGELOG plugin. Backups: `class-erpc-templates.php.bkup-20260920`, `backups/home-page8-content-backup.txt`. `template_mode` quedó en `elementor` (original; solo se cambió a `plugin` temporalmente para verificar por HTTP).
+- **Afecta a**: kalimete (stack wordpress-local, home en ambos modos)
+- **Causa**: Usuario: "no veo que se hayan aplicado". Validación HTTP real demostró que v3.9.10 sí estaba vivo (CSS `ver=3.9.11`) pero la portada en modo plugin nunca rinde `landing.php`: slug `magantech-inicio` ≠ `inicio` → fallback incluía `products.php` directo ignorando attrs → 15 productos del tenant. Tres fuentes divergidas (content:12, elementor:4, router:15).
+- **Verificación**: modo plugin → landing con 4 cards + CTA + hero, sin load-more; modo elementor → 4 cards sin load-more; php -l ×3 OK; debug.log sin entradas nuevas.
+- **Estado**: ✅ sincronizado
+
+### [01:05] - WordPress local: connector v3.9.10 — home plugin en paridad con Elementor (4 destacados + CTA)
+- **Tipo**: proyecto | fix | paridad | wordpress-dev
+- **Modificado**: `templates/landing.php` (destacados 8→4 + sección CTA final "¿Listo para equipar tu setup?/Ir a la tienda"); `assets/css/connector.css` (reglas `.erpc-landing-cta*`); bump 3.9.10 + CHANGELOG del plugin. Backups `.bkup-20260920` de ambos.
+- **Afecta a**: kalimete (stack wordpress-local, home modo plugin)
+- **Causa**: Usuario: home del plugin mostraba muchos productos, no los 4 del Elementor, y le faltaban updates del template Elementor. Causa: `array_slice($productos,0,8)` vs shortcode Elementor `columns='4' per_page='4' show_more='0'`; CTA final no existía en `landing.php`.
+- **Verificación**: render real vía `do_shortcode('[erpc_landing]')` → 4 cards + CTA; php -l OK; últimos `Undefined array key` del 18-sep (pre-fix), cero nuevos.
+- **Estado**: ✅ sincronizado
+
+### [01:00] - WordPress local: update total — core 7.1.1 + plugins al día, cero pendientes
+- **Tipo**: proyecto | update | mantenimiento | wordpress-dev
+- **Modificado**: core 7.1→7.1.1; `all-in-one-wp-migration` 7.110→7.111; `emcp-tools` 3.14.1→3.16.1; contenedor `wordpress-local` recreado (activa guards `!defined` del compose en WORDPRESS_CONFIG_EXTRA); wp-cli 2.12.0 instalado en contenedor (`/tmp/wp-cli.phar`, se pierde al recrear). Backups pre-update: `backups/wp-full-20260920.sql` (1.6M) + `backups/wp-content-20260920.tgz` (31M).
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, endpoints MCP)
+- **Causa**: Usuario: discrepancias en updates — validar todo y actualizar. Hallado: core pedía 7.1.1 (minor), 2 plugins con update, ruido `Constant already defined` en cada request (compose sin guards + constantes duplicadas).
+- **Verificación**: `core check-update` = latest; plugins/temas con update = cero; home 200; REST OK; rutas MCP (`default-server` + `emcp-tools-server`) intactas tras emcp 3.16.1; `wp-config.php` con 1 sola definición y wp-cli sin warnings; `debug.log` sin autoloader ni warnings de brand. Avisos EMCP `not in the ability registry` (40 líneas) son PREVIOS al update (primera 04:43:05, update posterior) — no es regresión, es logging informativo propio con WP_DEBUG.
+- **Notas**: (1) imagen base sigue `wordpress:6.7-php8.3-apache` aunque el core es 7.1.1 — normal: el core se auto-actualiza sobre la base; no se cambió la imagen a propósito (riesgo innecesario). (2) `mcp-basic-auth` v1.1 sigue INACTIVO (se deja así; activar cambia auth de MCP — pedir confirmación). (3) demás stacks (erpipo-preprod, alfredo-ecomm, taohemps, petsuite, woodly, tapmap): todos Up/healthy; imágenes de build local (actualizar = rebuild/deploy por stack, no tocado) y bases `:latest` compartidas (pull reiniciaría preprod, no tocado).
+- **Estado**: ✅ sincronizado
+
+### [00:40] - WordPress local: validación plugin — error MCP corregido + connector v3.9.9
+- **Tipo**: proyecto | fix | validación | wordpress-dev
+- **Modificado**: `mcp-adapter/` (`composer dump-autoload` → `vendor/autoload.php`, 251 clases); plugin `erp-ecomm-connector` (`get_brand()` reescrito con merge defaults<-ERP<-local, `footer.php` + `auth/form.php` blindados con `?? 'Tienda'`, bump 3.9.8→3.9.9); `mcp-basic-auth.php` v1.1 (auth correcta, multi-header Apache/FPM, base64 estricto); `docker-compose.yml` (guards `!defined` en WORDPRESS_CONFIG_EXTRA); `wp-config.php` (WP_DEBUG duplicado eliminado); CHANGELOG del plugin (entrada 3.9.9). Backups `.bkup-20260920` de todo lo tocado.
+- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, endpoints MCP)
+- **Causa**: Usuario: "el plugin emite error de mcp, validar y corregir todas las fallas". Causa raíz: mcp-adapter instalado desde fuente sin `composer install` (sin autoload → plugin oficial muerto; solo vivía la copia bundled de EMCP Tools). Fallas extra: `get_brand()` comparaba array con `!== ''` (warnings `Undefined array key "name"`); `mcp-basic-auth` con lógica invertida y un solo header; colisión de constantes WP_HOME/WP_DEBUG.
+- **Estado**: ✅ sincronizado
+- **Notas**: wordpress-dev agotó sus pasos en diagnóstico (2 sesiones); kalimete aplicó correcciones pendientes directamente. Verificación: php -l ×4 OK; home 200 sin warnings nuevos; clases `WP\MCP\Plugin/Core\McpAdapter/Transport\HttpTransport` resuelven; MCP anónimo → 401 esperado (protegido, requiere usuario WP con cap read); basic inválido → 401 limpio sin fatales. Pendiente upstream: conflicto require-dev del mcp-adapter (php_codesniffer 3 vs 4) + ext-mbstring en host para `composer install` completo.
+
 ### [01:30] - WordPress local: connector v3.9.8 — auditoría integral responsive + cross-browser
 - **Tipo**: proyecto | fix | ux | compat | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (CSS: contador en su línea + hamburguesa ≤991px + 11 prefixes `-webkit-`/`100dvh`/`sticky`; JS: resize a 991; bump 3.9.8, commit `c8f0190`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.8); repo padre commit
