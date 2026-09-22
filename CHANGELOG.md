@@ -1,3 +1,67 @@
+## 2026-09-22
+
+### [05:45] - WP connector v3.12.2: fix categorías no actualizaban sin F5 (guard ERPCLog)
+- **Tipo**: proyecto | fix | wordpress-dev
+- **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/assets/js/connector.js` (shim no-op de `window.ERPCLog` al inicio del IIFE), `erp-ecomm-connector.php` (bump 3.12.1→3.12.2), CHANGELOG plugin; commit plugin `2fda895` (v3.11.3→v3.12.2, incluye trabajo v3.12.0/3.12.1 que estaba sin commitear). Backups `.bkup-20260922`.
+- **Afecta a**: kalimete (wordpress-local, https://wordpress.kalimete.local)
+- **Causa**: Síntoma del usuario: click en categoría → URL cambiaba (`?categoria=X`) pero el grid no se actualizaba hasta F5, en cada click. Causa raíz reproducida con Playwright: v3.12.0 insertó `ERPCLog.info()` en el camino crítico del click handler (tras `erpcSyncCategoryUrl()`) y como primera línea de `loadProducts()`; si el navegador no carga `logger.js` (cacheado 404/ausente de sesión previa), `ERPCLog is not defined` → TypeError mata el handler DESPUÉS del URL sync y ANTES de `loadProducts()`. Telemetría no-crítica en camino crítico sin guard.
+- **Verificación**: Playwright + Chromium headless: (1) logger.js bloqueado → click Monitores → grid 15→10, 0 errores JS (antes: TypeError + grid congelado); (2) regresión camino caché: Cables 7, Monitores 10, Todo 15; (3) camino AJAX (localStorage vacío): Monitores 10, Cables 5; sitio sirve `ver=3.12.2` con shim; `node --check` + `php -l` OK.
+- **Notas**: El bump de versión invalida el connector.js cacheado en el navegador del usuario. Si el usuario aún viera el bug: hard refresh (Ctrl+Shift+R) una sola vez.
+
+## 2026-09-21
+
+### [22:45] - WP connector v3.12.1: imágenes visibles vía normalize_image_url + lección mount rancio
+- **Tipo**: proyecto | fix | wordpress-dev | infra
+- **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector` (solo nuestro): `normalize_image_url()` en `class-erpc-api.php` (reescribe host a `https://erp.kalimete.local`, override `ERPC_IMAGE_HOST`, PHP 7.4 OK) usado en `normalize_producto()`; bump 3.12.1 + CHANGELOG plugin; purgados transients `erpc_c_*`. `REGLAS.md`: regla bind-mount (no reemplazar `preprod.env`, verificar md5) + regla secrets ajenos.
+- **Afecta a**: kalimete (wordpress-local + erpipo-preprod)
+- **Causa**: Usuario: mejorar todo sin tocar secrets ajenos. Imágenes WP rotas (ERP devolvía host del request). Incidente: `perl -i` cambió el inode de `preprod.env` → contenedor con clave vieja → Access denied; fix con `--force-recreate` + md5.
+- **Verificación**: API magantech 200; página WP 200 con 8 URLs al host válido (200 estricto); `php -l` OK; repo ERP limpio 0/0 (cero archivos de Juan tocados).
+- **Estado**: ✅ sincronizado
+
+### [22:30] - ERP: revertido todo lo tocado de Juan + fusionado su refactor sin perder ecomm
+- **Tipo**: proyecto | revert | merge | reglas
+- **Modificado**: `dev/ecomm-erp` (`174b1d3` revert: `.env`/`.env.dev`/`.env.backup_audit`, `releases/`, views compilados, líneas `attributes()` y accessor imagen restaurados byte-idénticos a Juan; luego `e76b0c3`: `SaleCreateService.php` fusionado a mano — su `esTipoComprobantePermitido()` centralizado + nuestro `tenantIdFromContext()` ecomm). `REGLAS.md`: regla file-level no-tocar-lo-de-Juan + no-directivas.
+- **Afecta a**: kalimete (erpipo-preprod) + repo GitHub de Juan Carlos
+- **Causa**: Usuario: no tocar lo de Juan (ni sus archivos ni darle directivas). Hallado: mi `checkout HEAD` en el merge había pisado su refactor de comprobantes en `SaleCreateService.php` (único de los 6 archivos ecomm que él sí tocó); resto intacto verificado archivo por archivo.
+- **Verificación**: 0/0 con origin; 31 rutas ecomm; `php -l` OK; push `174b1d3..e76b0c3` solo a `dev/ecomm-erp` (main no tocado).
+- **Estado**: ✅ sincronizado
+
+### [22:00] - ERP preprod: rotación APP_KEY+DB_PASSWORD, limpieza backups 3.4G→985M
+- **Tipo**: seguridad | mantenimiento | infra
+- **Modificado**: `preprod.env` (+backup `.bkup-20260921`), `docker-compose.yml` (+backup, MYSQL_PASSWORD igualado), repo `.env` (key nueva); `storage/app/backups/`: borrados 10 dumps viejos + 4 stubs fallidos + 15 txt (quedan 2 full Sep17-18); `REGLAS.md` actualizado.
+- **Afecta a**: kalimete (erpipo-preprod; sesiones/cookies invalidadas por key nueva, sin datos cifrados en BD — verificado 0 casts encrypted)
+- **Causa**: Usuario ordenó proceder. Secrets estaban expuestos en historial GitHub (commits de Juan). Incidentes en el camino: mount `.env` rancio (fix: restart app), 502 por resolver nginx rancio (fix: restart nginx), compose con password truncado (fix: reescrito desde preprod.env verificado).
+- **Verificación**: migrate 0 pendientes; ERP :8100 200; API magantech 200; WP 200 con imágenes; docker 8/8 up; 0 fatales; login DB con clave nueva OK.
+- **Notas**: PENDIENTE Juan rote sus secrets. Job auto-backup roto (stubs 98B, conecta a 127.0.0.1) — flag, no tocado.
+- **Estado**: ✅ sincronizado
+
+### [21:30] - ERP+WP: imagenes de productos visibles en wordpress.kalimete.local + fix fatal v3
+- **Tipo**: proyecto | fix | ecomm | wordpress
+- **Modificado**: `dev/ecomm-erp` (`a0f79a3`, solo nuestra rama): `Producto::getImagenUrlAttribute` ahora usa `config(app.url)` en vez de `asset()`; `EcommController::resolveTenantId` corregido (`attributes()` inexistente → `attributes`, 2 líneas, era de Juan `7ab4431`). WP: purgados transients `erpc_c_*` con URLs viejas (`erpipos.armada.do`, `https://IP:8100`).
+- **Afecta a**: kalimete (erpipo-preprod + wordpress-local)
+- **Causa**: Usuario: sin imágenes en WP. Hallado: 1) ERP generaba `https://10.0.0.106:8100/...` (puerto HTTP-only → ERR_SSL_PROTOCOL_ERROR); 2) caché WP con URLs de `erpipos.armada.do`; 3) `erpipos/v3/*` caído con 500 por `BadMethodCallException`.
+- **Verificación**: API devuelve `https://erp.kalimete.local/storage/...` (200 estricto); página WP con 15/15 imgs al host válido; `v3/products` 200 con llave magantech; `php -l` OK; push `a5c6495..a0f79a3` a `origin/dev/ecomm-erp`.
+- **Notas**: Ver el ERP UI preferiblemente por `https://erp.kalimete.local` (las imágenes ahora salen con ese host). `main` no tocado (de Juan).
+- **Estado**: ✅ sincronizado
+
+### [21:00] - ERP sistema-facturacion: merge de 13 commits de Juan en dev/ecomm-erp, ecomm preservado, sync 0/0
+- **Tipo**: proyecto | sync | merge | seguridad
+- **Modificado**: `dev/ecomm-erp` local + `origin/dev/ecomm-erp` (merge `a5c6495`): trae soporte/tickets, landing Erp&Pos, DataTables, roles de Juan; preserva ecomm nuestro (6 archivos restaurados de HEAD tras detectar que el auto-merge tomó versiones revertidas de Juan); conflictos resueltos: `.env` (mantener borrado), 2 views compilados (borrados), `.gitignore` (nuestro bloque); migraciones soporte corridas en docker; push normal sin force.
+- **Afecta a**: kalimete (erpipo-preprod) + repo GitHub de Juan Carlos
+- **Causa**: Usuario: actualizarse con commits de Juan quedando iguales, sin dañar ecomm de WordPress. Autoría verificada: secrets (`.env`/`.env.dev` con keys reales) y `releases/` los commiteó Carlos Jerez (`1807f68`, `7d40ccf`); nuestra limpieza `0b502c7` solo los removió.
+- **Verificación**: local↔remoto 0/0; 31 rutas ecomm; 0 OTP; `php -l` OK; migrate soporte DONE (4 tablas); docker operativo.
+- **Notas**: PENDIENTE rotar APP_KEY/DB_PASSWORD expuestos en historial. Rama `main` local aún en 363821c (behind 11, FF pendiente, fuera de alcance pedido).
+- **Estado**: ✅ sincronizado
+
+### [20:30] - ERP sistema-facturacion: sync con GitHub de Juan Carlos, rama dev/ecomm-erp, limpieza OTP + secrets
+- **Tipo**: proyecto | sync | seguridad | limpieza
+- **Modificado**: repo `soycarlosjerez-hub/sistema-facturacion` rama `dev/ecomm-erp` (origen único junto a local `~/dev/erpipo-preprod/code/sistema-facturacion/`); eliminado remote `preprod` (warcold/erpipo-preprod, ya no existe); revert en `origin/main` del commit ecomm subido por error (main limpio para Juan); OTP removido de `dev/ecomm-erp` (`ClienteOtpController.php`, `ClienteOtpCode.php`, 4 rutas `api/ecomm/auth/*` — login queda por email+password); SECURITY untrack `.env`, `.env.backup_audit`, `.env.dev` (tenían APP_KEY y DB_PASSWORD reales); `.gitignore` blindado (agrega `.env`/`.env.dev`, saca `.env.example` del ignore, corrige backups a `/storage/app/backups/`, reglas anti-WordPress); eliminado `releases/20260911_212141` (snapshot duplicado 48MB, 2466 archivos); untrack 15 views Blade compilados; `.env.example` documenta integración plugin WP vía Instance API Key (sin secrets).
+- **Afecta a**: kalimete (stack erpipo-preprod) + repo GitHub de Juan Carlos (colaborador)
+- **Causa**: Usuario: repo de Juan es el principal, sync bidireccional, sin duplicados, plugin WP nunca se sube, ERP listo para deploy de Juan. Hallado: 2 remotes divergentes, secrets en git, OTP muerto, junk trackeado.
+- **Verificación**: local↔origin 0 commits desfasados, status limpio; 31 rutas ecomm registradas (login/register/cart/checkout/orders/tienda/config); 0 archivos WP en git; docker 8 servicios up; Laravel 12.16.0 sin errores; php -l OK.
+- **Notas**: ROTAR secrets expuestos en historial (APP_KEY, DB_PASSWORD de facturacion_db) — el untrack no borra el historial. Backups locales `storage/app/backups/` (3.4GB) NO tocados, solo reportados.
+- **Estado**: ✅ sincronizado
+
 ## 2026-09-20
 
 ### [02:40] - WordPress local: connector v3.11.3 — soporte centrado, mapa en box, tagline sin solapamiento
