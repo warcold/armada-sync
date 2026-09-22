@@ -1,5 +1,13 @@
 ## 2026-09-22
 
+### [19:00] - WP connector v3.12.7: categorías tiempo real + total exacto + nocache
+- **Tipo**: proyecto | fix | wordpress-dev
+- **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/`: `erp-ecomm-connector.php` (nocache_headers frontend + placeholder en erpc_cfg), `assets/js/connector.js` (click handler defensivo + fallback AJAX si caché filtra 0), `includes/class-erpc-shortcodes.php` (ajax_get_products: fetch-all páginas ERP + stock antes de paginar + total desde meta.total), bump 3.12.6→3.12.7 + CHANGELOG plugin; commit plugin `4e81d4d`.
+- **Afecta a**: kalimete (wordpress-local, /productos/)
+- **Causa**: Usuario: "cambio de categoría no actualiza en tiempo real, debo refrescar". Diagnóstico: en headless el click SÍ funcionaba — fallo del usuario = JS viejo cacheado (HTML sin Cache-Control → caché heurística del navegador → ver viejo con bug ERPCLog mataba el handler). Extra: AJAX devolvía totales incorrectos (return del ERP trae total en meta.total, no 'total'; filtro de stock DESPUÉS de paginar → Cables 5 de 7 reales, sin "cargar más").
+- **Verificación**: Playwright headless — AJAX Cables 7 (antes 5)/Monitores 10/Impresoras 22 has_more=true/Computadoras 5 ✅; click sin refresh actualiza grilla + URL, 0 errores JS ✅; fallback caché incompleta → 7 ✅; regresión carrito v3.12.5 OK ✅.
+- **Estado**: ✅ sincronizado
+
 ### [12:10] - WP connector v3.12.5: fix carrito "vacío" (carrera add→navegar)
 - **Tipo**: proyecto | fix | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/`: `templates/ecomm/cart.php` (siempre rinde esqueleto completo con visibilidad server-side), `assets/js/connector.js` (renderCartPage robusto con selectores reales, binding qty server, checkout espera sync, re-sync al cargar /carrito/, beacon pagehide), `erp-ecomm-connector.php` (plugin_url en erpc_cfg), bump 3.12.4→3.12.5 + CHANGELOG plugin; commit plugin `a0576e1`. Backups `.bkup-20260922`.
