@@ -1,5 +1,13 @@
 ## 2026-09-22
 
+### [12:10] - WP connector v3.12.5: fix carrito "vacío" (carrera add→navegar)
+- **Tipo**: proyecto | fix | wordpress-dev
+- **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/`: `templates/ecomm/cart.php` (siempre rinde esqueleto completo con visibilidad server-side), `assets/js/connector.js` (renderCartPage robusto con selectores reales, binding qty server, checkout espera sync, re-sync al cargar /carrito/, beacon pagehide), `erp-ecomm-connector.php` (plugin_url en erpc_cfg), bump 3.12.4→3.12.5 + CHANGELOG plugin; commit plugin `a0576e1`. Backups `.bkup-20260922`.
+- **Afecta a**: kalimete (wordpress-local, /carrito/ y /checkout/)
+- **Causa**: Usuario: "agrego items, las alertas los muestran, pero el carrito dice vacío". Diagnóstico (subagente + repro Playwright): `syncCartToServer` async fire-and-forget → cookie server stale al navegar → `cart.php` rendía rama vacía sin `tbody#erpc-cart-items` → `renderCartPage()` early-return y no repintaba desde localStorage. Agravantes: selectores `#erpc-cart-empty`/`.erpc-total-amount` inexistentes y controles qty server sin binding.
+- **Verificación**: Playwright headless — navegación inmediata: 2 filas, total RD$ 3,110.89 ✅; sync bloqueado (route.abort): items visibles desde localStorage ✅; controles +/-: total 3,110.89→6,127.08→3,110.89 ✅.
+- **Estado**: ✅ sincronizado
+
 ### [06:30] - WP connector v3.12.4: testimonio Miguel A. → Laura A. (foto/nombre)
 - **Tipo**: proyecto | fix | contenido | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/templates/partials/social-proof.php` (testimonio Punta Cana: "Miguel A." → "Laura A."), bump 3.12.3→3.12.4 + CHANGELOG plugin; commit plugin `de4a3e1`. Backup `.bkup-20260922`.
