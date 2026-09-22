@@ -1,5 +1,13 @@
 ## 2026-09-22
 
+### [06:30] - WP connector v3.12.4: testimonio Miguel A. → Laura A. (foto/nombre)
+- **Tipo**: proyecto | fix | contenido | wordpress-dev
+- **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/templates/partials/social-proof.php` (testimonio Punta Cana: "Miguel A." → "Laura A."), bump 3.12.3→3.12.4 + CHANGELOG plugin; commit plugin `de4a3e1`. Backup `.bkup-20260922`.
+- **Afecta a**: kalimete (wordpress-local, home)
+- **Causa**: Usuario: "Miguel A. Punta Cana tiene imagen femenina con nombre de varón". Validado visualmente: avatar-3.jpg es foto femenina; avatar-1 (Carolina) y avatar-2 (José) correctos. Sin avatares masculinos libres en `assets/img/`, se corrigió el nombre (texto neutro intacto).
+- **Verificación**: home sirve "Laura A." (nombre + alt), "Miguel A." ausente; Playwright headless: 3/3 avatares cargan (256px), foto/nombre coherentes.
+- **Estado**: ✅ sincronizado
+
 ### [06:15] - WP connector v3.12.3: imágenes destacados home + thumbs carrito
 - **Tipo**: proyecto | fix | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector`: `templates/partials/featured.php` (mapeo manual → `ERPC_API::normalize_producto()`), `includes/class-erpc-cart.php::enrich()` (imagen envuelta en `normalize_image_url()`), bump 3.12.2→3.12.3 + CHANGELOG plugin; commit plugin `e5bc78a`. Backups `.bkup-20260922`.
