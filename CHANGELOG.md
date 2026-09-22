@@ -1,5 +1,13 @@
 ## 2026-09-22
 
+### [06:15] - WP connector v3.12.3: imágenes destacados home + thumbs carrito
+- **Tipo**: proyecto | fix | wordpress-dev
+- **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector`: `templates/partials/featured.php` (mapeo manual → `ERPC_API::normalize_producto()`), `includes/class-erpc-cart.php::enrich()` (imagen envuelta en `normalize_image_url()`), bump 3.12.2→3.12.3 + CHANGELOG plugin; commit plugin `e5bc78a`. Backups `.bkup-20260922`.
+- **Afecta a**: kalimete (wordpress-local, home + carrito)
+- **Causa**: Usuario: en la tienda se veían bien pero los 4 destacados de la home mostraban icono roto. Causa: `featured.php` era el único punto con mapeo manual de productos SIN `normalize_image_url()` → servía `https://10.0.0.106:8100/...` (puerto 8100 solo habla HTTP → ERR_SSL_PROTOCOL_ERROR). El `enrich()` del carrito tenía el mismo bypass.
+- **Verificación**: home sirve `https://erp.kalimete.local/...` (placeholder 200, webp real 200); Playwright headless: 4/4 destacados cargan (`naturalWidth>0`), 0 rotas, 0 errores JS; regresión categorías Todo 15 / Cables 7 / Monitores 10; `php -l` OK en los 3 archivos.
+- **Estado**: ✅ sincronizado
+
 ### [05:45] - WP connector v3.12.2: fix categorías no actualizaban sin F5 (guard ERPCLog)
 - **Tipo**: proyecto | fix | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/assets/js/connector.js` (shim no-op de `window.ERPCLog` al inicio del IIFE), `erp-ecomm-connector.php` (bump 3.12.1→3.12.2), CHANGELOG plugin; commit plugin `2fda895` (v3.11.3→v3.12.2, incluye trabajo v3.12.0/3.12.1 que estaba sin commitear). Backups `.bkup-20260922`.
