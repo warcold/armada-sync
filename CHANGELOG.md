@@ -1,5 +1,14 @@
 ## 2026-09-23
 
+### [04:30] - WP connector v3.12.9: checkout total 0 + bloquear orden 0 + reclamo guest
+- **Tipo**: proyecto | fix | wordpress-dev + erp-local
+- **Modificado**: plugin (connector.js, shortcodes, auth, api, form auth; bump 3.12.8→3.12.9 + CHANGELOG; commit `7798555`). ERP: submitGuest acceso_api, resetPassword plano+acceso (fix doble-hash), forgotPassword store_url, notificación link a tienda. Backups `.bkup-20260923`.
+- **Afecta a**: kalimete (wordpress-local, erpipo-preprod)
+- **Causa**: Usuario: resumen en RD$ 0.00, orden en 0 "exitosa", guest sin cuenta en ERP. Diagnóstico: selector JS inexistente (orden V-264 correcta en ERP: 2694.70); sin validación total>0; guest sin clave/acceso y sin vía de reclamo; doble-hash en reset.
+- **Verificación E2E**: totales display OK, bloqueo carrito vacío OK, guest → orden V-265 + email reset → set clave → login OK. Cliente 196 acceso=true tenant=10.
+- **Nota**: el `&amp;` del email HTML es correcto (navegador lo decodifica); mi test inicial lo extrajo sin decodificar (falso positivo, no bug).
+- **Estado**: ✅ sincronizado
+
 ### [03:30] - ERP local: revert asignación + clave owner MaganTech (m.garcia@magantech.com.do, id=35)
 - **Tipo**: proyecto | accesos | erp-local
 - **Modificado**: DB `erpipo-preprod-db` (users: id=23 business_instance_id → null; id=35 password hash nuevo; sin secretos en este log)
