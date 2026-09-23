@@ -1,5 +1,13 @@
 ## 2026-09-23
 
+### [03:00] - ERP local: reseteo clave cuenta me@alfredo.pro (id=23)
+- **Tipo**: proyecto | accesos | erp-local
+- **Modificado**: DB `erpipo-preprod-db` (tabla users, solo hash; sin secretos en este log)
+- **Afecta a**: kalimete (erpipo-preprod, panel erp.kalimete.local)
+- **Causa**: Usuario no podía entrar al panel local (`auth.failed` crudo por falta de lang). Diagnóstico: su cuenta existe local (id=23) pero con otra clave; owner bootstrap deshabilitado. Reseteo autorizado por el usuario.
+- **Verificación**: POST /login → 302 a /dashboard; /owner → 200 con sesión; /login con sesión → 302 a /dashboard. Hash verificado con Hash::check.
+- **Estado**: ✅ sincronizado
+
 ### [01:45] - WP connector v3.12.8: flujo compra completo (auth real + tenant + red local)
 - **Tipo**: proyecto | fix | wordpress-dev + erp-local
 - **Modificado**: plugin `erp-ecomm-connector` (api/auth/form/js/config/stock-url, bump 3.12.7→3.12.8 + CHANGELOG plugin; commit plugin `73dd312`). MU-plugin `erpc-local.php` → gateway docker. `/etc/hosts` → 127.0.0.1. ERP `preprod.env` → Mailpit local; `AppServiceProvider` forceRootUrl; `ClienteAuthController` verify público + bypass TenantScope. Backups `.bkup-20260922` en cada archivo.
