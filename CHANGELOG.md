@@ -1,5 +1,14 @@
 ## 2026-09-23
 
+### [03:15] - ERP local: usuario me@alfredo.pro (id=23) asignado a instancia MaganTech (10)
+- **Tipo**: proyecto | accesos | erp-local
+- **Modificado**: DB `erpipo-preprod-db` (users.business_instance_id  null → 10)
+- **Afecta a**: kalimete (erpipo-preprod, panel erp.kalimete.local)
+- **Causa**: Usuario veía la instancia MaganTech sin su API key. Diagnóstico: key id=2 `magantechwebsite` existe y activa, pero el TenantScope fail-closed la ocultaba (usuario sin instancia → resolveTenantId null). Asignación autorizada por el usuario.
+- **Verificación**: /owner/instances/10/api-keys → 200 y muestra `magantechwebsite`.
+- **Nota**: key de pruebas = id=2 `magantechwebsite` → instancia 10 (existe también en prod; la data local es snapshot + writes de prueba).
+- **Estado**: ✅ sincronizado
+
 ### [03:00] - ERP local: reseteo clave cuenta me@alfredo.pro (id=23)
 - **Tipo**: proyecto | accesos | erp-local
 - **Modificado**: DB `erpipo-preprod-db` (tabla users, solo hash; sin secretos en este log)
