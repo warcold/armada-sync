@@ -1,3 +1,14 @@
+## 2026-09-23
+
+### [01:45] - WP connector v3.12.8: flujo compra completo (auth real + tenant + red local)
+- **Tipo**: proyecto | fix | wordpress-dev + erp-local
+- **Modificado**: plugin `erp-ecomm-connector` (api/auth/form/js/config/stock-url, bump 3.12.7→3.12.8 + CHANGELOG plugin; commit plugin `73dd312`). MU-plugin `erpc-local.php` → gateway docker. `/etc/hosts` → 127.0.0.1. ERP `preprod.env` → Mailpit local; `AppServiceProvider` forceRootUrl; `ClienteAuthController` verify público + bypass TenantScope. Backups `.bkup-20260922` en cada archivo.
+- **Afecta a**: kalimete (wordpress-local, erpipo-preprod, Mailpit)
+- **Causa**: Usuario: "no sale el código" al crear cuenta + directiva "todo local, independiente de la red". Diagnóstico: (1) ERP sin rutas OTP — plugin apuntaba a `/ecomm/auth/*` → 404; ERP usa password min12 + email link. (2) `get_tenant_id()`=0 → register caía a tenant 3 (no MaganTech 10) → checkout ModelNotFound. (3) MU-plugin con IP LAN vieja (10.0.0.106; actual 10.1.10.174) → timeout ERP; /etc/hosts stale.
+- **Verificación E2E** (todo local): registro → tenant 10 + email en Mailpit + verify OK; login UI; profile load/update; checkout → **orden V-263 completada** (cliente 191, RD$ 3,016.19). Home 0.35s (antes 30s+).
+- **Nota**: `docker network connect erpipo-dev-network wordpress-local` se REVERTIÓ (colisión alias `db` → erpipo-db rompía la DB del WP). La vía correcta es el gateway 172.19.0.1. NO reconectar redes entre stacks.
+- **Estado**: ✅ sincronizado
+
 ## 2026-09-22
 
 ### [19:00] - WP connector v3.12.7: categorías tiempo real + total exacto + nocache
