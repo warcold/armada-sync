@@ -1,5 +1,13 @@
 ## 2026-09-23
 
+### [05:00] - WP connector v3.12.10: checkout exige sesión (anti-suplantación)
+- **Tipo**: proyecto | seguridad | wordpress-dev
+- **Modificado**: plugin (connector.js, shortcodes, auth; bump 3.12.9→3.12.10 + CHANGELOG; commit plugin pendiente).
+- **Afecta a**: kalimete (wordpress-local, /checkout/ y /login/)
+- **Causa**: Usuario: comprar sin login permite suplantación (solo email + pago contra entrega) y preguntó por duplicados. Verificado: el ERP reutiliza cliente por email+tenant (2 órdenes → 1 cliente, NO duplica), pero la suplantación era real.
+- **Verificación**: guest → /login/?redirect → registro → /checkout/ con items → orden V-269 ✅; POST sin token rechazado ✅.
+- **Estado**: ✅ sincronizado
+
 ### [04:30] - WP connector v3.12.9: checkout total 0 + bloquear orden 0 + reclamo guest
 - **Tipo**: proyecto | fix | wordpress-dev + erp-local
 - **Modificado**: plugin (connector.js, shortcodes, auth, api, form auth; bump 3.12.8→3.12.9 + CHANGELOG; commit `7798555`). ERP: submitGuest acceso_api, resetPassword plano+acceso (fix doble-hash), forgotPassword store_url, notificación link a tienda. Backups `.bkup-20260923`.
