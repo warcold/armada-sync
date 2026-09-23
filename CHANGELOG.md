@@ -1,5 +1,13 @@
 ## 2026-09-23
 
+### [03:30] - ERP local: revert asignación + clave owner MaganTech (m.garcia@magantech.com.do, id=35)
+- **Tipo**: proyecto | accesos | erp-local
+- **Modificado**: DB `erpipo-preprod-db` (users: id=23 business_instance_id → null; id=35 password hash nuevo; sin secretos en este log)
+- **Afecta a**: kalimete (erpipo-preprod, panel erp.kalimete.local)
+- **Causa**: Usuario corrigió el enfoque — prefiere probar desde la perspectiva del dueño de la tienda (admin-business) en vez de asignarse él la instancia. Ambos cambios autorizados por el usuario.
+- **Verificación**: login m.garcia@magantech.com.do → 302 dashboard; dashboard/ordenes/productos/clientes → 200 con su sesión; /owner/* → 403 correcto (sección system-owner).
+- **Estado**: ✅ sincronizado
+
 ### [03:15] - ERP local: usuario me@alfredo.pro (id=23) asignado a instancia MaganTech (10)
 - **Tipo**: proyecto | accesos | erp-local
 - **Modificado**: DB `erpipo-preprod-db` (users.business_instance_id  null → 10)
