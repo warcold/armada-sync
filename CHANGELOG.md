@@ -1,5 +1,14 @@
 ## 2026-09-26
 
+### [23:59] - Producción-ready: erp-chatbot + connector sin secretos en código + PRs GitHub para el admin
+- **Tipo**: proyecto | seguridad+infra | wordpress
+- **Modificado**: erp-chatbot (~/dev/wordpress: erpcbot_defaults() sin endpoint/key hardcodeados — resolución options > env ERPCBOT_LLM_URL/KEY/MODEL > vacío con error amigable; placeholder admin genérico; guard apunta a Ajustes). Stack: docker-compose.yml env-driven con ${VAR:-default} (local intacto), docker-compose.prod.yml (sin puertos 8091/3307, restart always), .env.example (placeholders sin valores), .gitignore, DEPLOY-PRODUCCION.md. GIT: repo nuevo github.com/warcold/erp-chatbot (privado) con PR #1 feature/v1.4.5-production-ready → main; connector PR #1 feature/v3.15.0-post-checkout-pedidos → main (incluye 5 commits no pusheados v3.12.5-3.12.10 + v3.15.0); stack commit local 938c270 (sin remote).
+- **Afecta a**: kalimete (dev/wordpress), producción futura (vps-preprod)
+- **Causa**: Usuario: preparar commit para que el admin de GitHub acepte cambios y haga merge él; funcional en producción (conexiones por variables, no en plano) y en local.
+- **Diagnóstico**: API key LLM vllm-key-e473... en PLANO en erpcbot_defaults() (crítico), IP LAN 10.0.0.5 hardcodeada, creds DB en compose, erp-chatbot SIN repo (riesgo pérdida), connector con 16 archivos sin commit.
+- **Verificación**: settings() fusionada trae valores de DB (local igual) ✅; defaults puros sin env → url/key vacíos, con env → valores env ✅; grep vllm-key/10.0.0.5 código vivo = 0 hits ✅; suite 8/8 ✅; docker compose config local+prod OK ✅; contenedores healthy + curl 8091 200 ✅.
+- **Estado**: ✅ PRs abiertos para el admin (erp-chatbot#1, erp-ecomm-connector#1) — merge lo hace el admin. Pendiente: rotar key vllm expuesta (requiere victoria, autorización usuario).
+
 ### [23:59] - erp-chatbot v1.4.5 + erp-ecomm-connector v3.15.0: post-checkout → Mis pedidos estilo Amazon + carrito se limpia
 - **Tipo**: proyecto | feature+fix | UX checkout | wordpress
 - **Modificado**: erp-ecomm-connector 3.14.0→3.15.0 (~/dev/wordpress: clearCart() inmediato tras checkout exitoso — localStorage+badge; redirect a /mi-cuenta/?tab=pedidos con timeout 4000→1500ms — antes caía en tab Perfil; alias ?tab=pedidos; ajax_get_orders normaliza shape estable; vista Mis pedidos estilo Amazon — tarjeta con Pedido V-XXX/fecha/pill estado/total formateado/items con precio c/u y subtotal/total destacado/CSS responsive; fix customer_id real vía me() no-fatal — antes siempre 0). erp-chatbot 1.4.4→1.4.5 (saveCart([]) tras confirmar_pedido exitoso; prompt: mi-cuenta en destinos ir_a + regla 10 — felicita 1 frase con número de orden y lleva a Mis pedidos).
