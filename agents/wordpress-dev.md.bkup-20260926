@@ -18,29 +18,22 @@ permission:
 
 ### Docker Stack
 - **Path**: `~/dev/wordpress/`
-- **Contenedor principal**: `wordpress-local` (WordPress 7.1.1 + PHP 8.3)
-- **Contenedor DB**: `wordpress-db` (MariaDB 10.11)
+- **Contenedor principal**: `wordpress-local` (WordPress 7.1 + PHP 8.3)
+- **Contenedor DB**: `wordpress-db` (MySQL)
 - **Puertos expuestos**:
-  - `http://localhost:8091` — WordPress Frontend/REST (loopback; el :8090 es nginx-TLS y da 400)
-  - `https://wordpress.kalimete.local` — LAN SSL (vía nginx)
-  - `localhost:3307` — MariaDB (mapeado al puerto 3306 interno)
+  - `http://localhost:8090` — WordPress Frontend/REST
+  - `localhost:3307` — MySQL (mapeado al puerto 3306 interno)
 
 ### Arquitectura
 ```
-kalimete (localhost:8091 / wordpress.kalimete.local)
-    ├── WordPress 7.1.1 (PHP 8.3)
-    ├── erp-chatbot v1.4.3 (asistente virtual AI: chat+voz+WhatsApp) ⭐
-    ├── erp-ecomm-connector v3.14.0 (catálogo/checkout ERP real)
-    ├── Elementor 4.2.4 (atomic elements, v4)
-    ├── EMCP Tools v3.16.1 (Elementor MCP Tools, 60+)
+kalimete (localhost:8090)
+    ├── WordPress 7.1 (PHP 8.3)
+    ├── Elementor 4.2.3 (atomic elements, v4)
+    ├── EMCP Tools v3.14.0 (Elementor MCP Tools)
     ├── MCP Adapter v0.5.0 (WordPress MCP adapter)
     ├── MCP Basic Auth (kalimete custom)
     └── All-in-One WP Migration
 ```
-
-### Plugins custom (desarrollo activo)
-- **erp-chatbot** (`wp-content/plugins/erp-chatbot/`): asistente de ventas con IA. Motor server-side contra LLM victoria (OpenAI-compatible, key en options). Chat + voz modo teléfono (TTS/STT half-duplex) + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Identidad configurable (hoy: Carlos, Asesor de ventas, voz masculina). Suite: `tests/regression.php` (docker exec). Docs: `WHATSAPP-ACTIVACION.md`, `FASE2-VOZ-IMAGEN.md`.
-- **erp-ecomm-connector**: backend e-commerce contra ERP real (`erpipos.armada.do/api`, tenant 10, tienda MaganTech). Dependencia dura del chatbot.
 
 ### Autenticación
 - **Usuario**: `admin`
@@ -66,7 +59,7 @@ Proxy Node.js que conecta clientes MCP stdio a WordPress HTTP transport:
 
 ### Variables de Entorno
 ```bash
-WP_URL="http://localhost:8091"
+WP_URL="http://localhost:8090"
 WP_USERNAME="admin"
 WP_APP_PASSWORD="admin123"
 ```
@@ -86,12 +79,12 @@ WP_APP_PASSWORD="admin123"
 docker ps --filter name=wordpress
 
 # Verificar servicios WordPress
-curl -s http://localhost:8091/wp-json/wp/v2/menu?context=view
-curl -s http://localhost:8091/index.php?rest_route=/wp/v2/posts?_fields=title,slug
+curl -s http://localhost:8090/wp-json/wp/v2/menu?context=view
+curl -s http://localhost:8090/index.php?rest_route=/wp/v2/posts?_fields=title,slug
 
 # Iniciar proxy MCP
 cd ~/dev/wordpress && \
-WP_URL="http://localhost:8091" \
+WP_URL="http://localhost:8090" \
 WP_USERNAME="admin" \
 WP_APP_PASSWORD="admin123" \
 node mcp-proxy.mod.js 2>&1 | head -50
@@ -113,21 +106,20 @@ docker exec -it wordpress-db mysql -u root -prootpassword wordpress
 3. **Usar mcp-proxy.mod.js** para comunicación MCP (no el proxy original)
 4. **Mantener flujo MCP correcto**: initialize → notifications/initialized → tools/call
 5. **No confliger** con el WordPress de producción (este es local dev only)
-6. **Los plugins EMCP** requieren Elementor 4.2.4+ para atomic elements
-7. **erp-chatbot**: cambios → bump versión + entrada en su CHANGELOG.md + correr `tests/regression.php` (7/7 PASS exigido)
+6. **Los plugins EMCP** requieren Elementor 4.2.3+ para atomic elements
 
 ## Integración con Victoria (vLLM)
 
 El stack local se conecta al LLM de victoria vía:
-- **Chatbot (erp-chatbot)**: `http://10.0.0.5:8010/v1` (LAN directo al gateway), modelo `nvidia/Qwen3.6-35B-A3B-NVFP4`, temp 0.4, max_tokens 350
-- **URL túnel alternativa**: `https://victoria.armada.do/v1` con API key `vllm-key-5d43...` (alfredo, admin)
+- **URL túnel**: `https://victoria.armada.do/v1`
+- **API Key**: `vllm-key-5d43...` (alfredo, admin)
+- **Modelo**: `nvidia/Qwen3.6-35B-A3B-NVFP4` (max 262144 tokens)
 - **Proxy MCP** sirve de bridge entre el LLM y las herramientas Elementor
 
 ## Notas Técnicas
 
 - WordPress usa permalinks `plain` en el proxy (no `pretty`) para evitar problemas con `.htaccess`
 - El MCP Adapter almacena sesiones en `usermeta` (mcp_adapter_sessions)
-- EMCP Tools v3.16.1 detecta Elementor 4.2.4 como atomic-compatible
+- EMCP Tools v3.14.0 detecta Elementor 4.2.3 como atomic-compatible
 - El `mcp-proxy.mod.js` maneja `Content-Length: 0` + Keep-Alive correctamente (evita hang)
 - **Importante**: La respuesta de `tools/list` puede ser ~65KB (muchas herramientas)
-- erp-chatbot: sin WooCommerce — el perfil del cliente vive en el ERP (`GET /ecomm/me`), WP solo aporta display_name/email como fallback

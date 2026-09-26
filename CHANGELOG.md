@@ -1,4 +1,283 @@
+## 2026-09-26
+
+### [23:50] - erp-chatbot v1.4.3: identidad Carlos sincronizada + doc agente wordpress-dev actualizada
+- **Tipo**: proyecto | config+doc | wordpress
+- **Modificado**: erp-chatbot 1.4.2→1.4.3 (~/dev/wordpress: defaults de identidad en código sincronizados con DB — Carlos/Asesor de ventas/perfil+saludo masculinos/voz masculina, antes Carla/femenina; regla 3 prompt neutralizada "práctica"→"eficaz"; ia.max_tokens DB 1024→350 que pisaba el default). agents/wordpress-dev.md (puerto 8091 real, WP 7.1.1/Elementor 4.2.4/EMCP 3.16.1, plugins custom erp-chatbot v1.4.3 + erp-ecomm-connector v3.14.0 documentados, LLM LAN 10.0.0.5:8010).
+- **Afecta a**: kalimete (wordpress-local :8091, chatbot identidad)
+- **Causa**: Usuario cambió identidad del agente por defecto vía admin (Carla→Carlos); auditoría encontró código/DB desalineados (defaults viejos, max_tokens DB viejo pisando el 350, regla 3 en femenino) y doc del subagente desactualizada (8090, versiones viejas, sin mencionar plugins custom).
+- **Verificación**: settings() fusionada Carlos/masculina/350 ✅; system_prompt contiene "Carlos"+"eficaz" sin "práctica" ✅; defaults código==DB ✅; suite 7/7 PASS ✅; php -l OK.
+- **Estado**: ✅ sincronizado (commit pendiente de prueba del usuario en navegador)
+
+### [22:45] - erp-chatbot v1.4.2: brevedad + fix nav impresoras + telemetría
+- **Tipo**: proyecto | fix+feature | UX conversacional | wordpress
+- **Modificado**: erp-chatbot 1.4.1→1.4.2 (~/dev/wordpress: regla 3 brevedad — voz 2 frases/40 palabras, texto 80, máx 3 productos; max_tokens default 1024→350; TTS habla solo 2 primeras frases; al_llegar tope 600→350; ver_categorias fija término de tienda vía termino_desde_categorias; armar_ir_a singulariza término — impresoras→impresora, ERP busca literal; aviso ya_estas en vez de silencio anti-loop; telemetría erpcbot_last_turns máx 20 rotativo; fix puntuar_producto categoria/subcategoria array del ERP — bonus +2/+1 recuperado).
+- **Afecta a**: kalimete (wordpress-local :8091, widget voz/texto)
+- **Causa**: Usuario: (1) el bot habla mucho, cortar diálogo para rapidez; (2) pidió catálogo de impresoras y no lo llevó.
+- **Diagnóstico**: regla de brevedad con excepción que se tragaba la regla + max_tokens 1024 + TTS leía todo; nav fallaba porque ver_categorias no fijaba término (ir_a=null), plural rompía búsqueda literal del ERP, y anti-loop suprimía en silencio.
+- **Verificación**: baterías docker (singular OK, ya_estas 2/2, scoring array PASS, telemetría rotativa 20) + suite 7/7 PASS ✅; php -l + node --check OK.
+- **Estado**: ✅ sincronizado (pendiente prueba del usuario: pedir "catálogo de impresoras" voz/texto)
+
+### [21:00] - erp-chatbot v1.4.1: fix checkout voz no pide datos del perfil + mejoras
+- **Tipo**: proyecto | fix+feature | wordpress
+- **Modificado**: erp-chatbot 1.4.0→1.4.1 (~/dev/wordpress: enriquecimiento server-side del cliente vía ERPC_API::me() con erpc_token — fusión solo-vacíos, regla 8 prompt no-repreguntar si logueado, refrescarCliente() JS antes de confirmar, erpc_token en ambos POST; tienda_url() unificada con mapa del sitio; comentarios puerto 8090→8091; suite tests/regression.php 7 tests; limpieza 46 .bkup viejos del connector; docs WHATSAPP-ACTIVACION.md + FASE2-VOZ-IMAGEN.md).
+- **Afecta a**: kalimete (wordpress-local :8091, checkout voz)
+- **Causa**: Usuario: al continuar por voz al checkout pedía datos ya grabados en el perfil. Causa raíz: motor armaba cliente solo de localStorage stale, nunca leía sesión ERP; prompt sin excepción logueado; sin WooCommerce el perfil canónico vive en el ERP.
+- **Verificación**: batería 3/3 (me existe, tienda_url desde mapa, regla en prompt) + suite 7/7 PASS ✅; php -l + node --check OK.
+- **Estado**: ✅ sincronizado (pendiente prueba del usuario: checkout voz con sesión — debe precargar sin preguntar)
+
+### [03:30] - erp-chatbot v1.4.0: chat retoma al llegar + mapa del sitio (guía total)
+- **Tipo**: proyecto | fix+feature | UX conversacional | wordpress
+- **Modificado**: erp-chatbot 1.3.0→1.4.0 (~/dev/wordpress: retome incondicional con líneas por destino, mapa del sitio dinámico, ir_a contra el mapa, prompt con destinos). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Causa**: Usuario: (1) al navegar al carrito el chat se cerraba sin poder continuar (en checkout quiere seguir hasta confirmar el cierre); (2) el asistente debe guiar por TODA la web en voz y texto, con mapa para nunca perderse (cada instancia distinta).
+- **Diagnóstico**: retomar exigía al_llegar (vacío en carrito/checkout) → chat cerrado; destinos fijos sin noción del sitio real.
+- **Solución**: retome siempre (con fallback por destino); mapa con las páginas reales de la instancia (hoy 8); ir_a validado contra el mapa; prompt con destinos disponibles para guiar por donde pida.
+- **Verificación**: mapa 8 reales ✅; armar 5/5 ✅; turno voz E2E con ir_a tienda ✅; node + php OK.
+- **Estado**: ⚠️ pendiente de prueba del usuario (navegar a carrito → chat sigue abierto → continuar hasta checkout) → luego commit
+
+### [02:30] - erp-chatbot v1.3.0: fix loop navegar-llegar-navegar + flujo completo (tienda/carrito/checkout/login)
+- **Tipo**: proyecto | fix+feature | UX conversacional | wordpress
+- **Modificado**: erp-chatbot 1.2.2→1.3.0 (~/dev/wordpress: página actual en contexto, prompt con flujo completo, armar_ir_a central con whitelist+ya_estas, JS con guard mismaTienda, WhatsApp con link de flujo). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, widget + canal WhatsApp)
+- **Causa**: Usuario: (1) el asistente en voz Y texto debe presentar en la web cada paso, incluido cerrar la orden; (2) el bot quedaba en loop.
+- **Diagnóstico del loop**: navegar-siempre + replay al llegar + re-búsqueda del mismo filtro = ciclo infinito. Sin contexto de página el bot decía "te llevo" estando ya ahí.
+- **Solución**: motor con página actual; destinos validados server-side (tienda/carrito/checkout/login, el LLM nunca pone URLs); supresión si ya estás (motor) + guard JS (segunda muralla, dice al_llegar en sitio si omite).
+- **Verificación**: 13/13 tests (helpers, whitelist, anti-loop E2E) ✅; node + php OK. En el camino se corrigió un bug propio (URL de comparación sin slash).
+- **Estado**: ⚠️ pendiente de prueba del usuario (flujo completo hablado: buscar → ver → carrito → pagar) → luego commit
+
+### [01:30] - erp-chatbot v1.2.2: en voz primero lleva, allá continúa la charla
+- **Tipo**: proyecto | feature | UX voz | wordpress
+- **Modificado**: erp-chatbot 1.2.1→1.2.2 (~/dev/wordpress: motor con al_llegar + respuesta breve en voz, widget guarda/retoma continuación vía localStorage). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Causa**: Usuario: al encontrar lo pedido, primero llevar allá y continuar la conversación en la tienda (no hablar todo y navegar al final).
+- **Solución**: en voz con productos → respuesta breve hablada + navegación guardando historial/modo-teléfono/al_llegar; en la tienda el widget reabre solo, repinta historial, dice el detalle y retoma escucha. En texto sin cambios.
+- **Verificación**: turno voz → breve + tienda_url + al_llegar con detalle ✅; JS 1.2.2 servido ✅; node + php OK.
+- **Estado**: ⚠️ pendiente de prueba del usuario (dictar → navegar → continuar allá) → luego commit
+
+### [00:30] - erp-chatbot v1.2.1: navegación automática en modo voz (sin clic)
+- **Tipo**: proyecto | feature | UX voz | wordpress
+- **Modificado**: erp-chatbot 1.2.0→1.2.1 (~/dev/wordpress: turno marcado de voz, auto-nav al terminar de hablar, prompt según modo). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Causa**: Usuario: hablando por voz no quiere dar clic — el bot debe llevar solo a la tienda filtrada.
+- **Solución**: mensaje dictado o modo teléfono → sin botón; al terminar de hablar navega solo (900ms); sin TTS a los 1.5s; mensaje nuevo cancela; escribiendo todo igual (con botón).
+- **Verificación**: turno voz=1 con tienda_url ✅; JS 1.2.1 servido con la lógica ✅; node + php OK.
+- **Estado**: ⚠️ pendiente de prueba del usuario (dictar → escuchar → auto-nav) → luego commit
+
+### [23:45] - erp-chatbot v1.2.0: "Ver en tienda" (del chat a la tienda con filtro)
+- **Tipo**: proyecto | feature | UX conversacional | wordpress
+- **Modificado**: erp-chatbot 1.1.9→1.2.0 (~/dev/wordpress: tienda_url en respuestas con término, helper URL, botón en widget, link en WhatsApp, prompt, blindaje JSON). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, widget + canal WhatsApp)
+- **Causa**: Usuario: al encontrar lo buscado, el bot debe llevar a la sección (tienda con filtro) para continuar desde ahí.
+- **Solución**: el motor adjunta la URL de productos con `?buscar=` normalizado (el que matchea, no el plural del usuario); widget con botón, WhatsApp con link en texto.
+- **Verificación**: 3/3 tienda_url correcta ✅; /productos/?buscar=impresora filtra reales ✅; botón JS/CSS sirviéndose ✅; php + node OK.
+- **Estado**: ⚠️ pendiente de prueba del usuario (clic al botón desde el chat) → luego commit
+
+### [23:30] - erp-chatbot v1.1.9: anti-eco (el bot ya no se escucha a sí mismo)
+- **Tipo**: proyecto | fix | voz | wordpress
+- **Modificado**: erp-chatbot 1.1.8→1.1.9 (~/dev/wordpress: half-duplex mic/voz, barge-in solo manual, filtro anti-eco por texto). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, modo teléfono del chatbot)
+- **Causa**: Usuario: el agente se escuchaba mientras respondía (eco por bocinas → se respondía solo).
+- **Solución**: mic detenido mientras el bot habla + reanude al terminar; tap manual = única interrupción; filtro que ignora transcripciones que repiten lo dicho (≥60% overlap) o ruido.
+- **Verificación**: batería anti-eco 5/5 ✅; node --check OK.
+- **Estado**: ⚠️ pendiente de prueba del usuario (modo teléfono con bocinas) → luego commit
+
+### [22:30] - erp-chatbot v1.1.8: voz humana (normalización para habla natural)
+- **Tipo**: proyecto | feature | voz TTS | wordpress
+- **Modificado**: erp-chatbot 1.1.7→1.1.8 (~/dev/wordpress: textoParaVoz + numeroAPalabras/dineroAPalabras en el widget). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, voz del chatbot)
+- **Causa**: Usuario: el agente lee números dígito por dígito y menciona asteriscos/signos — pidió habla humana ("$1,000.00 → mil pesos").
+- **Solución**: capa de normalización aplicada a todo lo que habla el bot (markdown/emojis fuera, dinero y números en palabras, símbolos hablados, modelos y fechas intactos).
+- **Verificación**: batería de casos reales del checkout en node — ejemplos exactos del usuario perfectos ✅; node --check OK.
+- **Estado**: ⚠️ pendiente de prueba del usuario (escuchar en navegador) → luego commit
+
+### [21:30] - erp-chatbot v1.1.7: separación a prueba de todo (:has puro + 36px)
+- **Tipo**: proyecto | fix | UI | wordpress
+- **Modificado**: erp-chatbot 1.1.6→1.1.7 (~/dev/wordpress: regla body:has para el apilado sin depender del JS, aire 36px desktop/móvil, divisor siempre en DOM). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, flotantes del sitio)
+- **Causa**: Usuario: en desktop/laptop aún juntos, pidió al menos 10px.
+- **Verificación**: captura propia — chat, línea, carrito con aire generoso ✅; node --check OK.
+- **Estado**: ⚠️ pendiente de prueba del usuario (Ctrl+F5 por caché) → luego commit
+
+### [20:30] - erp-chatbot v1.1.6: búsqueda inteligente por keywords + categorías (mejor práctica)
+- **Tipo**: proyecto | feature | IA search | wordpress
+- **Modificado**: erp-chatbot 1.1.5→1.1.6 (~/dev/wordpress: tool_buscar_productos en 2 capas con scoring local, ver_categorias, prompt). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, motor del chatbot web + WhatsApp)
+- **Causa**: Usuario: búsqueda por keywords o ver el inventario — ¿mejores prácticas? Diagnóstico: el LLM adivinaba 1 palabra contra el buscador literal del ERP; con 162 productos/18 categorías lo correcto es matching server-side con scoring.
+- **Solución**: capa 1 search ERP con variantes; capa 2 matching local (tokens - stopwords + singular + scoring exacta/substring/categoría/sub/typo, stock primero); nueva tool ver_categorias.
+- **Verificación**: plural/frase con ruido/typo/categoría → resultados reales en los 4 casos ✅; 18 categorías ✅; php -l OK.
+- **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
+
+### [19:30] - erp-chatbot v1.1.5: voz con pitch + búsqueda tolerante + divisor entre flotantes
+- **Tipo**: proyecto | fix | voz + búsqueda + UI | wordpress
+- **Modificado**: erp-chatbot 1.1.4→1.1.5 (~/dev/wordpress: pitch por género × tono admin, normalizador de búsqueda con reintentos, prompt en singular, div divisor entre flotantes). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Causa**: Usuario: voz femenina suena igual que masculina; bot decía no hay impresoras habiendo stock; chat aún pegado al carrito (pidió div divisor).
+- **Diagnóstico**: una sola voz español = elegir por nombre no cambia nada (pitch lo garantiza); ERP busca literal plural≠singular; 28px sin elemento visual se leía pegado.
+- **Verificación**: "buscando impresoras" → 3 reales ✅; node + php OK; archivos 1.1.5 sirviéndose; captura propia del divisor ✅. Prueba en navegador pendiente.
+- **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
+
+### [18:40] - erp-chatbot v1.1.4: separación generosa entre flotantes (verificado con captura)
+- **Tipo**: proyecto | fix | UI | wordpress
+- **Modificado**: erp-chatbot 1.1.3→1.1.4 (~/dev/wordpress: aire entre flotantes a 28px desktop/móvil). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, flotantes del sitio)
+- **Causa**: Usuario: carrito y chat aún se veían montados, pidió más separación.
+- **Diagnóstico** (captura headless con Chromium propio): el apilado v1.1.3 funcionaba pero con solo ~14px de aire. Verificado visualmente tras el fix: separación limpia. El logo del header carga bien (era timing del headless).
+- **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
+
+### [15:30] - erp-chatbot v1.1.3: iconos apilados + voz configurable y confiable
+- **Tipo**: proyecto | fix | UI/UX + voz | wordpress
+- **Modificado**: erp-chatbot 1.1.2→1.1.3 (~/dev/wordpress: chat apilado sobre el carrito con detección, botón Probar voz en admin, espera de voces en primer habla, listas limpias). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Causa**: Usuario: icono carrito y chat superpuestos; voz de varón con agente de nombre femenino.
+- **Diagnóstico**: ambos flotantes en el mismo punto (right:22/bottom:22); getVoices vacío al inicio + listas con duplicados/ambiguas.
+- **Verificación**: node --check + php -l OK; CSS 1.1.3 con apilado sirviéndose. Prueba en navegador pendiente (posición + voz según dispositivo del usuario).
+- **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
+
+### [14:30] - erp-chatbot v1.1.2: texto del chat visible + voz con género configurable
+- **Tipo**: proyecto | fix | UI/UX + voz | wordpress
+- **Modificado**: erp-chatbot 1.1.1→1.1.2 (~/dev/wordpress: clase msg-bubble propia en CSS+JS; admin Voz con selector Femenina/Masculina + sanitize; JS elegirVoz con onvoiceschanged y heurística es). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Causa**: Usuario: texto invisible en el box del chat; bot con voz de hombre teniendo nombre de mujer — pidió opciones varón/hembra.
+- **Diagnóstico**: colisión de clases (mensajes con la clase del botón flotante: fixed 62x62 círculo); hablar() tomaba la primera voz es sin criterio de género (o la default si getVoices vacío).
+- **Verificación**: node --check + php -l OK; genero femenina en el cfg del sitio; CSS/JS 1.1.2 sirviéndose con los cambios. Prueba visual y de voz en navegador pendiente (la voz depende del dispositivo del usuario).
+- **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
+- **Notas**: la voz TTS sale del navegador/dispositivo del visitante (speechSynthesis nativo) — no del servidor ni del ERP; el STT del micrófono (Chrome/Edge) sí envía audio a Google para reconocerlo.
+
+### [13:30] - erp-chatbot v1.1.1: cumplimiento Meta (firma, async, Graph v23, UTF-8)
+- **Tipo**: proyecto | seguridad | cumplimiento API | wordpress
+- **Modificado**: erp-chatbot 1.1.0→1.1.1 (~/dev/wordpress: App Secret + firma X-Hub-Signature-256, webhook async con cola+cron, Graph version configurable v23.0, split UTF-8, recipient_type, mark-read, error 131047, admin). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, webhook /wp-json/erpcbot/v1/whatsapp)
+- **Causa**: Usuario: validar todo contra documentación oficial, no violar términos de APIs/tokens, confirmar que es real/funciona/mejores prácticas.
+- **Diagnóstico** (docs Meta revisadas): verify GET exacto ✅, ventana 24h respetada ✅ (solo reactivo), tokens server-side ✅; FALLOS: sin verificación de firma (cualquiera posteaba al webhook), LLM síncrono en webhook (Meta reintenta → duplicados), Graph v21.0 vieja, str_split rompía emojis.
+- **Verificación**: php -l 4/4 OK; firma OK→200+cola, firma mala→403 ✅; cola→cron→cerebro con productos reales ✅; regresión web ✅; verify GET ✅. Config de test limpiada (WA deshabilitado).
+- **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
+- **Notas**: para producción Meta: token permanente de usuario de sistema + App Secret real + templates solo si se inicia conversación fuera de ventana.
+
+### [12:30] - erp-chatbot v1.1.0 + ecomm v3.14.0 + ERP v3.14.0-local: dependencia dura, motor multi-canal, WhatsApp
+- **Tipo**: proyecto | feature | multi-canal | IA | wordpress + erp-local
+- **Modificado**: erp-chatbot 1.0.1→1.1.0 (~/dev/wordpress: dependencia dura ecomm, motor modo web/canal, canal WhatsApp Cloud API + admin tab). ecomm 3.13.9→3.14.0 (checkout_guest con contrato delivery/pickup + origen=chatbot). ERP (~/dev/erpipo-preprod: submitGuest con contrato completo, origen chatbot = pendiente sin pago, tipo_comprobante + tipo_venta). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Causa**: Usuario: enfocarse en web + WhatsApp (resto después); el agente usa el ecomm para TODO (cero requests directos), no se instala sin él, estructura expandible; plugins como features de venta + SEO del cliente ERP.
+- **Solución**: activación aborta sin ecomm + guards runtime; motor dual (web: tools al JS; canal: todo servidor contra ERPC_API); WhatsApp = webhook REST (verify + receive), sesiones por teléfono 24h, envío Cloud API, notas de voz con respuesta honesta (STT en Fase 2); guest checkout del canal → venta PENDIENTE sin pago.
+- **Verificación**: php -l 6/6 + node OK; webhook verify (challenge/403) ✅; mensaje WA dry_run → productos reales + sesión ✅; pedido canal → **venta 278** pendiente, zone 3, fee 250, total 1650, 0 pagos ✅ (fixes: cart_id en body, tipo_comprobante, tipo_venta, delete pago auto). Canal WA deshabilitado (sin token Meta real).
+- **Estado**: ⚠️ pendiente de prueba del usuario (web + activar WA con token real) → luego commit
+- **Notas**: ventas test del canal (277 con pago huérfano limpiado, 278 limpia) en DB preprod.
+
+## 2026-09-24
+
+### [23:50] - erp-chatbot v1.0.1: key de servicios activa + veredicto OpenClaw vs hub propio
+- **Tipo**: proyecto | IA | decisión de arquitectura | wordpress
+- **Modificado**: plugin erp-chatbot (~/dev/wordpress: defaults + options con key de servicios vllm-key-e4735…). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + gateway LLM victoria 10.0.0.5:8010)
+- **Causa**: Usuario pidió validar la key de servicios y decidir: ¿integramos nosotros o usamos OpenClaw (plugin como canal del hub OpenClaw)?
+- **Key validada**: la key de servicios respondió una completion real en Qwen3.6-35B ✅ (tiene permiso LLM, a diferencia de la readonly). E2E vía admin-ajax: "Busca una impresora" → bot con 3 productos REALES del ERP (Canon G1110 RD$9,000, EcoTank L1250 RD$9,500, Brother T730DW RD$17,000) ✅. El bot está operativo.
+- **Evaluación OpenClaw** (docs oficiales, revisadas hoy): gateway WS :18789 con superficies WhatsApp vía Baileys (cliente NO oficial), Telegram vía grammY, Discord, WebChat estático; pairing de dispositivos; sesiones por agente/sender. VEREDICTO: NO usar OpenClaw como gateway del plugin — (1) es asistente personal/single-user, no multi-tenant de negocio; (2) WhatsApp Baileys = riesgo de baneo para negocio (producción exige Cloud API oficial); (3) su WebChat es genérico, incompatible con nuestro widget (identidad, voz teléfono, carrito localStorage); (4) el pairing es para dueños, no clientes anónimos de tienda; (5) habría que reescribir las ERP tools en TypeScript duplicando el cliente PHP que ya tenemos.
+- **Decisión**: hub PROPIO cuando haga falta el 2.º canal (el engine actual porta 1:1); la key sale de WP solo entonces. WhatsApp vía Cloud API oficial de Meta (producción), Telegram primero (BotFather, barato de validar). OpenClaw descartado con razones.
+- **Estado**: ⚠️ pendiente de prueba del usuario en navegador (chat + voz) → luego commit
+
+### [23:30] - Plugin NUEVO erp-chatbot v1.0.0: Agente de Negocio Personalizable (IA + voz + ventas reales)
+- **Tipo**: proyecto | feature | IA | wordpress
+- **Modificado**: plugin NUEVO ~/dev/wordpress/wp-content/plugins/erp-chatbot/ (core + engine + admin + widget JS/CSS + changelog). Activado en wordpress-local. **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + gateway LLM victoria 10.0.0.5:8010)
+- **Causa**: Usuario pidió bot vendedor: chat + voz streaming tipo teléfono (no videntes), que use SOLO lo que el ecomm maneja (no adivino), cierre de venta PENDIENTE para verificación del manager. Diseño del usuario: el plugin ES el bot completo, OpenAI-compatible (URL+key+modelo configurables), identidad configurable (nombre/foto/perfil).
+- **Solución**: motor PHP con protocolo de herramientas JSON (servidor: buscar_productos/info_tienda contra el ERP real; navegador: carrito interop localStorage + checkout vía erpc_checkout → venta PENDIENTE con nota del manager); admin con tabs (IA/Identidad/Voz/Ventas, foto vía media library); widget con avatar, chat, TTS es-DO, STT streaming continuo con barge-in, modo teléfono, Alt+C, aria; rate limit 20/min; key server-side solo.
+- **Verificación**: php -l 3/3 + node --check OK; activado; widget cargando en la home; E2E del motor (con key operativa, no persistida): "busca una impresora" → bot respondió con 3 productos REALES del ERP con precios y stock reales (EcoTank L1250 RD$9,500, Canon PIXMA G1110 RD$9,000, Brother DCPT730DW RD$17,000) ✅; manejo de error 403 key readonly → mensaje claro al usuario ✅; fix del parseo del catálogo (ERP devuelve clave `productos`, precio string).
+- **Estado**: ⚠️ la key del usuario (vllm-key-9977…) es rol `readonly` en el gateway victoria → 403 model_forbidden para LLM. Opciones: (a) cambiar rol de la key en victoria.local/admin, (b) crear key nueva con permiso llm, (c) autorizar a kalimete a actualizar el rol. Prueba del usuario en navegador pendiente (voz requiere micrófono).
+
+### [21:00] - WP connector v3.13.9 + ERP v3.13.9-local: zonas de cobertura del ERP en el checkout
+- **Tipo**: proyecto | feature | multitenant | wordpress + erp-local
+- **Modificado**: plugin erp-ecomm-connector 3.13.8→3.13.9 (~/dev/wordpress: checkout.php select zona, connector.js fee/ETA/validación, api+shortcodes pasan delivery_zone_id). ERP sistema-facturacion (~/dev/erpipo-preprod: TiendaApiController expone delivery_zones; EcommCheckoutController valida zona por tenant + persiste delivery_fee; fix use $zone). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Causa**: Usuario: solo se deben poder usar zonas de cobertura disponibles en el ERP. Diagnóstico: delivery_zones existía en el ERP (por tenant) pero no se exponía ni validaba por tenant (exists global = fuga) y el checkout WP no tenía selector.
+- **Solución**: config expone zonas activas del tenant; checkout WP exige zona del ERP (con costo en el label + ETA); ERP valida contra tenant (422 invalid_zone cross-tenant) y persiste delivery_fee = tarifa_base (gratis por mínimo de zona).
+- **Verificación**: config 4 zonas MaganTech ✅; checkout zona 3 → venta 276 fee 250.00 ✅; zona de otra instancia 422 ✅; node --check + php -l 6/6 OK. Prueba del usuario pendiente.
+- **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
+
+### [19:30] - WP connector v3.13.8: gestión de métodos de pago + panel admin con tabs
+- **Tipo**: proyecto | feature | UI admin | wordpress
+- **Modificado**: plugin erp-ecomm-connector 3.13.7→3.13.8 (~/dev/wordpress: class-erpc-admin.php tabs + sección métodos de pago + sanitize; erp-ecomm-connector.php get_all_payment_methods + override local). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, admin del plugin + /checkout/)
+- **Causa**: Usuario: poder activar/desactivar formas de pago para el cliente; reorganizar el panel admin con tabs y compactar secciones afines separadas.
+- **Solución**: 5 tabs (Conexión / Apariencia / Tienda / Contacto y correo / Shortcodes) — secciones de marca+tema y contacto+SMTP compactadas; nueva sección Métodos de pago con toggles (7 métodos, ERP v3.13.3+ los acepta todos); override local > config ERP > fallback; tab activo persiste en localStorage.
+- **Verificación**: php -l OK; tabs balanceados; E2E: override ['efectivo','tarjeta'] → checkout solo muestra esos 2 ✅; restaurado → fallback 5 ✅. Prueba visual del admin pendiente del usuario.
+- **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
+
+### [18:30] - WP connector v3.13.7: data del usuario migrada a su cliente correcto + cache fresco del ERP
+- **Tipo**: proyecto | fix | multitenant | wordpress + erp-local
+- **Modificado**: plugin erp-ecomm-connector 3.13.6→3.13.7 (~/dev/wordpress: connector.js refresca cache tras guardar perfil). DB facturacion_db: migración de datos del usuario (direccion/ciudad/provincia) del cliente 37 (tenant 2) → 183 (MaganTech/tenant 10). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Causa**: Usuario no veía su data al logearse. Diagnóstico: la data estaba en el ERP pero en el cliente de OTRA instancia (37, tenant 2) — la guardó cuando su sesión apuntaba ahí (login global pre-v3.13.4); el login tenant-aware actual entrega el 183 (tenant 10) que estaba vacío. Misma raíz multitenant del reset (v3.13.6).
+- **Solución**: migración de SU propia data al cliente correcto de su tienda (37 intacto); tras guardar perfil, el WP refresca el cache local con la respuesta del ERP (única fuente de verdad = ERP).
+- **Verificación E2E**: login tenant-aware → /me data ERP → PUT /profile → /me persistido ✅; node --check OK. Usuario debe ver dirección/ciudad/provincia en /mi-cuenta/ y /checkout/.
+- **Estado**: ⚠️ pendiente de verificación del usuario → luego commit del acumulado (3.13.0→3.13.7 + ERP v3.13.x)
+
+### [17:40] - WP connector v3.13.6 + ERP v3.13.6-local: fix reset de clave tocaba cliente de otra instancia
+- **Tipo**: proyecto | fix | multitenant | seguridad | wordpress + erp-local
+- **Modificado**: plugin erp-ecomm-connector 3.13.5→3.13.6 (~/dev/wordpress: request_password_reset/reset_password envían tenant_id). ERP sistema-facturacion (~/dev/erpipo-preprod: ClienteAuthController — forgotPassword/resetPassword/resendVerification tenant-aware). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Causa**: Usuario restableció la clave de warcold@gmail.com y el login falló. Diagnóstico: ese email existe en 4 clientes (3 en tenant 2, 1 en MaganTech/tenant 10 con acceso_api=0); el forgot/reset GLOBAL generó el token y cambió la clave del cliente de OTRA instancia (id 37, tenant 2); el login tenant-aware de la tienda busca en tenant 10 → clave vieja → "credenciales incorrectas".
+- **Solución**: forgot/reset/resend tenant-aware (body tenant_id > Bearer iak_ > global); WP envía tenant_id en ambos pasos; reset devuelve 400 si no hay cliente del tenant en vez de tocar otro.
+- **Verificación E2E** (email duplicado en tenants 10 y 2): token para el cliente correcto ✅, correo From instancia + link tienda ✅, reset 200 ✅, login clave nueva OK ✅, cliente del otro tenant intacto ✅, php -l OK.
+- **Estado**: ⚠️ pendiente: el usuario debe repetir el reset desde el WP (ahora tocará su cliente 183 y activará acceso_api) → luego commit
+
+### [16:30] - WP connector v3.13.5: /contacto compacta + logo footer 150x150
+- **Tipo**: proyecto | UI/UX | wordpress
+- **Modificado**: plugin erp-ecomm-connector 3.13.4→3.13.5 (~/dev/wordpress: connector.css — compactación scoped de /contacto y logo footer 150x150). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, /contacto/ + footer de todo el sitio)
+- **Causa**: Usuario: demasiado espacio en blanco entre secciones de /contacto (compactar sin eliminar) y el logo del footer muy pequeño (pedía ~150x150; la imagen fuente es 3000x3000).
+- **Solución**: hero 96→56px, secciones 56→30px (móvil 22px), scoped a .erpc-contacto-page (home intacta); logo footer 48→150x150 con object-fit contain (móvil 110px).
+- **Verificación**: CSS 3.13.5 sirviéndose con ambas reglas; /contacto renderiza; php -l OK. Prueba visual pendiente del usuario.
+- **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
+
+### [15:45] - WP connector v3.13.4 + ERP v3.13.4-local: fix validation.unique (unique por tenant)
+- **Tipo**: proyecto | fix | multitenant | wordpress + erp-local
+- **Modificado**: plugin erp-ecomm-connector 3.13.3→3.13.4 (~/dev/wordpress: login_password envía tenant_id, traducción de validation.unique). ERP sistema-facturacion (~/dev/erpipo-preprod: ClienteAuthController — updateProfile/register/login con unique por tenant, helper tenantFromApiKey). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Causa**: Usuario: "validation.unique" al guardar el perfil en /mi-cuenta tras completar campos vacíos. Diagnóstico: unique de telefono/email GLOBAL en el ERP — DB tiene teléfonos duplicados cross-tenant (8090000001 en tenants 2 y 10) → cualquier teléfono de otra instancia bloqueaba el update.
+- **Solución**: unique por (tenant_id, valor) en updateProfile (ignora propio id, nullable) y register (tenant resuelto antes de validar, incl. Bearer iak_); login tenant-aware (mismo email puede coexistir en varias instancias); WP envía tenant_id en login y traduce el mensaje crudo.
+- **Verificación**: update cross-tenant 200 (antes 422) ✅; duplicado en mismo tenant 422 correcto ✅; register mismo email en 2 tenants 201 coexistiendo ✅; login tenant-aware ✅; php -l OK. Prueba del usuario pendiente.
+- **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
+- **Notas**: cliente test 203 (tenant 2, mismo email que test de tenant 10) quedó en DB preprod como evidencia del multitenant — eliminar si molesta.
+
+### [11:00] - WP connector v3.13.3 + ERP v3.13.3-local: fix 422 checkout, botón Guardando, logo footer
+- **Tipo**: proyecto | fix | wordpress + erp-local
+- **Modificado**: plugin erp-ecomm-connector 3.13.2→3.13.3 (~/dev/wordpress: connector.js profile form, erp-ecomm-connector.php localize_remote_logo, footer.php onerror, connector.css logo). ERP sistema-facturacion (~/dev/erpipo-preprod: EcommCheckoutController payment_method ampliado en submit+submitGuest). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Causa**: Usuario: 422 al confirmar pedido con perfil completo; /mi-cuenta se queda "Guardando..."; logo de instancia no carga en footer (cuadro blanco) y debe ser más grande.
+- **Diagnóstico**: ERP rechazaba paypal/binance/cheque/otro (in: demasiado corto); bug $(this)=jqXHR en ajax del perfil (botón nunca se restauraba — el guardado sí funcionaba); logo con URL a erp.kalimete.local (no resuelve fuera de LAN) + CSS filter brightness(0) invert(1) que lo convertía en cuadro blanco sólido.
+- **Solución**: ERP acepta los 9 métodos; JS captura $form; nuevo localize_remote_logo() cachea el logo en uploads/erpc/ y lo sirve desde el dominio del WP (cache 24h); footer logo 48px a color real sobre pill blanco + onerror fallback.
+- **Verificación**: checkout paypal → HTTP 200 (venta 272) ✅; logo JPEG real sirviéndose desde /wp-content/uploads/erpc/ en header y footer ✅; node --check + php -l OK. Prueba navegador pendiente del usuario.
+- **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
+
 ## 2026-09-23
+
+### [22:10] - WP connector v3.13.2: resumen del pedido rediseñado + Ubuntu total + responsive checkout
+- **Tipo**: proyecto | UI/UX | wordpress
+- **Modificado**: plugin erp-ecomm-connector 3.13.1→3.13.2 (~/dev/wordpress: connector.js render de items + erpcEsc, connector.css rediseño summary + responsive + regla Ubuntu body *). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091, página /checkout/)
+- **Causa**: Usuario: items del "Resumen del pedido" con letras muy grandes y sin estilo; pidió texto más pequeño, mejor sección, responsive en todos los dispositivos y Ubuntu en TODO (WP + plugin, todas las páginas).
+- **Hallazgo**: el JS renderizaba items como <tr><td> sin clases pero el CSS esperaba .erpc-summary-item (flex) → sin estilo. La regla Ubuntu anterior no cubría todo el DOM.
+- **Verificación**: node --check OK; php -l OK; CSS 3.13.2 en el sitio con regla body * y estilos nuevos. Prueba visual (desktop + móvil) pendiente del usuario.
+- **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
+
+### [21:35] - WP connector v3.13.1 + ERP v3.13.1-local: Ubuntu global, perfil completo del cliente, dinero con comas
+- **Tipo**: proyecto | servicio | wordpress + erp-local
+- **Modificado**: plugin erp-ecomm-connector 3.13.0→3.13.1 (~/dev/wordpress: enqueue fuente, connector.css, api, auth, form.php, profile.php, connector.js, 3 templates de precios). ERP sistema-facturacion (~/dev/erpipo-preprod: ClienteAuthController@register valida direccion/ciudad/provincia). **SIN COMMIT (regla: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Causa**: Usuario pidió (1) fuente Ubuntu de Google para todo el template y WordPress, (2) que todos los datos del cliente queden guardados en el ERP al registrarse/actualizar perfil, (3) valores con separador de miles ($1,000.00).
+- **Hallazgos de auditoría**: el registro pedía dirección pero register_account() no la enviaba y el ERP no la validaba (se perdía); el perfil no enviaba ciudad/provincia; lo corregido en checkout no se guardaba en el perfil; todos los montos sin separador de miles (JS toFixed, PHP number_format).
+- **Verificación**: node --check OK; php -l 8/8 plugin + ERP OK; E2E ERP: register con direccion/ciudad/provincia → /me persistidos ✅, PUT profile cambia ciudad/provincia ✅; fuente Ubuntu encolada en el HTML del sitio ✅. Prueba navegador pendiente del usuario.
+- **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
+
+### [20:45] - Checkout delivery/pickup + autofill cliente + correos por instancia (WP ↔ ERP local)
+- **Tipo**: proyecto | servicio | wordpress-dev + erp-local
+- **Modificado**: plugin erp-ecomm-connector 3.12.10→3.13.0 (~/dev/wordpress: connector.js, checkout.php, api, auth, shortcodes, css, CHANGELOG; backups `.bkup-20260923d`). ERP sistema-facturacion rama dev/ecomm-erp (~/dev/erpipo-preprod: EcommCheckoutController, TiendaApiController, Venta.php, migración 5 columnas ventas EJECUTADA, trait ConfiguresInstanceMail, ClienteVerifyEmail/ClienteResetPassword; changelog propio). **SIN COMMIT en el ERP (regla nueva del usuario: nada de commits hasta probar).**
+- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Causa**: Usuario: el checkout volvía a pedir datos del cliente ya registrados (loop percibido), no había selector delivery/recoger, y los correos de registro debían salir desde el correo de cada instancia (no global, sin mezclar clientelas).
+- **Cambios clave**: contrato `delivery_type` (delivery: address/city/province; pickup: branch_id/pickup_time/pickup_contact) en ambos lados; autofill del checkout vía GET /ecomm/me; proxy público `erpc_store_config` (sucursales/delivery/pickup); sesión expirada → mensaje claro + /login/?redirect=/checkout/ (rompe el loop); correos con From de la instancia (SystemSetting por tenant_id, fallback global + warning); fix fuga cross-tenant en customer.id del checkout.
+- **Verificación**: ERP: config 200, register 201 + From instancia en mailpit (`MaganTech Store <pedidos@magantech.test>`), checkout delivery 200 (venta 270), pickup 200 (venta 271, sucursal 6), branch inválido 422, log limpio. Plugin: node --check OK, php -l 5/5 OK, proxy erpc_store_config E2E OK (branches/delivery/pickup llegan al navegador). Prueba E2E en navegador PENDIENTE por el usuario.
+- **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit del ERP
+- **Notas**: agente wordpress-dev falló 2 veces (reporte vacío, solo backups) — implementación del plugin la hizo kalimete directamente. `pickup.hours` por sucursal = null (no existe columna horario). Datos de test en DB preprod (sucursal 6, mail config tenant 10, cliente test) — eliminar si no se quieren.
 
 ### [05:00] - WP connector v3.12.10: checkout exige sesión (anti-suplantación)
 - **Tipo**: proyecto | seguridad | wordpress-dev
