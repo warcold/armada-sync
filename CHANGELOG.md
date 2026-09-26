@@ -1,5 +1,14 @@
 ## 2026-09-26
 
+### [23:59] - erp-chatbot v1.4.4: traducción de términos de búsqueda (EN→ES)
+- **Tipo**: proyecto | feature | búsqueda multilingüe | wordpress
+- **Modificado**: erp-chatbot 1.4.3→1.4.4 (~/dev/wordpress: traducir_termino() diccionario EN→ES ~36 entradas aplicado en tool_buscar_productos y armar_ir_a; regla 9 prompt — busca en español, responde en idioma del cliente; test 8 en suite).
+- **Afecta a**: kalimete (wordpress-local :8091, búsqueda chatbot)
+- **Causa**: Usuario pidió "printers" y el bot no encontró — catálogo/ERP en español, búsqueda literal, 0 resultados en inglés.
+- **Solución**: 2 capas — (1) determinista: diccionario por palabra tras singularizar (printers→impresora, laptop→portatil, keyboard and mouse→teclado y raton), ?buscar= nunca sale en inglés; (2) prompt: el LLM traduce cualquier idioma que sepa y responde en el idioma del cliente.
+- **Verificación**: batería 5/5 (IDs EN==ES contra ERP real: 6 impresoras 998/1016/1001/971/944/951) + suite 8/8 PASS ✅; php -l OK.
+- **Estado**: ✅ sincronizado (pendiente prueba del usuario: pedir "printers" en el chat)
+
 ### [23:50] - erp-chatbot v1.4.3: identidad Carlos sincronizada + doc agente wordpress-dev actualizada
 - **Tipo**: proyecto | config+doc | wordpress
 - **Modificado**: erp-chatbot 1.4.2→1.4.3 (~/dev/wordpress: defaults de identidad en código sincronizados con DB — Carlos/Asesor de ventas/perfil+saludo masculinos/voz masculina, antes Carla/femenina; regla 3 prompt neutralizada "práctica"→"eficaz"; ia.max_tokens DB 1024→350 que pisaba el default). agents/wordpress-dev.md (puerto 8091 real, WP 7.1.1/Elementor 4.2.4/EMCP 3.16.1, plugins custom erp-chatbot v1.4.3 + erp-ecomm-connector v3.14.0 documentados, LLM LAN 10.0.0.5:8010).
