@@ -1,5 +1,14 @@
 ## 2026-09-26
 
+### [23:59] - erp-chatbot v1.4.5 + erp-ecomm-connector v3.15.0: post-checkout → Mis pedidos estilo Amazon + carrito se limpia
+- **Tipo**: proyecto | feature+fix | UX checkout | wordpress
+- **Modificado**: erp-ecomm-connector 3.14.0→3.15.0 (~/dev/wordpress: clearCart() inmediato tras checkout exitoso — localStorage+badge; redirect a /mi-cuenta/?tab=pedidos con timeout 4000→1500ms — antes caía en tab Perfil; alias ?tab=pedidos; ajax_get_orders normaliza shape estable; vista Mis pedidos estilo Amazon — tarjeta con Pedido V-XXX/fecha/pill estado/total formateado/items con precio c/u y subtotal/total destacado/CSS responsive; fix customer_id real vía me() no-fatal — antes siempre 0). erp-chatbot 1.4.4→1.4.5 (saveCart([]) tras confirmar_pedido exitoso; prompt: mi-cuenta en destinos ir_a + regla 10 — felicita 1 frase con número de orden y lleva a Mis pedidos).
+- **Afecta a**: kalimete (wordpress-local :8091, checkout + mi-cuenta + widget)
+- **Causa**: Usuario: (1) al procesar la orden debe llevar a /mi-cuenta en mis pedidos; (2) mejorar vista de órdenes estilo Amazon con más info y precios correctos; (3) limpiar carrito al procesarse la orden.
+- **Diagnóstico**: redirect caía en tab Perfil (sin ?tab); localStorage del carrito nunca se limpiaba (riesgo resurrección vía sync); vista pedidos solo mostraba "Órden #X + total raw" sin items; customer_id siempre 0; bot no ofrecía navegar a mi-cuenta.
+- **Verificación**: normalize_order con orden real 279 → JSON estable (total 15450 float, fecha "2026-09-26 20:36", items_count 2) ✅; armar_ir_a mi-cuenta → URL real /mi-cuenta/ ✅; suite 8/8 PASS ✅; php -l + node --check OK.
+- **Estado**: ✅ sincronizado (pendiente prueba del usuario: checkout completo → cae en Mis pedidos con tarjeta del pedido y carrito vacío)
+
 ### [23:59] - erp-chatbot v1.4.4: traducción de términos de búsqueda (EN→ES)
 - **Tipo**: proyecto | feature | búsqueda multilingüe | wordpress
 - **Modificado**: erp-chatbot 1.4.3→1.4.4 (~/dev/wordpress: traducir_termino() diccionario EN→ES ~36 entradas aplicado en tool_buscar_productos y armar_ir_a; regla 9 prompt — busca en español, responde en idioma del cliente; test 8 en suite).
