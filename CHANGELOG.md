@@ -1,5 +1,14 @@
 ## 2026-09-26
 
+### [23:59] - ERP del amigo: paquete UPDATE-ERP-AMIGO + compatibilidad MAIN (connector v3.15.1)
+- **Tipo**: proyecto | compat+entrega | wordpress+erp
+- **Modificado**: ~/dev/wordpress/UPDATE-ERP-AMIGO/ (6 diffs v3.13.0-v3.14.0-local + 2 archivos nuevos + migración + README manifiesto + CHANGELOG-EXTRACTO + COMPATIBILIDAD-MAIN.md). erp-ecomm-connector 3.15.0→3.15.1 (retry UNA vez con método seguro ante 422 payment_method, payment_fallback+payment_requested en respuesta). PR #1 actualizado (MAIN sin tocar). Stack commit 80ad769.
+- **Afecta a**: amigo (dueño ERP ERPiPOS — él mergea en su main cuando apruebe), producción futura
+- **Causa**: Usuario: el ERP es del amigo — mandarle los updates dev/ecomm para que él los maneje; no tocar MAIN; dejar todo funcional con MAIN de la manera más viable. Key: se queda como está, el usuario la rota después.
+- **Diagnóstico**: ERP local tenía cambios v3.13.0-v3.14.0-local (delivery/pickup, zonas, pagos amplios, auth tenant, submitGuest chatbot) sin versionar (erpipo-preprod no es git). Único gap bloqueante contra MAIN viejo: 422 de payment_method sin retry → fallback implementado. Resto degrada elegantemente.
+- **Verificación**: php -l + lógica fallback 3/3 (paypal→efectivo, tarjeta no reintenta, 500 no reintenta) + suite chatbot 8/8 ✅. Paquete verificado (diffs legibles, ERP local intacto).
+- **Estado**: ✅ PRs abiertos (chatbot#1, connector#1 con v3.15.1) — merge lo hace el admin/amigo. Paquete UPDATE-ERP-AMIGO listo para enviar al amigo.
+
 ### [23:59] - Producción-ready: erp-chatbot + connector sin secretos en código + PRs GitHub para el admin
 - **Tipo**: proyecto | seguridad+infra | wordpress
 - **Modificado**: erp-chatbot (~/dev/wordpress: erpcbot_defaults() sin endpoint/key hardcodeados — resolución options > env ERPCBOT_LLM_URL/KEY/MODEL > vacío con error amigable; placeholder admin genérico; guard apunta a Ajustes). Stack: docker-compose.yml env-driven con ${VAR:-default} (local intacto), docker-compose.prod.yml (sin puertos 8091/3307, restart always), .env.example (placeholders sin valores), .gitignore, DEPLOY-PRODUCCION.md. GIT: repo nuevo github.com/warcold/erp-chatbot (privado) con PR #1 feature/v1.4.5-production-ready → main; connector PR #1 feature/v3.15.0-post-checkout-pedidos → main (incluye 5 commits no pusheados v3.12.5-3.12.10 + v3.15.0); stack commit local 938c270 (sin remote).
