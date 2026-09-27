@@ -1,5 +1,14 @@
 ## 2026-09-26
 
+### [23:59] - Amigo ERP: PR #7 a dev/ecomm-erp + análisis de accesos GitHub
+- **Tipo**: proyecto | entrega | erp+github
+- **Modificado**: PR soycarlosjerez-hub/sistema-facturacion#7 (rama update/ecomm-local-v3.13-v3.14 → dev/ecomm-erp): 7 modificados + 2 nuevos + migración + CHANGELOG[Unreleased]. Main del amigo sin tocar. Paquete local UPDATE-ERP-AMIGO queda como respaldo (NOTA-ENVIO.md). Stack commit local.
+- **Afecta a**: amigo (mergea cuando apruebe), producción futura
+- **Causa**: Usuario indicó el repo del amigo (soycarlosjerez-hub/sistema-facturacion) con rama dev/ecomm-erp. Verificado: rama existía sin nuestros cambios (sin origen=chatbot, sin trait correos, sin migración Sept 23); 7/8 baselines byte-idénticos a su rama (solo ResetPassword difiere por store_url v3.12.9 no pusheado — incluido en el PR).
+- **Accesos**: warcold tiene push (sin admin) en sistema-facturacion (colaborador junto al dueño) — flujo PR correcto. Repos propios: 30 (incluye warcold/erpipo-preprod privado del 19-sep — espejo desactualizado, no tocado — y warcold/erp-ecmm-connector con typo, posible duplicado a revisar).
+- **Verificación**: php -l OK en 9 archivos PHP del PR; diffs aplicados desde archivos live (sirviendo API hoy).
+- **Estado**: ✅ PR #7 abierto para el amigo — merge lo hace él. Pendiente: rotar key vllm (lo hace el usuario después).
+
 ### [23:59] - ERP del amigo: paquete UPDATE-ERP-AMIGO + compatibilidad MAIN (connector v3.15.1)
 - **Tipo**: proyecto | compat+entrega | wordpress+erp
 - **Modificado**: ~/dev/wordpress/UPDATE-ERP-AMIGO/ (6 diffs v3.13.0-v3.14.0-local + 2 archivos nuevos + migración + README manifiesto + CHANGELOG-EXTRACTO + COMPATIBILIDAD-MAIN.md). erp-ecomm-connector 3.15.0→3.15.1 (retry UNA vez con método seguro ante 422 payment_method, payment_fallback+payment_requested en respuesta). PR #1 actualizado (MAIN sin tocar). Stack commit 80ad769.
