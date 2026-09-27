@@ -1,5 +1,13 @@
 ## 2026-09-26
 
+### [23:59] - erp-chatbot v1.4.6: la conversación sobrevive refresh/navegación/cierre
+- **Tipo**: proyecto | feature | persistencia | wordpress
+- **Modificado**: erp-chatbot 1.4.5→1.4.6 (~/dev/wordpress: guardado en cada turno en erpcbot_historial — últimos 30 + ts_actividad — + hooks pagehide/visibilitychange + estado abierto erpcbot_abierto; restore incondicional en load — repinta sin hablar, reabre si estaba abierto, sin duplicar saludo; TTL inactividad 24h — reset solo tras 24h sin interactuar; fusión con navegación por solape sin duplicar; historial al servidor — erpcbot_parse_historial decode JSON→array, contexto real en build_messages). PR #1 actualizado (MAIN intacto).
+- **Afecta a**: kalimete (wordpress-local :8091, widget)
+- **Causa**: Usuario: al refrescar la página se perdía la conversación. Causa raíz: historial solo en memoria, guardado solo al navegar por voz, sin restore en load, sin estado abierto.
+- **Verificación**: node 38 checks (restore/retome/fusión) + suite 8/8 + php -l ✅ (2 verificaciones).
+- **Estado**: ✅ sincronizado (pendiente prueba del usuario en navegador: F5 a mitad de charla → reabre donde quedó)
+
 ### [23:59] - Amigo ERP: PR #7 a dev/ecomm-erp + análisis de accesos GitHub
 - **Tipo**: proyecto | entrega | erp+github
 - **Modificado**: PR soycarlosjerez-hub/sistema-facturacion#7 (rama update/ecomm-local-v3.13-v3.14 → dev/ecomm-erp): 7 modificados + 2 nuevos + migración + CHANGELOG[Unreleased]. Main del amigo sin tocar. Paquete local UPDATE-ERP-AMIGO queda como respaldo (NOTA-ENVIO.md). Stack commit local.
