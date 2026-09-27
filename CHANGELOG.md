@@ -1,4 +1,12 @@
-## 2026-09-26
+## 2026-09-27
+
+### [01:30] - Veredicto producción GO: connector v3.15.2 (fix image host) — ambos plugins libres de IPs locales
+- **Tipo**: proyecto | fix+auditoría | producción | wordpress
+- **Modificado**: erp-ecomm-connector 3.15.1→3.15.2 (~/dev/wordpress: normalize_image_url() ya NO hardcodea erp.kalimete.local — resolución: constante ERPC_IMAGE_HOST > derivación automática scheme+host de la API URL del ERP > sin host no reescribe; mu-plugin erpc-local.php define la constante para dev; .env.example + DEPLOY-PRODUCCION.md actualizados). PR connector actualizado (MAIN intacto).
+- **Afecta a**: producción futura (vps-preprod), kalimete (dev intacto)
+- **Causa**: Usuario: ¿están listos para producción con IPs no-locales? Auditoría final: chatbot 0 hits funcionales; connector 1 bloqueante (fallback imágenes a host LAN) — corregido.
+- **Verificación**: docker con filtro prod → relativa reescrita a erpipos.armada.do, host público/data-uri intactos; constante local → erp.kalimete.local (dev intacto); suite 8/8; php -l OK; barrido JS/CSS sin hosts absolutos.
+- **Estado**: ✅ GO para producción tras merge de los PRs (chatbot#1 v1.4.6, connector#1 v3.15.2, ERP amigo#7)
 
 ### [23:59] - erp-chatbot v1.4.6: la conversación sobrevive refresh/navegación/cierre
 - **Tipo**: proyecto | feature | persistencia | wordpress
