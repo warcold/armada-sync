@@ -1,5 +1,13 @@
 ## 2026-09-27
 
+### [02:30] - Validación remota E2E: chatbot funciona con LLM victoria (túnel) + ERP erpipos (prod) — cero llaves en plano
+- **Tipo**: proyecto | test+auditoría | producción | wordpress
+- **Modificado**: nada (solo pruebas). Script temporal E2E en contenedor (eliminado).
+- **Afecta a**: veredicto producción (confirmado GO)
+- **Causa**: Usuario: validar que no haya llaves en plano, todo configurable local/remoto, probar vLLM remoto y ERP erpipos.armada.do.
+- **Resultados**: (1) Auditoría llaves: 0 valores hardcodeados en ambos plugins (todo desde get_option/env/$_POST). (2) LLM remoto victoria.armada.do/v1: chat/completions 200 con key del chatbot (nota: /v1/models da 404, /models 200 — irrelevante, el engine usa /chat/completions). (3) ERP remoto erpipos.armada.do/api: config 200 tenant 10 MaganTech — SIN delivery_zones/store (MAIN viejo del amigo, PR#7 pendiente; plugins lo toleran por diseño). (4) E2E remoto con overrides en memoria: turno 1 "¿qué impresoras tienes?" → 3 productos reales con precios del ERP remoto vía LLM remoto (3.9s), tool buscar_productos + ir_a tienda; turno 2 "muéstrame el catálogo" → 18 categorías reales (3.3s). (5) Restauración byte-exacta: config local intacta (10.0.0.5:8010 + filtro 172.19.0.1:8100), cache y telemetría limpios.
+- **Estado**: ✅ GO producción confirmado con evidencia real remota. Latencia por turno ~3.5-4s (túnel).
+
 ### [01:30] - Veredicto producción GO: connector v3.15.2 (fix image host) — ambos plugins libres de IPs locales
 - **Tipo**: proyecto | fix+auditoría | producción | wordpress
 - **Modificado**: erp-ecomm-connector 3.15.1→3.15.2 (~/dev/wordpress: normalize_image_url() ya NO hardcodea erp.kalimete.local — resolución: constante ERPC_IMAGE_HOST > derivación automática scheme+host de la API URL del ERP > sin host no reescribe; mu-plugin erpc-local.php define la constante para dev; .env.example + DEPLOY-PRODUCCION.md actualizados). PR connector actualizado (MAIN intacto).
