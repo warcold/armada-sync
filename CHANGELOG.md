@@ -1,5 +1,13 @@
 ## 2026-09-27
 
+### [23:30] - ZIPs de instalación WordPress generados y validados (v1.4.6 + v3.15.2)
+- **Tipo**: proyecto | build | distribución | wordpress
+- **Modificado**: ~/dev/wordpress/export/erp-chatbot-v1.4.6.zip (74.6 KB, 17 entradas) + erp-ecomm-connector-v3.15.2.zip (693 KB, 68 entradas). Build artifacts (export/ gitignored por diseño).
+- **Afecta a**: instalación vía WP admin (Plugins → Añadir → Subir)
+- **Causa**: Usuario: plugins listos para instalar como ZIP?
+- **Validación**: estructura correcta (carpeta top-level + archivo principal); WP lee headers (get_plugin_data en docker: "ERP Chatbot v1.4.6" + "ERP E-Commerce Connector v3.15.2"); 0 contaminantes (.git/.bkup/.gitignore excluidos); php -l masivo OK; 0 secretos (solo refs truncadas vllm-key-9977… históricas en CHANGELOG, no utilizables); sin keys completas (grep estricto 0 hits).
+- **Estado**: ✅ listos para instalar. Nota: erp-ecmm-connector.zip viejo (21-sep, typo nombre) queda obsoleto en export/. Tras merge de los PRs se pueden publicar como GitHub Releases.
+
 ### [02:30] - Validación remota E2E: chatbot funciona con LLM victoria (túnel) + ERP erpipos (prod) — cero llaves en plano
 - **Tipo**: proyecto | test+auditoría | producción | wordpress
 - **Modificado**: nada (solo pruebas). Script temporal E2E en contenedor (eliminado).
