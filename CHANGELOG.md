@@ -1,3 +1,14 @@
+## 2026-09-29
+
+### [11:30] - ERP local actualizado a origin/dev/ecomm-erp 5c6ca70 + env migrado (MAIN intacto)
+- **Tipo**: proyecto | update | env | erp
+- **Modificado**: ~/dev/erpipo-preprod/code/sistema-facturacion (dev/ecomm-erp e76b0c3 → 5c6ca70 + commit local 7d1e885); preprod DB migrada (0 pending, incluye delivery_pickup + whatsapp/cobranza/auditoria)
+- **Afecta a**: kalimete (erpipo-preprod :8100, erp.kalimete.local); wordpress-dev (contrato config intacto)
+- **Causa**: Usuario: actualizar ERP local con última versión de soycarlosjerez-hub/sistema-facturacion (main=prod no tocar, dev/ecomm=nuestra)
+- **Validación**: 2 hosts verificados (LLM configurable vía admin erpcbot_settings→ia.api_url=http://10.0.0.5:8010/v1 DB; ERP prod fijo ERPC_API_URL=https://erpipos.armada.do/api, override solo mu-plugin→172.19.0.1:8100); fetch muestra origin/dev/ecomm-erp==origin/main==5c6ca70 (Juan mergeó PR #10); local main sin tocar; TiendaApiController dedupe 5 keys + sin duplicados; php -l OK; :8100/:8091/:3004 vivos; .bkup-ERP movidos a /tmp/opencode/erp-bkup-20260929 (stash backup conserva original)
+- **Estado**: ✅ sincronizado local. Pendiente confirmación usuario para push a origin/dev/ecomm-erp (ahead 1, Juan acepta)
+- **Notas**: ajax_test_connection() usa ERPC_API_URL directo sin filtro (botón Probar apunta a prod en dev — reportado, no tocado); MAPA.md tiene versiones WP/ERP desactualizadas (pendiente actualizar)
+
 ## 2026-09-27
 
 ### [23:30] - ZIPs de instalación WordPress generados y validados (v1.4.6 + v3.15.2)
