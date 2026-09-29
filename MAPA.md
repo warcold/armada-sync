@@ -42,8 +42,8 @@
      - baseURL: `https://integrate.api.nvidia.com/v1`
      - apiKey: `nvapi-...` (key compartida desde victoria)
      - Contexto nativo: 1M tokens (vs 262K del Qwen local)
-- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1 + Elementor 4.2.4 + EMCP Tools v3.14.1 + MCP Adapter 0.5.0
-  - URL local: `http://localhost:8090` | URL LAN/SSL: `https://wordpress.kalimete.local`
+- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1.1 (imagen base 6.7-php8.3) + Elementor 4.2.4 + EMCP Tools 3.16.1 + MCP Adapter 0.5.0
+  - URL local: `http://localhost:8091` (loopback) | URL LAN/SSL: `https://wordpress.kalimete.local`
   - URL LAN: `http://wordpress.kalimete.local` (redirect 301 → HTTPS)
   - DB: localhost:3307 (wordpress-db container)
   - Autenticación: `admin:admin123` (Basic Auth REST)
@@ -54,12 +54,11 @@
   - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
   - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
   - Puertos: nginx-TLS 443 + 8090 (mismo cert, ambas URLs válidas) → Docker loopback 8091 (8090 público ya NO es backend HTTP directo — fix redirects envenenados 2026-09-17)
-  - Tienda viva: "MaganTech Store" + plugin `erp-ecomm-connector` v3.3.8 → ERP `https://erpipos.armada.do/api` (tenant 10, 18 cat / 157 prod, verificado 2026-09-17)
-  - Repo plugin: `github.com/warcold/erp-ecomm-connector` (privado, rama `main`) — README con contrato API + guía despliegue
+  - **Plugin único: `erp-commerce-suite` v4.0.0** (2026-09-29) — unifica los 3 plugins viejos (erp-chatbot 1.4.6 + erp-ecomm-connector 3.15.2 + mcp-basic-auth 1.1, rastro eliminado local+GitHub). Option única `erp_suite_settings`, sin roles (manage_options), modo sellado dev/público en Core/Environment: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Tienda "MaganTech" tenant 10. Tests regresión 8/8.
+  - Repo plugin: `github.com/warcold/erp-commerce-suite` (privado, rama `master`) — único rastro; repos viejos erp-chatbot/erp-ecomm-connector/erp-ecmm-connector BORRADOS 2026-09-29
+  - ERP local de pruebas: `~/dev/erpipo-preprod/` (erpipo-preprod-nginx :8100) — clavado a main puro de Juan Carlos `5c6ca70` (soycarlosjerez-hub/sistema-facturacion, sin edits; rama local dev/ecomm-erp preservada con commit 7d1e885 sin push)
   - SSL: `mkcert` con CA instalada en sistema, Firefox y Chrome/Chromium (NSS) — verificado 2026-09-17
-  - Mu-plugin de protección: `/var/www/html/wp-content/mu-plugins/disable-mcp-host-guard.php`
-    → Deshabilita EMCP Tools MCP host guard (permite proxy `localhost:8090` → `wordpress.kalimete.local`)
-    → PERSISTE: los mu-plugins no se borran con updates de WordPress/plugins
+  - Mu-plugins: `disable-mcp-host-guard.php` (MCP host guard off) + `erpc-local.php` (define `ERPC_IMAGE_HOST` dev; su filtro URL legacy ya es inerte — Environment lo reemplaza; retirar en 4.1)
   - **Protección contra updates**:
     - mcp-proxy.mod.js: `~/dev/wordpress/` (fuera del contenedor Docker)
     - Nginx config: `/etc/nginx/sites-available/` (fuera del contenedor)

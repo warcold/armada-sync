@@ -1,5 +1,14 @@
 ## 2026-09-29
 
+### [19:50] - ERP Commerce Suite 4.0.0: 3 plugins → 1 plugin unificado, activo y verificado
+- **Tipo**: proyecto | feature | consolidación | wordpress
+- **Modificado**: ~/dev/wordpress/wp-content/plugins/erp-commerce-suite/ (NUEVO, 51 PHP files): unifica erp-chatbot 1.4.6 + erp-ecomm-connector 3.15.2 + mcp-basic-auth 1.1. Entry + Core/{Environment,Main,Logger,Activator} + Store/{ApiClient,Auth,CartCheckout,Customer,Forms,Templates,Shortcodes} + AI/{ChatEngine,Bootstrap,Channels/WhatsApp} + Infra + Admin/{AdminMenu,LegacyConnectorAdmin,LegacyChatbotAdmin,LogViewer} + Compat/Legacy + 22 templates + assets + tests.
+- **Afecta a**: kalimete (wordpress-local :8091), GitHub warcold (3 repos borrados, 1 nuevo)
+- **Causa**: Usuario: unificar todo en 1 plugin sin roles (manage_options), modo dev/público sellado, borrar rastro de los 3 plugins local + GitHub
+- **Validación**: activada en WP (active_plugins = emcp-tools + suite + mcp-adapter); migración erpc_settings+erpcbot_settings→erp_suite_settings con backup erpsuite_legacy_backup; php -l 51/51; regresión 8/8; front/productos 200 con grid real del ERP local (172.19.0.1:8100); widget carga; REST erpsuite/v1/whatsapp existe (403 sin challenge, esperado); api_url dev=172.19.0.1:8100/api, llm=10.0.0.5:8010/v1, img=erp.kalimete.local, tenant 10 + api_key migradas
+- **Estado**: ✅ sincronizado. GitHub: erp-chatbot + erp-ecomm-connector + erp-ecmm-connector BORRADOS; creado warcold/erp-commerce-suite (private) con push inicial + docs
+- **Notas**: fixes post-build del subagente (murió por rate limit a mitad): porté Main.php + AI/Bootstrap.php de los entries viejos, corregí alias invertido erpc()/erpsuite() (fatal), recursión infinita en Environment::get_api_url (apply_filters + alias Compat), image_host dev apuntaba a prod, 16 archivos con constantes legacy (ERPC_PLUGIN_DIR etc.), ERPSUITE_DEFAULT_HERO sin definir. Rastros en cuarentena /tmp/opencode/erp-suite-deleted-20260929/ (recuperable). Pendiente 4.1: consolidar renders admin legacy en los 8 tabs del menú ERP Suite (hoy 3 menús funcionales), retirar aliases Compat y mu-plugin erpc-local.php. ERP local clavado a main puro de Juan 5c6ca70 (sin edits, rama dev/ecomm-erp local preservada con nuestro commit 7d1e885 sin push).
+
 ### [11:30] - ERP local actualizado a origin/dev/ecomm-erp 5c6ca70 + env migrado (MAIN intacto)
 - **Tipo**: proyecto | update | env | erp
 - **Modificado**: ~/dev/erpipo-preprod/code/sistema-facturacion (dev/ecomm-erp e76b0c3 → 5c6ca70 + commit local 7d1e885); preprod DB migrada (0 pending, incluye delivery_pickup + whatsapp/cobranza/auditoria)
