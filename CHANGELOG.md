@@ -1,3 +1,14 @@
+## 2026-09-30
+
+### [00:35] - ERP Commerce Suite 4.2.0: panel UX — SPA tabs, diseño propio, datos vivos del ERP
+- **Tipo**: proyecto | UX | feature | wordpress
+- **Modificado**: erp-commerce-suite 4.1.1→4.2.0. AdminMenu SPA client-side (erpsuite-admin.js: tabs sin recarga, deep link #tab-x, localStorage, flechas teclado); erpsuite-admin.css (hero+badge modo, tabs píldora dashicons, cards estado, botones rounded, responsive mobile ≤782px); cards datos vivos en Entorno/Catálogo/MCP (conteos reales ERP vía transient 60s, sin bloqueo si cae); assets solo en nuestra página admin (toplevel_page_erp-suite)
+- **Afecta a**: kalimete (wordpress-local wp-admin), producción (v4.2.0 en export/)
+- **Causa**: Usuario: hay tabs sin información, todo recarga al hacer click, quiere diseño amigable + responsive/móvil
+- **Validación**: php -l 50/50; regresión 8/8; render() completo sin fatal (8 secciones, 7 hidden, 8 cards, badge DEV); erp_counts productos=162 categorias=18 ok=true (fix: shape real ERPC_API['meta']['total']); ZIP reconstruido 761 KB
+- **Estado**: ✅ sincronizado. Suite push OK. ZIP: ~/dev/wordpress/export/erp-commerce-suite-v4.2.0.zip
+- **Notas**: en el camino: restore temporal del admin conector con Main ya en singletons → sitio caído ~2 min, reparado con split correcto (off-by-one en rango de prep)
+
 ## 2026-09-29
 
 ### [23:45] - Departamento Ethical Hacking: audit completo + reparaciones (wpscan, metasploit, limpieza 887MB)
