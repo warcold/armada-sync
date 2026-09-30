@@ -1842,3 +1842,12 @@ EOF又是
   - **Causa raíz**: el caché de Squid (cache_dir ufs) tiene un bug (`store.cc:1911: "sd"`) que causa crashes aleatorios. Un proxy no necesita caché, así que se deshabilitó por completo.
   - **Fix**: eliminado `cache_dir ufs` y agregado `cache deny all` — sin caché = sin bug
   - **Resultado**: SOCKS5 ya no se reinicia constantemente, Squid estable, Gmail 0.08s, Google 0.00s, SOCKS5 Gmail 0.10s
+
+### [23:59] - ERP Commerce Suite 4.1.1: ZIP de producción listo + fix fallback de modo
+- **Tipo**: proyecto | build | seguridad | wordpress
+- **Modificado**: erp-commerce-suite 4.1.0→4.1.1 (Environment::mode() fallback por entorno: local=dev, production/staging=public + cinturón host .local; docker-compose.yml + WP_ENVIRONMENT_TYPE=local con bkup). ZIP: ~/dev/wordpress/export/erp-commerce-suite-v4.1.1.zip (757 KB, 86 entradas, sin .git/tests/.bkup)
+- **Afecta a**: producción (instalación fresca ahora apunta a ERP prod por defecto), kalimete (local intacto en dev)
+- **Causa**: Usuario: ¿plugin listo para producción? ¿dónde está el ZIP?
+- **Validación**: mode local=dev + api_url 172.19.0.1:8100 ✓; prod-simulado=public + erpipos ✓; php -l 50 OK; tests 8/8; zip integrity OK; WP lee headers (ERP Commerce Suite v4.1.1, TextDomain erp-suite); scan secrets: 0 reales (solo forms de login de clientes)
+- **Estado**: ✅ listo para instalar en producción. Nota: en prod el admin debe configurar la api_key del ERP en Conexión ERP + la key LLM del chatbot; nginx de prod debería bloquear debug.log y uploads/erp-suite-connector/ (el ZIP lleva .htaccess+index.php para Apache)
+- **Notas**: el fallback SIEMPRE-dev era bloqueante para instalación fresca en prod (apuntaría al ERP local inaccesible). DEPLOY-GUIA.md viejo (14-sep) sigue en export/ — obsoleto
