@@ -1,5 +1,14 @@
 ## 2026-09-29
 
+### [21:40] - ERP Commerce Suite 4.0.1: auditoría de seguridad completa + hardening (16 hallazgos)
+- **Tipo**: proyecto | seguridad | wordpress
+- **Modificado**: erp-commerce-suite 4.0.0→4.0.1 (webhook WhatsApp 403 sin app_secret; init garantiza .htaccess+index.php en logs dir; secrets admin enmascarados value=""+preserve-if-empty verificado; capability manage_options en erpc_log_read/list/clear y MCP transport; erpc_client_ip anti-spoof XFF→X-Real-IP solo de proxy confiable; chat RL usa client_ip; erpc_log_error RL 30/min+cap 20; LogViewer basename guard; sslverify modo-aware; ajax_test_connection respeta modo sellado; uninstall transients propios). Stack: nginx wordpress.kalimete.local.conf +deny debug.log y uploads/erp-suite-connector/ (bkup .bkup-20260929)
+- **Afecta a**: kalimete (wordpress-local), producción futura (el ZIP de deploy lleva todo el hardening)
+- **Causa**: Usuario: procede con mejores prácticas, seguridad, nada expuesto en plano, no explotable
+- **Validación**: probes antes/después — debug.log 200→404, logs dir servido→404, webhook POST sin secret → 403 erpsuite_wa_sin_secreto (E2E con enabled=1 temporal), chat/log AJAX sin nonce bloqueados, sanitize preserve-if-empty PRESERVED OK (ia.api_key, tenant.api_key, smtp_pass), php -l 51/51, regresión 8/8, front/productos 200
+- **Estado**: ✅ sincronizado (repo suite push 4.0.1). Aceptado/documentado: secrets en wp_options plaintext (estándar WP, cifrado 4.2), sink .html() connector.js (disciplina de escape mantenida)
+- **Notas**: auditoría por wordpress-dev (16 hallazgos con file:line) + probes y fixes por kalimete. Hallazgo #2 confirmado en runtime: logs servidos por HTTP (el .htaccess nunca existía porque el Logger no está cableado — además nginx ignora .htaccess, doble capa aplicada)
+
 ### [19:50] - ERP Commerce Suite 4.0.0: 3 plugins → 1 plugin unificado, activo y verificado
 - **Tipo**: proyecto | feature | consolidación | wordpress
 - **Modificado**: ~/dev/wordpress/wp-content/plugins/erp-commerce-suite/ (NUEVO, 51 PHP files): unifica erp-chatbot 1.4.6 + erp-ecomm-connector 3.15.2 + mcp-basic-auth 1.1. Entry + Core/{Environment,Main,Logger,Activator} + Store/{ApiClient,Auth,CartCheckout,Customer,Forms,Templates,Shortcodes} + AI/{ChatEngine,Bootstrap,Channels/WhatsApp} + Infra + Admin/{AdminMenu,LegacyConnectorAdmin,LegacyChatbotAdmin,LogViewer} + Compat/Legacy + 22 templates + assets + tests.
