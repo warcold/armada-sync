@@ -9,7 +9,7 @@
   - ✅ wpscan: `gem install addressable` + `apt-get install --reinstall wpscan` → v4.1.0 Automattic OK
   - ✅ metasploit: `apt-get install metasploit-framework` → v6.5.3-dev OK (msfconsole, msfvenom, msfdb, etc.)
   - ✅ outputs Intigriti: 250 directorios BMW/alphabet limpiados (887MB → 4.8MB), carpeta outputs recreada vacía
-  - ⚠️ trufflehog: script Python restaurado pero pip package 2.2.1 incompatible con Py3.13 (GitPython conflict). Necesita versión binaria real o fork compatible.
+  - ✅ trufflehog: binario real v3.97.9 descargado (era script Python corrupto "Not Found"), instalado en ~/.local/bin/trufflehog — operativo (binario Go real, no pip 2.2.1 incompat con Py3.13)
   - ✅ Prueba de fuego: 20 herramientas verificadas (nuclei v3.11.0/13326 templates, ffuf 2.1.0, feroxbuster 2.13.1, sqlmap 1.10.6, dalfox 2.9.3, hashcat 7.1.2, crackmapexec, burpsuite 2026.3.2, zaproxy 2.17.0, amass 3.19.2, subfinder 2.11.0, httpx, katana 1.7.0, puredns 2.1.1, naabu 2.3.7, gobuster 3.8.2, gitleaks 8.30.1, mitmproxy 12.2.3, nikto, wfuzz, dirb, arjun 2.2.7, bandit, safety, scapy, impacket, hashcat, john, crunch → TODAS OK)
   - ✅ pm3 (Proxmark3): instalado, sin dispositivo USB → marcado como "dejar sin tocar" (usuario confirmó)
 - **Estado**: ✅ sincronizado (todo OK excepto trufflehog py)
