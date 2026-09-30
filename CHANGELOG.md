@@ -1,5 +1,14 @@
 ## 2026-09-29
 
+### [23:30] - ERP Commerce Suite 4.1.0: admin consolidado (1 menú, 8 tabs reales) + fix crítico register_setting
+- **Tipo**: proyecto | feature | refactor | wordpress
+- **Modificado**: erp-commerce-suite 4.0.1→4.1.0. AdminMenu con 8 tabs reales (split de render_page legacy: ERPC_Admin→6 métodos, ERPCBot_Admin→5 métodos, ambos singleton); sanitize_unificado por marcador erpsuite_form en AdminMenu::register_settings (ÚNICO registro); Main::get_api_url sellado vía Environment; ApiClient image host vía Environment; Compat/Legacy.php retirado; mu-plugin erpc-local.php retirado (queda solo disable-mcp-host-guard.php)
+- **Afecta a**: kalimete (wordpress-local), producción futura
+- **Causa**: spec original usuario (1 plugin, panel minimalista por tabs) + items pendientes 4.1 documentados
+- **Fix crítico**: ambos admin legacy registraban register_setting sobre la MISMA option con sanitizers distintos — el último pisaba al otro y guardar desde una página BORRABA los campos de la otra (latente desde 4.0.0). Verificado con 3 escenarios: preservación mutua OK
+- **Validación**: php -l 50/50; regresión 8/8; 8 tabs render OK (form+nonce+marker); menú único (erp-chatbot eliminado, slug erp-suite sin conflicto); front/productos 200; REST 403; debug.log 404. Incidente durante el trabajo: restore temporal del admin original con Main ya en singletons → sitio caído ~2 min, reparado con el split correcto (lección: prep range off-by-one)
+- **Estado**: ✅ sincronizado (suite repo push 4.1.0). Pendiente 4.2: cifrado secrets en reposo (libsodium), sink .html() connector.js
+
 ### [21:40] - ERP Commerce Suite 4.0.1: auditoría de seguridad completa + hardening (16 hallazgos)
 - **Tipo**: proyecto | seguridad | wordpress
 - **Modificado**: erp-commerce-suite 4.0.0→4.0.1 (webhook WhatsApp 403 sin app_secret; init garantiza .htaccess+index.php en logs dir; secrets admin enmascarados value=""+preserve-if-empty verificado; capability manage_options en erpc_log_read/list/clear y MCP transport; erpc_client_ip anti-spoof XFF→X-Real-IP solo de proxy confiable; chat RL usa client_ip; erpc_log_error RL 30/min+cap 20; LogViewer basename guard; sslverify modo-aware; ajax_test_connection respeta modo sellado; uninstall transients propios). Stack: nginx wordpress.kalimete.local.conf +deny debug.log y uploads/erp-suite-connector/ (bkup .bkup-20260929)
