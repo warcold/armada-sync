@@ -1,5 +1,20 @@
 ## 2026-09-29
 
+### [23:45] - Departamento Ethical Hacking: audit completo + reparaciones (wpscan, metasploit, limpieza 887MB)
+- **Tipo**: infra | seguridad | herramientas
+- **Modificado**: wpscan 3.8.28→4.1.0 (reparado gem dependency addressable), metasploit-framework 6.5.3 (instalado, reemplaza framework2 roto), outputs Intigriti limpiados (250 dominios BMW, 887MB liberados), trufflehog (pip 2.2.1 incompatible con Py3.13 → pendiente), kalimetehunt.sh framework bug bounty verificado
+- **Afecta a**: kalimete (dev/ethical-hacking)
+- **Causa**: Preparar el departamento de ethical hacking para reanudar proyectos Intigriti. wpscan rota por gem conflict (opt_parse_validator/cms_scanner), metasploit ausente (solo framework2 roto), outputs antiguos acumulados sin uso desde Feb 2026.
+- **Cambios realizados**:
+  - ✅ wpscan: `gem install addressable` + `apt-get install --reinstall wpscan` → v4.1.0 Automattic OK
+  - ✅ metasploit: `apt-get install metasploit-framework` → v6.5.3-dev OK (msfconsole, msfvenom, msfdb, etc.)
+  - ✅ outputs Intigriti: 250 directorios BMW/alphabet limpiados (887MB → 4.8MB), carpeta outputs recreada vacía
+  - ⚠️ trufflehog: script Python restaurado pero pip package 2.2.1 incompatible con Py3.13 (GitPython conflict). Necesita versión binaria real o fork compatible.
+  - ✅ Prueba de fuego: 20 herramientas verificadas (nuclei v3.11.0/13326 templates, ffuf 2.1.0, feroxbuster 2.13.1, sqlmap 1.10.6, dalfox 2.9.3, hashcat 7.1.2, crackmapexec, burpsuite 2026.3.2, zaproxy 2.17.0, amass 3.19.2, subfinder 2.11.0, httpx, katana 1.7.0, puredns 2.1.1, naabu 2.3.7, gobuster 3.8.2, gitleaks 8.30.1, mitmproxy 12.2.3, nikto, wfuzz, dirb, arjun 2.2.7, bandit, safety, scapy, impacket, hashcat, john, crunch → TODAS OK)
+  - ✅ pm3 (Proxmark3): instalado, sin dispositivo USB → marcado como "dejar sin tocar" (usuario confirmó)
+- **Estado**: ✅ sincronizado (todo OK excepto trufflehog py)
+- **Notas**: kalimetehunt.sh framework está listo pero carpetas vacías (recon/, scanning/, exploitation/, reports/, targets/, logs/) — sin actividad desde Feb 2026. Cron de hacking: ninguno (solo sync.sh cada 5 min). Listo para iniciar caza en Intigriti.
+
 ### [23:30] - ERP Commerce Suite 4.1.0: admin consolidado (1 menú, 8 tabs reales) + fix crítico register_setting
 - **Tipo**: proyecto | feature | refactor | wordpress
 - **Modificado**: erp-commerce-suite 4.0.1→4.1.0. AdminMenu con 8 tabs reales (split de render_page legacy: ERPC_Admin→6 métodos, ERPCBot_Admin→5 métodos, ambos singleton); sanitize_unificado por marcador erpsuite_form en AdminMenu::register_settings (ÚNICO registro); Main::get_api_url sellado vía Environment; ApiClient image host vía Environment; Compat/Legacy.php retirado; mu-plugin erpc-local.php retirado (queda solo disable-mcp-host-guard.php)
