@@ -1,6 +1,6 @@
 ---
 name: cloudflare
-description: Gestión de la cuenta Cloudflare de Alfredo@armada.do vía terminal. Usa SIEMPRE esta skill cuando el usuario mencione cloudflare, wrangler, r2, workers, dns, zonas, dominios, armada.do, buckets, kv, d1, pages, certificates, tunnels, o cualquier recurso de la cuenta. Contiene credenciales, comandos y ejemplos de la API.
+description: Gestión de la cuenta Cloudflare de Alfredo@armada.do vía terminal. Usa SIEMPRE esta skill cuando el usuario mencione cloudflare, wrangler, r2, workers, dns, zonas, dominios, armada.do, micaserogou.com, buckets, kv, d1, pages, certificates, tunnels, o cualquier recurso de la cuenta. Contiene credenciales, comandos y ejemplos de la API.
 ---
 
 # Cloudflare — Gestión desde terminal
@@ -25,7 +25,7 @@ El archivo `~/.config/cloudflare/env` (permisos 600) contiene:
 
 - Cuenta: **Alfredo@armada.do's Account**
 - Account ID: `432949306735261bec2ca45a0a2719c7`
-- Zonas (dominios): **armada.do** y **taohemps.com**
+- Zonas (dominios): **armada.do** y **micaserogou.com**
 - R2: las credenciales S3 existen pero **el usuario descartó R2 (decisión 2026-08-07: no pagar)** — backups en casa, disco físico separado en jonas. NO activar R2 ni proponerlo; no tocar R2.
 - Workers: **ninguno desplegado** (revisado 2026-08-05)
 - D1: **ninguna base** creada (revisado 2026-08-05)
@@ -37,27 +37,26 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 
 ### Túneles activos
 
-**1. `victoria-armada`** ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a` (en victoria, 10.0.0.5) — ÚNICO túnel de la cuenta (verificado 2026-08-13, healthy, 4 conexiones)
-- Ingress: `victoria.armada.do` → `http://127.0.0.1:8010` (victoria-llm-gateway — SOLO API LLM con llaves, chat validado 2026-08-13); default → 404. ⚠️ Panel /admin y UIs (ComfyUI/OpenClaw) = solo LAN (victoria.local)
-- `cloudflared.service` systemd en victoria (instalado 2026-08-13, arm64, token en `/etc/cloudflared/token`)
+**1. `victoria-armada`** ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a` — ÚNICO túnel de la cuenta (verificado 2026-08-13, healthy, 4 conexiones)
+- Ingress: `victoria.armada.do` → `http://127.0.0.1:8010` (API LLM con llaves, chat validado 2026-08-13); default → 404. ⚠️ Panel /admin = solo LAN; UIs internas = solo LAN
+- `cloudflared.service` systemd en el servidor que corresponda (arm64)
 
 **2. ~~`kalimete-local`~~ ELIMINADO 2026-08-06**: las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` (desarrollo) — nunca exponer en armada.do sin pedir confirmación al usuario.
 
 ### Orígenes directos proxied (no túnel) — cada uno con TLS propio
 - **VPS prod** 154.53.35.102 (armada.do y taohemps.com): TLS por caddy (Let's Encrypt), origin cerrado a solo rangos CF (DOCKER-USER).
-- **erpipos** 147.93.6.112: `erpipos.armada.do` (A proxied → 147.93.6.112). **TLS por Let's Encrypt en el propio nginx** desde 2026-08-07 (cert CN=erpipos.armada.do, certbot.timer renueva). Detalles: `ops/agents/legacy/AGENTS.md` (vps-erpipo).
+- **erpipos** 147.93.6.112: `erpipos.armada.do` + `erpipos.micaserogou.com` (A proxied → 147.93.6.112). **TLS por Let's Encrypt en el propio nginx** desde 2026-08-07 (cert CN=erpipos.armada.do, SAN ambos dominios, certbot.timer renueva). Detalles: `ops/agents/legacy/AGENTS.md` (vps-erpipo).
 
 ### Red local / acceso remoto
 - VPN WireGuard: servidor **jonas (10.0.0.20, wg0=10.0.100.1)**, clientes kalimete (10.0.100.2) y vps-preprod (10.0.100.3). Port-forward del router: UDP 51820 → jonas.
 - **DDNS de la casa (2026-08-06)**: `home.armada.do` → IP pública (A, `proxied:false`, TTL 120) — endpoint oficial del WG. **Updater**: `/usr/local/sbin/cloudflare-ddns.sh` en jonas (token DNS en `/etc/cloudflare-ddns/token` root:600), cron `*/5`, actualiza si la IP cambia (ipify). Los clientes WG usan `Endpoint = home.armada.do:51820` (kalimete: `/etc/wireguard/bridge-to-local.conf`; vps: `/etc/wireguard/wg0.conf`). ⚠️ **2026-08-13**: el updater ANTES también actualizaba `victoria.armada.do` (A) — ahora ese nombre es CNAME proxied del túnel victoria-armada; si el updater lo recrea como A pisa el túnel (verificar en jonas cuando el SSH se arregle).
-- DNS LAN: resolver `10.0.0.20` (dnsmasq en jonas, `/etc/dnsmasq.d/lan-overrides.conf`). Sirve los `.local` (kalimete.local=10.0.0.106, victoria.local=10.0.0.5, jonas.local=10.0.0.20) y split-horizon `.armada.do` internos (jonas.armada.do, victoria.armada.do → LAN; el bug victoria→10.0.0.106 fue corregido el 2026-08-06). Clientes WG externos: usar `DNS=10.0.0.20` para resolver los `.local` igual que en casa.
+- DNS LAN: resolver `10.0.0.20` (dnsmasq en jonas, `/etc/dnsmasq.d/lan-overrides.conf`). Sirve los `.local` (kalimete.local=10.0.0.106, jonas.local=10.0.0.20) y split-horizon `.armada.do` internos (jonas.armada.do → LAN; fue corregido el 2026-08-06). Clientes WG externos: usar `DNS=10.0.0.20` para resolver los `.local` igual que en casa.
 - Las apps dev de kalimete SOLO se acceden en localhost:PUERTO — no exponer
 
 ### Politica SSH (todos los servers, local y remoto)
 - **Sin restriccion por IP** (amigos con usuarios propios conectan desde cualquier lado)
 - Autenticacion SOLO por llave (`PasswordAuthentication no`), root directo solo con la llave de kalimete (`warcold@kalimete.local`, ~/.ssh/id_ed25519_kalimete)
 - vps-preprod: puerto 1333, root + key, usuario amigo `justin_t` (sin llaves aun — avisar cuando quiera conectar), fail2ban activo (jail sshd)
-- victoria: puerto 1666, root SIN llaves (solo usuario victoria + sudo con password)
 - kalimete: puerto 1111, root prohibit-password
 
 ### VPS preprod/produccion (`vps-preprod` = auth.armada.do = 154.53.35.102)
@@ -71,24 +70,23 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 - staging-postgres/minio: SOLO red docker (sin bind publico); platform-traefik ELIMINADO (config en /opt/residencial-staging/traefik.removed-20260806)
 - **VPN wg `bridge-to-local` ARREGLADA 2026-08-06**: el wg server es **jonas (10.0.0.20, wg0=10.0.100.1)**; relé kalimete (10.0.100.2) ↔ vps (10.0.100.3). El bug: ufw de jonas tiene default "deny (routed)" y ufw-before-forward solo acepta ICMP echo → TCP entre peers se caía en el policy DROP del FORWARD. Fix: `sudo ufw route allow in on wg0 out on wg0` (persiste). Verificado: SSH root@10.0.100.3:1333 desde kalimete (host key idéntica a la del IP público); puerto 22 del vps queda DROP (firewall)
 - royalsmoke ELIMINADO (kalimete y vps) 2026-08-06 — ya no procede
-- **Backups (2026-08-06): NAS central = jonas** (`/srv/backups/<host>/<servicio>/`). Timers: jonas 03:00, vps 03:20 (nextcloud-db, ragnarok/woodly, taohemps, petsuite, infra+env), victoria 04:05; prune 30 días 06:00. Push vía rsync+SSH 1222 con llaves `id_backup` forzadas al gate `backup-gate.sh` (solo rsync y /srv/backups). Restauración nextcloud-db PROBADA. Detalles: `ops/agents/backups/AGENTS.md`
+- **Backups (2026-08-06): NAS central = jonas** (`/srv/backups/<host>/<servicio>/`). Timers: jonas 03:00, vps 03:20 (nextcloud-db, ragnarok/woodly, taohemps, petsuite, infra+env); prune 30 días 06:00. Push vía rsync+SSH 1222 con llaves `id_backup` forzadas al gate `backup-gate.sh` (solo rsync y /srv/backups). Restauración nextcloud-db PROBADA. Detalles: `ops/agents/backups/AGENTS.md`
 
-- **Agentes por sistema**: repositorio `ops/agents/<sistema>/AGENTS.md` (jonas, vps, victoria, kalimete, vpn, backups) en https://github.com/warcold/armada-ops — **actualizar el agente correspondiente tras CADA cambio** en cualquier sistema.
+- **Agentes por sistema**: repositorio `ops/agents/<sistema>/AGENTS.md` (jonas, vps, kalimete, vpn, backups) en https://github.com/warcold/armada-ops — **actualizar el agente correspondiente tras CADA cambio** en cualquier sistema.
 - **Git = solo SSH keys** (sin PATs): remotes `git@github.com:warcold/*.git`. PAT clásico filtrado revocado; gho_ muerto eliminado del VPS.
 
 ### Credenciales y tokens
 - `CLOUDFLARE_API_TOKEN` (spring-dream-d681, en env): cuenta entera (túneles, R2, workers) — NO DNS de zona
 - `CLOUDFLARE_DNS_TOKEN` (opencode-dns-cleanup, en env): **DNS Read/Write solo armada.do** — creado 2026-08-06 vía API, para operaciones de DNS
-- Otros tokens del inventario: `erpipos-server-dns` (DNS+SSL en armada.do, en uso) y `damp-surf-3478-fusion` (DNS armada.do, SIN uso desde 27-jul — candidato a borrar)
+- Otros tokens del inventario: `erpipos-server-dns` (DNS+SSL en armada.do y micaserogou.com, en uso) y `damp-surf-3478-fusion` (DNS armada.do, SIN uso desde 27-jul — candidato a borrar)
 - `VICTORIA_API_KEY` (env shell, ~/.zshrc): bearer del gateway LLM de victoria (`victoria-llm-gateway` :8010, auth por NOMBRE de key — la key activa se llama `demo`; validado 2026-08-13)
-- La zona `micaserogou.com` fue eliminada (proyecto borrado 2026-09-17, ver CHANGELOG)
+- La zona `micaserogou.com` (fdebf4707c11ec49d9a73204457ba19c) aún NO tiene token de DNS propio (erpipos-server-dns la cubre)
 
 ### Reglas aprendidas
 - **NUNCA registrar un A proxied (nube naranja) apuntando a un origin sin 443 si la zona está en SSL=strict**: Cloudflare exige HTTPS:443 con cert válido al origin → si no existe, timeout total (caso erpipos 2026-08-07: el origin solo servía HTTP; con flexible funcionaba, strict lo tumbó). Al emitir cert LE en un origin proxied, **grisar temporalmente el registro** (challenge HTTP-01 directo) y volver a naranja después.
 - **NUNCA subdominios de 2 niveles** (api.x.armada.do): Universal SSL gratis no los cubre → handshake_failure. Usar `x-api.armada.do`
-- DNS CNAME: crear con `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (usa cert.pem de `~/.cloudflared/`, cubre armada.do)
+- DNS CNAME: crear con `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (usa cert.pem de `~/.cloudflared/`, cubre armada.do y micaserogou.com)
 - **PENDIENTE (dashboard)**: NADA en DNS — los 9 CNAME muertos del túnel kalimete ya fueron borrados 2026-08-06 (API con token opencode-dns-cleanup). `kalimete.armada.do` ELIMINADO 2026-08-06 (era CNAME al túnel borrado). El CNAME activo es `victoria.armada.do` (túnel victoria-armada)
-- ufw victoria: SOLO LAN (4000, 443, 1666, 8000, 8010, 18789, 127.0.0.1) — nada abierto a internet (el túnel no lo necesita)
 
 ### Playbook: agregar un servidor/servicio nuevo a armada.do
 
@@ -136,7 +134,7 @@ curl -s "https://api.cloudflare.com/client/v4/zones?per_page=50" \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | jq -r '.result[] | "\(.id) \(.name) \(.status)"'
 ```
 
-### DNS (records de armada.do o taohemps.com)
+### DNS (records de armada.do o micaserogou.com)
 ```sh
 # Obtener zone_id: usar el listado de zonas y el .result[].id correspondiente
 ZONE_ID="<id de la zona>"
@@ -161,7 +159,7 @@ curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_recor
 ```
 
 ### Configuración de zona (SSL, caché, seguridad)
-- **SSL por zona (2026-08-07)**: `armada.do` = **strict** (PATCH 2026-08-06; antes flexible); `taohemps.com` = **full**. Con strict, TODO origin proxied debe servir 443 con cert válido (ver "Reglas aprendidas" — caso erpipos).
+- **SSL por zona (2026-08-07)**: `armada.do` y `micaserogou.com` = **strict** (PATCH 2026-08-06; antes flexible); `taohemps.com` = **full**. Con strict, TODO origin proxied debe servir 443 con cert válido (ver "Reglas aprendidas" — caso erpipos).
 - **WAF Managed Free Ruleset DEPLOYADO en ambas zonas** (2026-08-06): plan Free usa el ruleset **`77454fe2d30c4220b5701f6fdfb893ba`** ("Cloudflare Managed Free Ruleset"), NO el ID estándar `efb7b8c949ac4650a09736fc376e9aee` (da error "not entitled"). Deploy: PUT /zones/{id}/rulesets/phases/http_request_firewall_managed/entrypoint `{"rules":[{"action":"execute","action_parameters":{"id":"77454fe2d30c4220b5701f6fdfb893ba"},"expression":"true","description":"Execute Cloudflare Managed Free Ruleset"}]}`. Verificar: GET .../entrypoint → 1 regla execute
 - **Bot Fight Mode: NO tiene API en plan Free** ("Method not allowed"/sin endpoint /bots) → solo dashboard, 2 clics
 - **R2: NO USAR (decisión 2026-08-07)** — usuario descartó el servicio; backups locales en NAS jonas (disco sdb). Ignorar error 10042.
@@ -207,7 +205,7 @@ Esta skill es parte de un sistema de agentes. El agente principal es `cloudflare
 | Agente | Modo | Rol |
 |---|---|---|
 | `cloudflare` | primary | Coordinador: decide, delega, verifica, responde |
-| `cf-dns` | subagent | DNS y zonas de armada.do / taohemps.com |
+| `cf-dns` | subagent | DNS y zonas de armada.do / micaserogou.com / taohemps.com |
 | `cf-workers` | subagent | Workers/Pages: deploy, versiones, rollback, tail, secrets, CRON |
 | `cf-storage` | subagent | KV, D1, Queues (R2: NO usar) |
 | `cf-security` | subagent | SSL, WAF, bot mgmt, tokens, firewall, certificados |

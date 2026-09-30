@@ -46,9 +46,14 @@ if $IS_HUB; then
         mkdir -p "$REPO_DIR/$repo_part"
         local_dir="$MY_HOME/.config/opencode/$local_part"
 
-        # a) Overwrite: config → repo dir
+        # a) Overwrite: config → repo dir (skip si es el mismo archivo/symlink — fix 2026-09-30: crash set -e)
         for f in "$local_dir"/*.md; do
-            cp -f "$f" "$REPO_DIR/$repo_part/$(basename "$f")"
+            dest="$REPO_DIR/$repo_part/$(basename "$f")"
+            if [ "$f" -ef "$dest" ] 2>/dev/null; then
+                echo "  = repo/$repo_part/$(basename "$f") (mismo archivo, skip)"
+                continue
+            fi
+            cp -f "$f" "$dest"
             echo "  → repo/$repo_part/$(basename "$f") (overwrite)"
         done
         for d2 in "$local_dir"/*/; do
@@ -68,6 +73,27 @@ if $IS_HUB; then
             local_name=$(basename "$d2")
             [ ! -d "$local_dir/$local_name" ] && rm -rf "$d2" && echo "  ✗ repo/$repo_part/$local_name/ (deleted)"
         done
+    done
+
+    # ── BIN (2026-09-30): scripts propios de ~/bin (solo TEXTO; .phar/ELF/*.bak*/*.bkup* fuera) ──
+    mkdir -p "$REPO_DIR/bin"
+    for f in "$MY_HOME"/bin/*; do
+        [ -f "$f" ] || continue
+        base=$(basename "$f")
+        case "$base" in *.bak.*|*.bkup*) echo "  - bin/$base (excluido: backup)"; continue;; esac
+        if file "$f" 2>/dev/null | grep -q "text"; then
+            dest="$REPO_DIR/bin/$base"
+            if [ "$f" -ef "$dest" ] 2>/dev/null; then
+                echo "  = bin/$base (mismo archivo, skip)"; continue
+            fi
+            cp -f "$f" "$dest" && echo "  → bin/$base"
+        else
+            echo "  - bin/$base (excluido: binario reinstalable)"
+        fi
+    done
+    for f in "$REPO_DIR"/bin/*; do
+        [ -e "$f" ] || continue
+        [ -f "$MY_HOME/bin/$(basename "$f")" ] || { rm -f "$f"; echo "  ✗ bin/$(basename "$f") (deleted)"; }
     done
 
     # Commit + push si hay cambios
