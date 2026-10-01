@@ -131,3 +131,17 @@ docker exec erpipo-preprod-app php artisan migrate:status
 - **Vivo 2026-10-01**: app/mysql:8.0/mailpit/queue/scheduler/phpmyadmin/nginx:1.25/redis Up 3d.
 - **Check**: docker ps -f name=erpipo
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "erp-dev",
+  "label": "git HEAD warcold/erpipo-preprod",
+  "source": "releases/latest (propio, tags)",
+  "href": "github.com/warcold/erpipo-preprod releases",
+  "href_docs": "",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

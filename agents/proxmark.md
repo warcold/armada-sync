@@ -510,3 +510,17 @@ diff <(xxd dump1.bin) <(xxd dump2.bin)
 - **Vivo**: solo presente si el hardware esta conectado.
 - **Check**: ls /dev/ttyACM0
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "proxmark",
+  "label": "prowler-cli --version 5.36.0",
+  "source": "pypi prowler (red hacking)",
+  "href": "pypi.org/pypi/prowler",
+  "href_docs": "https://docs.prowler.com/",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

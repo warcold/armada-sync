@@ -77,3 +77,10 @@ ssh victoria 'curl -s -m 4 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/
 
 Victoria corre `upstream-sync.py` diario (8 sistemas, guarda 24h): ComfyUI git, LivePortrait git, Sonic git, Gradio PyPI, yt-dlp releases, cloudflared releases, blogwatcher releases, vLLM-digest (pineado, sin fetch). Si kalimete necesita saber si algo en victoria tiene update: pedirle a Victoria su bloque UPSTREAM del reporte (WhatsApp cada 4h) o leerlo con `ssh victoria cat .victoria-custom/state/upstream.json`.
 - **NUNCA actualizar nada en victoria** (ni siquiera dependencias): los updates los aplica Victoria con autorización del owner. Este subagente solo LEE y documenta.
+
+
+```json upstream_drk
+{"enabled": false, "id": "eco-victoria", "label": "LEIDO de victoria (ajeno)", "source": "upstream.json de victoria via reporte", "href": "", "href_docs": "", "pin_note": "vLLM digest pineado (nunca mover sin owner)", "groom_clean": false}
+```
+
+groom_clean: **FALSE** — este subagente apunta a otra maquina; limpiar solo su propia forma (paths/checks rotos), NUNCA historia ni referencias a victoria.

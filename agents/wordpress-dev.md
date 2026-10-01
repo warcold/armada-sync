@@ -138,3 +138,17 @@ El stack local se conecta al LLM de victoria vía:
 - **Vivo 2026-10-01**: healthy, Up 3d.
 - **Check**: docker ps -f name=wordpress
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "wordpress-dev",
+  "label": "wordpress:6.7-php8.3-apache (hub tag)",
+  "source": "hub.docker.com/_/wordpress latest-tag",
+  "href": "hub.docker.com/_/wordpress",
+  "href_docs": "https://wordpress.org/documentation/",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

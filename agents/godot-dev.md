@@ -198,3 +198,17 @@ godot --headless --path ~/armada-godot --export-release "HTML5" ./export/game.ht
 - **Vivo**: MCP declarado en opencode.jsonc.
 - **Check**: ls ~/armada-godot/
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "godot-dev",
+  "label": "godot --version 4.7.2",
+  "source": "github godotengine/godot releases/latest",
+  "href": "github.com/godotengine/godot/releases/latest",
+  "href_docs": "https://docs.godotengine.org/",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

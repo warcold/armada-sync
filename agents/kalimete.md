@@ -256,3 +256,8 @@ No existen máquinas follower — solo kalimete escribe al repo. Si el usuario d
 - **Práctico**: el CHANGELOG.md se lee solo cuando el usuario pregunta "¿qué cambió?" — no se carga automáticamente en cada request.
 - **Destructivo sync**: collect/deploy borran zombies automáticamente (ya implementado).
 - **Sin scripts de detección**: no hay necesidad de un script de "change detection". El git log es suficiente. El reporting lo hace kalimete al leerlo.
+
+
+```json upstream_drk
+{"enabled": true, "id": "kalimete", "label": "coordinador (19 hijos)", "source": "", "href": "MAPA.md", "href_docs": "", "pin_note": "", "groom_clean": true}
+```
