@@ -100,11 +100,18 @@ stores → customers, carts, orders, products, deals, product_variants, cart_ite
 - Los frontend de los clientes no conversan entre sí — solo los del mismmo negocio
 - Woodly es el primer tenant operacional, "seed" incluído
 - Es solo desarrollado ahora (2026-09-05), es totalmente válido para producción cuando esté listo
+- **Deploy a vps-preprod: PENDIENTE y requiere autorización explícita del owner** (no desplegar sin permiso)
+
+## Vecindad — no confundir (owner aclaró 2026-10-01)
+
+- **erpipos :8100** (repo `sistema-facturacion`, rama dev/ecomm-erp, Laravel) es un **ERP DISTINTO** a este. El WordPress de MaganTech (kalimete :8091) consume erpipos :8100 **tenant 10** vía admin-ajax same-origin — NO consume alfredo-ecomm :3004.
+- El plugin WordPress **erp-commerce-suite** (dentro del WP :8091) con tabs/páginas de admin rotas lo arregla el **subagente WordPress** — NO tocarlo desde este agente; no duplicar trabajo.
+- **alfredo-ecomm :3004** (este repo, Node) sigue siendo exclusivo del proyecto Woodly (frontend Vue :5174). Scope intacto.
 
 ## Cambios recientes (2026-10-01)
 
-- **Nuevo endpoint**: `GET /v1/stores/:slug/categories` — devuelve `[{name: "Kitchen", count: 6}, ...]` con categoría + conteo de productos. Útil para navegación por categoría en frontend. Se implementó en `src/routes/stores.ts` OBLIGATORIAMENTE ANTES de `/:slug` (si "categories" viene después, Express lo interpreta como slug y devuelve 404).
-- **CORS ajustado**: `CORS_ORIGIN` en docker-compose.yaml ahora es variable `${CORS_ORIGIN:-...}` con defaults incluyendo `http://localhost:8091` (WordPress dev) y `https://mantantech.kalimete.local` (plausible dominio de MaganTech). El .env.example documenta el patrón comma-separated sin trailing slash.
+- **Nuevo endpoint**: `GET /v1/stores/:slug/categories` — devuelve `[{name: "Kitchen", count: 6}, ...]` con categoría + conteo de productos. Es **mejora general del API** para frontends del ecosistema (Woodly :5174 y futuros tenants e-commerce) — NO era requerimiento del WordPress de MaganTech (ese WP no consume este backend; ver "Vecindad" abajo). Se implementó en `src/routes/stores.ts` OBLIGATORIAMENTE ANTES de `/:slug` (si "categories" viene después, Express lo interpreta como slug y devuelve 404).
+- **CORS ajustado**: `CORS_ORIGIN` en docker-compose.yaml ahora es variable `${CORS_ORIGIN:-...}` con defaults incluyendo `http://localhost:5174,http://127.0.0.1:5174,http://woodly.kalimete.local` (Woodly, el consumidor real). `http://localhost:8091` y `https://mantantech.kalimete.local` quedan **solo por cortesía/compatibilidad** — el WP de MaganTech (:8091) usa admin-ajax same-origin contra **erpipos :8100** (tenant 10, ERP Dev) y no necesita este CORS. El .env.example documenta el patrón comma-separated sin trailing slash.
 - **Bugfix docker-compose**: Eliminado campo `version: "3.8"` obsoleto (Docker Compose v3+).
 
 ## Upstream (2026-10-01)
