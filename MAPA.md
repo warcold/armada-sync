@@ -171,11 +171,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### Subagentes ocultos (hidden, se delegan via tool task)
 | Agente | Función | Estado |
 |---|---|---|
-| eco-cloudflare-dns | DNS de las 3 zonas | ✅ |
-| eco-cloudflare-security | SSL, WAF, firewall, tokens | ✅ |
-| eco-cloudflare-storage | KV, D1, Queues (NO R2) | ✅ |
-| eco-cloudflare-tunnels | Túneles cloudflared | ✅ |
-| eco-cloudflare-workers | Workers/Pages/deploy | ✅ |
+| eco-cloudflare | Cloudflare único: DNS, SSL/WAF, KV/D1, túneles, Workers | ✅ |
 | eco-irc | Servidor IRC InspIRCd (vps-preprod) | ✅ |
 | eco-proxy | Servidor proxy internacional (vps-proxy) | ✅ |
 | eco-vps | Servidor VPS producción (vps-preprod) | ✅ |

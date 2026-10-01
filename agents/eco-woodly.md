@@ -98,3 +98,9 @@ Para crear un nuevo sitio basado en Woodly:
 5. Copiar hardcoded.img; ajustar colores/settings en el admin
 
 Esto es exactamente cómo funciona *Mitiba Klas Soliaria* para cualquier nuevo cliente que necesite su propia landing/e-commerce.
+
+## Fuente y despliegue (verificado 2026-10-01)
+
+- **Dev kalimete**: `~/dev/apps/woodly/` (compose dev/prod, `frontend/`, update.sh) y `~/projects/woodly/` (AGENTS.md, README, docs).
+- **Prod vps-preprod**: `/opt/woodly` (contenedor `woodly-woodly-1`). Flujo: editar en kalimete → commit/push → `cd /opt/woodly && git pull && ./update.sh`.
+- **Edge**: Caddy (`nextcloud-stack-caddy-1`, Caddyfile ro en `/opt/nextcloud-stack/`) — `caddy reload` NO aplica, usar `docker restart`; `woodly.alfredo.pro` retirado 2026-08-07.

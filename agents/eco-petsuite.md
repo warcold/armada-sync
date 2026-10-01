@@ -60,6 +60,11 @@ ssh vps-preprod 'curl -s http://127.0.0.1:4000/api/health'
 - "logs de petsuite", "reinicia petsuite", "backup de petsuite"
 - ⚠️ Backups: cron muerto desde 2026-07-10 (pendiente verificar)
 
+## Fuente y despliegue (verificado 2026-10-01)
+
+- **Dev kalimete**: `~/dev/apps/petsuite/` (compose dev/prod, `DATABASE_README.md`, `DEPLOY.md`, `backup.sh`, `deploy.sh`).
+- **Prod vps-preprod**: contenedor `petsuite` (`petsuite:v2`). Despliegue según `DEPLOY.md` del repo local.
+
 ## Reglas de Operación
 
 1. Backup `.bkup` antes de modificar cualquier config.

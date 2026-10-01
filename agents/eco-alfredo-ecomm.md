@@ -85,6 +85,12 @@ stores → customers, carts, orders, products, deals, product_variants, cart_ite
 4. Establecer CORS_ORIGIN=https://woodly.armada.do,https://*.armada.do
 5. JWT_SECRET y DB_PASSWORD con valores seguros
 
+## Fuente verificada (2026-10-01)
+
+- Rutas del agente CONFIRMADAS: `~/projects/alfredo-pro-ecomm/backend/docker-compose.yaml` existe; proyecto compose `backend` corriendo (api+db+redis, Up 2 días); `:3004` escuchando en kalimete; docs en `~/projects/alfredo-pro-ecomm/docs/`.
+- ⚠️ No confundir con `erp-dev`: ese es erpipo/facturación (Laravel, `:8100`, `https://erp.kalimete.local`). Este es e-commerce (Node, `:3004`, `http://erp.kalimete.local:3004`). Mismo hostname, puertos distintos, sistemas distintos.
+- "Producción: TBD" sigue vigente — el deploy a vps-preprod aún no ocurre.
+
 ## Notas importantes
 
 - El backend es multi-tenant: una DB, múltiples tiendas lógicamente separadas

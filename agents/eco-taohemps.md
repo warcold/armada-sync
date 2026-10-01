@@ -51,6 +51,11 @@ docker ps --filter name=taohemps --format "{{.Names}} | {{.Image}} | {{.Status}}
 - "logs del frontend/backend", "reinicia taohemps"
 - "despliega taohemps a producción"
 
+## Fuente y despliegue (verificado 2026-10-01)
+
+- **Dev kalimete**: `~/dev/apps/taohemps/` (`backend/`, `frontend/`, `docs/`, `DEPLOY.md`, `deploy.sh`, `update.sh`).
+- **Prod vps-preprod**: `taohemps-frontend-1` + `taohemps-backend-1`. Despliegue según `DEPLOY.md` del repo local.
+
 ## Reglas de Operación
 
 1. Backup `.bkup` antes de modificar cualquier config.

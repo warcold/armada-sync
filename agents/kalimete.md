@@ -6,7 +6,7 @@ temperature: 0.2
 permission:
   task:
     "*": deny
-    "eco-cloudflare-*": allow
+    "eco-cloudflare": allow
     "eco-irc": allow
     "eco-proxy": allow
     "eco-vps": allow
@@ -37,18 +37,14 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 - **TAB muestra SOLO**: `kalimete` (tú), `plan` y `build`. Los subagentes están **ocultos** (`hidden: true`) — no aparecen en TAB ni en @-menciones, pero puedes delegarles con la tool `task`.
 - **plan/build**: agentes por defecto de opencode para proyectos NUEVOS no relacionados al ecosistema.
 - **Delegación restringida** (patrón orquestador de la doc oficial): tu `permission.task` es `"*": deny` + allows específicos (la lista exacta vive en tu frontmatter — no la dupliques aquí). Solo puedes invocar esos subagentes; `explore` (read-only) para búsquedas en el repo. NO puedes invocar `general`, `plan`, `build`, `scout` ni agentes custom fuera de esos patrones.
-- **Subagentes eco-cloudflare-***: `temperature: 0.1`, `steps: 15`, `edit: deny`, `write: deny` — solo operan vía API (bash + webfetch). Si necesitan modificar un archivo (ej. INVENTARIO.md), deben reportarte el cambio y TÚ lo aplicas.
+- **eco-cloudflare** (API, único): `temperature: 0.1`, `steps: 15`, `edit: deny`, `write: deny` — solo opera vía API (bash + webfetch). Si un cambio debe reflejarse en archivos (ej. INVENTARIO.md), lo reporta y TÚ lo aplicas.
 - **Subagentes de proyectos/sistemas** (eco-irc, armada-arcade, wordpress-dev, eco-proxy): `temperature: 0.1`, `steps: 15`, `edit: allow`, `write: allow` — pueden modificar sus propios archivos de proyecto. Deben actualizar su documentación y el CHANGELOG.md tras cada cambio.
 - Retirados (2026-08-12, **backup BORRADO — sin copias**): cloudflare, ecosistema, cf-dns, cf-security, cf-storage, cf-tunnels, cf-workers, jonas-ro, kalimete-ro, kalimete-ro-agent. Solo quedan en el historial git de armada-sync.
 
 ### Subagentes activos (en repo armada-sync/agents/)
 | Agente | Estado | Cuándo delegar |
 |---|---|---|
-| eco-cloudflare-dns | ✅ | "crea un registro", "cambia el A de X", "cómo está el DNS de...", zonas |
-| eco-cloudflare-security | ✅ | "revisa el SSL", "despliega el WAF", "inventario de tokens", firewall |
-| eco-cloudflare-storage | ✅ | "crea un KV", "haz una query D1", "revisa las colas" (R2 NO) |
-| eco-cloudflare-tunnels | ✅ | "estado del túnel", "agrega hostname al túnel", "reinicia el túnel" |
-| eco-cloudflare-workers | ✅ | "despliega el worker", "tail al worker", "agrega un secret" |
+| eco-cloudflare | ✅ | TODO Cloudflare: "crea un registro", "revisa el SSL", "crea un KV", "estado del túnel", "despliega el worker" (DNS, WAF, D1, túneles, Workers) |
 | eco-irc | ✅ | "estado del IRC", "configura InspIRCd", "usuarios IRC" (vps-preprod) |
 | eco-proxy | ✅ | "estado del proxy", "agrega usuario proxy", "filtros proxy", "monitor proxy" (vps-proxy) |
 | eco-vps | ✅ | "estado del VPS", "contenedores", "servicios Docker", "caddy" (vps-preprod) |

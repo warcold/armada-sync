@@ -1,5 +1,17 @@
 ## 2026-10-01
 
+### [00:30] - Consolidación: eco-cloudflare único + ragnarok docs-harness + limpieza duplicados
+- **Tipo**: infra | agentes | refactor | diagnóstico
+- **Modificado**: `agents/eco-cloudflare.md` (NUEVO, unifica dns/security/storage/tunnels/workers con todas sus reglas aprendidas: IDs de zona/ruleset, NO-2-niveles, R2 ban, playbook túneles). BORRADOS los 5 + sus symlinks (limpieza autorizada). `kalimete.md` (permission `eco-cloudflare-*`→`eco-cloudflare` exacto — el wildcard ya no matcheaba; tabla 5 filas→1). MAPA.md (tabla igual). `eco-ragnarok.md` reescrito como harness docs (rAthena/FluxCP/roBrowser/wsProxy + estado vivo). Fuente+despliegue agregados a woodly/petsuite/taohemps/scriberr/alfredo-ecomm (rutas verificadas). Sin duplicados reales: erp-dev (facturación Laravel) vs alfredo-ecomm (e-commerce Node) son sistemas distintos — documentada la distinción (mismo hostname, puertos :8100/:3004). eco-vps vs proyectos = frontera host/app, se mantiene.
+- **Afecta a**: kalimete (1 solo target Cloudflare, cero misrouting). Sin impacto en producción (docs + routing).
+- **Causa**: Usuario: identificar discrepancias/duplicados, unificar por sistema, harness basado en documentación oficial de cada servicio.
+- **Diagnósticos nuevos (verificados, no inventados)**:
+  - 🎮 Demonios rAthena (6900/6121/5121) NO corren en vps-preprod — el juego web carga pero no puede autenticar. Fuente lista en `/srv/ragnarok` (confs, Dockerfiles, sql-init, scripts, ansible).
+  - 🔴 `ragnarok.cp.armada.do` → TLS handshake failure en edge aunque origin da 200: viola la regla CF de no-2-niveles. Propuesta: `ragnarok-cp.armada.do` (requiere confirmación, cambia URL pública).
+  - ⚠️ wsProxy sin allow-list verificada (`-a` restringido pendiente de confirmar).
+- **Estado**: ✅ sincronizado
+- **Notas**: pendiente confirmación usuario para renombre del panel y para levantar daemons athena (build desde Dockerfile.rathena).
+
 ### [00:05] - Harness único Kalimete: 23 subagentes ocultos + estándar de harness + fixes
 - **Tipo**: infra | agentes | harness | seguridad
 - **Modificado**: 19 archivos (agents/*.md + MAPA.md). `kalimete.md` (permission.task +erp-dev/+godot-dev, tabla +2 filas, sección Harness maestro). Frontmatter `hidden:true`+color en los 17 que faltaban (TAB ahora muestra SOLO kalimete/plan/build). 8 esqueletos expandidos al estándar (stack validado, comandos copiables, capacidades, reglas). `wordpress-dev.md` actualizado (erp-commerce-suite v4.4.0 unificado; el doc citaba plugins pre-4.0.0). MAPA.md (dup taohemps fuera, ERP 4.1.0→4.4.0, filas erp-dev/godot-dev, providers 3→4+MCP). `opencode.jsonc` (backup .bkup-20261001): MCP godot `command` string+args → array (el SDK exige `Array<string>`; así como estaba el MCP nunca conectaba). `eco-docuseal.md`: password SMTP en claro retirada del repo (→ puntero a .env).

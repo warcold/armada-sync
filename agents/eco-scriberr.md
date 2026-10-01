@@ -45,6 +45,11 @@ ssh vps-preprod 'docker logs scriberr --tail 50'
 - "logs de scriberr", "reinicia scriberr"
 - "despliega scriberr", "actualiza la imagen"
 
+## Fuente y despliegue (verificado 2026-10-01)
+
+- **Dev kalimete**: `~/dev/apps/Scriberr/` (ojo capital S; `build.sh`, variantes compose `blackwell`/`cuda`, `api-docs/`, `CNAME`).
+- **Prod vps-preprod**: contenedor `scriberr` (`scriberr-custom:latest`).
+
 ## Reglas de Operación
 
 1. Backup `.bkup` antes de modificar cualquier config.
