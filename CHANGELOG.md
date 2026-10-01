@@ -1,5 +1,15 @@
 ## 2026-10-01
 
+### [10:45] - Subagentes RENOMBRADOS a nombres reales (adios prefijo eco-) + name: display + harness alineado
+- **Tipo**: agentes | harness | docs | refactor
+- **Modificado**: 14 archivos `agents/eco-*.md` renombrados con `git mv` (sin prefijo: `authentik.md`, `cloudflare.md`, `docuseal.md`, `irc.md`, `nextcloud.md`, `petsuite.md`, `proxy.md`, `ragnarok.md`, `scriberr.md`, `taohemps.md`, `victoria-server.md`, `vps.md`, `woodly.md`, `alfredo-ecomm.md`); los 19 con `name:` display nuevo (`Authentik`, `Cloudflare`, `DocuSeal`, `IRC`, `Nextcloud`, `PetSuite`, `Proxy`, `Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `Woodly`, `Alfredo Ecomm`, `Armada Arcade`, `ERP Dev`, `Godot`, `Proxmark`, `WordPress`) + linea `> **Frescura**` + ref a su harness. `kalimete.md`: permission.task con claves = display names EXACTOS + scope reescrito + historia eco-cloudflare conservada + tabla. `harness/`: 14 renombrados + los 20 alineados (name/harness id/hidden:false/agent_file/docs) + central (lista subagentes + scope_agentes). Symlinks `~/.config/opencode/agent/` recreados. `bin/doc-fresh.sh` AGENTES -> ids lowercase. `bin/upstream-kalimete-check.py` ids -> lowercase. MAPA.md + configs/MAPA.md + commands/mapa.md + ecosistema-map + cloudflare-map (areas Cloudflare compactadas al agente unico). state/frescura.json remapeado.
+- **Afecta a**: kalimete (TUI): `@` ahora muestra nombres reales identificables (antes eco-*); delegacion Task de kalimete usa los names exactos; cero cambios de produccion/permisos por agente (edit/write deny preservados donde correspondia).
+- **Causa**: owner (via Victoria): "no usemos eco, usemos el nombre bien, ej. Authentik, Cloudflare, DocuSeal, NextCloud, Ragnarok" + cada agente con su harness y su documentacion oficial (mismo estandar Victoria).
+- **Verificado**: `opencode agent list` live: 19 subagentes con nombres reales `(subagent)`, primaries kalimete/plan/build intactos, CERO duplicados; 20 harness JSON validos; backup pre-cambio `~/.config/opencode/bkup-agents/rename-20261001-pre.tar.gz` (70 archivos). Requiere restart del TUI para el autocomplete.
+- **Estado**: en sincronizacion (hub cada 5 min — ya publicado)
+- **Notas**: `Victoria Server` (no "Victoria") a proposito: ese subagente GESTIONA el host victoria (solo lectura) — no es hablar CON Victoria. El historial "kalimete antes era eco-cloudflare" (2026-08-12) se conserva con nota. Referencias eco-accesos/eco-voice (muertos) intactas como historia.
+
+
 ### [10:10] - Subagentes VISIBLES en autocomplete @ (espejo Victoria, decision del owner)
 - **Tipo**: agentes | config
 - **Modificado**: 19 subagentes (`agents/*.md` + `~/armada-arcade/agents/armada-arcade.md`): frontmatter `hidden: true` -> `hidden: false`. `kalimete.md` INTACTO (mode: primary, color teal, permission.task allowlist completa). `default_agent: kalimete` ya estaba.
