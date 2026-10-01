@@ -1,5 +1,22 @@
 ## 2026-09-30
 
+### [00:00] - Godot Game Dev: MCP integration (386 herramientas) + agente godot-dev
+- **Tipo**: proyecto | gamedev | MCP | herramienta
+- **Modificado**: @yanhuifair/godot-mcp 1.12.3 (npm global), Godot 4.7.2 (steam), proyecto armada-godot, opencode.jsonc (mcp config), agents/godot-dev.md
+- **Afecta a**: kalimete (opencode MCP client),~/armada-godot (proyecto demo)
+- **Causa**: Usuario: "VAMOS A CREAR EL HARNESS / AGENTES PARA GODOT" — necesitamos integración de IA con Godot Engine para desarrollo de juegos
+- **Cambios realizados**:
+  - ✅ MCP server `@yanhuifair/godot-mcp` 1.12.3 instalado globalmente (npm)
+  - ✅ Godot 4.7.2 symlinked a /usr/local/bin/godot (era godot.x11.opt.tools.64)
+  - ✅ Proyecto demo ~/armada-godot/ creado con project.godot + addons/godot-mcp/ plugin
+  - ✅ opencode.jsonc: sección `mcp` con server `godot` (type: local, command: godot-mcp, args: -p /home/warcold/armada-godot)
+  - ✅ Agente `godot-dev.md` creado (386 tools, 30 categorías, GDScript, editor bridge, runtime bridge)
+  - ✅ Symlink creado: ~/.config/opencode/agents/godot-dev.md → armada-sync/agents/godot-dev.md
+- **Estado**: ✅ sincronizado (pendiente commit/push)
+- **Notas**: 386 herramientas vs IvanMurzak/Godot-MCP (42 tools, requiere .NET 8 que no tenemos). @yanhuifair es TypeScript puro, funciona sin Godot abierto para 220+ tools, tiene undo nativo, runtime freeze/step/screenshot (único), 30 categorías
+
+### [00:35] - ERP Commerce Suite 4.2.0: panel UX — SPA tabs, diseño propio, datos vivos del ERP
+
 ### [00:35] - ERP Commerce Suite 4.2.0: panel UX — SPA tabs, diseño propio, datos vivos del ERP
 - **Tipo**: proyecto | UX | feature | wordpress
 - **Modificado**: erp-commerce-suite 4.1.1→4.2.0. AdminMenu SPA client-side (erpsuite-admin.js: tabs sin recarga, deep link #tab-x, localStorage, flechas teclado); erpsuite-admin.css (hero+badge modo, tabs píldora dashicons, cards estado, botones rounded, responsive mobile ≤782px); cards datos vivos en Entorno/Catálogo/MCP (conteos reales ERP vía transient 60s, sin bloqueo si cae); assets solo en nuestra página admin (toplevel_page_erp-suite)
