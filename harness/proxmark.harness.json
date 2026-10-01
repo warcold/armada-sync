@@ -3,7 +3,7 @@
  "updated": "2026-10-01",
  "agent_file": "~/armada-sync/agents/proxmark.md",
  "mode": "subagent",
- "hidden": true,
+ "hidden": false,
  "scope": "Proxmark3 RFID/NFC (/dev/ttyACM0)",
  "vivo_2026_10_01": "hardware local; solo si conectado",
  "live_check": "ls /dev/ttyACM0",
@@ -14,5 +14,6 @@
  "docs": [
   "~/armada-sync/agents/proxmark.md"
  ],
- "changelog": "~/armada-sync/CHANGELOG.md"
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "name": "Proxmark"
 }

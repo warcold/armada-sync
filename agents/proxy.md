@@ -1,4 +1,5 @@
 ---
+name: Proxy
 description: Subagente del servidor proxy (vps-proxy 31.220.102.176). Usado cuando kalimete delega: gestión de usuarios del proxy, filtros de contenido, rate limiting, monitoreo, estado del servicio Squid/SOCKS5, DNS del proxy. Cubre el proxy server internacional (EEUU).
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco Proxy — Servidor Proxy Internacional (vps-proxy)
+# Proxy — Servidor Proxy Internacional (vps-proxy)
 
 ## Visión
 
@@ -123,7 +125,7 @@ Cuando se agreguen más IPs al servidor, descomentar en `/etc/squid/squid.conf`:
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-proxy",
+  "id": "Proxy",
   "label": "native squid vps-proxy (hijo)",
   "source": "manual squid-cache.org",
   "href": "manual squid-cache.org",
@@ -132,3 +134,5 @@ Cuando se agreguen más IPs al servidor, descomentar en `/etc/squid/squid.conf`:
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/proxy.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

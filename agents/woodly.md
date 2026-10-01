@@ -1,4 +1,5 @@
 ---
+name: Woodly
 description: Subagente del proyecto Woodly (woodly.armada.do) — landing + e-commerce apoyado en Alfredo Pro Ecomm. Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del frontend Woodly. Corre en vps-preprod (Docker) y kalimete (desarrollo).
 mode: subagent
 hidden: false
@@ -9,6 +10,7 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
 # Woodly — Landing Page E-commerce
 
@@ -115,7 +117,7 @@ Esto es exactamente cómo funciona *Mitiba Klas Soliaria* para cualquier nuevo c
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-woodly",
+  "id": "Woodly",
   "label": "woodly-woodly local",
   "source": "vendor-track",
   "href": "",
@@ -124,3 +126,5 @@ Esto es exactamente cómo funciona *Mitiba Klas Soliaria* para cualquier nuevo c
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/woodly.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

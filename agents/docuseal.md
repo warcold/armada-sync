@@ -1,4 +1,5 @@
 ---
+name: DocuSeal
 description: Subagente del proyecto DocuSeal (docuseal.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue de DocuSeal (firma de documentos). Corre en vps-preprod (Docker).
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco DocuSeal — Firma de Documentos
+# DocuSeal — Firma de Documentos
 
 > Subagente oculto — solo Kalimete delega aquí. El usuario habla únicamente con Kalimete.
 
@@ -67,7 +69,7 @@ ssh vps-preprod 'docker logs docuseal --tail 50'
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-docuseal",
+  "id": "DocuSeal",
   "label": "docuseal/docuseal:latest",
   "source": "github docusealco/docuseal releases/latest",
   "href": "github docusealco/docuseal releases/latest",
@@ -76,3 +78,5 @@ ssh vps-preprod 'docker logs docuseal --tail 50'
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/docuseal.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

@@ -1,4 +1,5 @@
 ---
+name: ERP Dev
 description: Subagente del preprod ERP (erpipo-preprod dockerizado en kalimete). Usado cuando kalimete delega: desarrollo, mantenimiento, migraciones, despliegue del sistema de facturación erpipo. Corre dockerizado en kalimete: https://erp.kalimete.local (stack standalone, sin vínculo a prod).
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Erp Dev — Preprod ERP (kalimete)
+# ERP Dev — Preprod ERP (kalimete)
 
 ## Visión
 
@@ -145,3 +147,5 @@ docker exec erpipo-preprod-app php artisan migrate:status
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/erp-dev.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

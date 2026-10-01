@@ -1,4 +1,5 @@
 ---
+name: Taohemps
 description: Subagente del proyecto Taohemps (taohemps.com). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del proyecto Taohemps. Corre en vps-preprod (Docker) y kalimete.
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco Taohemps — Proyecto Taohemps
+# Taohemps — Proyecto Taohemps
 
 > Subagente oculto — solo Kalimete delega aquí. El usuario habla únicamente con Kalimete.
 
@@ -75,7 +77,7 @@ docker ps --filter name=taohemps --format "{{.Names}} | {{.Image}} | {{.Status}}
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-taohemps",
+  "id": "Taohemps",
   "label": "taohemps-frontend/backend locales",
   "source": "vendor-track",
   "href": "",
@@ -84,3 +86,5 @@ docker ps --filter name=taohemps --format "{{.Names}} | {{.Image}} | {{.Status}}
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/taohemps.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

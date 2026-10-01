@@ -1,4 +1,5 @@
 ---
+name: Armada Arcade
 description: Subagente del proyecto Armada Arcade (juego multiplayer TetriNET + plugins). Usado cuando kalimete delega: desarrollo, mantenimiento, mejoras del servidor y cliente de juego. Repo ~/armada-arcade/.
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# 🎮 Armada Arcade — Subagente de Juego
+# Armada Arcade — Subagente de Juego
 
 ## Visión General
 
@@ -165,3 +167,5 @@ pluginRegistry.register(DominoesPlugin);
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/armada-arcade.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

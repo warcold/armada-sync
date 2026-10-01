@@ -1,6 +1,6 @@
 # 🗺️ MAPA DE AGENTES — Sistema Cloudflare de Alfredo@armada.do
 
-> **Para qué es esto**: mapa de detalle del sistema Cloudflare. El agente **kalimete** (principal, ex-eco-cloudflare) lo consulta cuando el usuario pide el detalle Cloudflare o `/mapa`. Los subagentes `eco-cloudflare-*` (hidden) lo usan como base.
+> **Para qué es esto**: mapa de detalle del sistema Cloudflare. El agente **kalimete** (principal, ex-Cloudflare) lo consulta cuando el usuario pide el detalle Cloudflare o `/mapa`. Los subagentes `Cloudflare-*` (hidden) lo usan como base.
 >
 > **Regla de oro**: el agente principal (primary) NO ejecuta operaciones él mismo — delega a los subagentes según la tabla. Los subagentes ejecutan, el principal coordina y verifica.
 
@@ -18,11 +18,11 @@ TÚ (Alfredo/warcold)
 │ verifica resultados, responde al usuario   │
 └────────────────────────────────────────────┘
    │  (subagentes hidden — delegación vía tool task)
-   ├──► eco-cloudflare-dns     → DNS, zonas, records (armada.do / taohemps.com)
-   ├──► eco-cloudflare-workers → Workers, Pages, CRON, secrets
-   ├──► eco-cloudflare-storage → KV, D1, Queues (R2: NO USAR — desactivado)
-   ├──► eco-cloudflare-security→ SSL, WAF, firewall, bot mgmt, tokens, certificados
-   └──► eco-cloudflare-tunnels → Túneles Cloudflare, conectividad, ingress
+   ├──► Cloudflare-dns     → DNS, zonas, records (armada.do / taohemps.com)
+   ├──► Cloudflare-workers → Workers, Pages, CRON, secrets
+   ├──► Cloudflare-storage → KV, D1, Queues (R2: NO USAR — desactivado)
+   ├──► Cloudflare-security→ SSL, WAF, firewall, bot mgmt, tokens, certificados
+   └──► Cloudflare-tunnels → Túneles Cloudflare, conectividad, ingress
 ```
 
 Todos los agentes comparten la misma base de conocimiento:
@@ -36,11 +36,11 @@ Todos los agentes comparten la misma base de conocimiento:
 | Agente | Modo | Responsabilidad | Delegar cuando... |
 |---|---|---|---|
 | **kalimete** | primary | Coordinador general. Carga env, verifica whoami, consulta skill+mapa, delega, verifica, resume | — (es el principal) |
-| **eco-cloudflare-dns** | subagent (hidden) | DNS de las 3 zonas: listar/crear/actualizar/borrar records, ver zonas, settings de zona | "crea un registro", "cambia el A de X", "cómo está el DNS de...", migraciones de zona |
-| **eco-cloudflare-workers** | subagent (hidden) | Workers/Pages: deploy, versiones, rollback, tail, secrets, CRON | "despliega el worker", "tail al worker", "agrega un secret" |
-| **eco-cloudflare-storage** | subagent (hidden) | KV namespaces, D1 databases, Queues. **R2: NO tocar (descartado 2026-08-07)** | "crea un KV", "haz una query D1", "revisa las colas" |
-| **eco-cloudflare-security** | subagent (hidden) | SSL modes, WAF Managed Free Ruleset, bot mgmt (dashboard), tokens, certificados, reglas firewall | "revisa el SSL", "despliega el WAF", "haz inventario de tokens" |
-| **eco-cloudflare-tunnels** | subagent (hidden) | Túneles cloudflared, ingress, estados, DNS del túnel, conectividad | "estado del túnel", "agrega un hostname al túnel", "reinicia el túnel" |
+| **Cloudflare-dns** | subagent (hidden) | DNS de las 3 zonas: listar/crear/actualizar/borrar records, ver zonas, settings de zona | "crea un registro", "cambia el A de X", "cómo está el DNS de...", migraciones de zona |
+| **Cloudflare-workers** | subagent (hidden) | Workers/Pages: deploy, versiones, rollback, tail, secrets, CRON | "despliega el worker", "tail al worker", "agrega un secret" |
+| **Cloudflare-storage** | subagent (hidden) | KV namespaces, D1 databases, Queues. **R2: NO tocar (descartado 2026-08-07)** | "crea un KV", "haz una query D1", "revisa las colas" |
+| **Cloudflare-security** | subagent (hidden) | SSL modes, WAF Managed Free Ruleset, bot mgmt (dashboard), tokens, certificados, reglas firewall | "revisa el SSL", "despliega el WAF", "haz inventario de tokens" |
+| **Cloudflare-tunnels** | subagent (hidden) | Túneles cloudflared, ingress, estados, DNS del túnel, conectividad | "estado del túnel", "agrega un hostname al túnel", "reinicia el túnel" |
 
 > Los antiguos `cloudflare` (primary) y `cf-*` fueron absorbidos/renombrados el 2026-08-12. Retirados en `~/.config/opencode/agent-backup-2026-08-12/`.
 

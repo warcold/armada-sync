@@ -1,4 +1,5 @@
 ---
+name: Alfredo Ecomm
 description: Subagente del proyecto Alfredo Pro Ecomm (e-commerce ERP backend). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del backend ERP e-commerce. Corre en kalimete (dev) y/o vps-preprod (prod futuro).
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Alfredo Pro Ecomm
+# Alfredo Ecomm
 
 Sistema e-commerce multi-tenant ERP — **backend central** para todos los negocios e-commerce de armada.
 
@@ -109,7 +111,7 @@ stores → customers, carts, orders, products, deals, product_variants, cart_ite
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-alfredo-ecomm",
+  "id": "Alfredo Ecomm",
   "label": "backend-api custom local",
   "source": "vendor-track",
   "href": "",
@@ -118,3 +120,5 @@ stores → customers, carts, orders, products, deals, product_variants, cart_ite
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/alfredo-ecomm.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

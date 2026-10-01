@@ -3,7 +3,7 @@
  "updated": "2026-10-01",
  "agent_file": "~/armada-sync/agents/wordpress-dev.md",
  "mode": "subagent",
- "hidden": true,
+ "hidden": false,
  "scope": "WordPress dev (kalimete)",
  "vivo_2026_10_01": "wordpress:6.7-php8.3 healthy + mariadb:10.11 Up 3d",
  "live_check": "docker ps -f name=wordpress",
@@ -14,5 +14,6 @@
  "docs": [
   "~/armada-sync/agents/wordpress-dev.md"
  ],
- "changelog": "~/armada-sync/CHANGELOG.md"
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "name": "WordPress"
 }

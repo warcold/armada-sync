@@ -1,4 +1,5 @@
 ---
+name: WordPress
 description: Subagente del stack WordPress Dev (WordPress + Elementor + EMCP Tools + MCP Adapter) en kalimete. Usado cuando kalimete delega: desarrollo, mantenimiento, pruebas del sistema WordPress automatizado que se comunica vía MCP con el LLM local (victoria).
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# WordPress Dev — Subagente de Desarrollo
+# WordPress — Subagente de Desarrollo
 
 ## Visión General
 
@@ -152,3 +154,5 @@ El stack local se conecta al LLM de victoria vía:
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/wordpress-dev.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

@@ -1,4 +1,5 @@
 ---
+name: VPS
 description: Subagente del servidor VPS de producción (vps-preprod 154.53.35.102). Usado cuando kalimete delega: gestión de contenedores Docker, servicios, caddy, authentik SSO, proyectos alojados. Cubre auth.armada.do, pets, woodly, ragnarok, scriberr, docuseal, nextcloud, whiteboard, taohemps.
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco VPS — Servidor de Producción (vps-preprod)
+# VPS — Servidor de Producción (vps-preprod)
 
 ## Visión
 
@@ -75,7 +77,7 @@ ssh vps-preprod 'uptime; df -h / | tail -1'
 ## Notas Validadas (2026-10-01)
 
 - **Caddy** = `nextcloud-stack-caddy-1` (caddy:2) — es el reverse proxy de TODO el VPS, no solo Nextcloud.
-- **IRC es servicio nativo systemd** (`inspircd`, puertos 6667/6697 activos) — NO es contenedor Docker; lo gestiona `eco-irc`.
+- **IRC es servicio nativo systemd** (`inspircd`, puertos 6667/6697 activos) — NO es contenedor Docker; lo gestiona `IRC`.
 - **Sin contenedor `caddy` suelto**: no buscarlo en `docker ps`.
 ## Upstream (2026-10-01)
 
@@ -87,7 +89,7 @@ ssh vps-preprod 'uptime; df -h / | tail -1'
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-vps",
+  "id": "VPS",
   "label": "labels 25/25 vps-preprod (hijo)",
   "source": "labels docker/docker hub",
   "href": "labels docker/docker hub",
@@ -96,3 +98,5 @@ ssh vps-preprod 'uptime; df -h / | tail -1'
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/vps.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

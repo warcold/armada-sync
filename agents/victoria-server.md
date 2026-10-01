@@ -1,4 +1,5 @@
 ---
+name: Victoria Server
 description: Subagente del servidor GPU/LLM (victoria 10.0.0.5). Usado cuando kalimete delega: gestión de vLLM, gateway LLM, nginx, cloudflared, servicios de IA (video, voz, whois, web-nav, comfyui). Acceso SOLO LECTURA por defecto.
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: deny
   write: deny
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco Victoria — Servidor GPU/LLM
+# Victoria Server — Servidor GPU/LLM
 
 ## Visión
 
@@ -80,7 +82,9 @@ Victoria corre `upstream-sync.py` diario (8 sistemas, guarda 24h): ComfyUI git, 
 
 
 ```json upstream_drk
-{"enabled": false, "id": "eco-victoria", "label": "LEIDO de victoria (ajeno)", "source": "upstream.json de victoria via reporte", "href": "", "href_docs": "", "pin_note": "vLLM digest pineado (nunca mover sin owner)", "groom_clean": false}
+{"enabled": false, "id": "Victoria Server", "label": "LEIDO de victoria (ajeno)", "source": "upstream.json de victoria via reporte", "href": "", "href_docs": "", "pin_note": "vLLM digest pineado (nunca mover sin owner)", "groom_clean": false}
 ```
 
 groom_clean: **FALSE** — este subagente apunta a otra maquina; limpiar solo su propia forma (paths/checks rotos), NUNCA historia ni referencias a victoria.
+
+> **Harness**: `~/armada-sync/harness/victoria-server.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

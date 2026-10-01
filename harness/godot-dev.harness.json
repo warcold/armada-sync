@@ -3,7 +3,7 @@
  "updated": "2026-10-01",
  "agent_file": "~/armada-sync/agents/godot-dev.md",
  "mode": "subagent",
- "hidden": true,
+ "hidden": false,
  "scope": "Godot 4.x + MCP 386 tools (~/armada-godot/)",
  "vivo_2026_10_01": "MCP godot en opencode.jsonc",
  "live_check": "ls ~/armada-godot/",
@@ -14,5 +14,6 @@
  "docs": [
   "~/armada-sync/agents/godot-dev.md"
  ],
- "changelog": "~/armada-sync/CHANGELOG.md"
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "name": "Godot"
 }

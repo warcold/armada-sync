@@ -1,4 +1,5 @@
 ---
+name: Authentik
 description: Subagente del SSO Authentik (auth.armada.do). Usado cuando kalimete delega: gestión de autenticación SSO, usuarios, aplicaciones, flujos de authentik. Corre en vps-preprod (Docker).
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco Authentik — SSO Authentik
+# Authentik — SSO Authentik
 
 ## Visión
 
@@ -108,7 +110,7 @@ for p in OAuth2Provider.objects.all():
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-authentik",
+  "id": "Authentik",
   "label": "ghcr.io/goauthentik/server",
   "source": "releases.authentik.io (hub publico)",
   "href": "releases.authentik.io (hub publico)",
@@ -117,3 +119,5 @@ for p in OAuth2Provider.objects.all():
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/authentik.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

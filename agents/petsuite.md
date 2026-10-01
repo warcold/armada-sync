@@ -1,4 +1,5 @@
 ---
+name: PetSuite
 description: Subagente del proyecto PetSuite (pets.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue, API, base de datos del sistema de mascotas. Corre en vps-preprod (Docker) y kalimete.
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco PetSuite — Plataforma de Mascotas
+# PetSuite — Plataforma de Mascotas
 
 > Subagente oculto — solo Kalimete delega aquí. El usuario habla únicamente con Kalimete.
 
@@ -83,7 +85,7 @@ ssh vps-preprod 'curl -s http://127.0.0.1:4000/api/health'
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-petsuite",
+  "id": "PetSuite",
   "label": "Imagen local petsuite:v2 + git pets-suite",
   "source": "labels vs git (workflow del subagente)",
   "href": "labels vs git (workflow del subagente)",
@@ -92,3 +94,5 @@ ssh vps-preprod 'curl -s http://127.0.0.1:4000/api/health'
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/petsuite.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

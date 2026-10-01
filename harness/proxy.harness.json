@@ -1,9 +1,9 @@
 {
- "harness": "eco-proxy",
+ "harness": "proxy",
  "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/eco-proxy.md",
+ "agent_file": "~/armada-sync/agents/proxy.md",
  "mode": "subagent",
- "hidden": true,
+ "hidden": false,
  "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)",
  "vivo_2026_10_01": "host Up 228d (dato 2026-09-19); revalidar",
  "live_check": "ssh vps-proxy systemctl is-active squid",
@@ -12,7 +12,8 @@
   "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
  },
  "docs": [
-  "~/armada-sync/agents/eco-proxy.md"
+  "~/armada-sync/agents/proxy.md"
  ],
- "changelog": "~/armada-sync/CHANGELOG.md"
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "name": "Proxy"
 }

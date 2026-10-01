@@ -1,4 +1,5 @@
 ---
+name: Godot
 description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 herramientas). Usado cuando kalimete delega: crear juegos, editar escenas, GDScript, shaders, animación, audio. Repo ~/armada-godot/.
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# 🎮 Godot Dev — Subagente de Desarrollo de Juegos
+# Godot — Subagente de Desarrollo de Juegos
 
 ## Visión General
 
@@ -212,3 +214,5 @@ godot --headless --path ~/armada-godot --export-release "HTML5" ./export/game.ht
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/godot-dev.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

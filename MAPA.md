@@ -171,20 +171,20 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### Subagentes ocultos (hidden, se delegan via tool task)
 | Agente | Función | Estado |
 |---|---|---|
-| eco-cloudflare | Cloudflare único: DNS, SSL/WAF, KV/D1, túneles, Workers | ✅ |
-| eco-irc | Servidor IRC InspIRCd (vps-preprod) | ✅ |
-| eco-proxy | Servidor proxy internacional (vps-proxy) | ✅ |
-| eco-vps | Servidor VPS producción (vps-preprod) | ✅ |
-| eco-victoria | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
-| eco-petsuite | Proyecto PetSuite (pets.armada.do) | ✅ |
-| eco-woodly | Proyecto Woodly (woodly.armada.do) — cliente principal ERP | ✅ |
-| eco-alfredo-ecomm | Backend ERP Alfredo Pro Ecomm (multin tenant) — NUEVO (2026-09-05) | ✅ |
-| eco-taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
-| eco-ragnarok | Servidor de juego Ragnarok | ✅ |
-| eco-nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
-| eco-authentik | SSO Authentik (auth.armada.do) | ✅ |
-| eco-docuseal | Proyecto DocuSeal | ✅ |
-| eco-scriberr | Proyecto Scriberr | ✅ |
+| Cloudflare | Cloudflare único: DNS, SSL/WAF, KV/D1, túneles, Workers | ✅ |
+| IRC | Servidor IRC InspIRCd (vps-preprod) | ✅ |
+| Proxy | Servidor proxy internacional (vps-proxy) | ✅ |
+| VPS | Servidor VPS producción (vps-preprod) | ✅ |
+| Victoria Server | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
+| PetSuite | Proyecto PetSuite (pets.armada.do) | ✅ |
+| Woodly | Proyecto Woodly (woodly.armada.do) — cliente principal ERP | ✅ |
+| Alfredo Ecomm | Backend ERP Alfredo Pro Ecomm (multin tenant) — NUEVO (2026-09-05) | ✅ |
+| Taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
+| Ragnarok | Servidor de juego Ragnarok | ✅ |
+| Nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
+| Authentik | SSO Authentik (auth.armada.do) | ✅ |
+| DocuSeal | Proyecto DocuSeal | ✅ |
+| Scriberr | Proyecto Scriberr | ✅ |
 | armada-arcade | Proyecto juego multiplayer (TetriNET) | ✅ |
 | wordpress-dev | WordPress+Elementor+EMCP+MCP stack | ✅ |
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
@@ -194,7 +194,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-voice | ~~Voz/STT/TTS~~ | 🔴 roto (servicio ELIMINADO) |
 
 ### Agentes retirados
-cloudflare → kalimete, ecosistema → kalimete, cf-dns→eco-cloudflare-dns, cf-security→eco-cloudflare-security, cf-storage→eco-cloudflare-storage, cf-tunnels→eco-cloudflare-tunnels, cf-workers→eco-cloudflare-workers, jonas-ro, kalimete-ro, kalimete-ro-agent — archivo backup BORRADO 2026-08-14, solo historial git.
+cloudflare → kalimete, ecosistema → kalimete, cf-dns→Cloudflare-dns, cf-security→Cloudflare-security, cf-storage→Cloudflare-storage, cf-tunnels→Cloudflare-tunnels, cf-workers→Cloudflare-workers, jonas-ro, kalimete-ro, kalimete-ro-agent — archivo backup BORRADO 2026-08-14, solo historial git.
 
 ## Reglas Anti-Desborde
 - Modelo Qwen3.6 max 262144 tokens. opencode.jsonc usa context:240000 / output:32000 (**272000 total — excede el límite real de 262144**). Ajustar output a ≤22144.

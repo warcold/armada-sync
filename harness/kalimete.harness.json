@@ -13,7 +13,7 @@
   "host": "kalimete",
   "ip": "10.0.0.106",
   "rol": "desarrollo + ethical",
-  "scope_agentes": "eco-*/armada-arcade/wordpress-dev/erp-dev/godot-dev/proxmark (19, hidden)"
+  "scope_agentes": "19 subagentes con NOMBRES REALES (Armada Arcade, Alfredo Ecomm, Authentik, Cloudflare, DocuSeal, IRC, Nextcloud, PetSuite, Proxy, Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, Woodly, ERP Dev, Godot, Proxmark, WordPress) — visibles en @ (hidden:false)"
  },
  "hermanos": {
   "victoria": {
@@ -24,99 +24,137 @@
  },
  "subagentes": [
   {
-   "name": "armada-arcade",
-   "file": "armada-arcade.md",
-   "scope": "Juego TetriNET (repo ~/armada-arcade/)"
+   "name": "Alfredo Ecomm",
+   "id": "alfredo-ecomm",
+   "file": "alfredo-ecomm.md",
+   "scope": "ERP Ecomm backend (kalimete dev)",
+   "hidden": false
   },
   {
-   "name": "eco-alfredo-ecomm",
-   "file": "eco-alfredo-ecomm.md",
-   "scope": "ERP Ecomm backend (kalimete dev)"
+   "name": "Authentik",
+   "id": "authentik",
+   "file": "authentik.md",
+   "scope": "SSO Authentik (auth.armada.do)",
+   "hidden": false
   },
   {
-   "name": "eco-authentik",
-   "file": "eco-authentik.md",
-   "scope": "SSO Authentik (auth.armada.do)"
+   "name": "Cloudflare",
+   "id": "cloudflare",
+   "file": "cloudflare.md",
+   "scope": "Cuenta Alfredo armada.do (DNS/WAF/R2/Tuneles/Workers)",
+   "hidden": false
   },
   {
-   "name": "eco-cloudflare",
-   "file": "eco-cloudflare.md",
-   "scope": "Cuenta Alfredo armada.do (DNS/WAF/R2/Tuneles/Workers)"
+   "name": "DocuSeal",
+   "id": "docuseal",
+   "file": "docuseal.md",
+   "scope": "DocuSeal (docuseal.armada.do)",
+   "hidden": false
   },
   {
-   "name": "eco-docuseal",
-   "file": "eco-docuseal.md",
-   "scope": "DocuSeal (docuseal.armada.do)"
+   "name": "IRC",
+   "id": "irc",
+   "file": "irc.md",
+   "scope": "InspIRCd El Corito (chatlatinos.org) en vps-preprod",
+   "hidden": false
   },
   {
-   "name": "eco-irc",
-   "file": "eco-irc.md",
-   "scope": "InspIRCd El Corito (chatlatinos.org) en vps-preprod"
+   "name": "Nextcloud",
+   "id": "nextcloud",
+   "file": "nextcloud.md",
+   "scope": "Nextcloud (nextcloud.armada.do)",
+   "hidden": false
   },
   {
-   "name": "eco-nextcloud",
-   "file": "eco-nextcloud.md",
-   "scope": "Nextcloud (nextcloud.armada.do)"
+   "name": "PetSuite",
+   "id": "petsuite",
+   "file": "petsuite.md",
+   "scope": "PetSuite (pets.armada.do)",
+   "hidden": false
   },
   {
-   "name": "eco-petsuite",
-   "file": "eco-petsuite.md",
-   "scope": "PetSuite (pets.armada.do)"
+   "name": "Proxy",
+   "id": "proxy",
+   "file": "proxy.md",
+   "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)",
+   "hidden": false
   },
   {
-   "name": "eco-proxy",
-   "file": "eco-proxy.md",
-   "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)"
+   "name": "Ragnarok",
+   "id": "ragnarok",
+   "file": "ragnarok.md",
+   "scope": "Ragnarok rAthena+FluxCP+roBrowser (/srv/ragnarok)",
+   "hidden": false
   },
   {
-   "name": "eco-ragnarok",
-   "file": "eco-ragnarok.md",
-   "scope": "Ragnarok rAthena+FluxCP+roBrowser (/srv/ragnarok)"
+   "name": "Scriberr",
+   "id": "scriberr",
+   "file": "scriberr.md",
+   "scope": "Scriberr (scriberr.armada.do)",
+   "hidden": false
   },
   {
-   "name": "eco-scriberr",
-   "file": "eco-scriberr.md",
-   "scope": "Scriberr (scriberr.armada.do)"
+   "name": "Taohemps",
+   "id": "taohemps",
+   "file": "taohemps.md",
+   "scope": "Taohemps (taohemps.com)",
+   "hidden": false
   },
   {
-   "name": "eco-taohemps",
-   "file": "eco-taohemps.md",
-   "scope": "Taohemps (taohemps.com)"
+   "name": "Victoria Server",
+   "id": "victoria-server",
+   "file": "victoria-server.md",
+   "scope": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA)",
+   "hidden": false
   },
   {
-   "name": "eco-victoria",
-   "file": "eco-victoria.md",
-   "scope": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA)"
+   "name": "VPS",
+   "id": "vps",
+   "file": "vps.md",
+   "scope": "VPS produccion vps-preprod (154.53.35.102, root:1333)",
+   "hidden": false
   },
   {
-   "name": "eco-vps",
-   "file": "eco-vps.md",
-   "scope": "VPS produccion vps-preprod (154.53.35.102, root:1333)"
+   "name": "Woodly",
+   "id": "woodly",
+   "file": "woodly.md",
+   "scope": "Woodly (woodly.armada.do)",
+   "hidden": false
   },
   {
-   "name": "eco-woodly",
-   "file": "eco-woodly.md",
-   "scope": "Woodly (woodly.armada.do)"
+   "name": "Armada Arcade",
+   "id": "armada-arcade",
+   "file": "armada-arcade.md (origen ~/armada-arcade/agents/)",
+   "scope": "Juego TetriNET (repo ~/armada-arcade/)",
+   "hidden": false
   },
   {
-   "name": "erp-dev",
+   "name": "ERP Dev",
+   "id": "erp-dev",
    "file": "erp-dev.md",
-   "scope": "ERP erpipo preprod (kalimete :8100)"
+   "scope": "ERP erpipo preprod (kalimete :8100)",
+   "hidden": false
   },
   {
-   "name": "godot-dev",
+   "name": "Godot",
+   "id": "godot-dev",
    "file": "godot-dev.md",
-   "scope": "Godot 4.x + MCP 386 tools (~/armada-godot/)"
+   "scope": "Godot 4.x + MCP 386 tools (~/armada-godot/)",
+   "hidden": false
   },
   {
-   "name": "proxmark",
+   "name": "Proxmark",
+   "id": "proxmark",
    "file": "proxmark.md",
-   "scope": "Proxmark3 RFID/NFC (/dev/ttyACM0)"
+   "scope": "Proxmark3 RFID/NFC (/dev/ttyACM0)",
+   "hidden": false
   },
   {
-   "name": "wordpress-dev",
+   "name": "WordPress",
+   "id": "wordpress-dev",
    "file": "wordpress-dev.md",
-   "scope": "WordPress dev (kalimete)"
+   "scope": "WordPress dev (kalimete)",
+   "hidden": false
   }
  ],
  "sync": {

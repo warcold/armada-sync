@@ -1,4 +1,5 @@
 ---
+name: Nextcloud
 description: Subagente del proyecto Nextcloud (nextcloud.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue de Nextcloud y whiteboard. Corre en vps-preprod (Docker).
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco Nextcloud — Cloud Nextcloud
+# Nextcloud — Cloud Nextcloud
 
 > Subagente oculto — solo Kalimete delega aquí. El usuario habla únicamente con Kalimete.
 
@@ -77,7 +79,7 @@ ssh vps-preprod 'docker exec nextcloud-stack-nextcloud-1 php occ user_oidc:provi
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-nextcloud",
+  "id": "Nextcloud",
   "label": "nextcloud:fpm",
   "source": "github Nextcloud/server releases/latest",
   "href": "github Nextcloud/server releases/latest",
@@ -86,3 +88,5 @@ ssh vps-preprod 'docker exec nextcloud-stack-nextcloud-1 php occ user_oidc:provi
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/nextcloud.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

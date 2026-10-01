@@ -1,9 +1,9 @@
 {
- "harness": "eco-alfredo-ecomm",
+ "harness": "alfredo-ecomm",
  "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/eco-alfredo-ecomm.md",
+ "agent_file": "~/armada-sync/agents/alfredo-ecomm.md",
  "mode": "subagent",
- "hidden": true,
+ "hidden": false,
  "scope": "ERP Ecomm backend (kalimete dev)",
  "vivo_2026_10_01": "alfredo-ecomm-api + redis:7 + postgres:16 Up 3d",
  "live_check": "docker ps -f name=alfredo-ecomm",
@@ -12,7 +12,8 @@
   "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
  },
  "docs": [
-  "~/armada-sync/agents/eco-alfredo-ecomm.md"
+  "~/armada-sync/agents/alfredo-ecomm.md"
  ],
- "changelog": "~/armada-sync/CHANGELOG.md"
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "name": "Alfredo Ecomm"
 }

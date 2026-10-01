@@ -1,4 +1,5 @@
 ---
+name: Scriberr
 description: Subagente del proyecto Scriberr (scriberr.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue de Scriberr. Corre en vps-preprod (Docker).
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco Scriberr — Proyecto Scriberr
+# Scriberr — Proyecto Scriberr
 
 > Subagente oculto — solo Kalimete delega aquí. El usuario habla únicamente con Kalimete.
 
@@ -68,7 +70,7 @@ ssh vps-preprod 'docker logs scriberr --tail 50'
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-scriberr",
+  "id": "Scriberr",
   "label": "scriberr-custom (vendor)",
   "source": "vendor track (fuente cerrada/modificado) — no GitHub releases",
   "href": "vendor track (fuente cerrada/modificado) — no GitHub releases",
@@ -77,3 +79,5 @@ ssh vps-preprod 'docker logs scriberr --tail 50'
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/scriberr.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

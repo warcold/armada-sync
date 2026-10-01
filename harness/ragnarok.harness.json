@@ -1,9 +1,9 @@
 {
- "harness": "eco-ragnarok",
+ "harness": "ragnarok",
  "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/eco-ragnarok.md",
+ "agent_file": "~/armada-sync/agents/ragnarok.md",
  "mode": "subagent",
- "hidden": true,
+ "hidden": false,
  "scope": "Ragnarok rAthena+FluxCP+roBrowser (/srv/ragnarok)",
  "vivo_2026_10_01": "fluxcp/mariadb/robrowser/remoteclient Up 4w; demonios juego CAIDOS (CHANGELOG 10-01)",
  "live_check": "docker ps -f name=ragnarok en vps-preprod",
@@ -12,7 +12,8 @@
   "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
  },
  "docs": [
-  "~/armada-sync/agents/eco-ragnarok.md"
+  "~/armada-sync/agents/ragnarok.md"
  ],
- "changelog": "~/armada-sync/CHANGELOG.md"
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "name": "Ragnarok"
 }

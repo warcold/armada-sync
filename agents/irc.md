@@ -1,4 +1,5 @@
 ---
+name: IRC
 description: Subagente del servidor IRC InspIRCd "El Corito" (chatlatinos.org) en vps-preprod. Usado cuando kalimete delega: gestión de InspIRCd, configuración, links, usuarios, estado del servicio.
 mode: subagent
 hidden: false
@@ -9,8 +10,9 @@ permission:
   edit: allow
   write: allow
 ---
+> **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Eco Cloudflare IRC — Gestión de InspIRCd El Corito
+# IRC — Gestión de InspIRCd El Corito
 
 ## Visión
 
@@ -162,7 +164,7 @@ cat /home/justin_t/inspircd/run/inspircd.pid
 ```json upstream_drk
 {
   "enabled": true,
-  "id": "eco-irc",
+  "id": "IRC",
   "label": "native inspircd (hijo)",
   "source": "docs.inspircd.org",
   "href": "docs.inspircd.org",
@@ -171,3 +173,5 @@ cat /home/justin_t/inspircd/run/inspircd.pid
   "groom_clean": true
 }
 ```
+
+> **Harness**: `~/armada-sync/harness/irc.harness.json` (scope + live_check + upstream + docs + changelog de este agente).
