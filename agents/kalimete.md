@@ -20,11 +20,11 @@ permission:
     "DocuSeal": allow
     "Scriberr": allow
     "Alfredo Ecomm": allow
-    "armada-arcade": allow
-    "wordpress-dev": allow
-    "erp-dev": allow
-    "godot-dev": allow
-    "proxmark": allow
+    "Armada Arcade": allow
+    "WordPress": allow
+    "ERP Dev": allow
+    "Godot": allow
+    "Proxmark": allow
     "explore": allow
 ---
 
