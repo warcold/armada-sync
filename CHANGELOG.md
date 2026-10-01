@@ -1,3 +1,14 @@
+## 2026-10-02
+
+### [00:45] - Fix permisos: WP admin local no podía borrar plugins (ACLs en bind mount)
+- **Tipo**: fix | infra | wordpress
+- **Causa raíz**: `wp-content/plugins/` es bind mount del host con owner `warcold:warcold` (1000) modo 755; el contenedor corre PHP como `www-data` (UID 33) → solo lectura → "Borrar" en WP admin fallaba (pedía FTP o "no se pudo eliminar"). `themes/` y `uploads/` ya eran www-data (por eso sí funcionaban). Descartado `DISALLOW_FILE_MODS`.
+- **Fix**: ACLs recursivas en `~/dev/wordpress/wp-content/plugins/`: `setfacl -R -m u:33:rwx,u:1000:rwx` + default ACL `-d` para herencia en archivos nuevos. Owner sin cambios → edición host-side intacta.
+- **Verificación E2E**: plugin desechable `zz-test-delete` borrado vía flujo admin real (GET confirm → POST verify-delete → 302) → carpeta físicamente eliminada ✅. www-data touch+rm OK, warcold touch+rm OK.
+- **Extra validado esta sesión**: stack local 100% operativo (DB 22 tablas intactas, login admin/admin123 OK en ambas URLs, plugin 4.4.2 activo, AJAX→ERP 18 categorías reales). El "DB vacía" reportado antes fue falso positivo de kalimete (password root equivocado en sus propios comandos: `rootpassword` vs `root_pass_2026`).
+- **Detalle**: entrada completa en `~/dev/wordpress/CHANGELOG.md` [fix-permisos-plugins]. Reversible: `setfacl -R -b`.
+- **Estado**: ✅ verificado end-to-end
+
 ## 2026-10-01
 
 ### [18:00] - Validación exhaustiva anti-duplicados plugin 4.4.2: LIMPIO (veredicto: navegador del owner)
