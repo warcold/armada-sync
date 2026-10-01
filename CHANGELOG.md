@@ -1,6 +1,21 @@
 ## 2026-10-01
 
-### [17:10] - Fix regresión visual wp-admin (plugin 4.4.2): CSS del frontend pisaba todo el admin
+### [18:00] - Validación exhaustiva anti-duplicados plugin 4.4.2: LIMPIO (veredicto: navegador del owner)
+- **Tipo**: diagnóstico | wordpress
+- **Reporte del owner**: "en todos los tabs: botones duplicados, textos montados". Segunda ronda de validación (la primera por HTML estático no bastó).
+- **Método**: Selenium headless real (chromedriver) con login real + análisis DOM programático (bounding boxes, contadores de nodos visibles) — ni el subagente ni kalimete pueden ver imágenes (modelos sin input visual), por eso evidencia numérica.
+- **Resultados (los 9 tabs)**:
+  - Navegación por URL: 1 nav, 1 sección visible, 0 botones duplicados, 0 solapes >30% (1366px y 780px)
+  - **Navegación por CLICKS, 2 pasadas** (gap cubierto): 1 sección visible por tab, 0 duplicados, 0 acumulación — el JS no clona al interactuar
+  - Umbral de solape bajado a >8%: **0 pares** en los 9 tabs
+  - Zoom 125%: limpio; zoom 150%: 1 falso positivo (bounding-box de spans inline que wrappean, glifos no se montan; script linecheck.py quedó en /tmp sin ejecutar)
+  - Doble registro de menús: descartado (1 add_menu_page, AdminMenu.php:36; LegacyConnectorAdmin es wrapper llamado por diseño)
+  - Doble enqueue: descartado (3 handles, 1 vez cada uno; ver=ERPSUITE_VERSION dinámico → cache-bust OK, servido como ?ver=4.4.2 en localhost:8091 Y wordpress.kalimete.local)
+  - erpsuite_remote_nonce x3 y _wpnonce x9: patrón WP legítimo (un nonce por form)
+  - Inyección del connector.css VIEJO (pre-fix): rompe fuentes/íconos pero NO produce botones duplicados → ni siquiera el bug original explica el síntoma actual
+- **Veredicto**: el sitio servido 4.4.2 está CORRECTO; no existe bug reproducible de duplicación. Lo que el owner ve = estado de su navegador (pestaña abierta pre-fix / cache de disco). NO se aplicaron fixes inventados (regla respetada).
+- **Estado**: ✅ validado; pendiente confirmación del owner tras Ctrl+Shift+R o incógnito
+- **Notas**: Si persiste tras limpieza de cache → pedir al owner: navegador+versión, zoom, % escalado DPI, y qué texto/botón exacto ve duplicado en qué tab, para reproducir su contexto en headless.
 - **Tipo**: fix | wordpress | release
 - **Reportado por owner**: tras instalar el plugin, "se perdieron varios íconos arriba del menú de WordPress" + footer `Thank you for creating with WordPress.` duplicado/desplazado.
 - **Diagnóstico (antes de tocar nada)**: las 9 pantallas del plugin + dashboard + posts nativos verificadas por HTML — `footer-thankyou` =1 por página, `wpadminbar` =1, **0 errores PHP**, balance de `<div>` =0 errores, CSS admin del plugin NO se carga en páginas nativas. NO era markup roto.
