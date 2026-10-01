@@ -1,5 +1,24 @@
 ## 2026-10-01
 
+### [14:28] - Switch Local/Público en plugin erp-commerce-suite 4.4.1 + alineación arquitectura ecomm (owner)
+- **Tipo**: feature | wordpress | arquitectura | docs | validación
+- **Instrucción del owner**: (1) WP local trabaja SOLO con ERP Dev local (erpipos :8100 tenant 10), nunca producción; (2) el ERP Dev vive en `github.com/soycarlosjerez-hub/sistema-facturacion` rama `dev/ecomm-erp` — nosotros solo pusheamos updates ahí, **Juan Carlos mergea a main** (nosotros nunca); (3) plugin erp-commerce-suite: mejorar tabs/páginas admin con errores; (4) la config de conexión del plugin debe tener **switch Local↔Público**: local = valores HARDCODEADOS por defecto (NO editables NI visibles, solo el switch se ve), público = conexión/llaves de erpipos prod EDITABLES por el admin de WP.
+- **Modificado**:
+  - **Plugin erp-commerce-suite 4.4.0 → 4.4.1** (wordpress-local :8091): `includes/Core/Environment.php` (reescrito — perfil LOCAL sellado: `http://172.19.0.1:8100/api`, tenant_id 10, key iak_* como constantes; accessors `get_api_url/get_api_key/get_tenant_id`; modo persiste en `wp_options.erpsuite_env_mode`), `includes/Core/Main.php` (delega a Environment), `includes/Admin/AdminMenu.php` (badge LOCAL|PÚBLICO, `tab_entorno()` muestra "Perfil Local (sellado)" en local — datos NO visibles, `sanitize_unified()` solo persiste conexión si switch=Público en namespace `erp_suite_settings[public][...]`), `includes/Admin/LegacyConnectorAdmin.php` (`render_tab_conexion()` gateado por modo: local=cero inputs de conexión, público=inputs editables; health check usa accessor). Backups `.bkup` ×4 + `/tmp/wp_options_backup_20261001_134829.sql.gz`.
+  - **Docs**: `~/dev/wordpress/CHANGELOG.md` (SSL_FIX v2 + credenciales reales + 4.4.1), CHANGELOG propio del plugin, `agents/alfredo-ecomm.md` (endpoint /categories = mejora general del ecosistema, NO fix de MaganTech; CORS :8091 = cortesía; nueva sección "Vecindad — no confundir": erpipos :8100 Laravel ≠ alfredo-ecomm :3004 Node; deploy a prod = requiere autorización explícita).
+- **Afecta a**: kalimete local únicamente (wordpress-local, docs armada-sync). CERO producción.
+- **Causa**: owner definió la arquitectura y pidió mejoras del admin del plugin + separación local/público estricta.
+- **Verificado**:
+  - `php -l` 4/4 archivos OK; **`tests/regression.php` 14/14 PASS**
+  - HTML settings modo Local: **0 coincidencias** de `172.19.0.1` ni `iak_` (datos locales ni se renderizan ✅); solo el switch visible
+  - admin-ajax con env=local: `erpc_get_products` 200 (AGI-CT2000 Rollo UTP CAT6), `erpc_get_categories` 200 (**18 categorías reales MaganTech**); `erpc_cfg` frontend sigue recibiendo el perfil sellado
+  - Auditoría de los 9 tabs del admin: **todos HTTP 200, 0 errores PHP** (Voz/WhatsApp = dependencia de credenciales externas desactivadas por el owner, no "roto"; notices `emcp-tools/list-pages` son de OTRO plugin, documentado); assets admin todos 200
+  - **ERP Dev validado**: erpipos local :8100 operativo (stack 7 contenedores healthy + mailpit no documentado); logs nginx confirman tráfico real del plugin WP (`GET /api/tienda/categorias 200`, `/api/tienda/productos?limit=200 200`, `/api/ecomm/tienda/config 200` UA WordPress/7.1.2); repo `~/dev/erpipo-preprod/code/sistema-facturacion` en rama `dev/ecomm-erp`, tree limpio, **5 commits docs ahead de origin sin push** (pendiente decisión del owner)
+  - **Alfredo Ecomm :3004**: health OK, `/v1/stores/woodly-park/categories` 200 — intacto, scope exclusivo Woodly
+- **Estado**: ✅ sincronizado
+- **Notas**: Doc drift corregido en agente erp-dev (live: push directo a `origin dev/ecomm-erp`, NO existe remote `preprod`/`warcold/erpipo-preprod`; merge a main = Juan Carlos). Pendientes: push de los 5 commits docs de erpipos (decidir con owner); smoke test del modo Público del switch (guardar campos public_* y flip; requiere llaves reales de prod — NO hacer sin autorización); apagar Xdebug en erpipo-preprod-app (ruido en logs); alinear título "Doc drift agente erp-dev" cuando se reescriba su sección Acceso/Workflow.
+
+
 ### [13:11] - Fix bug categorías MaganTech (redirect HTTPS WordPress) + nuevo endpoint /categories en ERP Ecomm + CORS
 - **Tipo**: fix | api | wordpress | infra | diagnóstico
 - **Modificado**:
