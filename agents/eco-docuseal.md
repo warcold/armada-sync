@@ -63,3 +63,16 @@ ssh vps-preprod 'docker logs docuseal --tail 50'
 - **Vivo 2026-10-01**: Up 4w.
 - **Check**: ssh vps-preprod docker ps -f name=docuseal
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-docuseal",
+  "label": "docuseal/docuseal:latest",
+  "source": "github docusealco/docuseal releases/latest",
+  "href": "github docusealco/docuseal releases/latest",
+  "href_docs": "https://www.docuseal.com/guides",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

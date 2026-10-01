@@ -73,3 +73,16 @@ ssh vps-preprod 'docker exec nextcloud-stack-nextcloud-1 php occ user_oidc:provi
 - **Vivo 2026-10-01**: stack completo Up 4w.
 - **Check**: ssh vps-preprod docker ps -f name=nextcloud
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-nextcloud",
+  "label": "nextcloud:fpm",
+  "source": "github Nextcloud/server releases/latest",
+  "href": "github Nextcloud/server releases/latest",
+  "href_docs": "https://docs.nextcloud.com/",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

@@ -39,6 +39,7 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 - **Frescura**: LIVE manda (docker/ps/curl/ssh primero); la doc es receta. `~/bin/doc-fresh.sh <Agente>` (TTL 24h): STALE = deep-check en el Task + `--mark-ok`; FRESH = fast path. Estado: `~/.config/opencode/state/frescura.json`.
 - **@-menciones**: `hidden: true` = sin autocomplete, PERO invocables por Task directo o `@Nombre` directo (verificado en Victoria con opencode 1.18; si tu TUI no resuelve, usa Task).
 - **Harness maquina-legible**: `~/armada-sync/harness/` (central `kalimete.harness.json` + 1 por subagente) — versionado por el hub como todo lo demas.
+- **Upstream propio (loopstream propio, NO el de Victoria)**: `~/bin/upstream-kalimete-check.py` (guarda 24h, todo KEYLESS) → `~/armada-sync/upstream/state.json` (el hub lo publica) + espejo `/srv/armada-upstream/kalimete-state.json` en vps-preprod. 19 sistemas FETCHEABLES (vps 10 contenedores/daemon + 9 locales Godot/Prowler/proxmark/erp-dev/armada-arcade/alfredo-ecomm/tcp); 9 etiquetas locales sin upstream keyless (petsuite/woodly/taohemps/scriberr/alfredo-ecomm/custom/vendor) = verificación LIVE + docs oficiales a mano, no GitHub. `doc-fresh.sh` (deep-check, mismos TTL) es el gatillo del groom limpio per-agente; `upstream-kalimete-check.py` publica el diff versiones. Victoria lo lee para su reporte; Kalimete nunca apunta al upstream de Victoria (`upstream.json` ajeno).
 
 ## Estructura de agentes (2026-08-14, patrón oficial opencode)
 

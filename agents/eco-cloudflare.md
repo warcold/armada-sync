@@ -115,3 +115,16 @@ wrangler pages project list
 - **Vivo 2026-10-01**: tuneles vps+victoria activos (victoria: cloudflared 2026.9.3).
 - **Check**: API zones list con CLOUDFLARE_ACCOUNT_ID (ver agente).
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-cloudflare",
+  "label": "cloudflare cloudflared (hijo)",
+  "source": "releases cloudflared",
+  "href": "releases cloudflared",
+  "href_docs": "https://developers.cloudflare.com/changelog/",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

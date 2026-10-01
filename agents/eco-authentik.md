@@ -104,3 +104,16 @@ for p in OAuth2Provider.objects.all():
 - **Vivo 2026-10-01**: server x2 healthy + worker + redis + postgres:16, Up 4w.
 - **Check**: ssh vps-preprod docker ps -f name=authentik
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-authentik",
+  "label": "ghcr.io/goauthentik/server",
+  "source": "releases.authentik.io (hub publico)",
+  "href": "releases.authentik.io (hub publico)",
+  "href_docs": "https://docs.goauthentik.io/",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

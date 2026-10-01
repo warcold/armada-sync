@@ -64,3 +64,16 @@ ssh vps-preprod 'docker logs scriberr --tail 50'
 - **Vivo 2026-10-01**: Up 4w.
 - **Check**: ssh vps-preprod docker ps -f name=scriberr
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-scriberr",
+  "label": "scriberr-custom (vendor)",
+  "source": "vendor track (fuente cerrada/modificado) — no GitHub releases",
+  "href": "vendor track (fuente cerrada/modificado) — no GitHub releases",
+  "href_docs": "",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

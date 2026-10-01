@@ -71,3 +71,16 @@ docker ps --filter name=taohemps --format "{{.Names}} | {{.Image}} | {{.Status}}
 - **Vivo 2026-10-01**: Up 4w en vps-preprod.
 - **Check**: ssh vps-preprod docker ps -f name=taohemps
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-taohemps",
+  "label": "taohemps-frontend/backend locales",
+  "source": "vendor-track",
+  "href": "",
+  "href_docs": "",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

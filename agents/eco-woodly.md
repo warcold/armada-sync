@@ -111,3 +111,16 @@ Esto es exactamente cómo funciona *Mitiba Klas Soliaria* para cualquier nuevo c
 - **Vivo 2026-10-01**: Up 4w (vps-preprod) + Up 3d (kalimete dev).
 - **Check**: docker ps -f name=woodly en ambos hosts
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-woodly",
+  "label": "woodly-woodly local",
+  "source": "vendor-track",
+  "href": "",
+  "href_docs": "",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

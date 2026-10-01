@@ -83,3 +83,16 @@ ssh vps-preprod 'uptime; df -h / | tail -1'
 - **Vivo 2026-10-01**: 25 contenedores Up 4w (petsuite, woodly, staging, nextcloud-stack, docuseal, scriberr, ragnarok, authentik, taohemps, apps).
 - **Check**: ssh vps-preprod docker ps
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-vps",
+  "label": "labels 25/25 vps-preprod (hijo)",
+  "source": "labels docker/docker hub",
+  "href": "labels docker/docker hub",
+  "href_docs": "https://docs.docker.com",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

@@ -105,3 +105,16 @@ stores → customers, carts, orders, products, deals, product_variants, cart_ite
 - **Vivo 2026-10-01**: Up 3d.
 - **Check**: docker ps -f name=alfredo-ecomm
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-alfredo-ecomm",
+  "label": "backend-api custom local",
+  "source": "vendor-track",
+  "href": "",
+  "href_docs": "",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

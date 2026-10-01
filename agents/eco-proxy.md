@@ -119,3 +119,16 @@ Cuando se agreguen más IPs al servidor, descomentar en `/etc/squid/squid.conf`:
 - **Vivo**: host Up 228d (dato 2026-09-19); revalidar.
 - **Check**: ssh vps-proxy systemctl is-active squid
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-proxy",
+  "label": "native squid vps-proxy (hijo)",
+  "source": "manual squid-cache.org",
+  "href": "manual squid-cache.org",
+  "href_docs": "https://www.squid-cache.org",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

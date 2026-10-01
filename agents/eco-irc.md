@@ -158,3 +158,16 @@ cat /home/justin_t/inspircd/run/inspircd.pid
 - **PENDIENTE 2026-10-01**: no aparece en docker ps (verificar si corre como proceso nativo).
 - **Check**: ssh vps-preprod ps aux
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-irc",
+  "label": "native inspircd (hijo)",
+  "source": "docs.inspircd.org",
+  "href": "docs.inspircd.org",
+  "href_docs": "https://docs.inspircd.org/4/",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

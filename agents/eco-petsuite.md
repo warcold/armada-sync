@@ -79,3 +79,16 @@ ssh vps-preprod 'curl -s http://127.0.0.1:4000/api/health'
 - **Vivo 2026-10-01**: Up 4w en vps-preprod.
 - **Check**: ssh vps-preprod docker ps -f name=petsuite
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-petsuite",
+  "label": "Imagen local petsuite:v2 + git pets-suite",
+  "source": "labels vs git (workflow del subagente)",
+  "href": "labels vs git (workflow del subagente)",
+  "href_docs": "",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

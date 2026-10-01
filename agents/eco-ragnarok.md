@@ -103,3 +103,16 @@ ssh vps-preprod 'docker logs ragnarok-fluxcp --tail 30'
 - **Vivo 2026-10-01**: fluxcp/mariadb/robrowser/remoteclient Up 4w, PERO demonios del juego CAIDOS (ver CHANGELOG 10-01).
 - **Check**: ssh vps-preprod docker ps -f name=ragnarok
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "eco-ragnarok",
+  "label": "Imagenes locales rAthena/FluxCP/roBrowser + git repos",
+  "source": "git vs running (workflow subagente)",
+  "href": "git vs running (workflow subagente)",
+  "href_docs": "https://rathena.org/board/",
+  "pin_note": "",
+  "groom_clean": true
+}
+```

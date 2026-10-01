@@ -145,3 +145,23 @@ pluginRegistry.register(DominoesPlugin);
 ## Cambios Recientes
 
 - **2026-08-29**: Proyecto creado desde cero — motor TetriNET + Socket.IO server + Canvas client
+
+## Upstream (2026-10-01)
+
+- **Fuente**: repo propio `~/armada-arcade/` (proyecto del owner, sin upstream ajeno)
+- **Vivo 2026-10-01**: motor TetriNET + Socket.IO; dominoes en placeholder
+- **Check**: `git -C ~/armada-arcade log --oneline -3`
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+
+```json upstream_drk
+{
+  "enabled": true,
+  "id": "armada-arcade",
+  "label": "HEAD ~/armada-arcade",
+  "source": "HEAD (propio)",
+  "href": "",
+  "href_docs": "",
+  "pin_note": "",
+  "groom_clean": true
+}
+```
