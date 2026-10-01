@@ -1,0 +1,18 @@
+{
+ "harness": "eco-authentik",
+ "updated": "2026-10-01",
+ "agent_file": "~/armada-sync/agents/eco-authentik.md",
+ "mode": "subagent",
+ "hidden": true,
+ "scope": "SSO Authentik (auth.armada.do)",
+ "vivo_2026_10_01": "server x2 healthy + redis + postgres:16 Up 4w",
+ "live_check": "docker ps -f name=authentik en vps-preprod",
+ "upstream": {
+  "fuente": "SSO Authentik (auth.armada.do)",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+ },
+ "docs": [
+  "~/armada-sync/agents/eco-authentik.md"
+ ],
+ "changelog": "~/armada-sync/CHANGELOG.md"
+}

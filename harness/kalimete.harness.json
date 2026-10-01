@@ -1,0 +1,143 @@
+{
+ "harness": "kalimete",
+ "updated": "2026-10-01",
+ "principal": {
+  "name": "kalimete",
+  "file": "~/armada-sync/agents/kalimete.md",
+  "mode": "primary",
+  "color": "#00b3a4",
+  "default_agent": "kalimete",
+  "visible": true
+ },
+ "flota": {
+  "host": "kalimete",
+  "ip": "10.0.0.106",
+  "rol": "desarrollo + ethical",
+  "scope_agentes": "eco-*/armada-arcade/wordpress-dev/erp-dev/godot-dev/proxmark (19, hidden)"
+ },
+ "hermanos": {
+  "victoria": {
+   "host": "10.0.0.5",
+   "acceso": "ssh victoria (warcold:1666) SOLO LECTURA; escritura solo autorizada",
+   "contrato": "namespaces separados: cambios en la maquina duena + referencia cruzada"
+  }
+ },
+ "subagentes": [
+  {
+   "name": "armada-arcade",
+   "file": "armada-arcade.md",
+   "scope": "Juego TetriNET (repo ~/armada-arcade/)"
+  },
+  {
+   "name": "eco-alfredo-ecomm",
+   "file": "eco-alfredo-ecomm.md",
+   "scope": "ERP Ecomm backend (kalimete dev)"
+  },
+  {
+   "name": "eco-authentik",
+   "file": "eco-authentik.md",
+   "scope": "SSO Authentik (auth.armada.do)"
+  },
+  {
+   "name": "eco-cloudflare",
+   "file": "eco-cloudflare.md",
+   "scope": "Cuenta Alfredo armada.do (DNS/WAF/R2/Tuneles/Workers)"
+  },
+  {
+   "name": "eco-docuseal",
+   "file": "eco-docuseal.md",
+   "scope": "DocuSeal (docuseal.armada.do)"
+  },
+  {
+   "name": "eco-irc",
+   "file": "eco-irc.md",
+   "scope": "InspIRCd El Corito (chatlatinos.org) en vps-preprod"
+  },
+  {
+   "name": "eco-nextcloud",
+   "file": "eco-nextcloud.md",
+   "scope": "Nextcloud (nextcloud.armada.do)"
+  },
+  {
+   "name": "eco-petsuite",
+   "file": "eco-petsuite.md",
+   "scope": "PetSuite (pets.armada.do)"
+  },
+  {
+   "name": "eco-proxy",
+   "file": "eco-proxy.md",
+   "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)"
+  },
+  {
+   "name": "eco-ragnarok",
+   "file": "eco-ragnarok.md",
+   "scope": "Ragnarok rAthena+FluxCP+roBrowser (/srv/ragnarok)"
+  },
+  {
+   "name": "eco-scriberr",
+   "file": "eco-scriberr.md",
+   "scope": "Scriberr (scriberr.armada.do)"
+  },
+  {
+   "name": "eco-taohemps",
+   "file": "eco-taohemps.md",
+   "scope": "Taohemps (taohemps.com)"
+  },
+  {
+   "name": "eco-victoria",
+   "file": "eco-victoria.md",
+   "scope": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA)"
+  },
+  {
+   "name": "eco-vps",
+   "file": "eco-vps.md",
+   "scope": "VPS produccion vps-preprod (154.53.35.102, root:1333)"
+  },
+  {
+   "name": "eco-woodly",
+   "file": "eco-woodly.md",
+   "scope": "Woodly (woodly.armada.do)"
+  },
+  {
+   "name": "erp-dev",
+   "file": "erp-dev.md",
+   "scope": "ERP erpipo preprod (kalimete :8100)"
+  },
+  {
+   "name": "godot-dev",
+   "file": "godot-dev.md",
+   "scope": "Godot 4.x + MCP 386 tools (~/armada-godot/)"
+  },
+  {
+   "name": "proxmark",
+   "file": "proxmark.md",
+   "scope": "Proxmark3 RFID/NFC (/dev/ttyACM0)"
+  },
+  {
+   "name": "wordpress-dev",
+   "file": "wordpress-dev.md",
+   "scope": "WordPress dev (kalimete)"
+  }
+ ],
+ "sync": {
+  "sistema": "armada-sync hub (cron 5min) a GitHub, un solo writer, sin followers",
+  "incluye": [
+   "agents/",
+   "skills/",
+   "commands/",
+   "bin/ texto",
+   "harness/"
+  ],
+  "secrets_gate": true
+ },
+ "frescura": {
+  "script": "~/bin/doc-fresh.sh",
+  "ttl_s": 86400,
+  "estado": "~/.config/opencode/state/frescura.json"
+ },
+ "reporte": {
+  "script": "~/armada-sync/daily-report/report.py",
+  "destino": "Discord #general-chat Piso 14",
+  "nota_2026_10_01": "ultimo run FALLO con token presente; pendiente rotar/verificar token (decide owner)"
+ }
+}

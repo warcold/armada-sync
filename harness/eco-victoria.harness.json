@@ -1,0 +1,18 @@
+{
+ "harness": "eco-victoria",
+ "updated": "2026-10-01",
+ "agent_file": "~/armada-sync/agents/eco-victoria.md",
+ "mode": "subagent",
+ "hidden": true,
+ "scope": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA)",
+ "vivo_2026_10_01": "13 servicios active + digest 9204569b + upstream 8/8 ok (2026-10-01)",
+ "live_check": "ssh victoria systemctl is-active (ver agente)",
+ "upstream": {
+  "fuente": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA)",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+ },
+ "docs": [
+  "~/armada-sync/agents/eco-victoria.md"
+ ],
+ "changelog": "~/armada-sync/CHANGELOG.md"
+}

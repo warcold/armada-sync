@@ -1,0 +1,18 @@
+{
+ "harness": "erp-dev",
+ "updated": "2026-10-01",
+ "agent_file": "~/armada-sync/agents/erp-dev.md",
+ "mode": "subagent",
+ "hidden": true,
+ "scope": "ERP erpipo preprod (kalimete :8100)",
+ "vivo_2026_10_01": "erpipo app/mysql:8.0/mailpit/queue/scheduler/phpmyadmin/nginx:1.25/redis Up 3d; repo warcold/erpipo-preprod",
+ "live_check": "docker ps -f name=erpipo",
+ "upstream": {
+  "fuente": "ERP erpipo preprod (kalimete :8100)",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+ },
+ "docs": [
+  "~/armada-sync/agents/erp-dev.md"
+ ],
+ "changelog": "~/armada-sync/CHANGELOG.md"
+}

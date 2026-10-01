@@ -1,0 +1,18 @@
+{
+ "harness": "eco-taohemps",
+ "updated": "2026-10-01",
+ "agent_file": "~/armada-sync/agents/eco-taohemps.md",
+ "mode": "subagent",
+ "hidden": true,
+ "scope": "Taohemps (taohemps.com)",
+ "vivo_2026_10_01": "taohemps-frontend/backend Up 4w en vps-preprod",
+ "live_check": "docker ps -f name=taohemps en vps-preprod",
+ "upstream": {
+  "fuente": "Taohemps (taohemps.com)",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+ },
+ "docs": [
+  "~/armada-sync/agents/eco-taohemps.md"
+ ],
+ "changelog": "~/armada-sync/CHANGELOG.md"
+}

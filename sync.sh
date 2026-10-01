@@ -96,14 +96,21 @@ if $IS_HUB; then
         [ -f "$MY_HOME/bin/$(basename "$f")" ] || { rm -f "$f"; echo "  ✗ bin/$(basename "$f") (deleted)"; }
     done
 
-    # Commit + push si hay cambios
-    echo "[3/3] Pushing to GitHub (hub)..."
-    git add -A
-    if git diff --cached --quiet; then
-        echo "No local changes."
+    # Secrets-gate (2026-10-01, mismo sistema que Victoria): aborta el push si hay keys completas
+    echo "[3/3] Secrets-gate + pushing to GitHub (hub)..."
+    _leak="$(git status --porcelain | cut -c4- | xargs -r grep -lE "vllm-key-[0-9a-f]{60,}|nvapi-[A-Za-z0-9._-]{20,}" 2>/dev/null || true)"
+    if [ -n "$_leak" ]; then
+        echo "ALERTA: posible secreto en cambios - push ABORTADO (revisar, nunca subir keys):"
+        echo "$_leak"
+        echo "Push FAILED!"
     else
-        git commit -m "hub: sync $(date +%H:%M)"
-        git push origin master 2>&1 && echo "Pushed OK." || echo "Push FAILED!"
+        git add -A
+        if git diff --cached --quiet; then
+            echo "No local changes."
+        else
+            git commit -m "hub: sync $(date +%H:%M)"
+            git push origin master 2>&1 && echo "Pushed OK." || echo "Push FAILED!"
+        fi
     fi
 else
     # ── FOLLOWER: DEPLOY (destructivo) ─────────────────────────────
