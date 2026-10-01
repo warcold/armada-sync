@@ -1,7 +1,7 @@
 ---
 description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 herramientas). Usado cuando kalimete delega: crear juegos, editar escenas, GDScript, shaders, animación, audio. Repo ~/armada-godot/.
 mode: subagent
-hidden: true
+hidden: false
 color: "#478cbf"
 temperature: 0.1
 steps: 15

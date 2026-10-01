@@ -1,7 +1,7 @@
 ---
 description: Subagente del proyecto Nextcloud (nextcloud.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue de Nextcloud y whiteboard. Corre en vps-preprod (Docker).
 mode: subagent
-hidden: true
+hidden: false
 color: "#0ea5e9"
 temperature: 0.1
 steps: 15

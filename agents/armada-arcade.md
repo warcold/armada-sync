@@ -1,7 +1,7 @@
 ---
 description: Subagente del proyecto Armada Arcade (juego multiplayer TetriNET + plugins). Usado cuando kalimete delega: desarrollo, mantenimiento, mejoras del servidor y cliente de juego. Repo ~/armada-arcade/.
 mode: subagent
-hidden: true
+hidden: false
 color: "#facc15"
 temperature: 0.1
 steps: 15

@@ -1,7 +1,7 @@
 ---
 description: Subagente ÚNICO de Cloudflare (cuenta Alfredo@armada.do). Usado cuando kalimete delega TODO lo de Cloudflare: DNS/zonas, SSL/WAF/firewall/tokens, KV/D1/Queues, túneles cloudflared, Workers/Pages. Unifica eco-cloudflare-dns/security/storage/tunnels/workers (2026-10-01).
 mode: subagent
-hidden: true
+hidden: false
 color: "#f6821f"
 temperature: 0.1
 steps: 15

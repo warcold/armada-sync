@@ -1,7 +1,7 @@
 ---
 description: Subagente del proyecto Scriberr (scriberr.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue de Scriberr. Corre en vps-preprod (Docker).
 mode: subagent
-hidden: true
+hidden: false
 color: "#db2777"
 temperature: 0.1
 steps: 15

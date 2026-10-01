@@ -1,7 +1,7 @@
 ---
 description: Subagente del proyecto Taohemps (taohemps.com). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del proyecto Taohemps. Corre en vps-preprod (Docker) y kalimete.
 mode: subagent
-hidden: true
+hidden: false
 color: "#84cc16"
 temperature: 0.1
 steps: 15

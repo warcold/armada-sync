@@ -1,7 +1,7 @@
 ---
 description: Subagente del servidor VPS de producción (vps-preprod 154.53.35.102). Usado cuando kalimete delega: gestión de contenedores Docker, servicios, caddy, authentik SSO, proyectos alojados. Cubre auth.armada.do, pets, woodly, ragnarok, scriberr, docuseal, nextcloud, whiteboard, taohemps.
 mode: subagent
-hidden: true
+hidden: false
 color: "#f97316"
 temperature: 0.1
 steps: 15

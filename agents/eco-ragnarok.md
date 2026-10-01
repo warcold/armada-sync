@@ -1,7 +1,7 @@
 ---
 description: Subagente del proyecto Ragnarok (ragnarok.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del servidor de juego Ragnarok (rAthena + FluxCP + roBrowser). Corre en vps-preprod (Docker). Fuente en /srv/ragnarok.
 mode: subagent
-hidden: true
+hidden: false
 color: "#dc2626"
 temperature: 0.1
 steps: 15

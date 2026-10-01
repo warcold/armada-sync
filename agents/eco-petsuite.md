@@ -1,7 +1,7 @@
 ---
 description: Subagente del proyecto PetSuite (pets.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue, API, base de datos del sistema de mascotas. Corre en vps-preprod (Docker) y kalimete.
 mode: subagent
-hidden: true
+hidden: false
 color: "#ec4899"
 temperature: 0.1
 steps: 15

@@ -1,7 +1,7 @@
 ---
 description: Subagente del proyecto Alfredo Pro Ecomm (e-commerce ERP backend). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del backend ERP e-commerce. Corre en kalimete (dev) y/o vps-preprod (prod futuro).
 mode: subagent
-hidden: true
+hidden: false
 color: "#eab308"
 temperature: 0.1
 steps: 15

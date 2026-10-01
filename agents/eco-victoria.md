@@ -1,7 +1,7 @@
 ---
 description: Subagente del servidor GPU/LLM (victoria 10.0.0.5). Usado cuando kalimete delega: gestión de vLLM, gateway LLM, nginx, cloudflared, servicios de IA (video, voz, whois, web-nav, comfyui). Acceso SOLO LECTURA por defecto.
 mode: subagent
-hidden: true
+hidden: false
 color: "#a855f7"
 temperature: 0.1
 steps: 15

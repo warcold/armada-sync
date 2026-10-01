@@ -1,7 +1,7 @@
 ---
 description: Subagente del proyecto DocuSeal (docuseal.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue de DocuSeal (firma de documentos). Corre en vps-preprod (Docker).
 mode: subagent
-hidden: true
+hidden: false
 color: "#0891b2"
 temperature: 0.1
 steps: 15

@@ -1,7 +1,7 @@
 ---
 description: Subagente experto en Proxmark3 RFID/NFC Security Testing en kalimete. Gestiona lectura, clonado, escritura, simulación, sniffing y análisis de tarjetas RFID/NFC (MIFARE Classic, Ultralight, DESFire, HID, iClass, EM4100, T55xx, tokens, etc.). Runs on kalimete via /dev/ttyACM0 con pm3.
 mode: subagent
-hidden: true
+hidden: false
 color: "#ff6b35"
 temperature: 0.1
 steps: 30
