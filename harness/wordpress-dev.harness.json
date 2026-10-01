@@ -12,8 +12,16 @@
   "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
  },
  "docs": [
-  "~/armada-sync/agents/wordpress-dev.md"
+  "~/armada-sync/agents/wordpress-dev.md",
+  "~/dev/wordpress/CHANGELOG.md",
+  "~/dev/wordpress/export/DEPLOY-GUIA.md"
  ],
+ "rutas_canonicas": {
+  "proyecto": "~/dev/wordpress/ (Desktop/dev es solo symlink alias — nunca usar en docs)",
+  "artefactos_zip": "~/dev/wordpress/export/ (UNICA ruta; prohibido export/ dentro del plugin)",
+  "plugin": "~/dev/wordpress/wp-content/plugins/erp-commerce-suite (repo warcold/erp-commerce-suite)",
+  "erp_local": "erpipos :8100 tenant 10 (ERP Dev; la conexion del plugin en modo Local esta sellada a esto)"
+ },
  "changelog": "~/armada-sync/CHANGELOG.md",
  "name": "WordPress"
 }

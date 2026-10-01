@@ -22,6 +22,7 @@ permission:
 
 ### Docker Stack
 - **Path**: `~/dev/wordpress/`
+- **⚠️ Ruta canónica de artefactos (ÚNICA, 2026-10-01)**: los ZIPs del plugin para producción se generan SIEMPRE en `~/dev/wordpress/export/` (contiene `DEPLOY-GUIA.md` + zips versionados). NUNCA dentro del directorio del plugin (`export/` interno está en su `.gitignore` y prohibido). NOTA: `~/Desktop/dev` es solo un **symlink alias** de `~/dev` — en docs y comandos usar siempre `~/dev/...`, jamás `~/Desktop/dev/...`.
 - **Contenedor principal**: `wordpress-local` (WordPress 7.1.1 + PHP 8.3)
 - **Contenedor DB**: `wordpress-db` (MariaDB 10.11)
 - **Puertos expuestos**:
@@ -33,7 +34,7 @@ permission:
 ```
 kalimete (localhost:8091 / wordpress.kalimete.local)
     ├── WordPress 7.1.1 (PHP 8.3)
-    ├── erp-commerce-suite v4.4.0 (plugin ÚNICO — unifica erp-chatbot + erp-ecomm-connector + mcp-basic-auth; chat+voz+WhatsApp+catálogo ERP) ⭐
+    ├── erp-commerce-suite v4.4.1 (plugin ÚNICO — unifica erp-chatbot + erp-ecomm-connector + mcp-basic-auth; chat+voz+WhatsApp+catálogo ERP; **switch Local/Público** en admin) ⭐
     ├── Elementor 4.2.4 (atomic elements, v4)
     ├── EMCP Tools v3.16.1 (Elementor MCP Tools, 60+)
     ├── MCP Adapter v0.5.0 (WordPress MCP adapter)
@@ -42,7 +43,10 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 ```
 
 ### Plugin custom (desarrollo activo)
-- **erp-commerce-suite** (`wp-content/plugins/erp-commerce-suite/`, v4.4.0 verificado 2026-10-01): plugin ÚNICO que unifica erp-chatbot + erp-ecomm-connector + mcp-basic-auth (los 3 repos viejos fueron borrados). Asistente de ventas con IA server-side contra LLM victoria (OpenAI-compatible, key en options). Chat + voz modo teléfono (TTS/STT half-duplex) + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Backend e-commerce contra ERP real (`erpipos.armada.do/api`, tenant 10, tienda MaganTech). Identidad configurable. Tras cambios: bump versión + correr suite de regresión del plugin.
+- **erp-commerce-suite** (`wp-content/plugins/erp-commerce-suite/`, v4.4.1 verificado 2026-10-01, repo `warcold/erp-commerce-suite`): plugin ÚNICO que unifica erp-chatbot + erp-ecomm-connector + mcp-basic-auth (los 3 repos viejos fueron borrados). Asistente de ventas con IA server-side contra LLM victoria (OpenAI-compatible, key en options). Chat + voz modo teléfono (TTS/STT half-duplex) + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Identidad configurable. Tras cambios: bump versión + correr suite de regresión del plugin.
+- **Switch Local/Público (4.4.1, regla del owner)**: el admin solo ve el toggle Local↔Público (tab Entorno). **Local** = conexión SELLADA hardcodeada al erpipos dev de kalimete (`http://172.19.0.1:8100/api`, tenant 10) — NO editable NI visible en la UI (verificado: 0 hits de `172.19.0.1`/`iak_` en el HTML). **Público** = URL/tenant/key de erpipos PROD editables por el admin (`wp_options.erp_suite_settings.public.*`, solo visibles con switch=Público). Local NUNCA toca producción.
+- **Backend e-commerce local**: ERP real = **erpipos LOCAL :8100** (ERP Dev, repo `sistema-facturacion` rama `dev/ecomm-erp`, tenant 10, tienda MaganTech; auth Bearer `iak_*`). La URL `erpipos.armada.do/api` solo aplica cuando switch=Público.
+- **Empaquetado**: ZIP de producción SOLO en `~/dev/wordpress/export/erp-commerce-suite-<version>.zip` (excluir `.git`, `*.bkup`, `export/` interno, `node_modules`, `.env`).
 
 ### Autenticación
 - **Usuario**: `admin`
