@@ -164,16 +164,16 @@ CHECKS = [
  {"id":"eco-taohemps", "label":"taohemps-frontend/backend (vps)", "kind":"local", "href":"", "docs":"", "local": lambda: vps_img(r"taohemps"), "upstream": ""},
  {"id":"eco-ragnarok", "label":"git /srv/ragnarok (vps)", "kind":"git", "href":"https://rathena.org/board/", "docs":"https://rathena.org/board/",
   "local": lambda: ssh_vps("git -C /srv/ragnarok rev-parse HEAD 2>/dev/null")[:12], "upstream": lambda: ssh_vps("git -C /srv/ragnarok fetch --quiet --depth=1 origin HEAD ./svn && echo $(git -C /srv/ragnarok rev-parse @{u} 2>/dev/null | cut -c1-12)") or ""},
- {"id":"eco-nextcloud", "label":"nextcloud:fpm (vps)", "kind":"fetched", "href":"github.com/Nextcloud/server/releases", "docs":"https://docs.nextcloud.com/",
-  "local": lambda: vps_img(r"nextcloud-stack-nextcloud") or "nextcloud:fpm", "upstream": lambda: gh_latest("Nextcloud/server")},
- {"id":"eco-authentik", "label":"ghcr.io/goauthentik/server (vps)", "kind":"fetched", "href":"github.com/goauthentik/authentik/releases", "docs":"https://docs.goauthentik.io/",
-  "local": lambda: vps_img(r"authentik-server") or "ghcr.io/goauthentik/server", "upstream": lambda: gh_latest("goauthentik/authentik")},
- {"id":"eco-docuseal", "label":"docuseal/docuseal:latest (vps)", "kind":"fetched", "href":"github.com/docusealco/docuseal/releases", "docs":"https://www.docuseal.com/guides",
-  "local": lambda: vps_img(r"docuseal") or "docuseal/docuseal:latest", "upstream": lambda: gh_latest("docusealco/docuseal")},
+ {"id":"eco-nextcloud", "label":"nextcloud:fpm (vps)", "kind":"named", "href":"github.com/Nextcloud/server/releases", "docs":"https://docs.nextcloud.com/",
+  "local": lambda: vps_img(r"nextcloud-stack-nextcloud") or "nextcloud:fpm", "upstream": "", "extra": lambda: gh_latest("Nextcloud/server")},
+ {"id":"eco-authentik", "label":"ghcr.io/goauthentik/server (vps)", "kind":"named", "href":"github.com/goauthentik/authentik/releases", "docs":"https://docs.goauthentik.io/",
+  "local": lambda: vps_img(r"authentik-server") or "ghcr.io/goauthentik/server", "upstream": "", "extra": lambda: gh_latest("goauthentik/authentik")},
+ {"id":"eco-docuseal", "label":"docuseal/docuseal:latest (vps)", "kind":"named", "href":"github.com/docusealco/docuseal/releases", "docs":"https://www.docuseal.com/guides",
+  "local": lambda: vps_img(r"docuseal") or "docuseal/docuseal:latest", "upstream": "", "extra": lambda: gh_latest("docusealco/docuseal")},
  {"id":"eco-scriberr", "label":"scriberr-custom (vendor)", "kind":"local", "href":"", "docs":"", "local": lambda: vps_img(r"scriberr"), "upstream": ""},
  {"id":"armada-arcade", "label":"git ~/armada-arcade (kalimete)", "kind":"git", "href":"", "docs":"./README.md", "local": lambda: git_head(HOME + "/armada-arcade"), "upstream": lambda: git_up(HOME + "/armada-arcade")},
  {"id":"wordpress-dev", "label":"wordpress:6.7-php8.3-apache (kalimete)", "kind":"fetched", "href":"hub.docker.com/_/wordpress", "docs":"https://wordpress.org/documentation/",
-  "local": hub_wp_local_date, "upstream": hub_wp_latest},
+  "local": hub_wp_local_date, "upstream": hub_wp_latest, "extra": lambda: hub_tag_named("library/wordpress", "6.7-php8.3-apache")},
  {"id":"erp-dev", "label":"git erpipo preprod (:8100)", "kind":"git", "href":"github.com/warcold/erpipo-preprod", "docs":"", "local": lambda: git_head(HOME + "/erpipo-preprod") or "?", "upstream": lambda: git_up(HOME + "/erpipo-preprod")},
  {"id":"godot-dev", "label":"godot: 4.7.2 (kalimete)", "kind":"fetched", "href":"github.com/godotengine/godot/releases", "docs":"https://docs.godotengine.org/", "local": val_godot, "upstream": lambda: gh_latest("godotengine/godot") and re.sub(r"^[A-Za-z-]*", "", gh_latest("godotengine/godot").replace("stable","").replace(".stable",""))},
  {"id":"proxmark", "label":"prowler-cli 5.36.0 (kalimete)", "kind":"fetched", "href":"pypi.org/pypi/prowler", "docs":"https://docs.prowler.com/", "local": val_prowler, "upstream": lambda: pypi("prowler")},
@@ -193,11 +193,17 @@ def run(write=True):
             up = (c["upstream"]() or "").strip()
         except Exception:
             up = ""
+        extra = ""
+        if c.get("extra"):
+            try:
+                extra = (c["extra"]() or "").strip()
+            except Exception:
+                extra = ""
         drift = eq(local, up) if up else None
         if not local and not up:
             drift = None
         state[c["id"]] = {"id": c["id"], "label": c.get("label",""), "href": c["href"], "docs": c.get("docs",""),
-                          "local": local or "?", "upstream": up or "?", "drift": drift,
+                          "local": local or "?", "upstream": up or "?", "latest": extra, "drift": drift,
                           "kind": c.get("kind","fetched"), "ts": int(time.time())}
         if drift is True:
             drifts.append(c["id"])
