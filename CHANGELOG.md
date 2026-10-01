@@ -1,5 +1,19 @@
 ## 2026-10-01
 
+### [17:10] - Fix regresión visual wp-admin (plugin 4.4.2): CSS del frontend pisaba todo el admin
+- **Tipo**: fix | wordpress | release
+- **Reportado por owner**: tras instalar el plugin, "se perdieron varios íconos arriba del menú de WordPress" + footer `Thank you for creating with WordPress.` duplicado/desplazado.
+- **Diagnóstico (antes de tocar nada)**: las 9 pantallas del plugin + dashboard + posts nativos verificadas por HTML — `footer-thankyou` =1 por página, `wpadminbar` =1, **0 errores PHP**, balance de `<div>` =0 errores, CSS admin del plugin NO se carga en páginas nativas. NO era markup roto.
+- **Causa raíz**: `assets/css/connector.css` (líneas 14-21) — reglas `body, body *` con `font-family: Ubuntu !important` + `letter-spacing` se encolaban también en el admin del plugin via `Main.php::admin_assets()`. Pisaban las fuentes de wp-admin: `#wpadminbar .ab-icon` (dashicons) quedaba invisible → "íconos perdidos", y el footer nativo se descuadraba. **Bug heredado desde ~v3.13.1, NO causado por el switch 4.4.1.**
+- **Fix**: selectores re-scopeados a `body:not(.wp-admin)` + contenedores propios (`.wp-admin .erpsuite-wrap`, `.erpc-section`) — frontend intacto, admin nativo protegido, plugin conserva su look. `connector.css.bkup` previo.
+- **Modificado**: `connector.css` (+15/-4), bump **4.4.1 → 4.4.2** (header + ERPSUITE_VERSION + readme Stable tag), CHANGELOG del plugin + `~/dev/wordpress/CHANGELOG.md`. NUEVO `~/dev/wordpress/export/erp-commerce-suite-4.4.2.zip` (780K, 103 archivos, `unzip -t` OK; el 4.4.1.zip se conserva histórico).
+- **Commits locales** en `warcold/erp-commerce-suite` (master, SIN push — pendiente owner): `d5d58c5` feat: switch Local/Público 4.4.1 (+acumulado 4.3.0-4.4.0), `94c6737` fix(admin): scope connector.css (4.4.2), `4cc098e` docs. Working tree limpio.
+- **Afecta a**: kalimete (plugin + artefacto). CERO producción (el owner sube el 4.4.2.zip cuando quiera).
+- **Verificado**: `tests/regression.php` 14/14 PASS post-bump; CSS servido via HTTP muestra selectores corregidos; switch Local/Público intacto.
+- **Estado**: ✅ sincronizado
+- **Notas**: Owner debe hacer **Ctrl+F5** en wp-admin para ver el fix (cache-bust `?ver=4.4.2` ayuda). Si quiere historia git pristina (4.4.1 puro separado del bump 4.4.2) requiere `git rebase -i` — no hecho sin autorización. Push del repo plugin sigue pendiente a decisión del owner.
+
+
 ### [16:30] - Ruta canónica ÚNICA de artefactos WP + consolidación de zips (owner: "no quiero tener 2 rutas")
 - **Tipo**: organización | docs | limpieza
 - **Análisis**: el owner reportó duplicidad con `~/Desktop/dev/wordpress/export/` vs `~/dev/wordpress/dist/`. Verificado: `~/Desktop/dev` es un **symlink** a `/home/warcold/dev` — misma ubicación física, no hay duplicación de datos, solo doble forma de escribirla. Pero SÍ existían 3 carpetas de distribución reales: `~/dev/wordpress/export/` (vieja: DEPLOY-GUIA + v4.2.0), `~/dev/wordpress/dist/` (creada hoy con 4.4.1), y `~/dev/wordpress/wp-content/plugins/erp-commerce-suite/export/` (DENTRO del repo del plugin: v4.3.0, v4.4.0).
