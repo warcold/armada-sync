@@ -1,5 +1,21 @@
 ## 2026-10-01
 
+### [13:11] - Fix bug categorías MaganTech (redirect HTTPS WordPress) + nuevo endpoint /categories en ERP Ecomm + CORS
+- **Tipo**: fix | api | wordpress | infra | diagnóstico
+- **Modificado**:
+  - **WordPress (kalimete :8091)**: `wp-config.php` reescrito (SSL_FIX_INJECTED v2 — HTTPS solo tras `X-Forwarded-Proto` del nginx, `WP_HOME`/`WP_SITEURL` dinámicos desde `HTTP_HOST`, removidos 3 bloques duplicados de `$_SERVER['HTTPS']='on'` + `FORCE_SSL_ADMIN` condicional). Backup `/tmp/wp-config.php.bkup_20261001_124405`. Backup DB `/tmp/wp_backup_20261001_124109.sql.gz`.
+  - **ERP Ecomm (kalimete :3004)**: `backend/src/routes/stores.ts` — NUEVO `GET /v1/stores/:slug/categories` (SQL raw GROUP BY, excluye inactivos/vacíos; colocado ANTES de `/:slug` por shadowing de Express). `docker-compose.yaml` — `CORS_ORIGIN` ahora `${CORS_ORIGIN:-...}` con defaults + `localhost:8091` + `mantantech.kalimete.local`; eliminado `version: "3.8"` obsoleto. `.env.example` + `README.md` documentados. Backups `.bkup`.
+  - **Docs**: `agents/alfredo-ecomm.md` (sección cambios 2026-10-01).
+- **Afecta a**: kalimete (`wordpress-local` y `alfredo-ecomm-api` recreados/redeployados localmente). CERO producción (vps-preprod verificado: ERP y WordPress/MaganTech NO viven ahí).
+- **Causa**: Usuario: "click en categorías de la web no cambia de categoría ni en tiempo real". Diagnóstico: (1) **causa raíz del bug = redirect loop HTTPS** — `siteurl` apuntaba a `https://wordpress.kalimete.local` → 301 a `https://localhost/productos/` mataba la página entera (0 bytes, ningún JS corría); (2) no existía endpoint dedicado de categorías en el ERP; (3) CORS no incluía el origen del WordPress.
+- **Verificado**:
+  - `curl -sI http://localhost:8091/productos/` → **200 OK, 66,606 bytes** (antes 301 con 0 bytes) ✅
+  - Filtrado funciona vía `admin-ajax.php?action=erpc_get_products&categoria=X` (erp-commerce-suite v4.4.0): `erpc_get_categories` devuelve las **18 categorías reales de MaganTech** (erpipos `:8100` tenant 10); filtro `categoria=Cables` devuelve producto real ✅
+  - `GET :3004/v1/stores/woodly-park/categories` → `{"data":[{"Dispensary":1},{"Drinks":1},{"Kitchen":6}]}` (sum=8 = `_count.products` ✅); slug inexistente → 404 ✅
+- **Estado**: ⚠️ pendiente verificación en navegador real (curl confirma server-side; falta click real del usuario)
+- **Notas**: **HALLAZGO CLAVE** — el WordPress MaganTech consume erpipos `:8100` tenant 10 (vía admin-ajax same-origin, sin CORS), NO el ERP `:3004` de woodly-park. El endpoint `/categories` nuevo + CORS beneficia a frontends que usen el :3004 (Woodly). Doc drift corregido: credenciales DB reales WP = `wordpress`/`wordpress_pass_2026`, root = `root_pass_2026`. Pendientes: tests del endpoint (backend sin suite), verificación E2E navegador, confirmar dominio público MaganTech, deploy ERP a prod (requiere autorización explícita).
+
+
 ### [10:45] - Subagentes RENOMBRADOS a nombres reales (adios prefijo eco-) + name: display + harness alineado
 - **Tipo**: agentes | harness | docs | refactor
 - **Modificado**: 14 archivos `agents/eco-*.md` renombrados con `git mv` (sin prefijo: `authentik.md`, `cloudflare.md`, `docuseal.md`, `irc.md`, `nextcloud.md`, `petsuite.md`, `proxy.md`, `ragnarok.md`, `scriberr.md`, `taohemps.md`, `victoria-server.md`, `vps.md`, `woodly.md`, `alfredo-ecomm.md`); los 19 con `name:` display nuevo (`Authentik`, `Cloudflare`, `DocuSeal`, `IRC`, `Nextcloud`, `PetSuite`, `Proxy`, `Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `Woodly`, `Alfredo Ecomm`, `Armada Arcade`, `ERP Dev`, `Godot`, `Proxmark`, `WordPress`) + linea `> **Frescura**` + ref a su harness. `kalimete.md`: permission.task con claves = display names EXACTOS + scope reescrito + historia eco-cloudflare conservada + tabla. `harness/`: 14 renombrados + los 20 alineados (name/harness id/hidden:false/agent_file/docs) + central (lista subagentes + scope_agentes). Symlinks `~/.config/opencode/agent/` recreados. `bin/doc-fresh.sh` AGENTES -> ids lowercase. `bin/upstream-kalimete-check.py` ids -> lowercase. MAPA.md + configs/MAPA.md + commands/mapa.md + ecosistema-map + cloudflare-map (areas Cloudflare compactadas al agente unico). state/frescura.json remapeado.
