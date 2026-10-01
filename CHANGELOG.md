@@ -1,5 +1,21 @@
 ## 2026-10-01
 
+### [16:30] - Ruta canónica ÚNICA de artefactos WP + consolidación de zips (owner: "no quiero tener 2 rutas")
+- **Tipo**: organización | docs | limpieza
+- **Análisis**: el owner reportó duplicidad con `~/Desktop/dev/wordpress/export/` vs `~/dev/wordpress/dist/`. Verificado: `~/Desktop/dev` es un **symlink** a `/home/warcold/dev` — misma ubicación física, no hay duplicación de datos, solo doble forma de escribirla. Pero SÍ existían 3 carpetas de distribución reales: `~/dev/wordpress/export/` (vieja: DEPLOY-GUIA + v4.2.0), `~/dev/wordpress/dist/` (creada hoy con 4.4.1), y `~/dev/wordpress/wp-content/plugins/erp-commerce-suite/export/` (DENTRO del repo del plugin: v4.3.0, v4.4.0).
+- **Decisión**: canónica = **`~/dev/wordpress/export/`** (forma sin Desktop). Regla: artefactos SIEMPRE ahí; prohibido `export/` dentro del plugin (agregado a su `.gitignore` junto a `dist/`); en docs/comandos jamás `~/Desktop/dev/...`.
+- **Modificado**:
+  - Movidos: `dist/erp-commerce-suite-4.4.1.zip` → `export/`; `wp-content/plugins/erp-commerce-suite/export/{v4.3.0,v4.4.0}.zip` → `export/`. Borradas ambas carpetas vacías (`rmdir`). Ruta final del ZIP de prod: **`~/dev/wordpress/export/erp-commerce-suite-4.4.1.zip`** (la referencia a `dist/` de la entrada 16:05 queda SUPERADA).
+  - `.gitignore` del plugin: `export/` + `dist/` (commit local `c79f711` en master de `warcold/erp-commerce-suite`, SIN push — pendiente owner).
+  - Docs: `~/dev/wordpress/export/DEPLOY-GUIA.md` (header canónico), `~/dev/wordpress/DEPLOY-PRODUCCION.md` (bloque de ruta canónica), `~/dev/wordpress/CHANGELOG.md` (entrada `[ruta-canonica-dist]`).
+  - `agents/wordpress-dev.md`: regla de ruta canónica en Docker Stack + plugin actualizado a **v4.4.1 con switch Local/Público** + backend local = erpipos :8100 tenant 10.
+  - `harness/wordpress-dev.harness.json`: nuevo bloque `rutas_canonicas` (proyecto / artefactos_zip / plugin / erp_local) + docs extra. JSON validado.
+- **Afecta a**: kalimete (docs/organización). CERO producción.
+- **Verificado**: `export/` final = 5 archivos (DEPLOY-GUIA + 4 zips); `dist/` y export interno del plugin eliminados; `unzip -t` del 4.4.1 = sin errores tras el move.
+- **Estado**: ✅ sincronizado
+- **Notas**: ⚠️ Pendiente del owner: el repo del plugin tiene SIN COMMITEAR todo el código del switch 4.4.1 (Environment.php, Main.php, AdminMenu.php, LegacyConnectorAdmin.php + untracked includes/Remote/, readme.txt, erpsuite-remote.js). Solo se commiteó el `.gitignore`. Recomendado: `git add -A` (los .bkup ya están ignorados) + push de la 4.4.1.
+
+
 ### [16:05] - ZIP de producción erp-commerce-suite-4.4.1 empaquetado
 - **Tipo**: release | wordpress
 - **Modificado**: NUEVO `~/dev/wordpress/dist/erp-commerce-suite-4.4.1.zip` (**779 KB, 103 archivos**, raíz `erp-commerce-suite/`). Fuente: `/home/warcold/dev/wordpress/wp-content/plugins/erp-commerce-suite/` (volumen del contenedor wordpress-local). Repo propio del plugin: `ssh://git@github.com/warcold/erp-commerce-suite.git` (rama master).
