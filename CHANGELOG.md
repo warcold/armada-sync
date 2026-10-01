@@ -1,6 +1,6 @@
 ## 2026-10-01
 
-### [02:45] - Estructura espejo Victoria: principal + 19 hide + harness + frescura + upstream + sync unificado
+### [02:30] - Estructura espejo Victoria: principal + 19 hide + harness + frescura + upstream + sync unificado
 - **Tipo**: agentes | config | sync | docs
 - **Modificado**: `opencode.jsonc` (+`default_agent: kalimete`), `agents/kalimete.md` (identidad flota + regla TARGET + frescura + harness + snapshot victoria 160K/Docker/7 keys/limites 120K/dual P-LAN), `agents/eco-victoria.md` (tabla 13 servicios + receta 160K + Upstream), 19x `## Upstream`, `harness/` (central + 19 JSON), `sync.sh` (+secrets-gate pre-push), `~/bin/doc-fresh.sh` (TTL 24h, estado local fuera del repo)
 - **Afecta a**: kalimete (cero produccion: solo docs/config; symlink `agents` eliminado = un solo dir real `agent/`, requiere restart TUI; permisos godot-dev/proxmark ya existian, verificado sin cambio)
