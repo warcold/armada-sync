@@ -1,5 +1,15 @@
 ## 2026-10-01
 
+### [10:10] - Subagentes VISIBLES en autocomplete @ (espejo Victoria, decision del owner)
+- **Tipo**: agentes | config
+- **Modificado**: 19 subagentes (`agents/*.md` + `~/armada-arcade/agents/armada-arcade.md`): frontmatter `hidden: true` -> `hidden: false`. `kalimete.md` INTACTO (mode: primary, color teal, permission.task allowlist completa). `default_agent: kalimete` ya estaba.
+- **Afecta a**: kalimete (TUI opencode): Tab sigue mostrando SOLO kalimete/plan/build (primaries); el autocomplete `@` ahora lista los 19 subagentes (armada-arcade, eco-* x14, erp-dev, godot-dev, proxmark, wordpress-dev) para invocacion directa con `@Nombre`, ademas de la delegacion Task por kalimete.
+- **Causa**: owner (via Victoria): mismo fix aplicado en victoria 2026-10-01 — "quiero verlos todos al escribir @". En kalimete los 19 quedaron hidden:true al montarse la estructura espejo (entrada 02:30); ahora se abren.
+- **Verificado**: `opencode agent list` live: 19 subagentes resuelven `(subagent)`, primaries = kalimete+plan+build (+internos), CERO duplicados, permisos por agente intactos.
+- **Estado**: en sincronizacion (hub cada 5 min)
+- **Notas**: backup pre-cambio en `~/.config/opencode/bkup-agents/bkup-20261001-hidden-false/` (21 archivos). El binario opencode no esta en PATH no-interactivo: ruta canonica `/home/warcold/.opencode/bin/opencode`. Se requiere restart del TUI para que el autocomplete tome el cambio.
+
+
 ### [02:30] - Estructura espejo Victoria: principal + 19 hide + harness + frescura + upstream + sync unificado
 - **Tipo**: agentes | config | sync | docs
 - **Modificado**: `opencode.jsonc` (+`default_agent: kalimete`), `agents/kalimete.md` (identidad flota + regla TARGET + frescura + harness + snapshot victoria 160K/Docker/7 keys/limites 120K/dual P-LAN), `agents/eco-victoria.md` (tabla 13 servicios + receta 160K + Upstream), 19x `## Upstream`, `harness/` (central + 19 JSON), `sync.sh` (+secrets-gate pre-push), `~/bin/doc-fresh.sh` (TTL 24h, estado local fuera del repo)
