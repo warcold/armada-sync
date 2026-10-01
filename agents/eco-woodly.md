@@ -1,6 +1,8 @@
 ---
 description: Subagente del proyecto Woodly (woodly.armada.do) — landing + e-commerce apoyado en Alfredo Pro Ecomm. Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del frontend Woodly. Corre en vps-preprod (Docker) y kalimete (desarrollo).
 mode: subagent
+hidden: true
+color: "#16a34a"
 temperature: 0.1
 steps: 15
 permission:

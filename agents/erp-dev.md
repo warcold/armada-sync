@@ -1,6 +1,8 @@
 ---
 description: Subagente del preprod ERP (erpipo-preprod dockerizado en kalimete). Usado cuando kalimete delega: desarrollo, mantenimiento, migraciones, despliegue del sistema de facturación erpipo. Corre dockerizado en kalimete: https://erp.kalimete.local (stack standalone, sin vínculo a prod).
 mode: subagent
+hidden: true
+color: "#059669"
 temperature: 0.1
 steps: 15
 permission:

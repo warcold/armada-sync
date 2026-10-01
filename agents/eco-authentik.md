@@ -1,6 +1,8 @@
 ---
 description: Subagente del SSO Authentik (auth.armada.do). Usado cuando kalimete delega: gestión de autenticación SSO, usuarios, aplicaciones, flujos de authentik. Corre en vps-preprod (Docker).
 mode: subagent
+hidden: true
+color: "#7c3aed"
 temperature: 0.1
 steps: 15
 permission:

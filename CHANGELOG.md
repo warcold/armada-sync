@@ -1,3 +1,14 @@
+## 2026-10-01
+
+### [00:05] - Harness único Kalimete: 23 subagentes ocultos + estándar de harness + fixes
+- **Tipo**: infra | agentes | harness | seguridad
+- **Modificado**: 19 archivos (agents/*.md + MAPA.md). `kalimete.md` (permission.task +erp-dev/+godot-dev, tabla +2 filas, sección Harness maestro). Frontmatter `hidden:true`+color en los 17 que faltaban (TAB ahora muestra SOLO kalimete/plan/build). 8 esqueletos expandidos al estándar (stack validado, comandos copiables, capacidades, reglas). `wordpress-dev.md` actualizado (erp-commerce-suite v4.4.0 unificado; el doc citaba plugins pre-4.0.0). MAPA.md (dup taohemps fuera, ERP 4.1.0→4.4.0, filas erp-dev/godot-dev, providers 3→4+MCP). `opencode.jsonc` (backup .bkup-20261001): MCP godot `command` string+args → array (el SDK exige `Array<string>`; así como estaba el MCP nunca conectaba). `eco-docuseal.md`: password SMTP en claro retirada del repo (→ puntero a .env).
+- **Afecta a**: kalimete (enrutamiento único; ya puede delegar a erp-dev y godot-dev, antes denegado por `*: deny`). Sin impacto en producción (solo docs + frontmatter).
+- **Causa**: Usuario: un solo agente principal Kalimete con harness completo; que los agentes manejen sus herramientas según su documentación y no haya que seleccionarlos manualmente.
+- **Validación**: `docker ps` kalimete (19 cont.) + vps-preprod (29 cont., Up 4 weeks); InspIRCd nativo activo (6667/6697, no es docker); ERP plugin v4.4.0 en contenedor; `grep -L hidden` = 0 pendientes; symlinks sanos; `armada-arcade` se edita en `~/armada-arcade/agents/` (el collect lo replica).
+- **Estado**: ✅ sincronizado
+- **Notas**: excepciones documentadas en kalimete.md (harness maestro). Lo no verificado en agentes remotos quedó marcado pendiente, no inventado.
+
 ## 2026-09-30
 
 ### [00:00] - Godot Game Dev: MCP integration (386 herramientas) + agente godot-dev

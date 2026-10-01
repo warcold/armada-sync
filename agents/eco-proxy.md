@@ -1,6 +1,8 @@
 ---
 description: Subagente del servidor proxy (vps-proxy 31.220.102.176). Usado cuando kalimete delega: gestión de usuarios del proxy, filtros de contenido, rate limiting, monitoreo, estado del servicio Squid/SOCKS5, DNS del proxy. Cubre el proxy server internacional (EEUU).
 mode: subagent
+hidden: true
+color: "#6366f1"
 temperature: 0.1
 steps: 15
 permission:

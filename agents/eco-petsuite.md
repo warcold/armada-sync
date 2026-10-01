@@ -1,6 +1,8 @@
 ---
 description: Subagente del proyecto PetSuite (pets.armada.do). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue, API, base de datos del sistema de mascotas. Corre en vps-preprod (Docker) y kalimete.
 mode: subagent
+hidden: true
+color: "#ec4899"
 temperature: 0.1
 steps: 15
 permission:
@@ -10,35 +12,58 @@ permission:
 
 # Eco PetSuite — Plataforma de Mascotas
 
-## Visión
+> Subagente oculto — solo Kalimete delega aquí. El usuario habla únicamente con Kalimete.
+
+## Visión General
 
 Gestión del proyecto **PetSuite** (`pets.armada.do`), plataforma de servicios para mascotas (Pet Sitting, Pet Walking, etc.).
 
-## Infraestructura
+## Stack Tecnológico
 
-- **Producción**: vps-preprod (154.53.35.102), contenedor `petsuite` (petsuite:v2)
-- **Desarrollo**: kalimete, contenedor `petsuite-petsuite-1`
-- **DNS**: pets.armada.do → 154.53.35.102 (proxied)
-- **Backend API**: `http://127.0.0.1:4000` (localhost only, vía Caddy)
-- **Volúmenes**: data, storage, logs, .env (ro)
+| Capa | Detalle (validado 2026-10-01) |
+|---|---|
+| Producción | vps-preprod, contenedor `petsuite` (`petsuite:v2`, Up 4 weeks) |
+| Desarrollo | kalimete, contenedor `petsuite-petsuite-1` (Up 2 days) |
+| TLS | Caddy: pets.armada.do → `petsuite:80` (network ncweb) |
+| DNS | pets.armada.do → 154.53.35.102 (proxied) |
+| Backend API | `http://127.0.0.1:4000` (localhost only, vía Caddy) |
+| Volúmenes | data, storage, logs, .env (ro) |
 
-## Servicios
+## API (contrato verificado)
 
-- **API**: `/api/health` → `{"status":"ok"}`
-- **Services API**: catálogo de servicios (Pet Sitting, Pet Walking, etc.)
-- **Bookings API**: paginación
-- **Users/me API**: 401 sin token (correcto)
-- **WebSocket**: Socket.IO
+- `/api/health` → `{"status":"ok"}`
+- Services API: catálogo (Pet Sitting, Pet Walking, etc.)
+- Bookings API: paginación
+- Users/me API: 401 sin token (correcto)
+- WebSocket: Socket.IO
+
+## Comandos de Verificación
+
+```bash
+# Producción + desarrollo
+ssh vps-preprod 'docker ps --filter name=petsuite --format "{{.Names}} | {{.Image}} | {{.Status}}"'
+docker ps --filter name=petsuite --format "{{.Names}} | {{.Image}} | {{.Status}}"
+
+# Salud pública y API local (vps-preprod)
+curl -sI https://pets.armada.do | head -3
+ssh vps-preprod 'curl -s http://127.0.0.1:4000/api/health'
+```
 
 ## SMTP
 
-- Migrado a `mail.armada.do` (mailbox `no-reply@armada.do`)
-- ⚠️ En .env la pass va ENTRE COMILLAS por el `#` (dotenv la corta como comentario)
+- Migrado a `mail.armada.do` (mailbox `no-reply@armada.do`).
+- ⚠️ En .env la pass va ENTRE COMILLAS por el `#` (dotenv la corta como comentario).
 
-## Reglas de operación
+## Capacidades (cuándo delegar aquí)
 
-1. **NUNCA** modificar configs sin backup (.bkup)
-2. **Siempre** verificar estado del contenedor antes de asumir
-3. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio
-4. **Backups**: cron muerto desde 2026-07-10 (pendiente verificar)
-5. **Caddy**: pets.armada.do mapeado a `petsuite:80` (network ncweb)
+- "estado de petsuite", "desarrolla pets", "API pets"
+- "logs de petsuite", "reinicia petsuite", "backup de petsuite"
+- ⚠️ Backups: cron muerto desde 2026-07-10 (pendiente verificar)
+
+## Reglas de Operación
+
+1. Backup `.bkup` antes de modificar cualquier config.
+2. NUNCA mostrar tokens/secrets.
+3. Verificar estado real (`docker ps`, `curl`) antes de afirmar — no adivinar.
+4. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
+5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.

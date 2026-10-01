@@ -29,7 +29,7 @@
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
 - Docker: 8 containers (tapmap, woodly, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
-- **opencode.jsonc**: 3 providers (verificado 2026-09-14; el archivo es la fuente única)
+- **opencode.jsonc**: 4 providers + MCP `godot` (verificado 2026-10-01; el archivo es la fuente única)
   1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
       - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
       - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)
@@ -54,7 +54,7 @@
   - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
   - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
   - Puertos: nginx-TLS 443 + 8090 (mismo cert, ambas URLs válidas) → Docker loopback 8091 (8090 público ya NO es backend HTTP directo — fix redirects envenenados 2026-09-17)
-  - **Plugin único: `erp-commerce-suite` v4.1.0 (admin: 1 menú, 8 tabs reales; seguridad 4.0.1 aplicada)** (2026-09-29) — unifica los 3 plugins viejos (erp-chatbot 1.4.6 + erp-ecomm-connector 3.15.2 + mcp-basic-auth 1.1, rastro eliminado local+GitHub). Option única `erp_suite_settings`, sin roles (manage_options), modo sellado dev/público en Core/Environment: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Tienda "MaganTech" tenant 10. Tests regresión 8/8.
+  - **Plugin único: `erp-commerce-suite` v4.4.0 (admin: 1 menú, 8 tabs reales; verificado 2026-10-01)** (unifica los 3 plugins viejos desde 4.0.0) — unifica los 3 plugins viejos (erp-chatbot 1.4.6 + erp-ecomm-connector 3.15.2 + mcp-basic-auth 1.1, rastro eliminado local+GitHub). Option única `erp_suite_settings`, sin roles (manage_options), modo sellado dev/público en Core/Environment: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Tienda "MaganTech" tenant 10. Tests regresión 8/8.
   - Repo plugin: `github.com/warcold/erp-commerce-suite` (privado, rama `master`) — único rastro; repos viejos erp-chatbot/erp-ecomm-connector/erp-ecmm-connector BORRADOS 2026-09-29
   - ERP local de pruebas: `~/dev/erpipo-preprod/` (erpipo-preprod-nginx :8100) — clavado a main puro de Juan Carlos `5c6ca70` (soycarlosjerez-hub/sistema-facturacion, sin edits; rama local dev/ecomm-erp preservada con commit 7d1e885 sin push)
   - SSL: `mkcert` con CA instalada en sistema, Firefox y Chrome/Chromium (NSS) — verificado 2026-09-17
@@ -184,7 +184,6 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-woodly | Proyecto Woodly (woodly.armada.do) — cliente principal ERP | ✅ |
 | eco-alfredo-ecomm | Backend ERP Alfredo Pro Ecomm (multin tenant) — NUEVO (2026-09-05) | ✅ |
 | eco-taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
-| eco-taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
 | eco-ragnarok | Servidor de juego Ragnarok | ✅ |
 | eco-nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
 | eco-authentik | SSO Authentik (auth.armada.do) | ✅ |
@@ -192,6 +191,8 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | eco-scriberr | Proyecto Scriberr | ✅ |
 | armada-arcade | Proyecto juego multiplayer (TetriNET) | ✅ |
 | wordpress-dev | WordPress+Elementor+EMCP+MCP stack | ✅ |
+| erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
+| godot-dev | Juegos Godot 4.x + MCP 386 tools | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
 | eco-accesos | ~~SSH/access management~~ | 🔴 roto (symlink sin target) |
 | eco-voice | ~~Voz/STT/TTS~~ | 🔴 roto (servicio ELIMINADO) |

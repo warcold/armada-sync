@@ -1,6 +1,8 @@
 ---
 description: Subagente del stack WordPress Dev (WordPress + Elementor + EMCP Tools + MCP Adapter) en kalimete. Usado cuando kalimete delega: desarrollo, mantenimiento, pruebas del sistema WordPress automatizado que se comunica vía MCP con el LLM local (victoria).
 mode: subagent
+hidden: true
+color: "#21759b"
 temperature: 0.1
 steps: 15
 permission:
@@ -29,8 +31,7 @@ permission:
 ```
 kalimete (localhost:8091 / wordpress.kalimete.local)
     ├── WordPress 7.1.1 (PHP 8.3)
-    ├── erp-chatbot v1.4.3 (asistente virtual AI: chat+voz+WhatsApp) ⭐
-    ├── erp-ecomm-connector v3.14.0 (catálogo/checkout ERP real)
+    ├── erp-commerce-suite v4.4.0 (plugin ÚNICO — unifica erp-chatbot + erp-ecomm-connector + mcp-basic-auth; chat+voz+WhatsApp+catálogo ERP) ⭐
     ├── Elementor 4.2.4 (atomic elements, v4)
     ├── EMCP Tools v3.16.1 (Elementor MCP Tools, 60+)
     ├── MCP Adapter v0.5.0 (WordPress MCP adapter)
@@ -38,9 +39,8 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
     └── All-in-One WP Migration
 ```
 
-### Plugins custom (desarrollo activo)
-- **erp-chatbot** (`wp-content/plugins/erp-chatbot/`): asistente de ventas con IA. Motor server-side contra LLM victoria (OpenAI-compatible, key en options). Chat + voz modo teléfono (TTS/STT half-duplex) + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Identidad configurable (hoy: Carlos, Asesor de ventas, voz masculina). Suite: `tests/regression.php` (docker exec). Docs: `WHATSAPP-ACTIVACION.md`, `FASE2-VOZ-IMAGEN.md`.
-- **erp-ecomm-connector**: backend e-commerce contra ERP real (`erpipos.armada.do/api`, tenant 10, tienda MaganTech). Dependencia dura del chatbot.
+### Plugin custom (desarrollo activo)
+- **erp-commerce-suite** (`wp-content/plugins/erp-commerce-suite/`, v4.4.0 verificado 2026-10-01): plugin ÚNICO que unifica erp-chatbot + erp-ecomm-connector + mcp-basic-auth (los 3 repos viejos fueron borrados). Asistente de ventas con IA server-side contra LLM victoria (OpenAI-compatible, key en options). Chat + voz modo teléfono (TTS/STT half-duplex) + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Backend e-commerce contra ERP real (`erpipos.armada.do/api`, tenant 10, tienda MaganTech). Identidad configurable. Tras cambios: bump versión + correr suite de regresión del plugin.
 
 ### Autenticación
 - **Usuario**: `admin`

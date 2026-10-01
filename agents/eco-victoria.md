@@ -1,6 +1,8 @@
 ---
 description: Subagente del servidor GPU/LLM (victoria 10.0.0.5). Usado cuando kalimete delega: gestión de vLLM, gateway LLM, nginx, cloudflared, servicios de IA (video, voz, whois, web-nav, comfyui). Acceso SOLO LECTURA por defecto.
 mode: subagent
+hidden: true
+color: "#a855f7"
 temperature: 0.1
 steps: 15
 permission:
@@ -56,3 +58,14 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 2. **Solo lectura**: cat, ls, ps, curl, ss, nvidia-smi, sqlite3ro_real, systemctl is-*, timedatectl, df, uptime
 3. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio documentado
 4. **Consultar DB** de forma segura: `echo "colador" | sudo -S -u victoria /usr/local/libexec/sqlite3ro_real "SELECT ..."`
+
+## Comandos de Verificación (solo lectura)
+
+```bash
+# Gateway LLM vía túnel
+curl -s -o /dev/null -w "%{http_code}\n" https://victoria.armada.do/v1/models
+
+# GPU + servicios (SSH lectura)
+ssh victoria 'nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total --format=csv,noheader'
+ssh victoria 'systemctl is-active victoria-llm-gateway cloudflared'
+```

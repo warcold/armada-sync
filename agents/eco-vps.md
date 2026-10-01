@@ -1,6 +1,8 @@
 ---
 description: Subagente del servidor VPS de producción (vps-preprod 154.53.35.102). Usado cuando kalimete delega: gestión de contenedores Docker, servicios, caddy, authentik SSO, proyectos alojados. Cubre auth.armada.do, pets, woodly, ragnarok, scriberr, docuseal, nextcloud, whiteboard, taohemps.
 mode: subagent
+hidden: true
+color: "#f97316"
 temperature: 0.1
 steps: 15
 permission:
@@ -55,3 +57,23 @@ Gestión del servidor VPS de producción (`vps-preprod`, 154.53.35.102). Este su
 3. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio
 4. **Caddy**: el contenedor monta `/opt/nextcloud-stack/Caddyfile` (ro); para aplicar cambios usar `docker restart nextcloud-stack-caddy-1`
 5. **Documentar** en el agente correspondiente de cada proyecto si el cambio es específico
+
+## Comandos de Verificación
+
+```bash
+# Inventario real de contenedores (validado 2026-10-01: 29 contenedores, todos Up 4 weeks)
+ssh vps-preprod 'docker ps --format "{{.Names}} | {{.Image}} | {{.Status}}"'
+
+# Salud del proxy + un servicio
+ssh vps-preprod 'docker exec nextcloud-stack-caddy-1 caddy version'
+curl -sI https://auth.armada.do | head -3
+
+# Recursos del host
+ssh vps-preprod 'uptime; df -h / | tail -1'
+```
+
+## Notas Validadas (2026-10-01)
+
+- **Caddy** = `nextcloud-stack-caddy-1` (caddy:2) — es el reverse proxy de TODO el VPS, no solo Nextcloud.
+- **IRC es servicio nativo systemd** (`inspircd`, puertos 6667/6697 activos) — NO es contenedor Docker; lo gestiona `eco-irc`.
+- **Sin contenedor `caddy` suelto**: no buscarlo en `docker ps`.
