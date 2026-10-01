@@ -101,6 +101,12 @@ stores → customers, carts, orders, products, deals, product_variants, cart_ite
 - Woodly es el primer tenant operacional, "seed" incluído
 - Es solo desarrollado ahora (2026-09-05), es totalmente válido para producción cuando esté listo
 
+## Cambios recientes (2026-10-01)
+
+- **Nuevo endpoint**: `GET /v1/stores/:slug/categories` — devuelve `[{name: "Kitchen", count: 6}, ...]` con categoría + conteo de productos. Útil para navegación por categoría en frontend. Se implementó en `src/routes/stores.ts` OBLIGATORIAMENTE ANTES de `/:slug` (si "categories" viene después, Express lo interpreta como slug y devuelve 404).
+- **CORS ajustado**: `CORS_ORIGIN` en docker-compose.yaml ahora es variable `${CORS_ORIGIN:-...}` con defaults incluyendo `http://localhost:8091` (WordPress dev) y `https://mantantech.kalimete.local` (plausible dominio de MaganTech). El .env.example documenta el patrón comma-separated sin trailing slash.
+- **Bugfix docker-compose**: Eliminado campo `version: "3.8"` obsoleto (Docker Compose v3+).
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: backend-api local + redis:7 + postgres:16 (kalimete dev).
