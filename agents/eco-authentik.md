@@ -98,3 +98,9 @@ for p in OAuth2Provider.objects.all():
 1. **NUNCA** modificar configs sin backup (.bkup)
 2. **Siempre** verificar estado de los contenedores antes de asumir
 3. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio
+## Upstream (2026-10-01)
+
+- **Fuente**: ghcr.io/goauthentik/server (auth.armada.do).
+- **Vivo 2026-10-01**: server x2 healthy + worker + redis + postgres:16, Up 4w.
+- **Check**: ssh vps-preprod docker ps -f name=authentik
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

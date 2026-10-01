@@ -77,3 +77,9 @@ ssh vps-preprod 'uptime; df -h / | tail -1'
 - **Caddy** = `nextcloud-stack-caddy-1` (caddy:2) — es el reverse proxy de TODO el VPS, no solo Nextcloud.
 - **IRC es servicio nativo systemd** (`inspircd`, puertos 6667/6697 activos) — NO es contenedor Docker; lo gestiona `eco-irc`.
 - **Sin contenedor `caddy` suelto**: no buscarlo en `docker ps`.
+## Upstream (2026-10-01)
+
+- **Fuente**: vps-preprod 154.53.35.102 (root:1333, alias ssh vps-preprod).
+- **Vivo 2026-10-01**: 25 contenedores Up 4w (petsuite, woodly, staging, nextcloud-stack, docuseal, scriberr, ragnarok, authentik, taohemps, apps).
+- **Check**: ssh vps-preprod docker ps
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

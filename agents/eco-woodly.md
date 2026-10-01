@@ -104,3 +104,10 @@ Esto es exactamente cómo funciona *Mitiba Klas Soliaria* para cualquier nuevo c
 - **Dev kalimete**: `~/dev/apps/woodly/` (compose dev/prod, `frontend/`, update.sh) y `~/projects/woodly/` (AGENTS.md, README, docs).
 - **Prod vps-preprod**: `/opt/woodly` (contenedor `woodly-woodly-1`). Flujo: editar en kalimete → commit/push → `cd /opt/woodly && git pull && ./update.sh`.
 - **Edge**: Caddy (`nextcloud-stack-caddy-1`, Caddyfile ro en `/opt/nextcloud-stack/`) — `caddy reload` NO aplica, usar `docker restart`; `woodly.alfredo.pro` retirado 2026-08-07.
+
+## Upstream (2026-10-01)
+
+- **Fuente**: imagen local woodly-woodly (woodly.armada.do).
+- **Vivo 2026-10-01**: Up 4w (vps-preprod) + Up 3d (kalimete dev).
+- **Check**: docker ps -f name=woodly en ambos hosts
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

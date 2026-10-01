@@ -57,3 +57,10 @@ ssh vps-preprod 'docker logs scriberr --tail 50'
 3. Verificar estado real (`docker ps`, `curl`) antes de afirmar — no adivinar.
 4. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
 5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
+
+## Upstream (2026-10-01)
+
+- **Fuente**: imagen local scriberr-custom:latest (scriberr.armada.do).
+- **Vivo 2026-10-01**: Up 4w.
+- **Check**: ssh vps-preprod docker ps -f name=scriberr
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

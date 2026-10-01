@@ -131,3 +131,10 @@ El stack local se conecta al LLM de victoria vía:
 - El `mcp-proxy.mod.js` maneja `Content-Length: 0` + Keep-Alive correctamente (evita hang)
 - **Importante**: La respuesta de `tools/list` puede ser ~65KB (muchas herramientas)
 - erp-chatbot: sin WooCommerce — el perfil del cliente vive en el ERP (`GET /ecomm/me`), WP solo aporta display_name/email como fallback
+
+## Upstream (2026-10-01)
+
+- **Fuente**: wordpress:6.7-php8.3-apache + mariadb:10.11 (kalimete).
+- **Vivo 2026-10-01**: healthy, Up 3d.
+- **Check**: docker ps -f name=wordpress
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

@@ -108,3 +108,10 @@ wrangler pages project list
 4. NUNCA mencionar R2 como opción (backups → NAS jonas).
 5. Estado raro (SPF duplicado, records huérfanos, settings extraños, posible compromiso) → reportar a kalimete, no auto-arreglar.
 6. Respuestas: estado antes → cambio → verificación, en tablas breves.
+
+## Upstream (2026-10-01)
+
+- **Fuente**: cuenta Alfredo armada.do (API + dashboard); IDs en este agente.
+- **Vivo 2026-10-01**: tuneles vps+victoria activos (victoria: cloudflared 2026.9.3).
+- **Check**: API zones list con CLOUDFLARE_ACCOUNT_ID (ver agente).
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

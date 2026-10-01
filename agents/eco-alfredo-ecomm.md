@@ -98,3 +98,10 @@ stores → customers, carts, orders, products, deals, product_variants, cart_ite
 - Los frontend de los clientes no conversan entre sí — solo los del mismmo negocio
 - Woodly es el primer tenant operacional, "seed" incluído
 - Es solo desarrollado ahora (2026-09-05), es totalmente válido para producción cuando esté listo
+
+## Upstream (2026-10-01)
+
+- **Fuente**: backend-api local + redis:7 + postgres:16 (kalimete dev).
+- **Vivo 2026-10-01**: Up 3d.
+- **Check**: docker ps -f name=alfredo-ecomm
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

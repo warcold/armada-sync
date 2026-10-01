@@ -96,3 +96,10 @@ ssh vps-preprod 'docker logs ragnarok-fluxcp --tail 30'
 3. Verificar puertos 6900/6121/5121 + HTTP antes de declarar "funciona".
 4. Destructivo (wipe DB, rebuild, cambio de URL pública) = confirmar con el usuario.
 5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
+
+## Upstream (2026-10-01)
+
+- **Fuente**: github.com/rathena/rathena + FluxCP + roBrowser + wsProxy (/srv/ragnarok).
+- **Vivo 2026-10-01**: fluxcp/mariadb/robrowser/remoteclient Up 4w, PERO demonios del juego CAIDOS (ver CHANGELOG 10-01).
+- **Check**: ssh vps-preprod docker ps -f name=ragnarok
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

@@ -191,3 +191,10 @@ godot --headless --path ~/armada-godot --export-release "HTML5" ./export/game.ht
 
 ## CHANGELOG
 - **2026-09-30**: Creación del agente. Godot 4.7.2 + @yanhuifair/godot-mcp 1.12.3 configurados. Proyecto de demostración en ~/armada-godot/. MCP integrado en opencode.jsonc.
+
+## Upstream (2026-10-01)
+
+- **Fuente**: Godot 4.x + MCP godot (386 tools) + repo ~/armada-godot/.
+- **Vivo**: MCP declarado en opencode.jsonc.
+- **Check**: ls ~/armada-godot/
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

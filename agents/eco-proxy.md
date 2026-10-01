@@ -113,3 +113,9 @@ Cuando se agreguen más IPs al servidor, descomentar en `/etc/squid/squid.conf`:
 5. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio
 6. **Backup** de configs antes de modificar (`.bkup-YYYYMMDD`)
 7. **Documentar** en `/opt/proxy-configs/proxy-credenciales.txt` los usuarios activos
+## Upstream (2026-10-01)
+
+- **Fuente**: vps-proxy 31.220.102.176 (Squid :3128 + SOCKS5 :1080).
+- **Vivo**: host Up 228d (dato 2026-09-19); revalidar.
+- **Check**: ssh vps-proxy systemctl is-active squid
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

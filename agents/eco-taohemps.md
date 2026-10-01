@@ -64,3 +64,10 @@ docker ps --filter name=taohemps --format "{{.Names}} | {{.Image}} | {{.Status}}
 4. Verificar estado real (`docker ps`, `curl`) antes de afirmar — no adivinar.
 5. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
 6. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
+
+## Upstream (2026-10-01)
+
+- **Fuente**: imagenes locales taohemps-frontend/backend (taohemps.com).
+- **Vivo 2026-10-01**: Up 4w en vps-preprod.
+- **Check**: ssh vps-preprod docker ps -f name=taohemps
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

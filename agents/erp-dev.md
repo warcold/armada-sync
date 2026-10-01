@@ -124,3 +124,10 @@ docker exec erpipo-preprod-app php artisan migrate:status
 - Sin acceso al servidor externo: alias SSH retirado, sin registro en MAPA ni en este agente.
 - El preprod es standalone: su DB (`facturacion_db`) vive solo en el volumen `erpipo-dev-mysql-data` de kalimete.
 - No tocar ni referenciar infraestructura de terceros. Todo cambio se prueba aquí y viaja por Git (`git push preprod main`).
+
+## Upstream (2026-10-01)
+
+- **Fuente**: github.com/warcold/erpipo-preprod + stack erpipo-* (kalimete :8100).
+- **Vivo 2026-10-01**: app/mysql:8.0/mailpit/queue/scheduler/phpmyadmin/nginx:1.25/redis Up 3d.
+- **Check**: docker ps -f name=erpipo
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

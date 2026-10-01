@@ -66,3 +66,10 @@ ssh vps-preprod 'docker exec nextcloud-stack-nextcloud-1 php occ user_oidc:provi
 3. Verificar estado real (`docker ps`, `occ status`, `curl`) antes de afirmar — no adivinar.
 4. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
 5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
+
+## Upstream (2026-10-01)
+
+- **Fuente**: imagenes oficiales nextcloud:fpm + caddy:2 + mariadb:10.11 + redis.
+- **Vivo 2026-10-01**: stack completo Up 4w.
+- **Check**: ssh vps-preprod docker ps -f name=nextcloud
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

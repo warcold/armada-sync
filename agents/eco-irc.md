@@ -151,3 +151,10 @@ cat /home/justin_t/inspircd/run/inspircd.pid
 - Binario: InspIRCd v4.7.0
 - Módulos: ~70 cargados
 - Logs: activos
+
+## Upstream (2026-10-01)
+
+- **Fuente**: InspIRCd El Corito (chatlatinos.org) en vps-preprod.
+- **PENDIENTE 2026-10-01**: no aparece en docker ps (verificar si corre como proceso nativo).
+- **Check**: ssh vps-preprod ps aux
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.

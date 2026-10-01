@@ -503,3 +503,10 @@ diff <(xxd dump1.bin) <(xxd dump2.bin)
 | "limpia t55xx" | `lf t55xx wipe` |
 | "decodifica wiegand" | `pm3 -o -c "wiegand decode --raw <HEX>"` |
 | "audita tarjeta" | Full audit workflow |
+
+## Upstream (2026-10-01)
+
+- **Fuente**: hardware Proxmark3 en /dev/ttyACM0 (kalimete).
+- **Vivo**: solo presente si el hardware esta conectado.
+- **Check**: ls /dev/ttyACM0
+- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
