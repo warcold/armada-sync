@@ -1,5 +1,13 @@
 ## 2026-10-01
 
+### [02:45] - Estructura espejo Victoria: principal + 19 hide + harness + frescura + upstream + sync unificado
+- **Tipo**: agentes | config | sync | docs
+- **Modificado**: `opencode.jsonc` (+`default_agent: kalimete`), `agents/kalimete.md` (identidad flota + regla TARGET + frescura + harness + snapshot victoria 160K/Docker/7 keys/limites 120K/dual P-LAN), `agents/eco-victoria.md` (tabla 13 servicios + receta 160K + Upstream), 19x `## Upstream`, `harness/` (central + 19 JSON), `sync.sh` (+secrets-gate pre-push), `~/bin/doc-fresh.sh` (TTL 24h, estado local fuera del repo)
+- **Afecta a**: kalimete (cero produccion: solo docs/config; symlink `agents` eliminado = un solo dir real `agent/`, requiere restart TUI; permisos godot-dev/proxmark ya existian, verificado sin cambio)
+- **Causa**: owner: mismo sistema que Victoria (principal visible + hide + @ directo + harness + upstream + frescura) y sync unificado con scopes separados (hub GitHub kalimete Vs snapshots victoria, nunca cruzados)
+- **Estado**: en sincronizacion (hub cada 5 min)
+- **Notas**: eco-irc no sale en docker ps (pendiente si es nativo); daily-report Discord FALLO con token presente (pendiente owner: rotar/verificar); binario opencode no en PATH no-interactivo (agent list pendiente en TUI)
+
 ### [00:30] - Consolidación: eco-cloudflare único + ragnarok docs-harness + limpieza duplicados
 - **Tipo**: infra | agentes | refactor | diagnóstico
 - **Modificado**: `agents/eco-cloudflare.md` (NUEVO, unifica dns/security/storage/tunnels/workers con todas sus reglas aprendidas: IDs de zona/ruleset, NO-2-niveles, R2 ban, playbook túneles). BORRADOS los 5 + sus symlinks (limpieza autorizada). `kalimete.md` (permission `eco-cloudflare-*`→`eco-cloudflare` exacto — el wildcard ya no matcheaba; tabla 5 filas→1). MAPA.md (tabla igual). `eco-ragnarok.md` reescrito como harness docs (rAthena/FluxCP/roBrowser/wsProxy + estado vivo). Fuente+despliegue agregados a woodly/petsuite/taohemps/scriberr/alfredo-ecomm (rutas verificadas). Sin duplicados reales: erp-dev (facturación Laravel) vs alfredo-ecomm (e-commerce Node) son sistemas distintos — documentada la distinción (mismo hostname, puertos :8100/:3004). eco-vps vs proyectos = frontera host/app, se mantiene.
