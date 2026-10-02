@@ -1,5 +1,17 @@
 ## 2026-10-02
 
+### [01:30] - Armada Suite 5.1.0: menú único, dedup, fix footer overlap, unificación completa
+- **Tipo**: feature | refactor | ux | wordpress
+- **Menú único**: nuevo `MenuUnifier.php` (admin_menu prio 999) — `ai1wm_export` y `vibe-ai` ocultos como top-level, re-registrados como 5 submenús de Armada Suite (Exportar/Importar/Respaldos con badge + Puente IA/Registro IA). Reset Hub y Schedules NO re-registrados (upsells premium). Título: "ERP Suite"→"Armada Suite".
+- **Dedup verificado**: ¿2 MCP? NO (tab MCP=estado API propia, AiBridge=tools para IAs — complementarios). ¿2 chatbot? NO (1 bot Carlos: Chatbot/IA=cerebro, Voz/WhatsApp=canales). Limpieza real: filtro muerto `mcp_adapter_tools` eliminado (main + WpvibeBridge), texto obsoleto emcp-tools/mcp-adapter→Puente IA.
+- **Fix footer** (bug del owner REPRODUCIDO con Selenium): WP 7.1.2 pone #wpfooter hijo de body con absolute;bottom:0 → clavado al viewport, contenido largo se desliza debajo (overlap 52px medido en tab entorno). Fix: `position:static` scopeado → 0px verificado. (Owner reportó bien la versión: WP auto-actualizó 6.7→7.1.2.)
+- **Textos + (i)**: helper `ERPSuite_AdminMenu::info()` + CSS popup sin JS; simplificados Conexión ERP, Config tienda, ID tienda, Carrito, MCP.
+- **Borrado final** (autorizado, backup 1.8M en `~/backups/armada-unificacion-20261002/`): erp-commerce-suite/, vibe-ai/, all-in-one-wp-migration/ + mu-plugin muerto + plugins/export/ vacía. Solo queda armada-suite/. Borrado con rm directo (NO vía admin: los uninstall.php habrían borrado las opciones compartidas).
+- **Smoke**: home 200, 8/8 admin 200, AJAX success:true 18 categorías, 0 FATALs, active_plugins=solo armada-suite.
+- **Commits stack** (~/dev/wordpress, sin push): 19a1e4e (5.0.0 creación) + 9697d3d (5.1.0 consolidación) + 169fc4d (borrado aiowpm). Detalle en ~/dev/wordpress/CHANGELOG.md.
+- **Nota proceso**: subagente wordpress-dev agotó steps 2 veces (diagnóstico + 90% construcción); kalimete completó la milla final (fix uninstall.php, activación curl, verificación 8 puntos, consolidación v5.1.0) — documentado por transparencia.
+- **Estado**: ✅ verificado end-to-end
+
 ### [00:45] - Fix permisos: WP admin local no podía borrar plugins (ACLs en bind mount)
 - **Tipo**: fix | infra | wordpress
 - **Causa raíz**: `wp-content/plugins/` es bind mount del host con owner `warcold:warcold` (1000) modo 755; el contenedor corre PHP como `www-data` (UID 33) → solo lectura → "Borrar" en WP admin fallaba (pedía FTP o "no se pudo eliminar"). `themes/` y `uploads/` ya eran www-data (por eso sí funcionaban). Descartado `DISALLOW_FILE_MODS`.
