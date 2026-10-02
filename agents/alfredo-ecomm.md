@@ -1,6 +1,6 @@
 ---
 name: Alfredo Ecomm
-description: Subagente del proyecto Alfredo Pro Ecomm (e-commerce ERP backend). Usado cuando kalimete delega: desarrollo, mantenimiento, despliegue del backend ERP e-commerce. Corre en kalimete (dev) y/o vps-preprod (prod futuro).
+description: Subagente del backend ERP e-commerce Alfredo Pro Ecomm (Node :3004, multitenant, exclusivo del ecosistema Woodly). Usado cuando kalimete delega desarrollo, mantenimiento o despliegue del backend. El plugin WP Armada Suite NO consume este backend (usa erpipos :8100). Corre en kalimete (dev); vps-preprod (prod futuro, requiere autorización del owner).
 mode: subagent
 hidden: false
 color: "#eab308"
@@ -12,22 +12,56 @@ permission:
 ---
 > **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-# Alfredo Ecomm
+# Alfredo Ecomm — Subagente Backend ERP E-commerce
 
-Sistema e-commerce multi-tenant ERP — **backend central** para todos los negocios e-commerce de armada.
+## Visión General
 
-## Proyectos
+**Alfredo Ecomm** es el subagente del **backend ERP e-commerce multitenant** (Node.js + Express + TypeScript + Prisma). Una sola DB sirve múltiples tiendas lógicamente separadas por `slug`. Hoy un solo tenant operacional: **Woodly** (`woodly-park`).
 
-- **Backend API**: `cd ~/projects/alfredo-pro-ecomm/backend` — Docker + PostgreSQL + Redis + Node.js
-- **Cliente demo**: `cd ~/projects/woodly/frontend` — landings y e-commerce con backend
+**Regla del estándar (owner, 2026-10-02)**:
+- **Armada Suite** = plugin WordPress comercial/UI (~/dev/wordpress, `armada-suite.php`) — pertenece al subagente WordPress (F1a/AiBridge). **NO consume este backend**: usa erpipos `:8100` (tenant 10).
+- **Alfredo Pro Ecomm** = backend ERP multitenant `:3004`, **solo-Woodly**. Este agente NO toca el plugin WP.
 
-## Estructura backend
+## Stack Tecnológico (validado 2026-10-02)
+
+| Componente | Detalle |
+|-----------|---------|
+| API | Node 20 + Express + TS — docker `alfredo-ecomm-api` (imagen `backend-api`), puerto **3004** |
+| DB | PostgreSQL 16-alpine — docker `alfredo-ecomm-db`, puerto 5432 |
+| Caché | Redis 7-alpine — docker `alfredo-ecomm-redis`, puerto 6379 |
+| ORM | Prisma (`prisma/schema.prisma`, 12 tablas) |
+| Frontend cliente | Woodly — docker `woodly-woodly-1` (nginx), `127.0.0.1:5173->80` — **:5173, NO :5174** |
+
+## Repositorios y Paths Exactos
+
+- **Backend**: `~/projects/alfredo-pro-ecomm/backend` — `src/`, `prisma/`, `Dockerfile`, `docker-compose.yaml`, `.env`
+- **Repo root**: `~/projects/alfredo-pro-ecomm` — `README.md`, `Caddyfile.dev` (receta; Caddy NO corre en dev), `CHANGELOG.md`, `docs/`
+- **Woodly repo root**: `~/projects/woodly` — `docker-compose.dev.yaml` (frontend), `frontend/` (Vue+Vite, `src/services/api.ts` defaultea a `http://localhost:3004`)
+- **NO-TOUCH desde este agente**: `~/dev/wordpress` (plugin Armada Suite → subagente WordPress), `armada-suite.php`, `.env` de Woodly (secrets)
+
+## Verificación LIVE (checks copiables)
+
+```bash
+curl -s localhost:3004/health
+# {"status":"ok","service":"alfredo-pro-ecomm","database":"up",...}
+
+docker ps --filter name=alfredo
+# alfredo-ecomm-api / alfredo-ecomm-db (healthy) / alfredo-ecomm-redis
+
+curl -s localhost:3004/v1/stores
+curl -s localhost:3004/v1/stores/woodly-park/categories
+# {"data":[{"name":"Kitchen","count":6},...]}
+
+curl -s -o /dev/null -w '%{http_code}' localhost:5173/   # frontend woodly → 200
+```
+
+## Estructura Backend
 
 ```
 backend/
 ├── src/
 │   ├── routes/
-│   │   ├── stores.ts      # GET /v1/stores, /:slug/config
+│   │   ├── stores.ts      # GET /v1/stores, /:slug/config, /:slug/categories (ANTES de /:slug)
 │   │   ├── products.ts    # GET /products con filtros
 │   │   ├── carts.ts       # Carrito + submit orders
 │   │   ├── auth.ts        # register/login/refresh/me
@@ -36,7 +70,7 @@ backend/
 │   ├── config/database.ts # Prisma client
 │   ├── config/redis.ts    # Redis (opcional)
 │   └── middleware/        # auth, errorHandler, adminStore
-├── prisma/schema.prisma  # Modelos (PostgreSQL)
+├── prisma/schema.prisma   # Modelos (PostgreSQL)
 ├── Dockerfile
 ├── docker-compose.yaml
 └── .env
@@ -46,15 +80,25 @@ backend/
 
 ```bash
 cd ~/projects/alfredo-pro-ecomm/backend
-docker compose up -d               # levantar stack completo
-docker compose up -d postgres redis  # solo deps
-npm run dev                        # dev server local :3004
-npm run build && npm start         # producción
-npm run db:seed                    # cargar datos demo
-npm run db:migrate                 # migrar DB
+docker compose up -d                  # stack completo (api+db+redis)
+docker compose up -d postgres redis   # solo deps
+npm run dev                           # dev server local :3004
+npm run build && npm start            # producción
+npm run db:seed                       # datos demo
+npm run db:migrate                    # migrar DB
+
+# Frontend Woodly (docker, LIVE en :5173):
+cd ~/projects/woodly && docker compose -f docker-compose.dev.yaml up -d
 ```
 
-## Credenciales demo
+## Capacidades (API `/v1`)
+
+- **Público**: stores, `/:slug/config`, `/:slug/categories` (categoría + conteo), products (+filtros), carts (+items/promos/submit), auth (register/login/refresh/me), deals
+- **Admin (JWT)**: `POST /v1/admin/auth/login` + CRUD ` /v1/admin/stores/:slug/*` (stores, products, orders, deals, customers)
+- **Multi-tenant**: todo lo público cuelga de `:slug`; una DB, tiendas aisladas lógicamente
+- **CORS**: `CORS_ORIGIN` en docker-compose.yaml es variable `${CORS_ORIGIN:-...}` (comma-separated, sin trailing slash; ver `.env.example`)
+
+## Credenciales demo (seed)
 
 ```
 Slug: woodly-park
@@ -62,70 +106,68 @@ Admin: admin@woodly.armada.do / admin123
 Customer: juan@example.com / password123
 ```
 
-## Clientes activos
+## Vecindad — no confundir
 
-```
-Woodly = slug: woodly-park → landing alfredo-ecomm
-SIGUIENTE: cliente2-slug, cliente3-slug (misma infra)
-```
+- **erpipos `:8100`** (repo `sistema-facturacion`, rama dev/ecomm-erp, Laravel) es un **ERP DISTINTO**. El WordPress de MaganTech (kalimete `:8091`) consume erpipos `:8100` **tenant 10** vía admin-ajax same-origin — **NO consume alfredo-ecomm `:3004`**.
+- **Armada Suite** (plugin WP, `~/dev/wordpress`) = capa comercial/UI del WP — lo arregla el **subagente WordPress** (F1a/AiBridge). NO tocarlo desde este agente; no duplicar trabajo.
+- **Woodly** (frontend `:5173`) es el ÚNICO consumidor de este backend `:3004` (slug `woodly-park`).
+- Mismo hostname `erp.kalimete.local`, puertos distintos = sistemas distintos: `:3004` e-commerce Node (este), `:8100` facturación Laravel (erp-dev).
 
-## Configuración local (dns)
+## Namespace legacy congelado (D6–D9) — decisión owner 2026-10-02
 
-- ERP API: http://erp.kalimete.local:3004 (backend)
-- Woodly frontend: http://localhost:5174 / https://woodly.kalimete.local (acceso propio)
-- Producción: TBD (igu.md)
+El plugin WP Armada Suite arrastra namespace histórico **erp-suite**. Se MANTIENE como legacy efectivo — **NO renombrar nada de código**:
+
+| Elemento legacy | Valor congelado |
+|----------------|-----------------|
+| Slug del plugin | `erp-suite` |
+| Constantes | `ERPSUITE_*` |
+| Options (wp_options) | `erp_suite_*` / `erpc_*` |
+| Namespace REST | `erpsuite/v1` |
+| Shortcodes | `erpc_*` |
+
+**Por qué**: renombrar rompe filas en DB (wp_options), bookmarks/enlaces admin y clientes REST existentes. La marca comercial va en UI/docs (`Armada Suite`); el namespace de código queda congelado. Documentar, no refactorizar.
+
+## Configuración local (dns/ports)
+
+- ERP API: `http://erp.kalimete.local:3004` (o `http://localhost:3004`)
+- Woodly frontend: `http://localhost:5173` (docker LIVE) — acceso propio vía `woodly.kalimete.local`
+- Producción: TBD (igu.md) — deploy a vps-preprod **PENDIENTE, requiere autorización explícita del owner**
 
 ## Schema de DB (12 tablas)
 
-stores → customers, carts, orders, products, deals, product_variants, cart_items, cart_deals, admin_users, refresh_tokens
+`stores` → customers, carts, orders, products, deals, product_variants, cart_items, cart_deals, admin_users, refresh_tokens
 
-## Deploy a producción
+## Deploy a producción (cuando el owner autorice)
 
-1. docker-compose up -d (postgres, redis, api)
-2. Conectar api-service docker-compose a erp network: `docker network connect alfredo-ecomm-api erp-network`
+1. `docker compose up -d` (postgres, redis, api)
+2. Conectar api a erp network: `docker network connect alfredo-ecomm-api erp-network`
 3. Reiniciar: `docker restart alfredo-ecomm-api`
-4. Establecer CORS_ORIGIN=https://woodly.armada.do,https://*.armada.do
-5. JWT_SECRET y DB_PASSWORD con valores seguros
-
-## Fuente verificada (2026-10-01)
-
-- Rutas del agente CONFIRMADAS: `~/projects/alfredo-pro-ecomm/backend/docker-compose.yaml` existe; proyecto compose `backend` corriendo (api+db+redis, Up 2 días); `:3004` escuchando en kalimete; docs en `~/projects/alfredo-pro-ecomm/docs/`.
-- ⚠️ No confundir con `erp-dev`: ese es erpipo/facturación (Laravel, `:8100`, `https://erp.kalimete.local`). Este es e-commerce (Node, `:3004`, `http://erp.kalimete.local:3004`). Mismo hostname, puertos distintos, sistemas distintos.
-- "Producción: TBD" sigue vigente — el deploy a vps-preprod aún no ocurre.
+4. `CORS_ORIGIN=https://woodly.armada.do,https://*.armada.do`
+5. `JWT_SECRET` y `DB_PASSWORD` con valores seguros
 
 ## Notas importantes
 
-- El backend es multi-tenant: una DB, múltiples tiendas lógicamente separadas
-- La misma base de datos se sirve para todos los clientes
-- Los frontend de los clientes no conversan entre sí — solo los del mismmo negocio
-- Woodly es el primer tenant operacional, "seed" incluído
-- Es solo desarrollado ahora (2026-09-05), es totalmente válido para producción cuando esté listo
-- **Deploy a vps-preprod: PENDIENTE y requiere autorización explícita del owner** (no desplegar sin permiso)
+- Backend multi-tenant: una DB, múltiples tiendas lógicas; los frontends de los clientes no conversan entre sí
+- Woodly es el primer tenant operacional (seed incluido); próximos tenants reusan la misma infra (`cliente2-slug`, `cliente3-slug`)
+- **Drift observado 2026-10-02 (reportar, no auto-fix)**: (a) `CORS_ORIGIN` defaults incluyen `localhost:5174` pero el frontend LIVE sirve en `:5173`; (b) `nginx.conf`/`nginx.dev.conf` del repo woodly aún proxyean `/api/` → `erp.kalimete.local:3001` (stale) — repo woodly, fuera de scope de este agente
 
-## Vecindad — no confundir (owner aclaró 2026-10-01)
+## Cambios recientes
 
-- **erpipos :8100** (repo `sistema-facturacion`, rama dev/ecomm-erp, Laravel) es un **ERP DISTINTO** a este. El WordPress de MaganTech (kalimete :8091) consume erpipos :8100 **tenant 10** vía admin-ajax same-origin — NO consume alfredo-ecomm :3004.
-- El plugin WordPress **erp-commerce-suite** (dentro del WP :8091) con tabs/páginas de admin rotas lo arregla el **subagente WordPress** — NO tocarlo desde este agente; no duplicar trabajo.
-- **alfredo-ecomm :3004** (este repo, Node) sigue siendo exclusivo del proyecto Woodly (frontend Vue :5174). Scope intacto.
+- **2026-10-02**: Cierre de discrepancias docs vs LIVE — README.md y Caddyfile.dev curados a `:3004` (5× en Caddyfile); este doc reescrito con datos LIVE; harness expandido; namespace legacy erp-suite CONGELADO (D6–D9, decisión owner).
+- **2026-10-01**: Nuevo endpoint `GET /v1/stores/:slug/categories` (implementado en `stores.ts` OBLIGATORIAMENTE ANTES de `/:slug` — si no, Express lo interpreta como slug → 404). CORS ajustado a variable `${CORS_ORIGIN:-...}`. Bugfix docker-compose: eliminado `version:` obsoleto.
 
-## Cambios recientes (2026-10-01)
+## Upstream (2026-10-02)
 
-- **Nuevo endpoint**: `GET /v1/stores/:slug/categories` — devuelve `[{name: "Kitchen", count: 6}, ...]` con categoría + conteo de productos. Es **mejora general del API** para frontends del ecosistema (Woodly :5174 y futuros tenants e-commerce) — NO era requerimiento del WordPress de MaganTech (ese WP no consume este backend; ver "Vecindad" abajo). Se implementó en `src/routes/stores.ts` OBLIGATORIAMENTE ANTES de `/:slug` (si "categories" viene después, Express lo interpreta como slug y devuelve 404).
-- **CORS ajustado**: `CORS_ORIGIN` en docker-compose.yaml ahora es variable `${CORS_ORIGIN:-...}` con defaults incluyendo `http://localhost:5174,http://127.0.0.1:5174,http://woodly.kalimete.local` (Woodly, el consumidor real). `http://localhost:8091` y `https://mantantech.kalimete.local` quedan **solo por cortesía/compatibilidad** — el WP de MaganTech (:8091) usa admin-ajax same-origin contra **erpipos :8100** (tenant 10, ERP Dev) y no necesita este CORS. El .env.example documenta el patrón comma-separated sin trailing slash.
-- **Bugfix docker-compose**: Eliminado campo `version: "3.8"` obsoleto (Docker Compose v3+).
-
-## Upstream (2026-10-01)
-
-- **Fuente**: backend-api local + redis:7 + postgres:16 (kalimete dev).
-- **Vivo 2026-10-01**: Up 3d.
-- **Check**: docker ps -f name=alfredo-ecomm
+- **Fuente**: backend-api custom local + redis:7 + postgres:16 (kalimete dev).
+- **Vivo 2026-10-02**: api Up 26h; db+redis Up 4d (db healthy); `:3004/health` ok; frontend `:5173` 200.
+- **Check**: `docker ps -f name=alfredo-ecomm`
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 
 ```json upstream_drk
 {
   "enabled": true,
   "id": "Alfredo Ecomm",
-  "label": "backend-api custom local",
+  "label": "backend-api custom local (Node :3004)",
   "source": "vendor-track",
   "href": "",
   "href_docs": "",
@@ -134,4 +176,4 @@ stores → customers, carts, orders, products, deals, product_variants, cart_ite
 }
 ```
 
-> **Harness**: `~/armada-sync/harness/alfredo-ecomm.harness.json` (scope + live_check + upstream + docs + changelog de este agente).
+> **Harness**: `~/armada-sync/harness/alfredo-ecomm.harness.json` (scope + paths + puertos live + checks + upstream + docs + changelog de este agente).
