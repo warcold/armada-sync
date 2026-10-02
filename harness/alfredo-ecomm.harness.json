@@ -1,19 +1,50 @@
 {
- "harness": "alfredo-ecomm",
- "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/alfredo-ecomm.md",
- "mode": "subagent",
- "hidden": false,
- "scope": "ERP Ecomm backend (kalimete dev)",
- "vivo_2026_10_01": "alfredo-ecomm-api + redis:7 + postgres:16 Up 3d",
- "live_check": "docker ps -f name=alfredo-ecomm",
- "upstream": {
-  "fuente": "ERP Ecomm backend (kalimete dev)",
-  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
- },
- "docs": [
-  "~/armada-sync/agents/alfredo-ecomm.md"
- ],
- "changelog": "~/armada-sync/CHANGELOG.md",
- "name": "Alfredo Ecomm"
+  "harness": "alfredo-ecomm",
+  "updated": "2026-10-02",
+  "agent_file": "~/armada-sync/agents/alfredo-ecomm.md",
+  "mode": "subagent",
+  "hidden": false,
+  "name": "Alfredo Ecomm",
+  "scope": "Backend ERP e-commerce multitenant (Node :3004) — exclusivo del ecosistema Woodly (slug woodly-park). El plugin WP Armada Suite NO consume este backend (usa erpipos :8100, tenant 10). Este agente NO toca ~/dev/wordpress ni armada-suite.php ni .env de Woodly.",
+  "paths": {
+    "backend_repo": "~/projects/alfredo-pro-ecomm/backend",
+    "repo_root": "~/projects/alfredo-pro-ecomm",
+    "woodly_repo_root": "~/projects/woodly",
+    "woodly_frontend": "~/projects/woodly/frontend",
+    "docs": "~/projects/alfredo-pro-ecomm/docs/",
+    "no_touch": ["~/dev/wordpress", "armada-suite.php", "~/projects/woodly/frontend/.env (secrets)"]
+  },
+  "ports_live": {
+    "api": "3004 (docker alfredo-ecomm-api, imagen backend-api)",
+    "postgres": "5432 (alfredo-ecomm-db, postgres:16-alpine)",
+    "redis": "6379 (alfredo-ecomm-redis, redis:7-alpine)",
+    "woodly_frontend": "5173 (docker woodly-woodly-1, 127.0.0.1:5173->80) — NO 5174",
+    "erpipos_laravel": "8100 (ERP DISTINTO — lo consume el WP MaganTech :8091, tenant 10; NO este backend)"
+  },
+  "vivo_2026_10_02": "api Up 26h; db+redis Up 4d (db healthy); :3004/health ok; :5173 frontend 200",
+  "live_check": "docker ps --filter name=alfredo",
+  "checks": [
+    "curl -s localhost:3004/health",
+    "docker ps --filter name=alfredo",
+    "curl -s localhost:3004/v1/stores/woodly-park/categories",
+    "curl -s -o /dev/null -w '%{http_code}' localhost:5173/"
+  ],
+  "standard_rule": "Armada Suite = plugin WP comercial/UI (erpipos :8100). Alfredo Pro Ecomm = backend ERP multitenant :3004, solo-Woodly.",
+  "legacy_frozen": "Namespace plugin erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, constantes ERPSUITE_*, options erp_suite_*/erpc_*, REST erpsuite/v1, shortcodes erpc_* — se MANTIENEN como legacy efectivo; renombrar rompe DB/bookmarks/clientes REST. NO renombrar código.",
+  "drift_reported_2026_10_02": [
+    "CORS_ORIGIN defaults incluyen localhost:5174 pero frontend LIVE sirve en :5173",
+    "nginx.conf/nginx.dev.conf del repo woodly proxyean /api/ → erp.kalimete.local:3001 (stale) — repo woodly, fuera de scope"
+  ],
+  "upstream": {
+    "fuente": "backend-api custom local + redis:7 + postgres:16 (kalimete dev)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/alfredo-ecomm.md",
+    "~/projects/alfredo-pro-ecomm/README.md",
+    "~/projects/alfredo-pro-ecomm/Caddyfile.dev",
+    "~/projects/alfredo-pro-ecomm/CHANGELOG.md"
+  ],
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "changelog_2026_10_02": "Docs curados a :3004 (README.md + Caddyfile.dev 5x); agent doc reescrito con LIVE verificado; harness expandido; freeze legacy D6-D9 (namespace erp-suite); entrada en ~/projects/alfredo-pro-ecomm/CHANGELOG.md"
 }
