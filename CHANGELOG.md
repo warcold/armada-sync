@@ -1,5 +1,12 @@
 ## 2026-10-02
 
+### [04:30] - Armada Suite 5.1.5: sin barra superior, submenú izquierdo persistente
+- **Tipo**: fix | ux | wordpress
+- **Quitado**: barra superior de pills (owner prefiere lista izquierda). Código y CSS eliminados.
+- **Persistencia**: el submenú se colapsaba en módulos porque WP resolvía parent a registros fantasma ($submenu huérfanos tras remove_menu_page). Fix: unset() de ambos — verificado expandido + resaltado correcto en las 6 páginas vía Selenium.
+- **Commits stack** (sin push): ver ~/dev/wordpress/CHANGELOG.md [armada-suite-5.1.5]. Smoke: todo 200, 0 FATALs.
+- **Estado**: ✅ verificado
+
 ### [04:00] - Armada Suite 5.1.4: nav unificada + fix botón fantasma (div huérfano)
 - **Tipo**: feature | fix | wordpress
 - **Nav unificada**: misma barra de pills en las 6 páginas (Panel + 5 módulos) con activos independientes por nivel. Fix: JS scopeado a .erpsuite-tabs (quitaba el active de la suite nav).
