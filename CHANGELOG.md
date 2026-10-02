@@ -1,5 +1,12 @@
 ## 2026-10-02
 
+### [04:00] - Armada Suite 5.1.4: nav unificada + fix botón fantasma (div huérfano)
+- **Tipo**: feature | fix | wordpress
+- **Nav unificada**: misma barra de pills en las 6 páginas (Panel + 5 módulos) con activos independientes por nivel. Fix: JS scopeado a .erpsuite-tabs (quitaba el active de la suite nav).
+- **Botón fantasma**: `</div>` huérfano en render_tab_pagos expulsaba el submit + secciones fuera del wrap (visible en todos los tabs). Eliminado + barrido: 5 wrappers legacy display:none sin JS (contenido inalcanzable) eliminados. Avanzado/Catálogo ahora muestran todo.
+- **Commits stack** (sin push): ver ~/dev/wordpress/CHANGELOG.md [armada-suite-5.1.4]. Smoke: todo 200, 0 FATALs.
+- **Estado**: ✅ verificado
+
 ### [03:30] - Armada Suite 5.1.3: footer único + simplificación botones/checks
 - **Tipo**: fix | ux | wordpress
 - **Footer único**: filtro `admin_footer_text` pone nuestra info en la posición del "Thank you" de WP (1 línea); eliminado footer propio + CSS. Bump versión 5.1.3 (cache-bust assets).
