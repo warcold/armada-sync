@@ -1,5 +1,14 @@
 ## 2026-10-02
 
+### [02:15] - Armada Suite 5.1.1: fixes del owner (Respaldos 404, menú, saves, export limpio)
+- **Tipo**: fix | ux | wordpress
+- **Respaldos 404**: causa raíz en WP core (`menu-header.php` exige callback registrado para generar href completo). `MenuUnifier` ahora pasa callbacks originales → 6/6 submenús con URLs válidas, páginas 200.
+- **Menú**: primer submenú "Armada Suite" duplicado → "Panel".
+- **Saves**: sin duplicación real (cada form guarda sus settings); labels específicos por tab para claridad.
+- **Export**: solo File + Google Drive (filtro prio 999; otros 14 eran ads premium). Sidebar ServMask eliminado de las 3 vistas.
+- **Commits stack** (sin push): ver ~/dev/wordpress/CHANGELOG.md [armada-suite-5.1.1]. Smoke: home 200, 6/6 admin 200, 0 FATALs.
+- **Estado**: ✅ verificado
+
 ### [01:30] - Armada Suite 5.1.0: menú único, dedup, fix footer overlap, unificación completa
 - **Tipo**: feature | refactor | ux | wordpress
 - **Menú único**: nuevo `MenuUnifier.php` (admin_menu prio 999) — `ai1wm_export` y `vibe-ai` ocultos como top-level, re-registrados como 5 submenús de Armada Suite (Exportar/Importar/Respaldos con badge + Puente IA/Registro IA). Reset Hub y Schedules NO re-registrados (upsells premium). Título: "ERP Suite"→"Armada Suite".
