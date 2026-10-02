@@ -62,6 +62,15 @@
 
 ## 2026-10-01
 
+### [12:55] - opencode.jsonc context 120000 -> 144000 (upgrade de contexto victoria 192K)
+- **Tipo**: config | cross-machine
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (backup `.bkup-20261001-144k`): `"context": 120000` -> `144000` en los 4 modelos (providers vllm publica + vllm-lan LAN).
+- **Afecta a**: kalimete TUI: el techo real de compactacion sube de ~78K a ~102K (+31%) — menos amnesia de sesion en proyectos largos (Godot MCP). El vLLM de victoria ahora sirve 192K reales; el gateway capta prompts hasta 144K.
+- **Causa**: owner (via Victoria): "procede al maximo que se pueda sin afectar el ecosistema y configura el opencode.jsonc de victoria y de kalimete". Aplicado desde victoria tras recrear el vLLM (detalle en CHANGELOG victoria / vllm).
+- **Verificado**: victoria E2E (prompts 100K+ reales OK, opencode run OK, cerebro sandbox OK). En kalimete requiere restart del TUI para tomar el cambio.
+- **Estado**: en sincronizacion (hub cada 5 min)
+
+
 ### [11:15] - Diagnostico compactaciones agente Godot (MCP ruidoso) + ledger + steps 50 + higiene
 - **Tipo**: diagnostico | agentes | docs
 - **Causa medida (forense gateway victoria)**: sesion del owner desde kalimete (10.0.0.106, key alfredo, modelo local) = 105 requests / 0 fallos / 9 compactaciones detectadas en ~15 min. Techo real de compactacion ~78-88K (NO 120K: el trigger es context120K - output32K - reserved10K ~= 78K, y un solo tool call lo empuja a ~87K). Salto tipico tras compactar: 15K -> 77K en UN turno = tool outputs del MCP godot masivos (+60K tokens c/u: arbol completo/estado editor). Conclusion: NO es fallo del modelo ni del gateway (105/105 OK, latencia media 11s con prompts 80K+, prefix-caching OK).
