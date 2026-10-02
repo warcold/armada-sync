@@ -62,6 +62,15 @@
 
 ## 2026-10-01
 
+### [11:15] - Diagnostico compactaciones agente Godot (MCP ruidoso) + ledger + steps 50 + higiene
+- **Tipo**: diagnostico | agentes | docs
+- **Causa medida (forense gateway victoria)**: sesion del owner desde kalimete (10.0.0.106, key alfredo, modelo local) = 105 requests / 0 fallos / 9 compactaciones detectadas en ~15 min. Techo real de compactacion ~78-88K (NO 120K: el trigger es context120K - output32K - reserved10K ~= 78K, y un solo tool call lo empuja a ~87K). Salto tipico tras compactar: 15K -> 77K en UN turno = tool outputs del MCP godot masivos (+60K tokens c/u: arbol completo/estado editor). Conclusion: NO es fallo del modelo ni del gateway (105/105 OK, latencia media 11s con prompts 80K+, prefix-caching OK).
+- **Modificado**: `~/armada-godot/AGENTS.md` CREADO (ledger por proyecto: mapa Mario Bros clone Godot 4.x, comandos headless, higiene, decisiones, pendientes — sobrevive a compactaciones). `agents/godot-dev.md`: `steps: 15 -> 50` (el limite 15 dejaba tareas grandes por mitad) + seccion "Higiene de contexto" (nodos especificos no arbol completo, no screenshots salvo pedido, errores filtrados).
+- **Afecta a**: kalimete (agente Godot); cero impacto en produccion.
+- **Pendiente (decision del owner, reinicio vLLM 5-7 min en victoria)**: subir `--max-model-len` 160000 -> ~196608 + gateway MAX_PROMPT_TOKENS 120K->144K + opencode context 144000 en ambos hosts => espacio de trabajo real 78K -> ~102K (+30%). KV 12GiB lo soporta (4x192K=768K < 945K). Alternativa sin cambios: sesiones maraton via provider NVIDIA NIM (DeepSeek 1M nativo, ya configurado en kalimete).
+- **Estado**: en sincronizacion (hub cada 5 min)
+
+
 ### [18:00] - Validación exhaustiva anti-duplicados plugin 4.4.2: LIMPIO (veredicto: navegador del owner)
 - **Tipo**: diagnóstico | wordpress
 - **Reporte del owner**: "en todos los tabs: botones duplicados, textos montados". Segunda ronda de validación (la primera por HTML estático no bastó).

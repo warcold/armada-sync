@@ -5,7 +5,7 @@ mode: subagent
 hidden: false
 color: "#478cbf"
 temperature: 0.1
-steps: 15
+steps: 50
 permission:
   edit: allow
   write: allow
@@ -216,3 +216,17 @@ godot --headless --path ~/armada-godot --export-release "HTML5" ./export/game.ht
 ```
 
 > **Harness**: `~/armada-sync/harness/godot-dev.harness.json` (scope + live_check + upstream + docs + changelog de este agente).
+
+## Higiene de contexto (CRITICO — sesiones largas)
+
+El MCP godot (386 herramientas) puede devolver **decenas de miles de tokens en UN
+solo tool call** (arbol de escena completo, estado del editor, screenshots). Con
+contexto 120K y trigger de compactacion ~78K, eso dispara compactaciones cada 2-3
+pasos y degrada la sesion. Reglas:
+
+1. Consultar **nodos/rutas especificas**, nunca la escena/arbol/proyecto entero.
+2. Screenshots solo cuando el owner pida revision visual.
+3. Salidas largas del editor (logs/errores): extraer el error concreto, no pegar todo.
+4. El proyecto tiene ledger `~/armada-godot/AGENTS.md`: LEERLO al empezar y
+   ACTUALIZARLO al terminar (decisiones + pendientes). La compactacion NO debe
+   borrar el estado: lo que importa vive ahi.
