@@ -1,5 +1,12 @@
 ## 2026-10-02
 
+### [03:30] - Armada Suite 5.1.3: footer único + simplificación botones/checks
+- **Tipo**: fix | ux | wordpress
+- **Footer único**: filtro `admin_footer_text` pone nuestra info en la posición del "Thank you" de WP (1 línea); eliminado footer propio + CSS. Bump versión 5.1.3 (cache-bust assets).
+- **Botones**: auditoría por tab — sin duplicados reales (cada uno acciona distinto). Visual: tabla salud 4 filas → 1 badge + (i); Vaciar caché a estilo link. Se mantienen Verificar/Sincronizar (ping vs sync) y acciones de Proyectos/Avanzado.
+- **Commits stack** (sin push): ver ~/dev/wordpress/CHANGELOG.md [armada-suite-5.1.3]. Smoke: todo 200, 0 FATALs.
+- **Estado**: ✅ verificado
+
 ### [03:00] - Armada Suite 5.1.2: Asistente IA fusionado, dropdown, centrado, UI unificado
 - **Tipo**: feature | fix | ux | wordpress
 - **Asistente IA**: Chatbot/IA + Voz/WhatsApp fusionados en 1 tab (cerebro + canales, guía 5 pasos WhatsApp, 1 save). BUG REAL: 4 secciones con display:none sin JS que las mostrara (ajustes inalcanzables) — liberadas, 5/5 visibles verificado.
