@@ -1,5 +1,14 @@
 ## 2026-10-02
 
+### [03:00] - Armada Suite 5.1.2: Asistente IA fusionado, dropdown, centrado, UI unificado
+- **Tipo**: feature | fix | ux | wordpress
+- **Asistente IA**: Chatbot/IA + Voz/WhatsApp fusionados en 1 tab (cerebro + canales, guía 5 pasos WhatsApp, 1 save). BUG REAL: 4 secciones con display:none sin JS que las mostrara (ajustes inalcanzables) — liberadas, 5/5 visibles verificado.
+- **Dropdown Export**: altura fija 456px ServMask → auto (57px verificado). **Backups centrado** (anulado margin-right 399px fantasma → 960px centrado verificado).
+- **Avisos**: remote_banner con branding viejo → Armada Suite, y "sin conexión" solo en modo público (ruido eliminado en local).
+- **UI**: armada-modules.css nuevo (módulos) + acento verde ServMask en Panel (botones + h3). Guardar carrito → Guardar pagos.
+- **Commits stack** (sin push): ver ~/dev/wordpress/CHANGELOG.md [armada-suite-5.1.2]. Smoke: todo 200, 0 FATALs.
+- **Estado**: ✅ verificado
+
 ### [02:15] - Armada Suite 5.1.1: fixes del owner (Respaldos 404, menú, saves, export limpio)
 - **Tipo**: fix | ux | wordpress
 - **Respaldos 404**: causa raíz en WP core (`menu-header.php` exige callback registrado para generar href completo). `MenuUnifier` ahora pasa callbacks originales → 6/6 submenús con URLs válidas, páginas 200.
