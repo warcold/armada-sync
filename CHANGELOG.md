@@ -1,5 +1,19 @@
 ## 2026-10-03
 
+### [12:30] - Mario Bros: 5 fixes pendientes completados (Godot Agent)
+- **Tipo**: feature | game-dev | Godot
+- **Que**: Los 5 fixes pendientes del proyecto Mario Bros clone en Godot 4.7.2 completados por el subagente Godot:
+  - Fix #1: BGM integrado con AudioManager singleton (play/stop/volume, loop_mode=1 en .import WAV)
+  - Fix #2: place_pipe() usa escalamiento dinámico por height_levels (antes fijo 2x2)
+  - Fix #3: Flash visual al golpear bloques question/brick (0.5s alternancia bright/dim)
+  - Fix #4: Pause overlay con botón PLAY funcional (PausePanel/PauseText/PlayButton en HUD)
+  - Fix #5: generate_level_for_stage(world, stage) — variantes procedurales con dificultad escalable
+  - Bug fixes: game_manager.gd doble level_complete.emit() eliminado (loop), global_data.gd rename de funciones, hud.gd InputEventKey.new() correcto, level_builder.gd indentación uniformizada
+- **Verificado**: `godot --headless --check-only` OK (solo WARNING de escena, no de código)
+- **Archivos modificados**: 15 files, +551/-18 lines (AGENTS.md, audio/music/*.wav, main_game.tscn, hud_overlay.tscn, audio_manager.gd, brick_block.gd, game_manager.gd, global_data.gd, hud.gd, level_builder.gd, question_block.gd, generate_bgm.py)
+- **Estado**: ✅ en sync (commit 30c2f5c en armada-godot local)
+- **Notas**: Push a remote requiere autorización del owner.
+
 ### [11:05] - kalimete-ptt CONVERSACIONAL: Victoria responde por voz + llave services dedicada
 - **Tipo**: feature | voz (Fase Jarvis-Victoria, autorización del owner, TARGET=kalimete verificado)
 - **Que**: (a) `~/.local/bin/kalimete-ptt` mejorado (backup `.bak.20261003-voz`): tras pegar el texto, Victoria RESPONDE HABLANDO (LLM Qwen3.6-35B-normal vía 10.0.0.5:8010 → TTS Qwen3-TTS con su voz vía 10.0.0.5:18810 → `paplay` en parlantes); `PTT_VOICE_REPLY=1` (0 = solo-pegar como antes); persona breve/hablada (60 palabras, sin markdown); docstrings rootsource limpiados (cero refs); (b) llave nueva `kalimete-ptt` rol **services** en gateway Victoria (STT+LLM+TTS, sin panel; least privilege — la admin heredada queda como fallback STT); config en `~/.config/kalimete-ptt/env` (`PTT_VOICE_KEY` + URLs + modelo); servicio `kalimete-ptt` reiniciado.
