@@ -1,5 +1,13 @@
 ## 2026-10-03
 
+### [11:40] - Voz viva en opencode + kalimete-ptt barge-in (Fase Jarvis, TARGET=kalimete)
+- **Tipo**: feature | voz en opencode (autorización del owner)
+- **Que**: (a) plugin `victoria-voice-live.js` en `~/.config/opencode/plugins/` (misma versión opencode 1.18.34): habla respuestas por oraciones + narra tools + barge-in; env en `~/.bashrc` (TTS por LAN + `VICTORIA_VOICE_KEY` desde kalimete-ptt env, single source); verificado E2E (tts ok 119KB + narración); (b) kalimete-ptt: `PTT_SUBMIT` (Enter tras pegar, opt-in) + toque-corto = solo callar + `PTT_BARGE_ABORT` (Esc opt-in); servicio reiniciado y activo.
+- **Verificado**: plugin carga + deltas + TTS LAN con llave services; compila OK.
+- **Docs**: este changelog (kalimete) + general de Victoria referencia. NOTA: reiniciar TUI opencode para cargar el plugin.
+
+## 2026-10-03
+
 ### [12:30] - Mario Bros: 5 fixes pendientes completados (Godot Agent)
 - **Tipo**: feature | game-dev | Godot
 - **Que**: Los 5 fixes pendientes del proyecto Mario Bros clone en Godot 4.7.2 completados por el subagente Godot:
