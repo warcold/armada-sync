@@ -1,5 +1,15 @@
 ## 2026-10-02
 
+### [17:30] - Armada Suite 5.2.0: consolidación API propia erpsuite/v1/ops + amputación nube wpvibe.ai
+- **Tipo**: feature | security | refactor | wordpress
+- **Consolidación** (decisión owner: 1 API propia sobre el motor más completo, solo recursos propios, sin membresías/terceros): OpsMotor propio (includes/Remote/OpsMotor.php) envuelve el motor AiBridge vendored (WPVibe v1.20.0) bajo `erpsuite/v1/ops` — 15 rutas: 5 originales + 7 lecturas (file/read|list|search|outline, content/search, site-info, motor-status) + 3 escrituras con policy (Guard paths deny-list, draft-only, dry-run→preview_id single-use→confirm, anti-drift 409, ai_mode=work fail-closed, rate-limit 10/min, audit). Options: UNA sola puerta (/ops/settings con Guard allowlist).
+- **Amputación nube/terceros** (F1): 0 llamadas vivas a mcp.wpvibe.ai/wpvibe.ai/jsdelivr — rutas cloud (self-update, code-snippet WPCode, builder-login SeedProd), authorize-notice beacon, dashboard-widget feed, connection-check preflight, CDN Tailwind, footers/branding, upsells. UI: conector = REST propio del sitio; sidebar CTA → admin propio. Guards class_exists anti-fatal (white-label, cli-plugin).
+- **Custom model → gateway propio** (F3): ChatEngine fallback a `wpvibe_custom_model` (placeholder victoria.armada.do); bloque modelo (Sites.php) +7 lecturas allow / +3 escrituras deny explícitas; Text Domain efectivo `erp-suite` (D5-lite, 459 usos, sin migración masiva); atribución GPL WPVibe en readme; docs/REMOTE-OPS.md alineado.
+- **Fixes sesión**: Importar sitio sin estilo (causa: import.min.css nunca encolado — hook vendored `all-in-one-wp-migration_page_*` vs live `armada-suite_page_*`; fix en MenuUnifier enqueue espejo + backups) → 5.1.6/5.1.7. Puente IA sin providers de pago (ChatGPT/Claude/Cursor fuera, fatal latente WPVibe_Uninstall_Notice corregido). Test 14 regression.php: drift pre-rename corregido.
+- **Regresión F4**: 14/14 PASS exit 0; 5 páginas admin 200/0 fatals; REST sin auth 403; php -l 18/18. Commit `f87ae0c` (repo local ~/dev/wordpress, sin remote).
+- **Alfredo Ecomm** (paralelo): D11 docs :3001→:3004 (README+Caddyfile), D14 agent doc reescrito (paths/ports LIVE), D15 harness JSON expandido, D6-D9 namespace legacy CONGELADO documentado (slug/constantes/options/REST/shortcodes — renombrar rompe DB/clientes), estándar documentado: Armada Suite=plugin WP, Alfredo Pro Ecomm=backend :3004 solo-Woodly.
+- **Estado**: ✅ verificado (GO). Pendiente owner: validación visual final (Ctrl+F5 ?ver=5.2.0) + decidir residuales (footer links wpvibe.ai ya eliminados; CORS_ORIGIN :5174; nginx woodly :3001 stale).
+
 ### [04:30] - Armada Suite 5.1.5: sin barra superior, submenú izquierdo persistente
 - **Tipo**: fix | ux | wordpress
 - **Quitado**: barra superior de pills (owner prefiere lista izquierda). Código y CSS eliminados.
