@@ -62,6 +62,15 @@
 
 ## 2026-10-01
 
+### [14:35] - Contexto 144000 -> 220000 (vLLM 256K nativo + seqs 3) — menos compactacion
+- **Tipo**: config | cross-machine
+- **Modificado**: `~/.config/opencode/opencode.jsonc`: `"context": 144000` -> `220000` en los 4 modelos (vllm publica + vllm-lan).
+- **Causa**: owner (via Victoria): evaluacion con 14 dias de data — las 4 secuencias del vLLM NUNCA se usaron (pico 3, 0.17%) -> se canjeo una carril por el contexto NATIVO completo (256K + seqs 3 en victoria). Trigger de compactacion: ~102K -> ~178K (+74%): el coding (Godot etc.) compacta mucho menos.
+- **Evaluacion de agentes (mismo pedido)**: kalimete SANO — AGENTS.md global 2.5KB (~700 tokens, sin necesidad de summary), subagentes 0.6-2K tokens c/u, primary 5.8K. El ruidoso era el MCP godot (+60K/tool call) ya mitigado (higiene + steps 50 + ledger ~/armada-godot/AGENTS.md).
+- **Verificado en victoria**: E2E prompt 140K reales 200 OK; cerebro sandbox OK; en kalimete requiere restart del TUI.
+- **Estado**: en sincronizacion (hub cada 5 min)
+
+
 ### [12:55] - opencode.jsonc context 120000 -> 144000 (upgrade de contexto victoria 192K)
 - **Tipo**: config | cross-machine
 - **Modificado**: `~/.config/opencode/opencode.jsonc` (backup `.bkup-20261001-144k`): `"context": 120000` -> `144000` en los 4 modelos (providers vllm publica + vllm-lan LAN).
