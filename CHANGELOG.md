@@ -1,5 +1,10 @@
 ## 2026-10-02
 
+### [23:58] - Key coder propia + git init armada-godot (auditoría Victoria)
+- **Tipo**: config | seguridad | procedencia
+- **Que**: (a) key `kalimete` (coder) creada en gateway Victoria; `opencode.jsonc`: apiKey nueva en `vllm`+`vllm-lan` + `instructions` absoluta (backup `.bkup-20261002-2358-kalimete-key`); la admin de alfredo se conserva (reiniciar TUI para tomar la nueva); (b) `git init` en `~/armada-godot` + `.gitignore` Godot (`.godot/`, `*.backup`, `*.bak`) + commit inicial (Mario Bros sin control de versiones; ledger `armada-godot/AGENTS.md` ya cubría `mario_bros/`, no se duplicó).
+- **Verificado**: JSON válido; `/v1/usage` 200 con la nueva.
+
 ### [21:55] - Validacion camino LOCAL (Godot): infra 100% sana — los stops eran comportamiento del modelo
 - **Tipo**: diagnostico forense
 - **Evidencia**: 0 errores de stream en provider vllm-lan/vllm hoy; 0 fallos del gateway para la sesion (239 requests OK, latencia media 4-8s con prompts 90-133K, prefix-cache sano); 30.2M tokens de entrada servidos sin un solo 502/timeout. El vLLM y el gateway NO se cayeron nunca.
