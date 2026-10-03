@@ -8,6 +8,20 @@
 
 ## 2026-10-03
 
+### [13:15] - Mario Bros: 5 pendientes restantes completados (Godot Agent)
+- **Tipo**: feature | game-dev | Godot
+- **Que**: Los 5 pendientes restantes del Mario Bros clone completados tras la sesión de validación:
+  - Fix #1 (pendiente): place_pipe() fórmula corregida `max(1.0, h*0.5)` → `1.5 + h*0.75` (1→2.25x, 2→3.0x, 3→3.75x), antes 1 y 2 niveles tenían misma altura (1.0x)
+  - Fix #2 (pendiente): pause overlay mejorado — 3 recursos de tema creados (`themes/pause_bg_style.tres`, `pause_button_style.tres`, `pause_theme.tres`) con StyleBoxFlat y Theme, PlayButton renombre a "▶ CONTINUAR"
+  - Fix #3 (pendiente): pipeline múltiples niveles verificado end-to-end — flag_pole→game_manager→level_builder→generate_level_for_stage() conectado correctamente, ruta de conexión flag_pole corrigida de `../../../MainGame` a `../..`
+  - Fix #4 (pendiente): `global_data.gd` — `_handle_level_complete()` dead code eliminada (nadie la llamaba, flujo real via game_manager._on_level_complete)
+  - Fix #5 (pendiente): `game_manager.gd` — dead connection `_global_data_ref.level_complete.connect(_on_level_complete)` eliminada (nadie emitía global_data.level_complete), ruta de escena `prefab_flag_pole.tscn` es la conexión funcional
+  - Cleanup: duplicados `armada-godot/themes/` eliminados (res:// resuelve a projects/mario_bros/themes/)
+- **Archivos**: 6 scripts + 2 escenas modificados, 3 nuevos .tres, 3 duplicados eliminados
+- **Commits**: f4508e8 (pendientes) + 6211550 (cleanup themes) en armada-godot
+- **Estado**: ✅ pipeline end-to-end completo (menú→juego→flag_pole→stage_clear→next_level→game_over)
+- **Notas**: Push a remote requiere autorización del owner.
+
 ### [12:30] - Mario Bros: 5 fixes pendientes completados (Godot Agent)
 - **Tipo**: feature | game-dev | Godot
 - **Que**: Los 5 fixes pendientes del proyecto Mario Bros clone en Godot 4.7.2 completados por el subagente Godot:
