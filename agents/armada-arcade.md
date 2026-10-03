@@ -4,8 +4,7 @@ description: Subagente del proyecto Armada Arcade (juego multiplayer TetriNET + 
 mode: subagent
 hidden: false
 color: "#facc15"
-temperature: 0.6
-top_p: 0.95
+temperature: 0.1
 steps: 15
 permission:
   edit: allow
