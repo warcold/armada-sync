@@ -1,5 +1,15 @@
 ## 2026-10-02
 
+### [21:30] - FIX "se para incluso en auto": timeouts NIM (glm-5.3 tardaba >5min y opencode mataba el run)
+- **Tipo**: fix | config | diagnostico forense
+- **Sintoma (owner)**: agentes se paran a mitad de tarea incluso en modo auto; no terminan el trabajo.
+- **Causa RAIZ (forense log opencode)**: `ProviderHeaderTimeoutError: Provider response headers timed out after 300000ms` en provider `nvidia` (z-ai/glm-5.3 via NIM, API externa) — 5 veces hoy (01:54, 01:59, 14:00, 23:44, 01:08) + 7 rate-limits/conexiones de kimi-k3 y muse-spark (provider opencode free). Cuando el provider externo tarda >5 min en devolver headers (razonamiento max + contexto grande), opencode ABORTA EL RUN COMPLETO -> el agente muere a mitad de tarea. El provider nvidia NO tenia timeouts configurados (solo los locales vllm/vllm-lan los tenian). COINCIDENCIA EXACTA: error NIM 23:44:51 -> stop de sesion local 23:44:57.
+- **El stack LOCAL estaba SANO todo el dia**: 239 requests, 0 rechazos, 0 errores de stream, compacts cada ~5min a 112K reales (TUI con context 144000 en memoria — requiere restart para tomar el 220000).
+- **Modificado**: `~/.config/opencode/opencode.jsonc` provider nvidia: `timeout: 1800000` (30 min header-timeout), `chunkTimeout: 600000`, `maxRetries: 3`. Mismo fix aplicado en victoria.
+- **Afecta a**: sesiones que usen NIM (glm/deepseek/kimi) — sobreviven first-byte lentos y reintentan rate-limits. Requiere restart del TUI.
+- **Recomendacion**: para subagentes operativos (WordPress release/commit), el local (vllm-lan, Qwen) responde en segundos; NIM glm-max para razonamiento pesado (ahora con 30 min de aire).
+- **Estado**: en sincronizacion (hub cada 5 min)
+
 ### [17:30] - Armada Suite 5.2.0: consolidación API propia erpsuite/v1/ops + amputación nube wpvibe.ai
 - **Tipo**: feature | security | refactor | wordpress
 - **Consolidación** (decisión owner: 1 API propia sobre el motor más completo, solo recursos propios, sin membresías/terceros): OpsMotor propio (includes/Remote/OpsMotor.php) envuelve el motor AiBridge vendored (WPVibe v1.20.0) bajo `erpsuite/v1/ops` — 15 rutas: 5 originales + 7 lecturas (file/read|list|search|outline, content/search, site-info, motor-status) + 3 escrituras con policy (Guard paths deny-list, draft-only, dry-run→preview_id single-use→confirm, anti-drift 409, ai_mode=work fail-closed, rate-limit 10/min, audit). Options: UNA sola puerta (/ops/settings con Guard allowlist).
@@ -71,7 +81,6 @@
 - **Estado**: ✅ verificado end-to-end
 
 ## 2026-10-01
-
 ### [14:35] - Contexto 144000 -> 220000 (vLLM 256K nativo + seqs 3) — menos compactacion
 - **Tipo**: config | cross-machine
 - **Modificado**: `~/.config/opencode/opencode.jsonc`: `"context": 144000` -> `220000` en los 4 modelos (vllm publica + vllm-lan).
