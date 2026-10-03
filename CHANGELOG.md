@@ -1,5 +1,12 @@
 ## 2026-10-03
 
+### [16:45] - Auditoria flota (Victoria→kalimete): Arcade a 0.6 como decia el changelog + kalimete.md a la realidad
+- **Tipo**: fix | config | docs (TARGET=kalimete verificado; pedido del owner: "valida y ajusta todo el ecosistema")
+- **Que**: (a) `Armada Arcade` temperature 0.1 → **0.6 + top_p 0.95** en AMBAS copias (`~/armada-arcade/agents/armada-arcade.md` canonica + replica `armada-sync/agents/`) — la entrada 15:00 listaba 12 creativos pero live habia 11 (arcade quedo en 0.1); (b) `kalimete.md` curado: frontmatter "subagentes ocultos" → visibles en @ (desde 10-01), `name: kalimete` explicito, linea corrupta "loopstream propio..." reconstruida, doctrina sampling actualizada (12 creativos 0.6/0.95 + infra 0.1 + kalimete 0.2), seccion "rotos eco-*" reemplazada (renombrados 10-01), tabla activos con display names (Armada Arcade, WordPress, ERP Dev, Godot); (c) datos de victoria actualizados: 256K nativo + seqs 3 (era 160K/4), driver 580.173.02, llaves 11 (era 7; +kalimete coder 10-02, +kalimete-ptt services 10-03), prompt 220K (era 120K), key opencode kalimete (era alfredo), warnings resueltos (nginx -t OK, sin :3389, sin ufw → ip6tables); (d) `opencode.jsonc`: `"model"` default `vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal` (sesiones nuevas arrancan en el cerebro local — antes sin default caian al free opencode, origen de los rate-limit kills del forense 10-02); en casa seguir cambiando a `vllm-lan` (backup `.bkup-20261003-defaultmodel`); (e) plugin `victoria-voice-live.js`: linea de comentario duplicada eliminada (mismo fix aplicado en victoria — md5 vuelve a ser identico entre maquinas); (f) CHANGELOG: header duplicado "## 2026-10-03" eliminado (esta misma pasada).
+- **Verificado**: grep 12× `temperature: 0.6` + 12× `top_p: 0.95` en los 20 agentes; python3 json.load(opencode.jsonc) OK; hostname=kalimete verificado ANTES de mutar; sampling validado contra la model card oficial nvidia/Qwen3.6-35B-A3B-NVFP4 (SciCode/coding = 0.6/0.95, general = 1.0/0.95) + voz E2E re-verificada desde victoria (TTS es ref nativa → STT exacto).
+- **Docs**: este changelog (kalimete) + general de Victoria referencia (regla de procedencia). NOTA: reiniciar TUI opencode para cargar temps/model default.
+- **Estado**: ✅ sincronizado (push hub)
+
 ### [15:00] - Sampling Qwen3.6 por rol: 12 agentes creativos a temp 0.6/top_p 0.95 (docs+expertos)
 - **Tipo**: config | agentes | best-practices (TARGET=kalimete, local; autorización explícita del owner)
 - **Que**: 12 agentes de desarrollo/creativo (godot, wordpress, arcade, woodly, alfredo-ecomm, erp-dev, petsuite, taohemps, ragnarok, nextcloud, docuseal, scriberr): `temperature: 0.1 → 0.6` + `top_p: 0.95` (Qwen oficial thinking-precise-coding; backup `*.bkup-20261003-temp06`). Se mantienen en 0.1 (tool-use determinista, literatura agentes): cloudflare, irc, proxy, vps, victoria-server, authentik, proxmark (API/SSH/SSO/hardware físico) + kalimete 0.2 (routing/TARGET). `todos.*`/`sidebar.*` NO se tocan: no existen en schema oficial (romperían arranque).
@@ -19,8 +26,6 @@
 - **Que**: (a) plugin `victoria-voice-live.js` en `~/.config/opencode/plugins/` (misma versión opencode 1.18.34): habla respuestas por oraciones + narra tools + barge-in; env en `~/.bashrc` (TTS por LAN + `VICTORIA_VOICE_KEY` desde kalimete-ptt env, single source); verificado E2E (tts ok 119KB + narración); (b) kalimete-ptt: `PTT_SUBMIT` (Enter tras pegar, opt-in) + toque-corto = solo callar + `PTT_BARGE_ABORT` (Esc opt-in); servicio reiniciado y activo.
 - **Verificado**: plugin carga + deltas + TTS LAN con llave services; compila OK.
 - **Docs**: este changelog (kalimete) + general de Victoria referencia. NOTA: reiniciar TUI opencode para cargar el plugin.
-
-## 2026-10-03
 
 ### [13:15] - Mario Bros: 5 pendientes restantes completados (Godot Agent)
 - **Tipo**: feature | game-dev | Godot
