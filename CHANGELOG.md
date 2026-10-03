@@ -1,5 +1,12 @@
 ## 2026-10-03
 
+### [14:45] - Todowrite Discipline: fix lista zombie + doc modelos Qwen3.6 (mejores prácticas)
+- **Tipo**: config | agente | best-practices (TARGET=kalimete, local)
+- **Que**: (a) nuevo `~/.config/opencode/todowrite-discipline.md` cargado como 2º `instructions` en `opencode.jsonc` (backup `.bkup-20261003-todowrite`; JSON validado OK): dueño SIEMPRE kalimete (subagentes no escriben en lista del padre, issue #12938), merge manual tras cada `task`, item final de verificación obligatorio, vaciado explícito al cerrar; (b) doc modelos: Qwen3.6-35B-A3B-NVFP4 recomienda 0.6-1.0 según modo, nuestro stack usa 0.2/0.1 INTENCIONAL (determinismo infra > creatividad; Godot 0.4-0.6 queda propuesto, NO aplicado); (c) verificado contra schema en vivo: NO existen `todos.*`/`sidebar.*`/`subagents.enableTodos` — agregarlos rompería el arranque.
+- **Verificado**: `python3 json.load(opencode.jsonc)` OK; docs: HF nvidia/Qwen3.6-35B-A3B-NVFP4, unsloth, RedHatAI, NGC + issues opencode #28961/#12938/#44221/#20484.
+- **Docs**: este changelog (kalimete). NOTA: reiniciar TUI opencode para cargar la nueva instruction.
+- **Estado**: ✅ sincronizado (push hub)
+
 ### [11:40] - Voz viva en opencode + kalimete-ptt barge-in (Fase Jarvis, TARGET=kalimete)
 - **Tipo**: feature | voz en opencode (autorización del owner)
 - **Que**: (a) plugin `victoria-voice-live.js` en `~/.config/opencode/plugins/` (misma versión opencode 1.18.34): habla respuestas por oraciones + narra tools + barge-in; env en `~/.bashrc` (TTS por LAN + `VICTORIA_VOICE_KEY` desde kalimete-ptt env, single source); verificado E2E (tts ok 119KB + narración); (b) kalimete-ptt: `PTT_SUBMIT` (Enter tras pegar, opt-in) + toque-corto = solo callar + `PTT_BARGE_ABORT` (Esc opt-in); servicio reiniciado y activo.
