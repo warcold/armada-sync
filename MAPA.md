@@ -185,7 +185,6 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | Authentik | SSO Authentik (auth.armada.do) | ✅ |
 | DocuSeal | Proyecto DocuSeal | ✅ |
 | Scriberr | Proyecto Scriberr | ✅ |
-| armada-arcade | Proyecto juego multiplayer (TetriNET) | ✅ |
 | wordpress-dev | WordPress+Elementor+EMCP+MCP stack | ✅ |
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
 | godot-dev | Juegos Godot 4.x + MCP 386 tools | ✅ |

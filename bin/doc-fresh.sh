@@ -9,7 +9,7 @@
 set -u
 STATE="$HOME/.config/opencode/state/frescura.json"
 TTL=86400
-AGENTES="kalimete armada-arcade alfredo-ecomm authentik cloudflare docuseal irc nextcloud petsuite proxy ragnarok scriberr taohemps victoria-server vps woodly erp-dev godot-dev proxmark wordpress-dev"
+AGENTES="kalimete alfredo-ecomm authentik cloudflare docuseal irc nextcloud petsuite proxy ragnarok scriberr taohemps victoria-server vps woodly erp-dev godot-dev proxmark wordpress-dev"
 if [ "${1:-}" = "--status" ]; then
     python3 - "$STATE" "$AGENTES" <<'EOF'
 import json, sys, time

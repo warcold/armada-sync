@@ -163,18 +163,6 @@
   "kind": "local",
   "ts": 1791039937
  },
- "armada-arcade": {
-  "id": "armada-arcade",
-  "label": "git ~/armada-arcade (kalimete)",
-  "href": "",
-  "docs": "./README.md",
-  "local": "41d3651e5634",
-  "upstream": "41d3651e5634",
-  "latest": "",
-  "drift": false,
-  "kind": "git",
-  "ts": 1791039941
- },
  "wordpress-dev": {
   "id": "wordpress-dev",
   "label": "wordpress:6.7-php8.3-apache (kalimete)",

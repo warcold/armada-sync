@@ -4,11 +4,11 @@
  "agent_file": "~/armada-sync/agents/godot-dev.md",
  "mode": "subagent",
  "hidden": false,
- "scope": "Godot 4.x + MCP 386 tools (~/armada-godot/)",
- "vivo_2026_10_01": "MCP godot en opencode.jsonc",
- "live_check": "ls ~/armada-godot/",
- "upstream": {
-  "fuente": "Godot 4.x + MCP 386 tools (~/armada-godot/)",
+  "scope": "Godot 4.x + MCP 386 tools (~/dev/godot/armada-godot/)",
+  "vivo_2026_10_01": "MCP godot en opencode.jsonc",
+  "live_check": "ls ~/dev/godot/armada-godot/",
+  "upstream": {
+   "fuente": "Godot 4.x + MCP 386 tools (~/dev/godot/armada-godot/)",
   "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
  },
  "docs": [

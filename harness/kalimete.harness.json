@@ -123,11 +123,6 @@
   },
   {
    "name": "Armada Arcade",
-   "id": "armada-arcade",
-   "file": "armada-arcade.md (origen ~/armada-arcade/agents/)",
-   "scope": "Juego TetriNET (repo ~/armada-arcade/)",
-   "hidden": false
-  },
   {
    "name": "ERP Dev",
    "id": "erp-dev",
@@ -139,7 +134,7 @@
    "name": "Godot",
    "id": "godot-dev",
    "file": "godot-dev.md",
-   "scope": "Godot 4.x + MCP 386 tools (~/armada-godot/)",
+    "scope": "Godot 4.x + MCP 386 tools (~/dev/godot/armada-godot/)",
    "hidden": false
   },
   {

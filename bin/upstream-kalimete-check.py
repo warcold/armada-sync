@@ -171,7 +171,6 @@ CHECKS = [
  {"id":"eco-docuseal", "label":"docuseal/docuseal:latest (vps)", "kind":"named", "href":"github.com/docusealco/docuseal/releases", "docs":"https://www.docuseal.com/guides",
   "local": lambda: vps_img(r"docuseal") or "docuseal/docuseal:latest", "upstream": "", "extra": lambda: gh_latest("docusealco/docuseal")},
  {"id":"eco-scriberr", "label":"scriberr-custom (vendor)", "kind":"local", "href":"", "docs":"", "local": lambda: vps_img(r"scriberr"), "upstream": ""},
- {"id":"armada-arcade", "label":"git ~/armada-arcade (kalimete)", "kind":"git", "href":"", "docs":"./README.md", "local": lambda: git_head(HOME + "/armada-arcade"), "upstream": lambda: git_up(HOME + "/armada-arcade")},
  {"id":"wordpress-dev", "label":"wordpress:6.7-php8.3-apache (kalimete)", "kind":"fetched", "href":"hub.docker.com/_/wordpress", "docs":"https://wordpress.org/documentation/",
   "local": hub_wp_local_date, "upstream": hub_wp_latest, "extra": lambda: hub_tag_named("library/wordpress", "6.7-php8.3-apache")},
  {"id":"erp-dev", "label":"git erpipo preprod (:8100)", "kind":"git", "href":"github.com/warcold/erpipo-preprod", "docs":"", "local": lambda: git_head(HOME + "/erpipo-preprod") or "?", "upstream": lambda: git_up(HOME + "/erpipo-preprod")},
@@ -232,7 +231,7 @@ def report():
         age = time.time() - os.path.getmtime(TTL_F)
     print("chequeo:", (str(age/3600) + "h" if age >= 0 else "nunca"))
     print("{}{:<22}{:<34}{:<34}EST".format("", "SISTEMA", "LOCAL", "UPSTREAM"))
-    for k in ["eco-vps","eco-victoria","eco-cloudflare","eco-irc","eco-proxy","eco-petsuite","eco-woodly","eco-alfredo-ecomm","eco-taohemps","eco-ragnarok","eco-nextcloud","eco-authentik","eco-docuseal","eco-scriberr","armada-arcade","wordpress-dev","erp-dev","godot-dev","proxmark"]:
+    for k in ["eco-vps","eco-victoria","eco-cloudflare","eco-irc","eco-proxy","eco-petsuite","eco-woodly","eco-alfredo-ecomm","eco-taohemps","eco-ragnarok","eco-nextcloud","eco-authentik","eco-docuseal","eco-scriberr","wordpress-dev","erp-dev","godot-dev","proxmark"]:
         s = st.get(k)
         if not s:
             print("{}{:<36}{}{}".format(k, "[sin datos]", "", "?")); continue

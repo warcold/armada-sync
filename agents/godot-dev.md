@@ -1,6 +1,6 @@
 ---
 name: Godot
-description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 herramientas). Usado cuando kalimete delega: crear juegos, editar escenas, GDScript, shaders, animación, audio. Repo ~/armada-godot/.
+description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 herramientas). Usado cuando kalimete delega: crear juegos, editar escenas, GDScript, shaders, animación, audio. Repo ~/dev/godot/armada-godot/.
 mode: subagent
 hidden: false
 color: "#478cbf"
@@ -27,11 +27,11 @@ permission:
 | MCP Server | `@yanhuifair/godot-mcp` v1.12.3 |
 | Lenguaje | GDScript (principal), C# (opcional) |
 | Editor | Godot Editor Plugin (TCP/stdio bridge) |
-| Proyecto | `~/armada-godot/` |
+| Proyecto | `~/dev/godot/armada-godot/` |
 
 ## Repositorio y Estructura
 
-- **Path**: `~/armada-godot/`
+- **Path**: `~/dev/godot/armada-godot/`
 - **Tipo**: Proyecto Godot 4.x (GDScript)
 - **MCP Server**: `godot-mcp` (instalado globalmente via npm)
 - **Plugin Editor**: `addons/godot-mcp/` (instalado automáticamente)
@@ -43,16 +43,16 @@ permission:
 godot-mcp --version
 
 # Verificar servidor con proyecto
-cd ~/armada-godot && godot-mcp -p . 2>&1 | head -3
+cd ~/dev/godot/armada-godot && godot-mcp -p . 2>&1 | head -3
 
 # Instalar/actualizar plugin del editor
-cd ~/armada-godot && godot-mcp --enable-plugin -p .
+cd ~/dev/godot/armada-godot && godot-mcp --enable-plugin -p .
 
 # Ejecutar Godot en headless (build/export)
 godot --headless --export-debug "Linux/X11" ./export/game.x86_64
 
 # Verificar proyecto Godot
-godot --headless --path ~/armada-godot --editor 2>&1 | head -5
+godot --headless --path ~/dev/godot/armada-godot --editor 2>&1 | head -5
 ```
 
 ## Integración con MCP
@@ -65,8 +65,8 @@ El MCP server está configurado en `opencode.jsonc`:
     "godot": {
       "type": "local",
       "command": "godot-mcp",
-      "args": ["-p", "/home/warcold/armada-godot"],
-      "cwd": "/home/warcold/armada-godot",
+      "args": ["-p", "/home/warcold/dev/godot/armada-godot"],
+      "cwd": "/home/warcold/dev/godot/armada-godot",
       "enabled": true
     }
   }
@@ -166,13 +166,13 @@ El MCP server está configurado en `opencode.jsonc`:
 
 ```bash
 # Exportar para Linux
-godot --headless --path ~/armada-godot --export-debug "Linux/X11" ./export/game.x86_64
+godot --headless --path ~/dev/godot/armada-godot --export-debug "Linux/X11" ./export/game.x86_64
 
 # Exportar para Windows (cross-compilation requiere wine/mingw)
-godot --headless --path ~/armada-godot --export-release "Windows Desktop" ./export/game.exe
+godot --headless --path ~/dev/godot/armada-godot --export-release "Windows Desktop" ./export/game.exe
 
 # Exportar para HTML5/Web
-godot --headless --path ~/armada-godot --export-release "HTML5" ./export/game.html
+godot --headless --path ~/dev/godot/armada-godot --export-release "HTML5" ./export/game.html
 ```
 
 ## Notas de Desarrollo
@@ -188,18 +188,18 @@ godot --headless --path ~/armada-godot --export-release "HTML5" ./export/game.ht
 - Sin plugin, las 220+ herramientas de archivos siguen funcionando
 
 ### Estado del Proyecto
-- El proyecto `armada-godot` es un **proyecto de demostración** para probar el flujo completo
+- El proyecto `dev/godot/armada-godot` es un **proyecto de demostración** para probar el flujo completo
 - En producción, se usaría otro proyecto Godot para cada juego
 - El MCP server se puede apuntar a cualquier proyecto Godot con `-p /path/to/project`
 
 ## CHANGELOG
-- **2026-09-30**: Creación del agente. Godot 4.7.2 + @yanhuifair/godot-mcp 1.12.3 configurados. Proyecto de demostración en ~/armada-godot/. MCP integrado en opencode.jsonc.
+- **2026-09-30**: Creación del agente. Godot 4.7.2 + @yanhuifair/godot-mcp 1.12.3 configurados. Proyecto de demostración en ~/dev/godot/armada-godot/. MCP integrado en opencode.jsonc.
 
 ## Upstream (2026-10-01)
 
-- **Fuente**: Godot 4.x + MCP godot (386 tools) + repo ~/armada-godot/.
+- **Fuente**: Godot 4.x + MCP godot (386 tools) + repo ~/dev/godot/armada-godot/.
 - **Vivo**: MCP declarado en opencode.jsonc.
-- **Check**: ls ~/armada-godot/
+- **Check**: ls ~/dev/godot/armada-godot/
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 
 
@@ -228,6 +228,6 @@ pasos y degrada la sesion. Reglas:
 1. Consultar **nodos/rutas especificas**, nunca la escena/arbol/proyecto entero.
 2. Screenshots solo cuando el owner pida revision visual.
 3. Salidas largas del editor (logs/errores): extraer el error concreto, no pegar todo.
-4. El proyecto tiene ledger `~/armada-godot/AGENTS.md`: LEERLO al empezar y
+4. El proyecto tiene ledger `~/dev/godot/armada-godot/AGENTS.md`: LEERLO al empezar y
    ACTUALIZARLO al terminar (decisiones + pendientes). La compactacion NO debe
    borrar el estado: lo que importa vive ahi.
