@@ -1,5 +1,12 @@
 ## 2026-10-03
 
+### [15:00] - Sampling Qwen3.6 por rol: 12 agentes creativos a temp 0.6/top_p 0.95 (docs+expertos)
+- **Tipo**: config | agentes | best-practices (TARGET=kalimete, local; autorización explícita del owner)
+- **Que**: 12 agentes de desarrollo/creativo (godot, wordpress, arcade, woodly, alfredo-ecomm, erp-dev, petsuite, taohemps, ragnarok, nextcloud, docuseal, scriberr): `temperature: 0.1 → 0.6` + `top_p: 0.95` (Qwen oficial thinking-precise-coding; backup `*.bkup-20261003-temp06`). Se mantienen en 0.1 (tool-use determinista, literatura agentes): cloudflare, irc, proxy, vps, victoria-server, authentik, proxmark (API/SSH/SSO/hardware físico) + kalimete 0.2 (routing/TARGET). `todos.*`/`sidebar.*` NO se tocan: no existen en schema oficial (romperían arranque).
+- **Verificado**: 12× temp 0.6 + 12× top_p 0.95 (grep); 7× infra en 0.1; kalimete 0.2 intacto.
+- **Docs**: este changelog (kalimete). NOTA: reiniciar TUI opencode (temps e instructions se cargan al inicio).
+- **Estado**: ✅ sincronizado (push hub)
+
 ### [14:45] - Todowrite Discipline: fix lista zombie + doc modelos Qwen3.6 (mejores prácticas)
 - **Tipo**: config | agente | best-practices (TARGET=kalimete, local)
 - **Que**: (a) nuevo `~/.config/opencode/todowrite-discipline.md` cargado como 2º `instructions` en `opencode.jsonc` (backup `.bkup-20261003-todowrite`; JSON validado OK): dueño SIEMPRE kalimete (subagentes no escriben en lista del padre, issue #12938), merge manual tras cada `task`, item final de verificación obligatorio, vaciado explícito al cerrar; (b) doc modelos: Qwen3.6-35B-A3B-NVFP4 recomienda 0.6-1.0 según modo, nuestro stack usa 0.2/0.1 INTENCIONAL (determinismo infra > creatividad; Godot 0.4-0.6 queda propuesto, NO aplicado); (c) verificado contra schema en vivo: NO existen `todos.*`/`sidebar.*`/`subagents.enableTodos` — agregarlos rompería el arranque.

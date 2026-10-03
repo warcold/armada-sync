@@ -4,8 +4,7 @@ description: Subagente del backend ERP e-commerce Alfredo Pro Ecomm (Node :3004,
 mode: subagent
 hidden: false
 color: "#eab308"
-temperature: 0.6
-top_p: 0.95
+temperature: 0.1
 steps: 15
 permission:
   edit: allow

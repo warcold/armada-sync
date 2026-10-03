@@ -4,8 +4,7 @@ description: Subagente del stack WordPress Dev (WordPress + Elementor + EMCP Too
 mode: subagent
 hidden: false
 color: "#21759b"
-temperature: 0.6
-top_p: 0.95
+temperature: 0.1
 steps: 15
 permission:
   edit: allow

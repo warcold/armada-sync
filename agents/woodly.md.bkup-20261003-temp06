@@ -4,8 +4,7 @@ description: Subagente del proyecto Woodly (woodly.armada.do) — landing + e-co
 mode: subagent
 hidden: false
 color: "#16a34a"
-temperature: 0.6
-top_p: 0.95
+temperature: 0.1
 steps: 15
 permission:
   edit: allow

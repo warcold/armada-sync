@@ -4,8 +4,7 @@ description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 h
 mode: subagent
 hidden: false
 color: "#478cbf"
-temperature: 0.6
-top_p: 0.95
+temperature: 0.1
 steps: 50
 permission:
   edit: allow
