@@ -1,5 +1,15 @@
 ## 2026-10-02
 
+### [21:55] - Validacion camino LOCAL (Godot): infra 100% sana — los stops eran comportamiento del modelo
+- **Tipo**: diagnostico forense
+- **Evidencia**: 0 errores de stream en provider vllm-lan/vllm hoy; 0 fallos del gateway para la sesion (239 requests OK, latencia media 4-8s con prompts 90-133K, prefix-cache sano); 30.2M tokens de entrada servidos sin un solo 502/timeout. El vLLM y el gateway NO se cayeron nunca.
+- **Los 2 modos de "se para" del local (sesion Crear juego Mario en Godot)**:
+  1. **Amnesia por compactacion (era 144K)**: compacts cada ~5 min a 112K reales (5 drops verificados 19:31-19:50 EDT); tras cada compact el modelo perdia detalle y cerraba turnos anticipadamente (ct=120-338 = textos finales cortos).
+  2. **Final degenerado a 133K con variante THINKING**: el ultimo mensaje de la sesion (21:03:05) = step-start + reasoning + step-finish SIN texto y SIN tool call — el modelo penso y no emitio nada -> opencode cierra el turno. Completiones colapsando: 84/69/74/64/120/.../106 tokens en los minutos finales. Ademas 3 requests cortados por thinking_token_budget (2048, lo inyecta el gateway). La sesion corria en la variante "Thinking · Coding con Victoria".
+- **Recomendaciones**: (a) para loops agenticos largos usar la variante NORMAL "Coding con Victoria" (thinking OFF — es el default recomendado del stack desde 09-13; thinking para problemas puntuales, no para maratones); (b) correr opencode DESDE ~/armada-godot para que el ledger AGENTS.md auto-cargue en cada sesion (compact-proof); (c) el 220K ya aplicado reduce el churn 2.3x (trigger 188K).
+- **Estado**: en sincronizacion (hub cada 5 min)
+
+
 ### [21:30] - FIX "se para incluso en auto": timeouts NIM (glm-5.3 tardaba >5min y opencode mataba el run)
 - **Tipo**: fix | config | diagnostico forense
 - **Sintoma (owner)**: agentes se paran a mitad de tarea incluso en modo auto; no terminan el trabajo.
