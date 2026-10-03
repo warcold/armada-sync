@@ -1,3 +1,11 @@
+## 2026-10-03
+
+### [11:05] - kalimete-ptt CONVERSACIONAL: Victoria responde por voz + llave services dedicada
+- **Tipo**: feature | voz (Fase Jarvis-Victoria, autorización del owner, TARGET=kalimete verificado)
+- **Que**: (a) `~/.local/bin/kalimete-ptt` mejorado (backup `.bak.20261003-voz`): tras pegar el texto, Victoria RESPONDE HABLANDO (LLM Qwen3.6-35B-normal vía 10.0.0.5:8010 → TTS Qwen3-TTS con su voz vía 10.0.0.5:18810 → `paplay` en parlantes); `PTT_VOICE_REPLY=1` (0 = solo-pegar como antes); persona breve/hablada (60 palabras, sin markdown); docstrings rootsource limpiados (cero refs); (b) llave nueva `kalimete-ptt` rol **services** en gateway Victoria (STT+LLM+TTS, sin panel; least privilege — la admin heredada queda como fallback STT); config en `~/.config/kalimete-ptt/env` (`PTT_VOICE_KEY` + URLs + modelo); servicio `kalimete-ptt` reiniciado.
+- **Verificado**: compila OK; servicio active; E2E remoto LLM 200 OK + TTS 200 176KB + PLAY_OK en parlantes. Falta prueba viva del owner (mantener Ctrl, hablar, soltar, escuchar).
+- **Docs**: este changelog (kalimete) + general de Victoria referencia.
+
 ## 2026-10-02
 
 ### [23:58] - Key coder propia + git init armada-godot (auditoría Victoria)
