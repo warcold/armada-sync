@@ -1,3 +1,8 @@
+### [07:45] - victoria-tui: MOTD banner → mapa compacto de comandos (estilo opencode)
+- **Tipo**: cambio cosmético (pedido del owner: quitar el banner, poner helper de comandos/shortcuts)
+- **Que**: el BANNER ASCII del arranque se reemplazó por MOTD_HELPER de 3 líneas: título + (Right Ctrl hablar, /call, /art, /hangup) + (F2 voz, F3 config, F4 callar, PgUp/PgDn scroll, /help). Atajos verificados contra el código real (F2=/voice, F3=config, F4=hush, F9=PTT fallback).
+- **Verificado**: captura pseudo-TTY muestra el helper 1x, 0 rastros del banner viejo; --check OK; TUI viva.
+- **Docs**: changelog kalimete (esta entrada) + general de victoria.
 ### [07:30] - victoria-tui: banner MOTD "VAROEROS" → VICTORIA legible (reporte del owner)
 - **Tipo**: fix cosmético (el owner preguntó "qué significa VAROEROS" — no significaba nada)
 - **Que**: el BANNER figlet del MOTD (8 glifos, intentaba decir VICTORIA) se emborronaba con la fuente del terminal y se leía como "VAROEROS". Reemplazado por letras ASCII simples 5x5 verificadas + subtítulo "tu IA · hija de Alfredo Armada · kalimete". Lógica intacta.
