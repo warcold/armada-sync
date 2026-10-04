@@ -75,6 +75,19 @@ ssh victoria 'systemctl is-active victoria-llm-gateway victoria-gpu-saver victor
 ssh victoria 'nvidia-smi --query-gpu=temperature.gpu,utilization.gpu --format=csv,noheader -i 0'
 ssh victoria 'curl -s -m 4 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/health'
 ```
+## Cambios recientes del stack (verificados 2026-10-04, por Victoria)
+
+- Cap de voz: `xtts` RENOMBRADA a `tts` en TODO el sistema (gateway, sense_auth,
+  panel, DB, landing). La llave kalimete quedo `["llm","art","tts","whisper"]`.
+- `ALL_CAPABILITIES` (las 7 caps) vive SOLO en `sense_auth.py` — el gateway la
+  importa (fuente unica; antes duplicada = deriva garantizada).
+- Los 4 bridges UNIX socket del sandbox (tts/video/whois/admin) estan
+  ENDURECIDOS: thread por conexion + timeouts. Si un wrapper del sandbox
+  cuelga, YA NO es el bridge (antes un cliente mudo atascaba todo).
+- El ensure-loop de victoria ahora REINICIA los bridges cuando cambia su md5
+  (antes copiaba el archivo y el proceso vivo seguia con codigo viejo).
+- Repo git de victoria: commit a6139aa (10-04) con todo lo anterior.
+
 ## Upstream (2026-10-01, verificado contra victoria live)
 
 Victoria corre `upstream-sync.py` diario (8 sistemas, guarda 24h): ComfyUI git, LivePortrait git, Sonic git, Gradio PyPI, yt-dlp releases, cloudflared releases, blogwatcher releases, vLLM-digest (pineado, sin fetch). Si kalimete necesita saber si algo en victoria tiene update: pedirle a Victoria su bloque UPSTREAM del reporte (WhatsApp cada 4h) o leerlo con `ssh victoria cat .victoria-custom/state/upstream.json`.

@@ -1,3 +1,8 @@
+### [18:45] - Auditoria Victoria: BillyCode 8/8 OK + higiene + pasos victoria ejecutados
+- **Tipo**: auditoria externa + docs (owner: "valida los cambios... aplica mejoras... procede con los proximos pasos")
+- **Que**: (1) Validacion: 8/8 checks, serve 1.18.34 vivo, .env correcto (llave kalimete, URLs con path), withPath() defensivo bien hecho, guardrails D7 asentados, voice-pipeline.ts revisado (barge-in 2 niveles, stop-words con limites). (2) Mejora aplicada: apps/tui/voice.py ELIMINADO — era placeholder muerto que contradecia el ledger (F2 esta en apps/server, nadie importaba voice.py; tests siguen 8/8). (3) Pasos victoria ejecutados: caps single-source en sense_auth.py, ensure-loop reinicia bridges por md5 (verificado en vivo), git commit a6139aa, victoria-server.md al dia (sin 120K/xtts).
+- **Pendiente owner**: readme.txt (handoff temporal) — borrar cuando confirme. F3 branding pendiente. kalimete-ptt: retiro sigue SOLO tras confirmacion.
+- **Docs**: changelog kalimete (esta) + ledger billycode + victoria-server.md + changelogs de victoria.
 ### [17:20] - Cap de voz renombrada xtts->tts en el gateway de Victoria (sin impacto cliente)
 - **Tipo**: docs + verificacion (Victoria ejecuto el cambio de codigo; kalimete solo referencia)
 - **Que**: la capacidad/rol xtts dejo de existir: ahora es tts (llm-gateway.py, sense_auth.py, panel, landing, DB). La llave kalimete quedo ["llm","art","tts","whisper"] — misma llave, mismos permisos, cero cambio de config en kalimete (la cap vive en la DB de Victoria). Docs alineadas: victoria-server.md roster, billycode victoria.ts comentarios + ledger.
