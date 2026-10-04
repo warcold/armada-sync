@@ -1,3 +1,8 @@
+### [16:50] - Docs voz al dia: Qwen3-TTS + limites 256K/220K (curado por Victoria)
+- **Tipo**: docs (autorizacion owner; victoria = solo lectura, curado remoto)
+- **Que**: agents/victoria-server.md: Voice server XTTS v2 -> Qwen3-TTS 0.6B-Base (clonacion ICL) + Whisper small; vLLM contexto 160K -> 256K nativo; gateway prompt 120K -> 220K; flags max-model-len 262144 + max-num-seqs 3; roster de llaves completo (nombres+roles, sin secrets). Billycode: fallback XTTS eliminado en docs/vcc/03-tecnologias.md, comentarios de voz aclaran llave valida (services o coder+xtts/whisper), ledger con nota xtts=TTS Qwen3.
+- **Verificado**: engine live qwen3 en :18810/health; wrappers victoria-tts/whisper-cli sanos; sin refs XTTS vivas fuera de historial.
+- **Docs**: changelog kalimete (esta entrada) + general de victoria.
 ### [08:20] - BillyCode: readme.txt handoff de contexto (temporal, el owner lo borra)
 - **Tipo**: docs de traspaso (pedido del owner: "deja instrucciones de lo que entiendes para continuar sin perder contexto")
 - **Que**: `~/dev/billycode/readme.txt` (131 líneas): nombre, visión, arquitectura, máquinas/accesos, inventario verificado, F0 con detalles técnicos (endpoints, formato SSE, prefill 75K, streaming), fases y pendientes, plan kalimete-ptt, 9 reglas operativas, rutas. Ledger AGENTS.md actualizado (línea readme temporal; 49 líneas).
