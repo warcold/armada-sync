@@ -1,3 +1,8 @@
+### [17:20] - Cap de voz renombrada xtts->tts en el gateway de Victoria (sin impacto cliente)
+- **Tipo**: docs + verificacion (Victoria ejecuto el cambio de codigo; kalimete solo referencia)
+- **Que**: la capacidad/rol xtts dejo de existir: ahora es tts (llm-gateway.py, sense_auth.py, panel, landing, DB). La llave kalimete quedo ["llm","art","tts","whisper"] — misma llave, mismos permisos, cero cambio de config en kalimete (la cap vive en la DB de Victoria). Docs alineadas: victoria-server.md roster, billycode victoria.ts comentarios + ledger.
+- **Verificado**: E2E desde kalimete con la llave kalimete: LLM 200 OK + TTS WAV 222KB + STT roundtrip OK.
+- **Docs**: changelog kalimete (esta entrada) + general de victoria.
 ### [16:50] - Docs voz al dia: Qwen3-TTS + limites 256K/220K (curado por Victoria)
 - **Tipo**: docs (autorizacion owner; victoria = solo lectura, curado remoto)
 - **Que**: agents/victoria-server.md: Voice server XTTS v2 -> Qwen3-TTS 0.6B-Base (clonacion ICL) + Whisper small; vLLM contexto 160K -> 256K nativo; gateway prompt 120K -> 220K; flags max-model-len 262144 + max-num-seqs 3; roster de llaves completo (nombres+roles, sin secrets). Billycode: fallback XTTS eliminado en docs/vcc/03-tecnologias.md, comentarios de voz aclaran llave valida (services o coder+xtts/whisper), ledger con nota xtts=TTS Qwen3.

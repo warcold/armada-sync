@@ -55,7 +55,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - `victoria-llm-gateway` (systemd): FastAPI en :8010
 - Auth por bearer token `vllm-key-<64hex>`
 - DB SQLite: `/home/victoria/.victoria-llm/llm-gateway.db`
-- Llaves (nombres+roles, nunca secrets): alfredo/victoria (admin), juancarlos/justin-t/jordan-diaz/michael-prestol/kalimete (coder; kalimete +llm/art/xtts/whisper), servicios-alfredo-pro-llc/kalimete-ptt (services), victoria-openclaw-sandbox (art), warcold/erp-bot (readonly). Límites: prompt 220K, output 32K, rate 120/min.
+- Llaves (nombres+roles, nunca secrets): alfredo/victoria (admin), juancarlos/justin-t/jordan-diaz/michael-prestol/kalimete (coder; kalimete +llm/art/tts/whisper), servicios-alfredo-pro-llc/kalimete-ptt (services), victoria-openclaw-sandbox (art), warcold/erp-bot (readonly). Límites: prompt 220K, output 32K, rate 120/min.
 
 ## Reglas de operación
 
