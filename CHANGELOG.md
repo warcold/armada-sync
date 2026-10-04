@@ -1,3 +1,9 @@
+### [21:35] - Skill art para agentes opencode + E2E generación desde kalimete + victoria-tui blindada
+- **Tipo**: feature + verificación (ronda de cierre, TARGET=kalimete verificado)
+- **Que**: (a) **skill `art`** instalada para los agentes opencode de kalimete: `~/armada-sync/skills/art/SKILL.md` (repo, se sincroniza a GitHub) + `~/.config/opencode/skills/art/SKILL.md` (live) — enseña a generar imágenes vía la art API del gateway de Victoria (templates z-image-turbo/flux-schnell/sd15-realistic, flujo async 202→poll→download, cola 429=reintentar, extracción de llave anti-leak por regex del opencode.jsonc); (b) **E2E REAL**: la llave `kalimete` (coder + multi-tier llm/art/xtts/whisper aplicado hoy desde el panel) generó "robot barista retro-futurista" vía `POST 10.0.0.5:8010/v1/images` → poll → imagen descargada a `~/Desktop/robot-barista.png` (671KB) — el caso "genera y ponla en mi escritorio" funciona; (c) **victoria-tui blindada**: handlers SIGTERM/SIGHUP (cierre brusco de terminal ahora restaura el daemon kalimete-ptt — verificado: timeout-kill → daemon volvió a `active`) + UI interactiva verificada por pseudo-TTY (corrió viva 8s dibujando; el owner la usa con `victoria-tui` en su terminal).
+- **Verificado**: submit `patched:True` con llave kalimete; imagen en Desktop; TUI exit 124 (viva) + daemon restaurado; skill en repo+config con md5 igual.
+- **Impacto**: +skills/art (repo+config), victoria-tui actualizado, ~/Desktop/robot-barista.png (prueba). El sync.sh existente ya cubre skills/.
+- **Docs**: changelog kalimete (esta entrada) + CHANGELOG general victoria (referencia).
 ## 2026-10-03
 
 ### [20:35] - victoria-tui: version grafica del kalimete-ptt (chat streaming + PTT + config)
