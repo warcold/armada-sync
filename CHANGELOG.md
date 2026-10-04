@@ -1,3 +1,7 @@
+### [08:20] - BillyCode: readme.txt handoff de contexto (temporal, el owner lo borra)
+- **Tipo**: docs de traspaso (pedido del owner: "deja instrucciones de lo que entiendes para continuar sin perder contexto")
+- **Que**: `~/dev/billycode/readme.txt` (131 líneas): nombre, visión, arquitectura, máquinas/accesos, inventario verificado, F0 con detalles técnicos (endpoints, formato SSE, prefill 75K, streaming), fases y pendientes, plan kalimete-ptt, 9 reglas operativas, rutas. Ledger AGENTS.md actualizado (línea readme temporal; 49 líneas).
+- **Docs**: changelog kalimete (esta entrada) + general de victoria.
 ### [08:10] - BillyCode: nombre final decidido por el owner (era armada-code)
 - **Tipo**: rename de proyecto (orden directa del owner: "se llamara billycode")
 - **Que**: `mv ~/dev/armada-code ~/dev/billycode` + AGENTS.md actualizado (título, decisión de nombre, pendiente marcado [x]). Sin colisiones, sin otros cambios.
