@@ -1,6 +1,6 @@
 ---
 name: WordPress
-description: Subagente del stack WordPress Dev (WordPress + Elementor + EMCP Tools + MCP Adapter) en kalimete. Usado cuando kalimete delega: desarrollo, mantenimiento, pruebas del sistema WordPress automatizado que se comunica vía MCP con el LLM local (victoria).
+description: Subagente del stack WordPress Dev en kalimete (WordPress 7.1.2 + plugin Armada Suite 5.2.0, super-plugin que unifica chat IA + e-commerce ERP + backup). Usado cuando kalimete delega desarrollo, mantenimiento y pruebas del plugin y su integración con erpipos :8100 (tenant 10 MaganTech).
 mode: subagent
 hidden: false
 color: "#21759b"
@@ -17,133 +17,108 @@ permission:
 
 ## Visión General
 
-**WordPress Dev** gestiona el stack Docker local de WordPress + Elementor + EMCP Tools + MCP Adapter. Este subagente se encarga de desarrollo, mantenimiento y pruebas del sistema WordPress automatizado que se comunica vía MCP con el LLM local (victoria).
+**WordPress Dev** gestiona el stack Docker local de WordPress con el plugin **Armada Suite 5.2.0** (super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored). Desarrollo, mantenimiento y pruebas del plugin y su integración con el ERP erpipos local.
 
-## Infraestructura
+## Infraestructura (validada 2026-10-05)
 
 ### Docker Stack
-- **Path**: `~/dev/wordpress/`
-- **⚠️ Ruta canónica de artefactos (ÚNICA, 2026-10-01)**: los ZIPs del plugin para producción se generan SIEMPRE en `~/dev/wordpress/export/` (contiene `DEPLOY-GUIA.md` + zips versionados). NUNCA dentro del directorio del plugin (`export/` interno está en su `.gitignore` y prohibido). NOTA: `~/Desktop/dev` es solo un **symlink alias** de `~/dev` — en docs y comandos usar siempre `~/dev/...`, jamás `~/Desktop/dev/...`.
-- **Contenedor principal**: `wordpress-local` (WordPress 7.1.1 + PHP 8.3)
-- **Contenedor DB**: `wordpress-db` (MariaDB 10.11)
-- **Puertos expuestos**:
-  - `http://localhost:8091` — WordPress Frontend/REST (loopback; el :8090 es nginx-TLS y da 400)
-  - `https://wordpress.kalimete.local` — LAN SSL (vía nginx)
-  - `localhost:3307` — MariaDB (mapeado al puerto 3306 interno)
+- **Path**: `~/dev/wordpress/` (repo git propio — el plugin se versiona aquí; `~/Desktop/dev` es solo symlink alias, nunca usar en docs)
+- **⚠️ Ruta canónica de artefactos (ÚNICA)**: los ZIPs del plugin se generan SIEMPRE en `~/dev/wordpress/export/` (contiene `DEPLOY-GUIA.md` + zips versionados). NUNCA dentro del directorio del plugin.
+- **Contenedor principal**: `wordpress-local` (imagen `wordpress:6.7-php8.3-apache`, WP core **7.1.2** + PHP 8.3)
+- **Contenedor DB**: `wordpress-db` (MariaDB 10.11, puerto host 3307)
+- **Puertos**:
+  - `http://localhost:8091` — WordPress Frontend/REST (loopback)
+  - `https://wordpress.kalimete.local` — LAN SSL (nginx-TLS, certs mkcert en `~/dev/wordpress/certs/ca-bundle.crt`)
+  - `localhost:3307` — MariaDB
 
-### Arquitectura
+### Arquitectura (live 2026-10-05)
 ```
 kalimete (localhost:8091 / wordpress.kalimete.local)
-    ├── WordPress 7.1.1 (PHP 8.3)
-    ├── erp-commerce-suite v4.4.1 (plugin ÚNICO — unifica erp-chatbot + erp-ecomm-connector + mcp-basic-auth; chat+voz+WhatsApp+catálogo ERP; **switch Local/Público** en admin) ⭐
-    ├── Elementor 4.2.4 (atomic elements, v4)
-    ├── EMCP Tools v3.16.1 (Elementor MCP Tools, 60+)
-    ├── MCP Adapter v0.5.0 (WordPress MCP adapter)
-    ├── MCP Basic Auth (kalimete custom)
-    └── All-in-One WP Migration
+    ├── WordPress 7.1.2 (PHP 8.3, imagen 6.7-php8.3-apache)
+    ├── Armada Suite 5.2.0 (plugin ÚNICO en live — super-plugin:
+    │     erp-commerce-suite + WPVibe + AIOWPM vendored; menú único;
+    │     REST propio erpsuite/v1/ops (15 rutas, OpsMotor);
+    │     nube wpvibe.ai amputada; custom-model→gateway propio;
+    │     chat IA + voz + WhatsApp + catálogo ERP; switch Local/Público) ⭐
+    └── (Elementor / EMCP Tools / MCP Adapter: NO instalados en live — ver "Módulos históricos")
 ```
 
 ### Plugin custom (desarrollo activo)
-- **erp-commerce-suite** (`wp-content/plugins/erp-commerce-suite/`, v4.4.1 verificado 2026-10-01, repo `warcold/erp-commerce-suite`): plugin ÚNICO que unifica erp-chatbot + erp-ecomm-connector + mcp-basic-auth (los 3 repos viejos fueron borrados). Asistente de ventas con IA server-side contra LLM victoria (OpenAI-compatible, key en options). Chat + voz modo teléfono (TTS/STT half-duplex) + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Identidad configurable. Tras cambios: bump versión + correr suite de regresión del plugin.
-- **Switch Local/Público (4.4.1, regla del owner)**: el admin solo ve el toggle Local↔Público (tab Entorno). **Local** = conexión SELLADA hardcodeada al erpipos dev de kalimete (`http://172.19.0.1:8100/api`, tenant 10) — NO editable NI visible en la UI (verificado: 0 hits de `172.19.0.1`/`iak_` en el HTML). **Público** = URL/tenant/key de erpipos PROD editables por el admin (`wp_options.erp_suite_settings.public.*`, solo visibles con switch=Público). Local NUNCA toca producción.
-- **Backend e-commerce local**: ERP real = **erpipos LOCAL :8100** (ERP Dev, repo `sistema-facturacion` rama `dev/ecomm-erp`, tenant 10, tienda MaganTech; auth Bearer `iak_*`). La URL `erpipos.armada.do/api` solo aplica cuando switch=Público.
-- **Empaquetado**: ZIP de producción SOLO en `~/dev/wordpress/export/erp-commerce-suite-<version>.zip` (excluir `.git`, `*.bkup`, `export/` interno, `node_modules`, `.env`).
+- **Armada Suite** (`wp-content/plugins/armada-suite/`, v5.2.0, header verificado 2026-10-05; versionado en el git de `~/dev/wordpress`, HEAD `f87ae0c` + `67ed6d4` + `be15cab`): plugin ÚNICO. Asistente de ventas con IA server-side (custom-model→gateway propio), chat + voz modo teléfono + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Identidad configurable.
+- **Switch Local/Público (regla del owner)**: el admin solo ve el toggle Local↔Público (tab Entorno). **Local** = conexión SELLADA hardcodeada al erpipos preprod de kalimete (`http://172.19.0.1:8100/api`, tenant 10, `includes/Core/Environment.php`) — NO editable NI visible en la UI. **Público** = URL/tenant/key de erpipos PROD editables por el admin (`wp_options.erp_suite_settings.public.*`). Local NUNCA toca producción.
+- **Backend e-commerce local**: ERP real = **erpipos LOCAL :8100** (ERP Dev, repo `sistema-facturacion` rama `dev/ecomm-erp`, tenant 10, tienda MaganTech; auth Bearer `iak_*`). La URL pública solo aplica con switch=Público.
+- **Empaquetado**: ZIP de producción SOLO en `~/dev/wordpress/export/armada-suite-<version>.zip` (excluir `.git`, `*.bkup*`, `export/` top-level, `node_modules`, `.env`, `secrets/`; los `export/` internos de SiteBackup son código y NO se excluyen). **5.2.0 hecho**: 498 archivos, ~2.1MB, sha256 `b4e5348d30397e9b74ca1b2c1857a8b7b366aab7fb0297c5f60731aa41bc30b9`.
 
-### Autenticación
-- **Usuario**: `admin`
-- **Password**: `admin123`
-- **REST API**: Basic Auth `Authorization: Basic YWRtaW46YWRtaW4xMjM=`
-- **MCP Session**: `Mcp-Session-Id` (generado por MCP Adapter)
+### Autenticación (curada 2026-10-05)
+- **WP-Admin**: usuario `admin` (login por UI; la password de login NO sirve para REST — da 401)
+- **REST API**: Application Passwords (Basic Auth). Activas (user admin): `mcp-kalimete-2026` y `alfredo-ecomm` — esta última guardada en `~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt` (dir 700, file 600, gitignored + excluida del ZIP). **NUNCA imprimir ni commitear el valor.**
+- **Verificación REST**: `curl --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:<app-password>" "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"` → 200; anónimo → 403 `erpsuite_forbidden`.
+- **Receta de rotación de App Password** (lección 2026-10-05): en este WP, `create_new_application_password()` devuelve `[$plaintext, $item]` — el plaintext es `$new[0]`, NO `$new[1]` (que es el array del item → TypeError PHP 8 silencioso). Escribir el plaintext a archivo DENTRO del contenedor (`file_put_contents('/tmp/newpw.txt', $new[0])`) y sacarlo con `docker cp` — nunca por stdout del exec.
 
-## MCP Integration
+### OpsMotor — REST `erpsuite/v1/ops/*` (15 rutas, verificado 2026-10-05)
+- `GET ops/status`, `ops/settings`, `ops/audit` → 200 con App Password / 403 anónimo
+- `POST ops/ping-erp` (sin args; rate-limit 30/60s): hace `GET {api_url}/tienda/productos?limit=1` con Bearer de la config local → `{ok, http_code, products, ms, api_host, key_fp}` + audita. **Verificado 2026-10-05: 200, ok:true, 119ms, api_host 172.19.0.1, key_fp 0b0e33e7.**
+- Cadena catálogo vía plugin: `admin-ajax.php?action=erpc_get_products_json` con nonce `erpc_cfg.nonce` (presente en páginas con el shortcode, p.ej. `/productos/`) → 200 con productos reales del ERP (55 verificados).
 
-### Proxy Modificado (`mcp-proxy.mod.js`)
-Proxy Node.js que conecta clientes MCP stdio a WordPress HTTP transport:
-- Usa `?rest_route=` (plain permalinks) para evitar `.htaccess` issues
-- Captura `Mcp-Session-Id` del response header tras initialize
-- Procesa mensajes serialmente (respetando lifecycle MCP)
-- Maneja `Content-Length: 0` con Keep-Alive (202 Accepted)
+### Módulos históricos (NO en live 2026-10-05 — decisión owner pendiente solo si se quieren recuperar)
+- **Elementor 4.2.4 / EMCP Tools v3.16.1 / MCP Adapter v0.5.0 / MCP Basic Auth**: NO instalados en el WP live (solo hay `armada-suite` + index.php en plugins/; namespace REST `mcp` ausente). El archivo `~/dev/wordpress/mcp-proxy.mod.js` EXISTE (bridge stdio→HTTP) pero sin plugin MCP Adapter en WP el bridge NO es funcional. Si se requiere MCP/Elementor de nuevo: reinstalar + revalidar `tools/list` por decisión explícita del owner. No prometerlos en docs de integración.
 
-### Flujo MCP Correcto
-```
-1. initialize → Captura session ID del header Mcp-Session-Id
-2. notifications/initialized → Notificación (202, sin body)
-3. tools/list/call → Con Mcp-Session-Id en headers
-```
-
-### Variables de Entorno
-```bash
-WP_URL="http://localhost:8091"
-WP_USERNAME="admin"
-WP_APP_PASSWORD="admin123"
-```
-
-### Herramientas EMCP Tools (60+)
-- **Media**: list-media, upload-media, get-media-by-id, search-images, sideload-image, upload-svg-icon, add-stock-image
-- **Widgets**: add-free-widget, add-atomic-widget, update-widget, update-atomic-widget, add-atomic-heading, add-atomic-paragraph, add-atomic-button, add-atomic-image, add-atomic-svg, add-atomic-youtube, add-atomic-video, add-custom-js, add-atomic-divider
-- **Layout**: add-container, update-container, update-element, batch-update, set-element-label, reorder-elements, move-element, remove-element, duplicate-element, add-flexbox, add-div-block
-- **Pages**: create-page, update-page-settings, delete-page-content, list-pages, export-page, build-page, import-template, apply-template, save-as-template
-- **Global**: detect-elementor-version, list-global-classes, create-global-class, update-global-class, delete-global-class, reorder-global-classes, update-global-colors, update-global-typography, get-global-settings
-- **Core**: get-site-info, get-user-info, get-environment-info
-
-### Comandos Útiles
+## Comandos Útiles
 
 ```bash
 # Verificar stack Docker
 docker ps --filter name=wordpress
 
-# Verificar servicios WordPress
-curl -s http://localhost:8091/wp-json/wp/v2/menu?context=view
-curl -s http://localhost:8091/index.php?rest_route=/wp/v2/posts?_fields=title,slug
+# Servicios WordPress (permalinks PLAIN — usar ?rest_route=)
+curl -s "http://localhost:8091/index.php?rest_route=/wp/v2/posts?_fields=title,slug"
+curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)" \
+  "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"
 
-# Iniciar proxy MCP
-cd ~/dev/wordpress && \
-WP_URL="http://localhost:8091" \
-WP_USERNAME="admin" \
-WP_APP_PASSWORD="admin123" \
-node mcp-proxy.mod.js 2>&1 | head -50
+# Regresión del plugin (14/14 PASS exigido) + lint
+docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php
+docker exec wordpress-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php
 
-# Docker logs
+# Ping al ERP desde el plugin (usa config sellada Local)
+curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)" \
+  -X POST "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/ping-erp"
+
+# Docker logs / reinicio / DB shell (creds DB en el compose, no en docs)
 docker logs wordpress-local -f
-
-# Reiniciar WordPress
 docker restart wordpress-local wordpress-db
-
-# DB shell
-docker exec -it wordpress-db mysql -u root -prootpassword wordpress
+docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordpress'
 ```
 
 ## Reglas de Operación
 
 1. **NUNCA modificar directamente** archivos del contenedor (mount volúmenes)
 2. **Siempre verificar** estado de contenedores antes de operar
-3. **Usar mcp-proxy.mod.js** para comunicación MCP (no el proxy original)
-4. **Mantener flujo MCP correcto**: initialize → notifications/initialized → tools/call
-5. **No confliger** con el WordPress de producción (este es local dev only)
-6. **Los plugins EMCP** requieren Elementor 4.2.4+ para atomic elements
-7. **erp-chatbot**: cambios → bump versión + entrada en su CHANGELOG.md + correr `tests/regression.php` (7/7 PASS exigido)
+3. **Tras cambios en el plugin**: bump versión + entrada en `~/dev/wordpress/CHANGELOG.md` + correr `tests/regression.php` (**14/14 PASS** exigido) + re-generar ZIP canónico en `export/`
+4. **Secrets**: App Passwords y keys viven en `~/dev/wordpress/secrets/` (600, gitignored, fuera del ZIP) — jamás en docs, chat o commits
+5. **No confliger** con producción (este es local dev only); switch Local NUNCA apunta a prod
+6. **Namespace legacy congelado** (owner 2026-10-02): slug `erp-suite`, constantes `ERPSUITE_*`, options `erp_suite_*`/`erpc_*`, REST `erpsuite/v1`, shortcodes `erpc_*` — NO renombrar código (rompe DB/bookmarks/clientes REST)
 
 ## Integración con Victoria (vLLM)
 
-El stack local se conecta al LLM de victoria vía:
-- **Chatbot (erp-chatbot)**: `http://10.0.0.5:8010/v1` (LAN directo al gateway), modelo `nvidia/Qwen3.6-35B-A3B-NVFP4`, temp 0.4, max_tokens 350
-- **URL túnel alternativa**: `https://victoria.armada.do/v1` con API key `vllm-key-5d43...` (alfredo, admin)
-- **Proxy MCP** sirve de bridge entre el LLM y las herramientas Elementor
+- **Chatbot (Armada Suite)**: custom-model→gateway propio contra el LLM de victoria (LAN `http://10.0.0.5:8010/v1` o túnel `https://victoria.armada.do/v1`; key en wp_options, no en docs). Modelo `nvidia/Qwen3.6-35B-A3B-NVFP4`.
 
 ## Notas Técnicas
 
-- WordPress usa permalinks `plain` en el proxy (no `pretty`) para evitar problemas con `.htaccess`
-- El MCP Adapter almacena sesiones en `usermeta` (mcp_adapter_sessions)
-- EMCP Tools v3.16.1 detecta Elementor 4.2.4 como atomic-compatible
-- El `mcp-proxy.mod.js` maneja `Content-Length: 0` + Keep-Alive correctamente (evita hang)
-- **Importante**: La respuesta de `tools/list` puede ser ~65KB (muchas herramientas)
-- erp-chatbot: sin WooCommerce — el perfil del cliente vive en el ERP (`GET /ecomm/me`), WP solo aporta display_name/email como fallback
+- WordPress usa permalinks `plain` — toda llamada REST vía `index.php?rest_route=` (pretty paths dan 404 vía nginx-TLS)
+- El perfil del cliente vive en el ERP (`GET /ecomm/me`); WP solo aporta display_name/email como fallback
+- `debug.log` ausente con logging desactivado = estado sano (0 FATALs, verificado 2026-10-05)
+- Smoke admin: `erp-suite` main + tabs chatbot/entorno/proyectos → 200; tab vozwa → 302 intencional (redirect legacy a chatbot, fusionado 5.1.2)
 
-## Upstream (2026-10-01)
+## Cambios recientes
+
+- **2026-10-05**: Fase 1 — regresión 14/14 + smoke 5/5 + php -l 13/13; commits `67ed6d4` (stack TLS CA bundle mkcert + extra_hosts) y `be15cab` (gitignore secrets/); ZIP canónico `armada-suite-5.2.0.zip` (sha256 b4e5348d…); App Password `alfredo-ecomm` creada y ROTADA (leak parcial; receta $new[0]); REST ops 200/403 verificado; **ping-erp 200 ok (119ms)** + catálogo vía plugin 200/55 productos + audit registrado.
+- **2026-10-03**: stack TLS (CA bundle mkcert + extra_hosts en docker-compose).
+- **2026-10-01**: Armada Suite 5.0.0 super-plugin (vendored erp-commerce-suite+WPVibe+AIOWPM); consolidación API propia erpsuite/v1/ops.
+
+## Upstream (2026-10-05)
 
 - **Fuente**: wordpress:6.7-php8.3-apache + mariadb:10.11 (kalimete).
-- **Vivo 2026-10-01**: healthy, Up 3d.
-- **Check**: docker ps -f name=wordpress
+- **Vivo 2026-10-05**: healthy Up 7h; WP 7.1.2; plugin Armada Suite 5.2.0 único en live; ping-erp OK.
+- **Check**: `docker ps -f name=wordpress` + regresión 14/14
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 
 

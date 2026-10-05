@@ -1,39 +1,49 @@
 {
   "harness": "alfredo-ecomm",
-  "updated": "2026-10-02",
+  "updated": "2026-10-05",
   "agent_file": "~/armada-sync/agents/alfredo-ecomm.md",
   "mode": "subagent",
   "hidden": false,
   "name": "Alfredo Ecomm",
   "scope": "Backend ERP e-commerce multitenant (Node :3004) — exclusivo del ecosistema Woodly (slug woodly-park). El plugin WP Armada Suite NO consume este backend (usa erpipos :8100, tenant 10). Este agente NO toca ~/dev/wordpress ni armada-suite.php ni .env de Woodly.",
   "paths": {
-    "backend_repo": "~/projects/alfredo-pro-ecomm/backend",
-    "repo_root": "~/projects/alfredo-pro-ecomm",
-    "woodly_repo_root": "~/projects/woodly",
-    "woodly_frontend": "~/projects/woodly/frontend",
-    "docs": "~/projects/alfredo-pro-ecomm/docs/",
-    "no_touch": ["~/dev/wordpress", "armada-suite.php", "~/projects/woodly/frontend/.env (secrets)"]
+    "backend_repo": "~/dev/webs/alfredo-pro-ecomm/backend",
+    "repo_root": "~/dev/webs/alfredo-pro-ecomm",
+    "woodly_repo_root": "~/dev/apps/woodly",
+    "docs": "~/dev/webs/alfredo-pro-ecomm/docs/",
+    "smoke": "~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh",
+    "archived_shell": "~/projects/alfredo-pro-ecomm.archived-20261005 (cascara VACIA — NO usar, NO borrar)",
+    "no_touch": ["~/dev/wordpress", "armada-suite.php", "~/dev/apps/woodly/.env (secrets)"]
+  },
+  "git": {
+    "init": "2026-10-05, rama master, LOCAL sin remote",
+    "baseline": "01fe048 chore: baseline Alfredo Pro Ecomm backend (import 2026-10-05)",
+    "smoke_commit": "e39fa99 chore: add smoke script",
+    "gitignored": [".env", "node_modules/", "dist/", "backups/", "uploads/", "*.bkup", "*.bkup-*", "*.sql", "secrets/"]
   },
   "ports_live": {
-    "api": "3004 (docker alfredo-ecomm-api, imagen backend-api)",
-    "postgres": "5432 (alfredo-ecomm-db, postgres:16-alpine)",
-    "redis": "6379 (alfredo-ecomm-redis, redis:7-alpine)",
-    "woodly_frontend": "5173 (docker woodly-woodly-1, 127.0.0.1:5173->80) — NO 5174",
+    "api": "3004 (docker alfredo-ecomm-api, imagen backend-api, runtime /app/dist)",
+    "postgres": "5432 (alfredo-ecomm-db, postgres:16-alpine, volumen backend_postgres_data)",
+    "redis": "6379 (alfredo-ecomm-redis, volumen backend_redis_data)",
+    "woodly_frontend": "5173 (docker woodly-woodly-1, 127.0.0.1:5173->80, React 19+Vite+TS) — mock estatico, NO consume :3004 todavia",
     "erpipos_laravel": "8100 (ERP DISTINTO — lo consume el WP MaganTech :8091, tenant 10; NO este backend)"
   },
-  "vivo_2026_10_02": "api Up 26h; db+redis Up 4d (db healthy); :3004/health ok; :5173 frontend 200",
-  "live_check": "docker ps --filter name=alfredo",
+  "seguridad_2026_10_05": "JWT_SECRET/JWT_REFRESH_SECRET/DB_PASSWORD ROTADOS (openssl + ALTER USER; valores solo en .env). CORS final: localhost:5173, 127.0.0.1:5173, woodly.kalimete.local, erp.kalimete.local, localhost:8091. Backup pre-rotacion: backend/.env.bkup-20261005 (gitignored).",
+  "vivo_2026_10_05": "api/db/redis Up (db healthy); :3004/health ok; stores/products(8)/deals/auth slug-scoped 200; smoke.sh 4/4; :5173 200 (mock)",
+  "live_check": "docker ps --filter name=alfredo && bash ~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh",
   "checks": [
     "curl -s localhost:3004/health",
     "docker ps --filter name=alfredo",
-    "curl -s localhost:3004/v1/stores/woodly-park/categories",
+    "curl -s localhost:3004/v1/stores/woodly-park/products",
+    "bash ~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh",
     "curl -s -o /dev/null -w '%{http_code}' localhost:5173/"
   ],
   "standard_rule": "Armada Suite = plugin WP comercial/UI (erpipos :8100). Alfredo Pro Ecomm = backend ERP multitenant :3004, solo-Woodly.",
   "legacy_frozen": "Namespace plugin erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, constantes ERPSUITE_*, options erp_suite_*/erpc_*, REST erpsuite/v1, shortcodes erpc_* — se MANTIENEN como legacy efectivo; renombrar rompe DB/bookmarks/clientes REST. NO renombrar código.",
-  "drift_reported_2026_10_02": [
-    "CORS_ORIGIN defaults incluyen localhost:5174 pero frontend LIVE sirve en :5173",
-    "nginx.conf/nginx.dev.conf del repo woodly proxyean /api/ → erp.kalimete.local:3001 (stale) — repo woodly, fuera de scope"
+  "drift_pendiente": [
+    "src↔dist: imagen corre /app/dist (compilado 2026-09-05); NO --build sin validar src↔dist",
+    "repo woodly (fuera de scope): nginx proxyea /api/ → erp.kalimete.local:3001 (stale); frontend mock-only + CSP connect-src 'self'",
+    "schema.prisma lista 11 modelos vs 12 CREATE TABLE en DB (conciliar, menor)"
   ],
   "upstream": {
     "fuente": "backend-api custom local + redis:7 + postgres:16 (kalimete dev)",
@@ -41,10 +51,11 @@
   },
   "docs": [
     "~/armada-sync/agents/alfredo-ecomm.md",
-    "~/projects/alfredo-pro-ecomm/README.md",
-    "~/projects/alfredo-pro-ecomm/Caddyfile.dev",
-    "~/projects/alfredo-pro-ecomm/CHANGELOG.md"
+    "~/dev/webs/alfredo-pro-ecomm/README.md",
+    "~/dev/webs/alfredo-pro-ecomm/Caddyfile.dev",
+    "~/dev/webs/alfredo-pro-ecomm/CHANGELOG.md"
   ],
   "changelog": "~/armada-sync/CHANGELOG.md",
-  "changelog_2026_10_02": "Docs curados a :3004 (README.md + Caddyfile.dev 5x); agent doc reescrito con LIVE verificado; harness expandido; freeze legacy D6-D9 (namespace erp-suite); entrada en ~/projects/alfredo-pro-ecomm/CHANGELOG.md"
+  "changelog_2026_10_05": "Fase 1: compose curado (mount src vacio eliminado, name: backend), cascara ~/projects archivada, git baseline 01fe048 + smoke e39fa99, JWT/JWT_REFRESH/DB rotados, CORS alineado, smoke.sh 4/4, red huerfana backend_alfredo-ecomm eliminada, snapshot pre-fase1. Docs curadas a paths canonicos ~/dev/webs/.",
+  "changelog_2026_10_02": "Docs curados a :3004 (README.md + Caddyfile.dev 5x); agent doc reescrito con LIVE verificado; harness expandido; freeze legacy D6-D9 (namespace erp-suite); entrada en CHANGELOG.md del proyecto"
 }

@@ -1,12 +1,17 @@
 {
  "harness": "wordpress-dev",
- "updated": "2026-10-01",
+ "updated": "2026-10-05",
  "agent_file": "~/armada-sync/agents/wordpress-dev.md",
  "mode": "subagent",
  "hidden": false,
- "scope": "WordPress dev (kalimete)",
- "vivo_2026_10_01": "wordpress:6.7-php8.3 healthy + mariadb:10.11 Up 3d",
+ "scope": "WordPress dev (kalimete) — stack WP 7.1.2 + plugin Armada Suite 5.2.0 (super-plugin unico en live) y su integracion con erpipos :8100 tenant 10",
+ "vivo_2026_10_05": "wordpress-local healthy Up 7h (WP 7.1.2, imagen 6.7-php8.3-apache) + wordpress-db (mariadb:10.11) healthy; plugin UNICO armada-suite 5.2.0; REST erpsuite/v1/ops 200 auth / 403 anon; ping-erp 200 ok (119ms, api_host 172.19.0.1, key_fp 0b0e33e7); catalogo via plugin 200/55 productos; regresion 14/14",
  "live_check": "docker ps -f name=wordpress",
+ "checks": [
+  "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/",
+  "docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php",
+  "curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u \"admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)\" -o /dev/null -w '%{http_code}' \"https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status\""
+ ],
  "upstream": {
   "fuente": "WordPress dev (kalimete)",
   "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
@@ -17,11 +22,24 @@
   "~/dev/wordpress/export/DEPLOY-GUIA.md"
  ],
  "rutas_canonicas": {
-  "proyecto": "~/dev/wordpress/ (Desktop/dev es solo symlink alias — nunca usar en docs)",
-  "artefactos_zip": "~/dev/wordpress/export/ (UNICA ruta; prohibido export/ dentro del plugin)",
-  "plugin": "~/dev/wordpress/wp-content/plugins/erp-commerce-suite (repo warcold/erp-commerce-suite)",
-  "erp_local": "erpipos :8100 tenant 10 (ERP Dev; la conexion del plugin en modo Local esta sellada a esto)"
+  "proyecto": "~/dev/wordpress/ (repo git propio — versiona el plugin; ~/Desktop/dev es solo symlink alias — nunca usar en docs)",
+  "artefactos_zip": "~/dev/wordpress/export/ (UNICA ruta; prohibido export/ top-level dentro del plugin; los export/ internos de SiteBackup son codigo y NO se excluyen)",
+  "plugin": "~/dev/wordpress/wp-content/plugins/armada-suite (Armada Suite 5.2.0 — super-plugin vendored; ya NO existe erp-commerce-suite/ como plugin separado)",
+  "secrets": "~/dev/wordpress/secrets/ (App Passwords, dir 700 file 600, gitignored, fuera del ZIP)",
+  "certs": "~/dev/wordpress/certs/ca-bundle.crt (mkcert, para curl https)",
+  "erp_local": "erpipos :8100 tenant 10 (ERP Dev; conexion del plugin en modo Local SELLADA en includes/Core/Environment.php: http://172.19.0.1:8100/api)"
  },
+ "zip_5_2_0": {
+  "path": "~/dev/wordpress/export/armada-suite-5.2.0.zip",
+  "files": 498,
+  "bytes": 2194876,
+  "sha256": "b4e5348d30397e9b74ca1b2c1857a8b7b366aab7fb0297c5f60731aa41bc30b9",
+  "verificado": "sin .env/secrets/.bkup/.git; storage files presentes"
+ },
+ "auth": "REST = App Passwords (Basic). Activas user admin: mcp-kalimete-2026 + alfredo-ecomm (en secrets/, 600). Password de login NO sirve para REST (401). Receta rotacion: plaintext es $new[0] (NO $new[1]); escribir a /tmp dentro del contenedor + docker cp.",
+ "modulos_historicos": "Elementor 4.2.4 / EMCP Tools v3.16.1 / MCP Adapter v0.5.0 NO instalados en live (namespace mcp ausente). mcp-proxy.mod.js existe como archivo pero el bridge NO es funcional sin el plugin. Reinstalar solo por decision owner.",
+ "legacy_frozen": "Namespace erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, ERPSUITE_*, erp_suite_*/erpc_*, erpsuite/v1, shortcodes erpc_* — NO renombrar.",
  "changelog": "~/armada-sync/CHANGELOG.md",
+ "changelog_2026_10_05": "Fase 1: regresion 14/14, commits 67ed6d4+be15cab, ZIP 5.2.0 canonico, App Password alfredo-ecomm creada+rotada (receta $new[0]), REST ops 200/403, ping-erp 200 ok, catalogo via plugin 55 productos. Doc reescrita: Armada Suite 5.2.0 super-plugin, Elementor/EMCP/MCP declarados historicos (no-live).",
  "name": "WordPress"
 }
