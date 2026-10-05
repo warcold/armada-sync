@@ -1,19 +1,62 @@
 {
- "harness": "erp-dev",
- "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/erp-dev.md",
- "mode": "subagent",
- "hidden": false,
- "scope": "ERP erpipo preprod (kalimete :8100)",
- "vivo_2026_10_01": "erpipo app/mysql:8.0/mailpit/queue/scheduler/phpmyadmin/nginx:1.25/redis Up 3d; repo warcold/erpipo-preprod",
- "live_check": "docker ps -f name=erpipo",
- "upstream": {
-  "fuente": "ERP erpipo preprod (kalimete :8100)",
-  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
- },
- "docs": [
-  "~/armada-sync/agents/erp-dev.md"
- ],
- "changelog": "~/armada-sync/CHANGELOG.md",
- "name": "ERP Dev"
+  "harness": "erp-dev",
+  "updated": "2026-10-05",
+  "agent_file": "~/armada-sync/agents/erp-dev.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "ERP erpipo preprod (kalimete :8100) — sandbox local de desarrollo. Upstream de Juan Carlos (soycarlosjerez-hub/sistema-facturacion); enviamos recomendaciones via rama dev/ecomm-erp. Push a origin SOLO con autorizacion del owner.",
+  "ownership": "Repo upstream = Juan Carlos. Copia local = sandbox para validar integraciones (WP/Alfredo Ecomm) sin tocar prod. main/develop read-only (politica rama unica, commit dd66417).",
+  "git": {
+    "rama_activa": "dev/ecomm-erp (el stack SIRVE esta rama)",
+    "head_verificado": "2d0d97b feat(ecomm): placeholder por tenant/business_type con fallback (2026-10-03)",
+    "remotes": "SOLO origin = ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git (upstream Juan Carlos). NO existe remote preprod en este clon.",
+    "regla": "push a origin SOLO con autorizacion explicita del owner"
+  },
+  "vivo_2026_10_05": "8/8 containers Up (db+redis+mailpit healthy); https://erp.kalimete.local 200; Laravel 12.16 / PHP 8.3.33 / env preprod / DEBUG OFF; DB 653 migraciones (batch 149), 328 tablas, 799 productos / 180 clientes / 253 ventas; contrato ecomm verificado e2e (venta V-281, stock 200->199, promos 400 invalid_code)",
+  "live_check": "docker ps -f name=erpipo",
+  "checks": [
+    "curl -sk -o /dev/null -w '%{http_code}' https://erp.kalimete.local/login",
+    "docker ps -f name=erpipo",
+    "docker exec erpipo-preprod-app php artisan migrate:status | tail -3"
+  ],
+  "puertos": {
+    "nginx": "8100 (frontal TLS erp.kalimete.local)",
+    "db": "3310 (mysql:8.0)",
+    "redis": "6390",
+    "phpmyadmin": "8102",
+    "mailpit": "8025",
+    "app": "9000/tcp INTERNO (sin puerto host — NO existe :8101)"
+  },
+  "contrato_ecomm_2026_10_05": {
+    "auth": "Authorization: Bearer iak_* (InstanceApiKey sha256); /api/ecomm/tienda/config tambien acepta ?api_key=",
+    "rutas": "GET /api/tienda/{productos,categorias,inventario,kardex/{id},config}; ecomm: register/login/me/carts/items/checkout/guest/orders(?customer_id=)/promociones/validar/lealtad",
+    "throttles": "register/login 10/min; tienda/config 30/min; grupo privado 60/min",
+    "gotchas": [
+      "register SIN tenant_id crea cliente en tenant 3 — el consumidor DEBE enviar tenant_id explicito (10)",
+      "telefono unique GLOBAL (no por tenant)",
+      "NO existe GET /api/ecomm/orders/{id} individual (solo listado ?customer_id=)",
+      "checkout depende de sesion_cajas estado=abierta del tenant (tabla sesion_cajas) — sin caja abierta da 500",
+      "imagenes = URLs absolutas a erp.kalimete.local; total del catalogo en meta.total"
+    ],
+    "keys_dir": "~/dev/erpipo-preprod/keys/ (700/600; ecomm-test-customer.txt = cliente 208 tenant 10)"
+  },
+  "candidatos_fase_2": [
+    "webhooks ERP->tienda (stock/price/order/invoice, HMAC)",
+    "desacoplar checkout ecomm de SesionCaja",
+    "GET /api/ecomm/orders/{id}",
+    "register: derivar tenant de la API key",
+    "telefono unique -> scope por tenant",
+    "/up JSON real",
+    "fix LogErrorToDatabase (cascada Connection refused)"
+  ],
+  "upstream": {
+    "fuente": "soycarlosjerez-hub/sistema-facturacion (Juan Carlos) + stack erpipo-* (kalimete :8100)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/erp-dev.md"
+  ],
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "changelog_2026_10_05": "Doc curada: app sin :8101 (9000 interno), mailpit :8025 anadido a tabla, migraciones 653/b149, dump db.sql 553MB en ~/dev/erpipo-preprod (no /tmp), remotos corregidos (solo origin, sin preprod), politica rama unica dev/ecomm-erp, secrets DB fuera del doc (preprod.env), contrato ecomm verificado + gotchas, candidatos Fase 2. 5 .bkup untracked movidos a ~/dev/erpipo-preprod/backups-bkup-20261003/ (tree limpio).",
+  "name": "ERP Dev"
 }
