@@ -8,11 +8,12 @@
   "ownership": "Repo upstream = Juan Carlos. Copia local = sandbox para validar integraciones (WP/Alfredo Ecomm) sin tocar prod. main/develop read-only (politica rama unica, commit dd66417).",
   "git": {
     "rama_activa": "dev/ecomm-erp (el stack SIRVE esta rama)",
-    "head_verificado": "2d0d97b feat(ecomm): placeholder por tenant/business_type con fallback (2026-10-03)",
+    "head_verificado": "2c8fca9 (merge con origin: PR #13 de Juan + fix papel impresora 94484c6, sin conflictos)",
+    "fase_2_pushed": "2026-10-06: 10 commits Fase 2 pushed a origin (4415e27..790cc8a + merge 2c8fca9) — autorizacion owner; Juan Carlos revisa",
     "remotes": "SOLO origin = ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git (upstream Juan Carlos). NO existe remote preprod en este clon.",
     "regla": "push a origin SOLO con autorizacion explicita del owner"
   },
-  "vivo_2026_10_05": "8/8 containers Up (db+redis+mailpit healthy); https://erp.kalimete.local 200; Laravel 12.16 / PHP 8.3.33 / env preprod / DEBUG OFF; DB 653 migraciones (batch 149), 328 tablas, 799 productos / 180 clientes / 253 ventas; contrato ecomm verificado e2e (venta V-281, stock 200->199, promos 400 invalid_code)",
+  "vivo_2026_10_06": "8/8 containers Up; dev/ecomm-erp @2c8fca9 PUSHED a origin; migraciones 655 (batch 150); queue worker con --queue=default,webhooks; contrato ecomm Fase 2 verificado e2e (checkout sin caja -> venta 289, orders/{id} 200/404, webhooks sent/200 firma HMAC OK); regresion post-merge 100% PASS",
   "live_check": "docker ps -f name=erpipo",
   "checks": [
     "curl -sk -o /dev/null -w '%{http_code}' https://erp.kalimete.local/login",
@@ -27,27 +28,29 @@
     "mailpit": "8025",
     "app": "9000/tcp INTERNO (sin puerto host — NO existe :8101)"
   },
-  "contrato_ecomm_2026_10_05": {
+  "contrato_ecomm_2026_10_06": {
     "auth": "Authorization: Bearer iak_* (InstanceApiKey sha256); /api/ecomm/tienda/config tambien acepta ?api_key=",
-    "rutas": "GET /api/tienda/{productos,categorias,inventario,kardex/{id},config}; ecomm: register/login/me/carts/items/checkout/guest/orders(?customer_id=)/promociones/validar/lealtad",
+    "rutas": "GET /api/tienda/{productos,categorias,inventario,kardex/{id},config}; ecomm: register/login/me/carts/items/checkout/guest/orders(?customer_id=)/orders/{id}(NUEVO)/promociones/validar/lealtad",
+    "register_fase_2": "tenant_id explicito > api_key (body/X-API-Key/Bearer) > 422 tenant_required (fin default tenant 3)",
+    "checkout_fase_2": "SIN caja POS abierta funciona: venta con sesion_caja_id/user_id NULL (migracion 2026_10_05_230000); POS intacto",
+    "health_fase_2": "GET /up -> JSON {status,database,redis,timestamp} 200 ok / 503 degraded",
+    "webhooks_fase_2": "tablas webhook_endpoints/webhook_deliveries; WebhookService::dispatch; job HMAC-SHA256 (X-Webhook-Signature) retries [30,60,120,300] afterCommit; eventos: order.created (ecomm submit+guest), stock.updated (venta+ajuste), price.updated (admin); alta via tinker (soporta wildcard *); verificado e2e sent/200 firma OK",
     "throttles": "register/login 10/min; tienda/config 30/min; grupo privado 60/min",
     "gotchas": [
-      "register SIN tenant_id crea cliente en tenant 3 — el consumidor DEBE enviar tenant_id explicito (10)",
-      "telefono unique GLOBAL (no por tenant)",
-      "NO existe GET /api/ecomm/orders/{id} individual (solo listado ?customer_id=)",
-      "checkout depende de sesion_cajas estado=abierta del tenant (tabla sesion_cajas) — sin caja abierta da 500",
-      "imagenes = URLs absolutas a erp.kalimete.local; total del catalogo en meta.total"
+      "imagenes = URLs absolutas a erp.kalimete.local; total del catalogo en meta.total (keys: productos+meta)",
+      "telefono unique scoped por tenant en codigo; SIN index DB (duplicados cross-tenant impiden index compuesto hasta dedupe)",
+      "queue worker REQUIERE --queue=default,webhooks (sin --queue= los webhooks nunca se procesan)",
+      "job de webhook ejecuta en el contenedor QUEUE (no app) — los endpoints de test deben vivir ahi o usar URLs alcanzables"
     ],
     "keys_dir": "~/dev/erpipo-preprod/keys/ (700/600; ecomm-test-customer.txt = cliente 208 tenant 10)"
   },
-  "candidatos_fase_2": [
-    "webhooks ERP->tienda (stock/price/order/invoice, HMAC)",
-    "desacoplar checkout ecomm de SesionCaja",
-    "GET /api/ecomm/orders/{id}",
-    "register: derivar tenant de la API key",
-    "telefono unique -> scope por tenant",
-    "/up JSON real",
-    "fix LogErrorToDatabase (cascada Connection refused)"
+  "fase_2_estado": "IMPLEMENTADA y PUSHED (2026-10-06). 10 commits: orders/{id} 4415e27, tenant-por-key ba62435, logging 4e1a216, /up c470bf2, checkout-sin-caja a2b183e, webhooks dbb1998+27be061+2893551, docs 9a18a04+790cc8a. Evidencia: docs/RECOMENDACIONES-FASE2-ECOMM.md + CHANGELOG del repo.",
+  "pendientes_siguientes": [
+    "evento invoice.issued (infra ya lo soporta, falta anclaje)",
+    "UI admin para webhook_endpoints",
+    "index compuesto (tenant_id, telefono) — requiere dedupe previo",
+    "UpdateClienteRequest: email/rnc_cedula unique GLOBAL (flujo admin)",
+    "comando re-proceso para deliveries failed"
   ],
   "upstream": {
     "fuente": "soycarlosjerez-hub/sistema-facturacion (Juan Carlos) + stack erpipo-* (kalimete :8100)",

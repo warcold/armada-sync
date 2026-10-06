@@ -63,6 +63,19 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 ### Módulos históricos (NO en live 2026-10-05 — decisión owner pendiente solo si se quieren recuperar)
 - **Elementor 4.2.4 / EMCP Tools v3.16.1 / MCP Adapter v0.5.0 / MCP Basic Auth**: NO instalados en el WP live (solo hay `armada-suite` + index.php en plugins/; namespace REST `mcp` ausente). El archivo `~/dev/wordpress/mcp-proxy.mod.js` EXISTE (bridge stdio→HTTP) pero sin plugin MCP Adapter en WP el bridge NO es funcional. Si se requiere MCP/Elementor de nuevo: reinstalar + revalidar `tools/list` por decisión explícita del owner. No prometerlos en docs de integración.
 
+### Integración ERP — estado (2026-10-06, para no adivinar en el futuro)
+
+**Fase 1 validada (nuestro lado)**: ping-erp 200 ok (119ms), catálogo vía plugin 200/55 productos, ZIP 5.2.0, App Password operativa, regresión 14/14.
+
+**Fase 2 disponible (lado ERP erpipo, rama `dev/ecomm-erp` pushed a origin — Juan Carlos revisa)** — capacidades nuevas que el plugin puede aproveitar:
+1. **`GET /api/ecomm/orders/{id}`** — detalle individual de pedido con scoping auth.cliente (ajena → 404). Ya no solo el listado `?customer_id=`.
+2. **Register acepta `api_key`** (body/X-API-Key/Bearer) además de `tenant_id` — el plugin sigue con `tenant_id=10` (compatible, sin cambio requerido).
+3. **Checkout ya NO requiere caja POS abierta** — los pedidos web ya no dependen de que el admin abra caja (antes: 500).
+4. **`/up` JSON** (`{status, database, redis}`) — listo para monitoreo/ping del plugin.
+5. **Webhooks ERP→tienda DISPONIBLES**: `order.created`, `stock.updated`, `price.updated` con firma HMAC-SHA256 (`X-Webhook-Signature`) y retries. **Futuro**: registrar un endpoint WP (`WebhookEndpoint` en el ERP) y recibir push de stock/precios/pedidos en vez de polling.
+
+Contrato vigente sin cambios: Local sellado `http://172.19.0.1:8100/api`, tenant 10, Bearer `iak_*` (44 chars), throttles 10/30/60, imágenes URL absoluta (proxy/rehost), total en `meta.total`.
+
 ## Comandos Útiles
 
 ```bash
@@ -110,6 +123,7 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 
 ## Cambios recientes
 
+- **2026-10-06**: Cierre de sección — CHANGELOG del repo WP con estado de integración (commit `dd2f1d2`): Fase 1 validada + las 5 capacidades nuevas del ERP (orders/{id}, api_key, checkout sin caja, /up, webhooks como futuro reemplazo de polling). Doc del agente + harness con sección "Integración ERP — estado".
 - **2026-10-05**: Fase 1 — regresión 14/14 + smoke 5/5 + php -l 13/13; commits `67ed6d4` (stack TLS CA bundle mkcert + extra_hosts) y `be15cab` (gitignore secrets/); ZIP canónico `armada-suite-5.2.0.zip` (sha256 b4e5348d…); App Password `alfredo-ecomm` creada y ROTADA (leak parcial; receta $new[0]); REST ops 200/403 verificado; **ping-erp 200 ok (119ms)** + catálogo vía plugin 200/55 productos + audit registrado.
 - **2026-10-03**: stack TLS (CA bundle mkcert + extra_hosts en docker-compose).
 - **2026-10-01**: Armada Suite 5.0.0 super-plugin (vendored erp-commerce-suite+WPVibe+AIOWPM); consolidación API propia erpsuite/v1/ops.

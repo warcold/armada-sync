@@ -34,8 +34,9 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 ## Git — política de rama única (commit dd66417)
 
 - **Rama activa**: `dev/ecomm-erp` (el stack preprod SIRVE esta rama; `main`/`develop` son **read-only**)
-- **Remotos**: SOLO `origin` = `ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git` (upstream de Juan Carlos). **NO existe remote `preprod` en este clon** (el mirror privado `warcold/erpipo-preprod` no está configurado — pendiente solo si el owner lo pide).
-- **Workflow**: desarrollar/probar local → commits limpios en `dev/ecomm-erp` → push a origin SOLO con autorización del owner → Juan Carlos revisa.
+- **Remotos**: SOLO `origin` = `ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git` (upstream de Juan Carlos). **NO existe remote `preprod` en este clon**.
+- **Workflow**: desarrollar/probar local → commits limpios en `dev/ecomm-erp` → push a origin con autorización del owner → Juan Carlos revisa (él integra vía PR: el histórico muestra PR #13 suyo integrando nuestra base 2d0d97b a main/develop el 2026-10-06).
+- **Estado push (2026-10-06)**: Fase 2 COMPLETA pushed — HEAD `2c8fca9` (merge limpio con origin: PR #13 de Juan + su fix papel impresora `94484c6`, cero conflictos). 10 commits nuestros sobre `2d0d97b` + merge.
 
 ## Stack (docker-compose.yml, verificado 2026-10-05)
 
@@ -58,20 +59,24 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 - **SSL**: mkcert (erp.kalimete.local.pem + -key.pem)
 - **App**: Laravel 12.16, PHP 8.3.33, cache/queue/session redis, db mysql, routes/events/views CACHED
 
-## Migraciones y datos (verificado 2026-10-05)
+## Migraciones y datos (verificado 2026-10-06)
 
-- DB: `facturacion_db` con **653 migraciones (batch 149)**, 328 tablas; users 31, clientes 180, productos 799, ventas 253
+- DB: `facturacion_db` con **655 migraciones (batch 150)**, 330 tablas; users 31, clientes 180+, productos 799, ventas 253+
 - Dump original: `~/dev/erpipo-preprod/db.sql` (553MB) — **NUNCA modificar ni borrar**
 - Scheduler: `recurring-invoices`, `ecf:consultar-pendientes`, `cajas:limpiar-sesiones`, `communication:process-outbox` (DONE cada minuto)
+- **Queue worker**: `php artisan queue:work --queue=default,webhooks --tries=3 --timeout=90 --sleep=3` (compose local curado 2026-10-06 con .bkup; sin `--queue=` los webhooks NO se procesan)
 
-## Contrato ecomm API (verificado end-to-end 2026-10-05)
+## Contrato ecomm API (verificado end-to-end 2026-10-05/06 — Fase 2 aplicada)
 
 - **Auth**: `Authorization: Bearer iak_*` (InstanceApiKey, sha256 en `instance_api_keys`). `/api/ecomm/tienda/config` también acepta `?api_key=`. Token de cliente (login ecomm) es compatible con `auth.cliente` vía el MISMO header Bearer.
-- **Rutas clave**: `GET /api/tienda/{productos,categorias,inventario,kardex/{id},config}` + `POST /api/tienda/inventario/ajuste`; ecomm storefront (31 rutas): `POST /api/ecomm/{register,login,logout,...}`, `GET /api/ecomm/me`, `carts` CRUD + `carts/{id}/items` + `carts/{cartId}/checkout` + `checkout/guest`, `orders` (**requiere `?customer_id=`** — NO existe ruta individual `orders/{id}`), `promociones/validar` (requiere `codigo`+`cart_id`+`subtotal`), lealtad.
+- **Rutas clave**: `GET /api/tienda/{productos,categorias,inventario,kardex/{id},config}` + `POST /api/tienda/inventario/ajuste`; ecomm storefront: `POST /api/ecomm/{register,login,logout,...}`, `GET /api/ecomm/me`, `carts` CRUD + `carts/{id}/items` + `carts/{cartId}/checkout` + `checkout/guest`, `orders` (listado `?customer_id=`) + **`GET /api/ecomm/orders/{id}` (NUEVO Fase 2 — detalle individual con scoping auth.cliente, ajena=404)**, `promociones/validar` (requiere `codigo`+`cart_id`+`subtotal`), lealtad.
+- **Register (Fase 2)**: resuelve tenant por precedencia `tenant_id` explícito > `api_key` (body/X-API-Key/Bearer) > **422 `tenant_required`** (fin del default silencioso a tenant 3). Lookup canónico: `InstanceApiKey::activeByHash()` (sin TenantScope).
+- **Checkout (Fase 2)**: **ya NO requiere caja POS abierta** — sin `sesion_cajas` abierta la venta se crea con `sesion_caja_id`/`user_id` NULL (migración `2026_10_05_230000`); el POS intacto (siempre pasa sesión).
 - **Throttles**: register/login 10/min; `/api/ecomm/tienda/config` 30/min; grupo tienda/ecomm-privado 60/min.
-- **Hallazgos para el consumidor (WP/Alfredo)**: register SIN `tenant_id` crea el cliente en tenant 3 → **el plugin DEBE enviar `tenant_id:10` explícito**; `telefono` es unique GLOBAL (generar únicos); imágenes = URLs absolutas a erp.kalimete.local (proxy/rehost desde WP); total del catálogo en `meta.total`.
-- **⚠️ Dependencia de caja**: `EcommCheckoutController::getSessionCaja()` lanza 500 si no hay `sesion_cajas` con `estado='abierta'` para el tenant (tabla real: `sesion_cajas`, NO `sesiones_caja`). Verificar antes de checkout.
-- **E2E verificado 2026-10-05**: register→verify-email(sha1)→login→me OK; cart→checkout→venta V-281 (stock 200→199); promociones/validar 400 `invalid_code` correcto; imágenes webp 200. Cliente test 208 (creds en keys/).
+- **Health (Fase 2)**: `GET /up` → JSON `{status, database, redis, timestamp}` (200 ok / 503 degraded; pings sin crash). Reemplaza el blade HTML nativo.
+- **Webhooks (Fase 2, NUEVO)**: tablas `webhook_endpoints`/`webhook_deliveries`; `WebhookService::dispatch(event, tenantId, payload)`; job con HMAC-SHA256 (`X-Webhook-Signature`), headers `X-Webhook-Event/-Delivery/-Timestamp`, retries backoff [30,60,120,300], afterCommit. Eventos cableados: `order.created` (ecomm submit+guest), `stock.updated` (venta+ajuste), `price.updated` (admin update). Alta de endpoints vía tinker/DB (soporta wildcard `*`). Verificado e2e: entregas sent/200 con firma validada.
+- **Hallazgos para el consumidor (WP/Alfredo)**: imágenes = URLs absolutas a erp.kalimete.local (proxy/rehost desde WP); total del catálogo en `meta.total` (keys: `productos`+`meta`); `telefono` unique scoped por tenant en código (sin index DB — duplicados cross-tenant impiden index compuesto hasta dedupe).
+- **E2E verificado**: register→verify-email(sha1)→login→me OK; cart→checkout SIN caja → ventas 283/288/289 (sesion_caja_id NULL, stock decrementado); promos 400 `invalid_code`; imágenes webp 200; webhooks entregas sent/200 firma OK.
 
 ## Reglas de operación
 
@@ -128,22 +133,28 @@ docker exec erpipo-preprod-app php artisan migrate:status
 - El preprod es standalone: su DB (`facturacion_db`) vive solo en el volumen de kalimete.
 - No tocar ni referenciar infraestructura de terceros. Los cambios viajan por Git (`dev/ecomm-erp`) como recomendaciones a Juan Carlos.
 
-## Candidatos Fase 2 (recomendaciones a Juan Carlos — NO implementar sin su visto bueno)
+## Fase 2 — IMPLEMENTADA y pushed (2026-10-06)
 
-1. Webhooks ERP→tienda (`stock.updated`, `price.updated`, `order.created/paid`, `invoice.issued` con HMAC + reintentos) — hoy solo polling
-2. Desacoplar checkout ecomm de `SesionCaja` (500 sin caja abierta → mejor 409 claro o caja automática para pedidos web)
-3. Añadir `GET /api/ecomm/orders/{id}` individual
-4. Register ecomm: derivar tenant de la API key (hoy default tenant 3)
-5. `telefono` unique → scope por tenant
-6. `/up` JSON real para monitoreo (hoy devuelve HTML landing)
-7. Fix `LogErrorToDatabase` (cascada `Connection refused` cuando mysql cae — loop log-del-log)
+Los 7 candidatos Fase 2 fueron implementados, verificados e2e y **pushed a origin** (`dev/ecomm-erp` HEAD `2c8fca9`, 10 commits + merge con el PR #13 de Juan). Resumen en `docs/RECOMENDACIONES-FASE2-ECOMM.md` del propio repo (viaja con la rama) + entrada en el CHANGELOG del repo (`790cc8a`).
 
-## Upstream (2026-10-05)
+| Commit | Mejora |
+|---|---|
+| `4415e27` | `GET /api/ecomm/orders/{id}` con scoping auth.cliente |
+| `ba62435` | register deriva tenant de la API key (fin default tenant 3) |
+| `4e1a216` | LogErrorToDatabase tolera caída de MySQL (fin loop log-del-log) |
+| `c470bf2` | `/up` JSON real (200 ok / 503 degraded) |
+| `a2b183e` | checkout sin caja POS (sesion_caja_id/user_id nullable, migración) |
+| `dbb1998`+`27be061`+`2893551` | webhooks MVP (HMAC-SHA256, retries, afterCommit; order.created/stock.updated/price.updated) |
+| `9a18a04`+`790cc8a` | docs: RECOMENDACIONES-FASE2 + changelog del repo |
+
+**Pendientes siguientes (no implementados)**: evento `invoice.issued` (infra ya lo soporta); UI admin para `webhook_endpoints`; index compuesto `(tenant_id, telefono)` requiere dedupe previo; `UpdateClienteRequest` email/rnc_cedula unique GLOBAL (flujo admin); comando de re-proceso para deliveries `failed`.
+
+## Upstream (2026-10-06)
 
 - **Fuente**: `soycarlosjerez-hub/sistema-facturacion` (upstream de Juan Carlos) + stack erpipo-* (kalimete :8100).
-- **Vivo 2026-10-05**: 8/8 containers Up (db+redis+mailpit healthy); rama `dev/ecomm-erp` @2d0d97b; contrato ecomm verificado e2e.
-- **Check**: `docker ps -f name=erpipo` + `curl -sk https://erp.kalimete.local/login`
-- **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
+- **Vivo 2026-10-06**: 8/8 containers Up; rama `dev/ecomm-erp` @2c8fca9 **pushed** (Juan ya integró la base vía su PR #13); contrato ecomm Fase 2 verificado e2e; regresión 100% PASS post-merge.
+- **Check**: `docker ps -f name=erpipo` + `curl -sk https://erp.kalimete.local/login` + `curl -s http://127.0.0.1:8100/up`
+- **Regla**: LIVE manda (doc vs live vs upstream); push a origin solo con autorización del owner.
 
 
 ```json upstream_drk
