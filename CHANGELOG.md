@@ -1,3 +1,21 @@
+## 2026-10-06
+
+### [15:30] - START PROJECT: Armada Star Fox (Godot 4.x — Star Fox clone)
+- **Tipo**: feature/game-dev
+- **Modificado**: proyecto completo `armada-starfox/` (Godot 4.7.2)
+- **Afecta a**: kalimete/godot
+- **Causa**: Nuevo proyecto Godot — clone de Star Fox (SNES/N64)
+- **Estado**: ✅ Foundation completa (Fase 1)
+- **Notas**:
+  - Estructura completa: scripts (player, enemy, weapon, powerup, level, ui, audio, save, globals)
+  - Escenas: player_ship.tscn, bullet.tscn, main_menu.tscn, test_room.tscn, level_01_pathos.tscn
+  - Input map: WASD + Shift/Ctrl + Space + B + Escape
+  - GameState autoload con sistema de guardado (FileAccess Godot 4.x API)
+  - Documentación: DESIGN.md (GDD completo), ARCHITECTURE.md, README.md, CHANGELOG.md del proyecto
+  - Audio Bus Layout: Master, Music (-3dB), SFX (0dB), Voices (-1dB)
+  - Correcciones: game_state.gd (FileAccess API), player_ship.tscn (IDs ext_resource), level_manager.gd (español)
+  - Pendiente: Fase 2 (core gameplay), Fase 3 (enemigos), Fase 4+ (niveles 2-5)
+
 ### [17:15] - RELEASE 5.3.0 + REVIEW JUAN LISTA (pasos 1 y 2; woodly fuera por orden owner)
 - **Tipo**: release + revisión (owner: "procede con 1 y 2, no toquemos woodly")
 - **Release 5.3.0** (commit `c084cdb`): bump versión (header + `ERPSUITE_VERSION` + readme Stable tag) + ZIP canónico `export/armada-suite-5.3.0.zip` (2.198.973 bytes, sha256 `6fbf47f8…9fc`; verificados Features.php + WebhookReceiver.php dentro, 0 `.bkup`/secrets) + entrada CHANGELOG WP + DEPLOY-GUIA al día. Regresión 19/19 + versión 5.3.0 viva verificada.
