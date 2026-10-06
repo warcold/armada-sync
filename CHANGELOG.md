@@ -1,5 +1,13 @@
 ## 2026-10-06
 
+### [19:45] - REPARACIÓN TOTAL Armada Star Fox validada (plan A1-E1, 18/18 escenas OK)
+- **Tipo**: fix/game-dev
+- **Modificado**: `~/dev/godot/armada-starfox/` (12 scripts, project.godot, 5 reescritas, 16 nuevos)
+- **Afecta a**: kalimete/godot
+- **Causa**: validación headless Godot 4.7.2: 8 errores compilación + 5 archivos inválidos + 8 refs rotas
+- **Estado**: ✅ verificado (check-only limpio, import limpio, 18/18 escenas 30 frames sin errores)
+- **Notas**: input re-mapeado (E/Q + Shift solo boost); level_select y niveles 2-5 como stubs jugables; PT→ES total; fases de boss corregidas; detalle en `docs/CHANGELOG.md` del proyecto.
+
 ### [15:30] - START PROJECT: Armada Star Fox (Godot 4.x — Star Fox clone)
 - **Tipo**: feature/game-dev
 - **Modificado**: proyecto completo `armada-starfox/` (Godot 4.7.2)
