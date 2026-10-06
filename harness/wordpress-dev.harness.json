@@ -39,7 +39,14 @@
  "auth": "REST = App Passwords (Basic). Activas user admin: mcp-kalimete-2026 + alfredo-ecomm (en secrets/, 600). Password de login NO sirve para REST (401). Receta rotacion: plaintext es $new[0] (NO $new[1]); escribir a /tmp dentro del contenedor + docker cp.",
  "modulos_historicos": "Elementor 4.2.4 / EMCP Tools v3.16.1 / MCP Adapter v0.5.0 NO instalados en live (namespace mcp ausente). mcp-proxy.mod.js existe como archivo pero el bridge NO es funcional sin el plugin. Reinstalar solo por decision owner.",
  "legacy_frozen": "Namespace erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, ERPSUITE_*, erp_suite_*/erpc_*, erpsuite/v1, shortcodes erpc_* — NO renombrar.",
+ "integracion_erp_2026_10_06": {
+  "fase_1": "VALIDADA: ping-erp 200 ok (119ms, key_fp 0b0e33e7), catalogo via plugin 200/55 productos, ZIP 5.2.0, App Password operativa, regresion 14/14",
+  "fase_2_disponible": "lado ERP erpipo, rama dev/ecomm-erp PUSHED a origin (Juan Carlos revisa): GET /api/ecomm/orders/{id} (scoping 404 ajena); register acepta api_key (plugin sigue tenant_id=10, compatible); checkout SIN caja POS (fin del 500); /up JSON {status,database,redis}; webhooks order.created/stock.updated/price.updated con HMAC-SHA256 — FUTURO: registrar endpoint WP y recibir push en vez de polling",
+  "contrato_vigente": "Local sellado http://172.19.0.1:8100/api, tenant 10, Bearer iak_* (44 chars), throttles 10/30/60, imagenes URL absoluta, total en meta.total (keys productos+meta)",
+  "changelog_repo_wp": "dd2f1d2 (2026-10-06) — estado integracion registrado en ~/dev/wordpress/CHANGELOG.md"
+ },
  "changelog": "~/armada-sync/CHANGELOG.md",
+ "changelog_2026_10_06": "Cierre de seccion: integracion ERP registrada en CHANGELOG del repo WP (dd2f1d2) + doc/harness con estado Fase 1 validada + Fase 2 disponible.",
  "changelog_2026_10_05": "Fase 1: regresion 14/14, commits 67ed6d4+be15cab, ZIP 5.2.0 canonico, App Password alfredo-ecomm creada+rotada (receta $new[0]), REST ops 200/403, ping-erp 200 ok, catalogo via plugin 55 productos. Doc reescrita: Armada Suite 5.2.0 super-plugin, Elementor/EMCP/MCP declarados historicos (no-live).",
  "name": "WordPress"
 }
