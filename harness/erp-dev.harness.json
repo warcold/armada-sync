@@ -8,12 +8,15 @@
   "ownership": "Repo upstream = Juan Carlos. Copia local = sandbox para validar integraciones (WP/Alfredo Ecomm) sin tocar prod. main/develop read-only (politica rama unica, commit dd66417).",
   "git": {
     "rama_activa": "dev/ecomm-erp (el stack SIRVE esta rama)",
-    "head_verificado": "2c8fca9 (merge con origin: PR #13 de Juan + fix papel impresora 94484c6, sin conflictos)",
+    "head_verificado": "00a255e (Fase3 doc + G6 ajusteInventario) PUSHED a origin",
     "fase_2_pushed": "2026-10-06: 10 commits Fase 2 pushed a origin (4415e27..790cc8a + merge 2c8fca9) — autorizacion owner; Juan Carlos revisa",
+    "fase_3_pushed": "2026-10-06: 95d17d8 (RECOMENDACIONES-FASE3-AGENTE G1-G5) + 00a255e (G6: ajusteInventario 500 siempre — notas sin ?? + linea_negocio inexistente en almacen_movimientos) — pushed a origin",
     "remotes": "SOLO origin = ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git (upstream Juan Carlos). NO existe remote preprod en este clon.",
     "regla": "push a origin SOLO con autorizacion explicita del owner"
   },
-  "vivo_2026_10_06": "8/8 containers Up; dev/ecomm-erp @2c8fca9 PUSHED a origin; migraciones 655 (batch 150); queue worker con --queue=default,webhooks; contrato ecomm Fase 2 verificado e2e (checkout sin caja -> venta 289, orders/{id} 200/404, webhooks sent/200 firma HMAC OK); regresion post-merge 100% PASS",
+  "webhooks_activos_2026_10_06": "endpoint WP dado de alta (webhook_endpoints id=2, instance 10 MaganTech, events order.created/stock.updated/price.updated, active); e2e checkout->deliveries sent/200->WP flush_cache verificado; red compartida erpipo-dev-network con stack WP (URL interna http://wordpress-local/wp-json/erpsuite/v1/erp-webhook)",
+  "aviso_ajuste_500": "POST /api/tienda/inventario/ajuste devuelve 500 SIEMPRE (G6, lado Juan): usar checkout para mover stock hasta correccion",
+  "vivo_2026_10_06": "8/8 containers Up; dev/ecomm-erp @00a255e PUSHED a origin; migraciones 655 (batch 150); queue worker con --queue=default,webhooks; contrato ecomm Fase 2 verificado e2e; webhooks activos hacia WP",
   "live_check": "docker ps -f name=erpipo",
   "checks": [
     "curl -sk -o /dev/null -w '%{http_code}' https://erp.kalimete.local/login",

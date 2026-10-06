@@ -147,12 +147,18 @@ Los 7 candidatos Fase 2 fueron implementados, verificados e2e y **pushed a origi
 | `dbb1998`+`27be061`+`2893551` | webhooks MVP (HMAC-SHA256, retries, afterCommit; order.created/stock.updated/price.updated) |
 | `9a18a04`+`790cc8a` | docs: RECOMENDACIONES-FASE2 + changelog del repo |
 
-**Pendientes siguientes (no implementados)**: evento `invoice.issued` (infra ya lo soporta); UI admin para `webhook_endpoints`; index compuesto `(tenant_id, telefono)` requiere dedupe previo; `UpdateClienteRequest` email/rnc_cedula unique GLOBAL (flujo admin); comando de re-proceso para deliveries `failed`.
+## Fase 3 — doc pushed + webhooks ACTIVOS en preprod (2026-10-06)
+
+- **Doc**: `docs/RECOMENDACIONES-FASE3-AGENTE.md` (`95d17d8`, pushed): matriz 26 capacidades, modelo auth mixto (store-key lo no personal / token per-cliente lo personal), gaps G1-G5 priorizados. **G6** (`00a255e`, pushed): bugs hallados en e2e — `ajusteInventario` 500 siempre (`notas` sin `??` fuera del try + columna `linea_negocio` inexistente en `almacen_movimientos`).
+- **Webhooks activos**: endpoint WP dado de alta (`webhook_endpoints` id=2, instance 10, events order.created/stock.updated/price.updated). E2E verificado: checkout → deliveries `sent/200` → WP invalida caché. Red docker compartida `erpipo-dev-network` con el stack WP (container-to-container, sin exponer puertos).
+- **OJO ecomm**: `POST /api/tienda/inventario/ajuste` 500 por G6 (usar checkout para mover stock hasta que Juan lo corrija).
+
+**Pendientes siguientes (no implementados)**: G1 (cancelar pedido, M), G2 (alta webhooks por API, S), G3 (invoice.issued, S), G4 (retry-failed, S), G5 (teléfono/stock-sucursal/detalle, S/M), G6 (ajuste 500, Juan).
 
 ## Upstream (2026-10-06)
 
 - **Fuente**: `soycarlosjerez-hub/sistema-facturacion` (upstream de Juan Carlos) + stack erpipo-* (kalimete :8100).
-- **Vivo 2026-10-06**: 8/8 containers Up; rama `dev/ecomm-erp` @2c8fca9 **pushed** (Juan ya integró la base vía su PR #13); contrato ecomm Fase 2 verificado e2e; regresión 100% PASS post-merge.
+- **Vivo 2026-10-06**: 8/8 containers Up; rama `dev/ecomm-erp` @00a255e **pushed** (Fase 2 + Fase 3 doc + G6); webhooks activos hacia WP (endpoint id=2); red compartida con WP.
 - **Check**: `docker ps -f name=erpipo` + `curl -sk https://erp.kalimete.local/login` + `curl -s http://127.0.0.1:8100/up`
 - **Regla**: LIVE manda (doc vs live vs upstream); push a origin solo con autorización del owner.
 
