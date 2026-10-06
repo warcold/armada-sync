@@ -137,7 +137,8 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 
 ## Cambios recientes
 
-- **2026-10-06 (Fases A+B+C, 13 commits)**: flags (`f0d1572`, `d51aed4`, `81c2ea5`), rebrand (`52aa796`, `084c0a6`, `eee8dca`, `ef0642f`, `e55ed39`, `fd2cff0`), agente (`2294e58`, `79ed47d`, `b289ba1`). Regresión 19/19. Webhooks e2e OK. Red compartida erpipo-dev-network (compose + WORDPRESS_DB_HOST=`wordpress-db:3306`). **Pendiente release**: bump a 5.3.0 + ZIP nuevo (el 5.2.0 no trae nada de esto).
+- **2026-10-06 (release 5.3.0, commit `c084cdb`)**: bump versión (header+define+readme Stable tag) + ZIP canónico `export/armada-suite-5.3.0.zip` (2.198.973 bytes, sha256 `6fbf47f8d03d5cdf6238e01efba9feafefb07511a263cad0b21919b9764099fc`; sin `.bkup`, sin secrets) + entrada CHANGELOG + DEPLOY-GUIA al día. Regresión 19/19.
+- **2026-10-06 (Fases A+B+C, 13 commits)**: flags (`f0d1572`, `d51aed4`, `81c2ea5`), rebrand (`52aa796`, `084c0a6`, `eee8dca`, `ef0642f`, `e55ed39`, `fd2cff0`), agente (`2294e58`, `79ed47d`, `b289ba1`). Regresión 19/19. Webhooks e2e OK. Red compartida erpipo-dev-network (compose + WORDPRESS_DB_HOST=`wordpress-db:3306`).
 - **2026-10-06**: Cierre de sección — CHANGELOG del repo WP con estado de integración (commit `dd2f1d2`): Fase 1 validada + las 5 capacidades nuevas del ERP (orders/{id}, api_key, checkout sin caja, /up, webhooks como futuro reemplazo de polling). Doc del agente + harness con sección "Integración ERP — estado".
 - **2026-10-05**: Fase 1 — regresión 14/14 + smoke 5/5 + php -l 13/13; commits `67ed6d4` (stack TLS CA bundle mkcert + extra_hosts) y `be15cab` (gitignore secrets/); ZIP canónico `armada-suite-5.2.0.zip` (sha256 b4e5348d…); App Password `alfredo-ecomm` creada y ROTADA (leak parcial; receta $new[0]); REST ops 200/403 verificado; **ping-erp 200 ok (119ms)** + catálogo vía plugin 200/55 productos + audit registrado.
 - **2026-10-03**: stack TLS (CA bundle mkcert + extra_hosts en docker-compose).

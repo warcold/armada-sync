@@ -73,7 +73,8 @@
   "Features: cache SOLO del valor guardado, padres frescos (filtro mid-request)",
   "docker: container_name unico como DB host si hay redes compartidas (service name `db` colisiona)"
  ],
- "pendiente_release": "bump a 5.3.0 + ZIP nuevo (el armada-suite-5.2.0.zip no trae Fases A/B/C)",
+ "pendiente_release": "HECHO 2026-10-06: 5.3.0 (commit c084cdb) — bump header+define+readme, ZIP export/armada-suite-5.3.0.zip (2198973 bytes, sha256 6fbf47f8d03d5cdf6238e01efba9feafefb07511a263cad0b21919b9764099fc, sin bkup/secrets), CHANGELOG + DEPLOY-GUIA al dia, regresion 19/19",
+ "release_5_3_0": "2026-10-06 c084cdb: Fases A+B+C empaquetadas (flags, admin uniforme ai1wm en espanol, agente mixto con webhooks). Instalable desde export/armada-suite-5.3.0.zip.",
  "changelog": "~/armada-sync/CHANGELOG.md",
  "changelog_2026_10_06": "Cierre de seccion: integracion ERP registrada en CHANGELOG del repo WP (dd2f1d2) + doc/harness con estado Fase 1 validada + Fase 2 disponible.",
  "changelog_2026_10_05": "Fase 1: regresion 14/14, commits 67ed6d4+be15cab, ZIP 5.2.0 canonico, App Password alfredo-ecomm creada+rotada (receta $new[0]), REST ops 200/403, ping-erp 200 ok, catalogo via plugin 55 productos. Doc reescrita: Armada Suite 5.2.0 super-plugin, Elementor/EMCP/MCP declarados historicos (no-live).",

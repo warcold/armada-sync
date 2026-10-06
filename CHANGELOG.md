@@ -1,3 +1,9 @@
+### [17:15] - RELEASE 5.3.0 + REVIEW JUAN LISTA (pasos 1 y 2; woodly fuera por orden owner)
+- **Tipo**: release + revisión (owner: "procede con 1 y 2, no toquemos woodly")
+- **Release 5.3.0** (commit `c084cdb`): bump versión (header + `ERPSUITE_VERSION` + readme Stable tag) + ZIP canónico `export/armada-suite-5.3.0.zip` (2.198.973 bytes, sha256 `6fbf47f8…9fc`; verificados Features.php + WebhookReceiver.php dentro, 0 `.bkup`/secrets) + entrada CHANGELOG WP + DEPLOY-GUIA al día. Regresión 19/19 + versión 5.3.0 viva verificada.
+- **Review Juan**: verificado `origin/dev/ecomm-erp` @`00a255e` en sync (Juan no ha empujado nada; `origin/main` sigue en su PR #13). Rama lista con 8 commits código Fase 2 + 4 docs (Fase 2, Fase 3 G1-G5, G6) + merge. Notas para integrar en erp-dev.md (migrar 2, queue flag, G6, G1-G5).
+- **Verificado**: WP 200 / ERP 200 / Alfredo 200; regresión 19/19; trees limpios.
+- **Estado**: pasos 1 y 2 COMPLETOS. Brief para Juan en el reporte de sesión.
 ### [16:30] - PLAN COMPLETO EJECUTADO: plugin con flags + admin uniforme + agente mixto + webhooks e2e (Fases A+B+C+D)
 - **Tipo**: feature/documentación/infra (orden owner: "procede paso a paso hasta el final" + 8 decisiones: 1 sí, 2 sí, 3 restyle total, 4 español, 5 sí, 6 todo-visible-nuestro/alfredo.pro, 7-8 sí best-practices)
 - **Que**: (A) **Feature flags**: 8 flags + tab Módulos + gates duros/UX (`f0d1572`, `d51aed4`, `81c2ea5`). (B) **Admin uniforme**: 6 superficies familia ai1wm + rebrand total a Armada/alfredo.pro en español + ERPC Logs al menú Armada (`52aa796`, `084c0a6`, `eee8dca`, `ef0642f`, `e55ed39`, `fd2cff0`). (C) **Agente mixto**: schema `agente.*` + prompt componible + modo local + tools `ver_pedido`/`leer_politicas` + receptor webhooks HMAC (`2294e58`, `79ed47d`, `b289ba1`). (D) **Fase 3 para Juan**: doc G1-G5 (`95d17d8`) + G6 (`00a255e`), ambos pushed a origin. Regresión plugin 19/19.

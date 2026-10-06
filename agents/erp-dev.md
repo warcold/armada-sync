@@ -153,6 +153,10 @@ Los 7 candidatos Fase 2 fueron implementados, verificados e2e y **pushed a origi
 - **Webhooks activos**: endpoint WP dado de alta (`webhook_endpoints` id=2, instance 10, events order.created/stock.updated/price.updated). E2E verificado: checkout → deliveries `sent/200` → WP invalida caché. Red docker compartida `erpipo-dev-network` con el stack WP (container-to-container, sin exponer puertos).
 - **OJO ecomm**: `POST /api/tienda/inventario/ajuste` 500 por G6 (usar checkout para mover stock hasta que Juan lo corrija).
 
+## Review de Juan — estado (2026-10-06, rama lista)
+
+Verificado: `origin/dev/ecomm-erp` @`00a255e` en sync (Juan no ha empujado nada nuevo; `origin/main` sigue en su PR #13). La rama contiene, sobre su base: 8 commits Fase 2 (código) + 2 docs Fase 2 + merge + 2 docs Fase 3. Archivos de código tocados: `routes/api.php` (+1), controllers ecomm/tienda, `SaleCreateService`, `LogErrorToDatabase`, `HealthController`, `bootstrap/app.php`, webhooks (modelos+servicio+job), 2 migraciones. Cero conflictos con su trabajo (tickets/impresoras). Para integrar: revisar → `php artisan migrate` (2 migraciones) → `--queue=default,webhooks` en su worker → corregir G6 → G1-G5 a su criterio. Detalle por commit en `docs/RECOMENDACIONES-FASE2-ECOMM.md` y `docs/RECOMENDACIONES-FASE3-AGENTE.md` (viajan con la rama).
+
 **Pendientes siguientes (no implementados)**: G1 (cancelar pedido, M), G2 (alta webhooks por API, S), G3 (invoice.issued, S), G4 (retry-failed, S), G5 (teléfono/stock-sucursal/detalle, S/M), G6 (ajuste 500, Juan).
 
 ## Upstream (2026-10-06)
