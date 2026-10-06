@@ -67,14 +67,28 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 
 **Fase 1 validada (nuestro lado)**: ping-erp 200 ok (119ms), catálogo vía plugin 200/55 productos, ZIP 5.2.0, App Password operativa, regresión 14/14.
 
-**Fase 2 disponible (lado ERP erpipo, rama `dev/ecomm-erp` pushed a origin — Juan Carlos revisa)** — capacidades nuevas que el plugin puede aproveitar:
-1. **`GET /api/ecomm/orders/{id}`** — detalle individual de pedido con scoping auth.cliente (ajena → 404). Ya no solo el listado `?customer_id=`.
-2. **Register acepta `api_key`** (body/X-API-Key/Bearer) además de `tenant_id` — el plugin sigue con `tenant_id=10` (compatible, sin cambio requerido).
-3. **Checkout ya NO requiere caja POS abierta** — los pedidos web ya no dependen de que el admin abra caja (antes: 500).
-4. **`/up` JSON** (`{status, database, redis}`) — listo para monitoreo/ping del plugin.
-5. **Webhooks ERP→tienda DISPONIBLES**: `order.created`, `stock.updated`, `price.updated` con firma HMAC-SHA256 (`X-Webhook-Signature`) y retries. **Futuro**: registrar un endpoint WP (`WebhookEndpoint` en el ERP) y recibir push de stock/precios/pedidos en vez de polling.
+**Fase 2 disponible (lado ERP erpipo, rama `dev/ecomm-erp` pushed a origin — Juan Carlos revisa)** — capacidades nuevas que el plugin **YA consume**:
+1. **`GET /api/ecomm/orders/{id}`** — consumido por la tool `ver_pedido` del agente (C1b) vía `ApiClient::get_order()`.
+2. **Register con `api_key`** — compatible, plugin sigue con `tenant_id=10`.
+3. **Checkout sin caja** — verificado e2e (ventas de prueba).
+4. **`/up` JSON** — monitoreo.
+5. **Webhooks ERP→WP ACTIVOS en preprod** (C2): endpoint `http://wordpress-local/wp-json/erpsuite/v1/erp-webhook` dado de alta en `webhook_endpoints` (id=2, tenant 10, events order.created/stock.updated/price.updated). E2E verificado: checkout → deliveries sent/200 → WP invalida caché. Red docker compartida `erpipo-dev-network` (compose WP, con .bkup; WORDPRESS_DB_HOST cambiado a `wordpress-db:3306` porque `db` colisionaba con el db de erpipo).
+
+**Fase 3 para Juan** (docs pushed a origin): `RECOMENDACIONES-FASE3-AGENTE.md` (G1-G5) + **G6** (bugs hallados en e2e C2: `ajusteInventario` 500 siempre — `notas` sin `??` fuera del try + columna `linea_negocio` inexistente en `almacen_movimientos`).
 
 Contrato vigente sin cambios: Local sellado `http://172.19.0.1:8100/api`, tenant 10, Bearer `iak_*` (44 chars), throttles 10/30/60, imágenes URL absoluta (proxy/rehost), total en `meta.total`.
+
+### Sistema de feature flags (Fase A, 2026-10-06)
+
+8 flags en `erp_suite_settings[features]` (`erp_sync, catalog, checkout, ai_chat, puente_ia, remote_ops, backups, legacy_logs`, default ON) + tab noveno **Módulos** + clase `ArmadaSuite_Features::enabled()` (cache solo del valor guardado, padres siempre frescos + filtro `armada_suite_feature_enabled`). Gates duros (requires vendored, menús MenuUnifier, instanciación ERPC_*, shortcodes stub `''`, `ApiClient::request()` → WP_Error si ERP OFF, cron WA) + gates UX (tabs en pausa con aviso, assets/AJAX chat, AJAX tienda, widget). Caso guía soportado: WP solo-chat-IA sin ERP. Reglas de testeo CLI: requires a mano + `wp-admin/includes/template.php` (submit_button no existe en CLI); smokes con backup+restore de settings; regresión por ruta de contenedor (por stdin `__DIR__` no resuelve).
+
+### Admin uniforme + rebrand (Fase B, 2026-10-06)
+
+Las 6 superficies son familia ai1wm (verde #27ae60, radius 3px, bordes #dcdcde, español, cero marcas ajenas visibles, cero estilos inline): Panel restyle total (solo CSS), Puente IA rebrandeado (91+ strings → Armada/alfredo.pro, CSS pills negros → ai1wm), Registro IA + ERPC Logs (este último movido de Herramientas al menú Armada), Exportar/Importar/Respaldos + modales del controlador en español (129 strings). Congelado por regla: text-domains, slugs, option keys, REST `wpvibe/v1`, clases/funciones, cabeceras GPL.
+
+### Agente mixto (Fase C, 2026-10-06)
+
+Schema `erp_suite_settings['agente']` (modo mixto|erp_solo|local_solo, instrucciones_extra ≤2000, tono, 8 toggles tools, mensaje_sin_erp, base_negocio 6 campos, memoria turnos 4-20 + recordar_cliente) + UI en tab Asistente IA + `Guard` (secretos siguen bloqueados, `webhooks.*` NO expuesto). Prompt componible en `ChatEngine::system_prompt()` (PERSONALIDAD + 10 REGLAS intactas + CONOCIMIENTO_LOCAL + HERRAMIENTAS filtradas por modo/toggles/ecomm; test #4 las protege). Sin gate duro de ecomm (degrada a local). Tools nuevas: `ver_pedido` (token del contexto, ajena→"no la encontré en tu cuenta") y `leer_politicas` (6 slugs Activator + fallback base_negocio). Receptor webhooks `POST erpsuite/v1/erp-webhook` (HMAC body crudo + skew 5min + allowlist eventos + flush_cache; 401 firma mala, 400 sin headers, 503 sin ERP/secreto) + tarjeta en Avanzado (endpoint, secreto auto-generado 48ch, última entrega). Regresión 19/19. LLM verificado en modo local (Qwen vía victoria responde sin ERP).
 
 ## Comandos Útiles
 
@@ -123,6 +137,7 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 
 ## Cambios recientes
 
+- **2026-10-06 (Fases A+B+C, 13 commits)**: flags (`f0d1572`, `d51aed4`, `81c2ea5`), rebrand (`52aa796`, `084c0a6`, `eee8dca`, `ef0642f`, `e55ed39`, `fd2cff0`), agente (`2294e58`, `79ed47d`, `b289ba1`). Regresión 19/19. Webhooks e2e OK. Red compartida erpipo-dev-network (compose + WORDPRESS_DB_HOST=`wordpress-db:3306`). **Pendiente release**: bump a 5.3.0 + ZIP nuevo (el 5.2.0 no trae nada de esto).
 - **2026-10-06**: Cierre de sección — CHANGELOG del repo WP con estado de integración (commit `dd2f1d2`): Fase 1 validada + las 5 capacidades nuevas del ERP (orders/{id}, api_key, checkout sin caja, /up, webhooks como futuro reemplazo de polling). Doc del agente + harness con sección "Integración ERP — estado".
 - **2026-10-05**: Fase 1 — regresión 14/14 + smoke 5/5 + php -l 13/13; commits `67ed6d4` (stack TLS CA bundle mkcert + extra_hosts) y `be15cab` (gitignore secrets/); ZIP canónico `armada-suite-5.2.0.zip` (sha256 b4e5348d…); App Password `alfredo-ecomm` creada y ROTADA (leak parcial; receta $new[0]); REST ops 200/403 verificado; **ping-erp 200 ok (119ms)** + catálogo vía plugin 200/55 productos + audit registrado.
 - **2026-10-03**: stack TLS (CA bundle mkcert + extra_hosts en docker-compose).

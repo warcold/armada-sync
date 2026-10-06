@@ -56,6 +56,7 @@
     "~/dev/webs/alfredo-pro-ecomm/CHANGELOG.md"
   ],
   "changelog": "~/armada-sync/CHANGELOG.md",
+  "diseno_plugin_implementado_2026_10_06": "El diseno de este agente (8 feature flags + rebrand Puente IA F1-F4 + arquitectura agente mixto con matriz tool->origen) se implemento integro en ~/dev/wordpress (13 commits f0d1572..b289ba1, regresion 19/19, webhooks e2e sent/200). Backend :3004 intacto.",
   "changelog_2026_10_06": "Cierre de seccion: Fase 1 hardening + contexto ecosistema registrados en el CHANGELOG del proyecto (commit 2dd567c).",
   "changelog_2026_10_05": "Fase 1: compose curado (mount src vacio eliminado, name: backend), cascara ~/projects archivada, git baseline 01fe048 + smoke e39fa99, JWT/JWT_REFRESH/DB rotados, CORS alineado, smoke.sh 4/4, red huerfana backend_alfredo-ecomm eliminada, snapshot pre-fase1. Docs curadas a paths canonicos ~/dev/webs/.",
   "changelog_2026_10_02": "Docs curados a :3004 (README.md + Caddyfile.dev 5x); agent doc reescrito con LIVE verificado; harness expandido; freeze legacy D6-D9 (namespace erp-suite); entrada en CHANGELOG.md del proyecto"

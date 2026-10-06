@@ -41,10 +41,39 @@
  "legacy_frozen": "Namespace erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, ERPSUITE_*, erp_suite_*/erpc_*, erpsuite/v1, shortcodes erpc_* — NO renombrar.",
  "integracion_erp_2026_10_06": {
   "fase_1": "VALIDADA: ping-erp 200 ok (119ms, key_fp 0b0e33e7), catalogo via plugin 200/55 productos, ZIP 5.2.0, App Password operativa, regresion 14/14",
-  "fase_2_disponible": "lado ERP erpipo, rama dev/ecomm-erp PUSHED a origin (Juan Carlos revisa): GET /api/ecomm/orders/{id} (scoping 404 ajena); register acepta api_key (plugin sigue tenant_id=10, compatible); checkout SIN caja POS (fin del 500); /up JSON {status,database,redis}; webhooks order.created/stock.updated/price.updated con HMAC-SHA256 — FUTURO: registrar endpoint WP y recibir push en vez de polling",
+  "fase_2_consumida": "orders/{id} via ApiClient::get_order (tool ver_pedido); register con tenant_id=10 (compatible); checkout sin caja verificado e2e; /up monitoreo; WEBHOOKS ACTIVOS: endpoint http://wordpress-local/wp-json/erpsuite/v1/erp-webhook dado de alta en ERP (webhook_endpoints id=2, tenant 10, events order.created/stock.updated/price.updated) — e2e checkout->sent/200->WP flush_cache verificado",
+  "red_compartida": "wordpress-local unido a erpipo-dev-network (compose WP con .bkup-20261006-C2); WORDPRESS_DB_HOST=wordpress-db:3306 (container_name unico — `db` colisionaba con el db de erpipo y WP intentaba loguearse en la DB ajena: 1045)",
+  "fase_3_para_juan": "RECOMENDACIONES-FASE3-AGENTE.md pushed (95d17d8) + G6 (00a255e): ajusteInventario 500 siempre (notas sin ?? fuera del try + columna linea_negocio inexistente en almacen_movimientos)",
   "contrato_vigente": "Local sellado http://172.19.0.1:8100/api, tenant 10, Bearer iak_* (44 chars), throttles 10/30/60, imagenes URL absoluta, total en meta.total (keys productos+meta)",
   "changelog_repo_wp": "dd2f1d2 (2026-10-06) — estado integracion registrado en ~/dev/wordpress/CHANGELOG.md"
  },
+ "feature_flags_2026_10_06": {
+  "clase": "includes/Core/Features.php — ArmadaSuite_Features::enabled() (cache solo valor guardado, padres frescos, filtro armada_suite_feature_enabled)",
+  "flags": "erp_sync, catalog, checkout, ai_chat, puente_ia, remote_ops, backups, legacy_logs (default ON) en erp_suite_settings[features]",
+  "commits": "f0d1572 (nucleo+tab Modulos) + d51aed4 (gates modulo) + 81c2ea5 (gates UX)",
+  "caso_guia": "WP solo-chat-IA sin ERP soportado (modo local)"
+ },
+ "admin_uniforme_2026_10_06": {
+  "sistema": "familia ai1wm en las 6 superficies (verde #27ae60, radius 3px, bordes #dcdcde, espanol, 0 marcas ajenas visibles, 0 inline styles)",
+  "commits": "52aa796 (core) + 084c0a6 (Puente IA pantallas) + eee8dca (AiBridge resto+CSS) + ef0642f (Registro IA+ERPC Logs al menu Armada) + e55ed39 (Panel restyle solo-CSS) + fd2cff0 (129 strings ServMask a espanol)",
+  "congelado": "text-domains, slugs, option keys, REST wpvibe/v1, clases/funciones, cabeceras GPL, die Kangaroos"
+ },
+ "agente_mixto_2026_10_06": {
+  "schema": "erp_suite_settings[agente]: modo mixto|erp_solo|local_solo, instrucciones_extra<=2000, tono, tools 8 toggles, mensaje_sin_erp, base_negocio 6 campos, memoria turnos 4-20 + recordar_cliente",
+  "commits": "2294e58 (schema+UI+sanitize+Guard) + 79ed47d (prompt componible+modo local+ver_pedido+leer_politicas — regresion 17) + b289ba1 (receptor webhooks+tarjeta Avanzado — regresion 19)",
+  "prompt": "PERSONALIDAD + 10 REGLAS intactas (test #4) + CONOCIMIENTO_LOCAL + HERRAMIENTAS filtradas por modo/toggles/ecomm",
+  "webhook_receiver": "POST erpsuite/v1/erp-webhook — HMAC body crudo + skew 300s + allowlist 4 eventos + flush_cache; 401/400/503; secreto 48ch auto-generado (NO en Guard editable)",
+  "llm_verificado": "modo local responde sin ERP (Qwen via victoria)"
+ },
+ "lecciones_cli_2026_10_06": [
+  "smokes CLI: requires a mano + wp-admin/includes/template.php (submit_button no existe en CLI)",
+  "smokes que tocan DB: SIEMPRE backup+restore de erp_suite_settings (un run muerto contamino la DB con erp_sync=0)",
+  "regresion por ruta de contenedor (por stdin __DIR__ no resuelve: 2 falsos FAIL)",
+  "exit codes: no pipear sin PIPESTATUS (tail enmascara); scripts terminan exit($fail)",
+  "Features: cache SOLO del valor guardado, padres frescos (filtro mid-request)",
+  "docker: container_name unico como DB host si hay redes compartidas (service name `db` colisiona)"
+ ],
+ "pendiente_release": "bump a 5.3.0 + ZIP nuevo (el armada-suite-5.2.0.zip no trae Fases A/B/C)",
  "changelog": "~/armada-sync/CHANGELOG.md",
  "changelog_2026_10_06": "Cierre de seccion: integracion ERP registrada en CHANGELOG del repo WP (dd2f1d2) + doc/harness con estado Fase 1 validada + Fase 2 disponible.",
  "changelog_2026_10_05": "Fase 1: regresion 14/14, commits 67ed6d4+be15cab, ZIP 5.2.0 canonico, App Password alfredo-ecomm creada+rotada (receta $new[0]), REST ops 200/403, ping-erp 200 ok, catalogo via plugin 55 productos. Doc reescrita: Armada Suite 5.2.0 super-plugin, Elementor/EMCP/MCP declarados historicos (no-live).",

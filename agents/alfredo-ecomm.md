@@ -165,6 +165,7 @@ El plugin WP Armada Suite arrastra namespace histórico **erp-suite**. Se MANTIE
 
 ## Cambios recientes
 
+- **2026-10-06 (diseño→implementación, plugin)**: el diseño de este agente (flags + rebrand + arquitectura del agente) se implementó completo en el plugin Armada Suite: 13 commits (`f0d1572`→`b289ba1`), regresión 19/19, webhooks e2e OK. Backend :3004 intacto (solo-Woodly, fuera de scope).
 - **2026-10-06**: Cierre de sección — CHANGELOG del proyecto con Fase 1 hardening + contexto ecosistema (commit `2dd567c`): split :3004 solo-Woodly vs :8100 erpipo/WP documentado; drift src↔dist y 11-modelos-vs-12-tablas registrados.
 - **2026-10-05**: Fase 1 — compose canónico curado (bind mount `src` vacío ELIMINADO, `name: backend`, `.dockerignore`); cáscara `~/projects/alfredo-pro-ecomm` archivada como `.archived-20261005`; git init baseline `01fe048` + smoke `e39fa99`; JWT/JWT_REFRESH/DB_PASSWORD rotados; CORS alineado a live; `scripts/smoke.sh` 4/4; red huérfana `backend_alfredo-ecomm` eliminada; snapshot `backups/pre-fase1-20261005.sql`.
 - **2026-10-02**: Cierre de discrepancias docs vs LIVE — README.md y Caddyfile.dev curados a `:3004` (5× en Caddyfile); namespace legacy erp-suite CONGELADO (D6–D9, decisión owner).
