@@ -1,5 +1,13 @@
 ## 2026-10-06
 
+### [21:10] - TEST Star Fox en vivo display :1 (render OK, inputmap 10/10, XTEST roto)
+- **Tipo**: test (sin cambios de código)
+- **Modificado**: ninguno
+- **Afecta a**: kalimete/godot
+- **Causa**: orden "compila el juego y ábrelo para probar"
+- **Estado**: ✅ parcial (menú+nivel renderizan, log limpio; input sintético imposible en esta sesión X)
+- **Notas**: correr desde fuente compila todo; export release pendiente (falta descarga templates ~1GB + preset). Detalle en `docs/CHANGELOG.md` del proyecto.
+
 ### [20:15] - FIX Star Fox "no puedo jugar": disparo + fuego amigo + pausa (smoke 7/7)
 - **Tipo**: fix/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (player_ship.gd, bullet.gd)
