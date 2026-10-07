@@ -1,5 +1,13 @@
 ## 2026-10-06
 
+### [23:20] - Star Fox: assets integrados (OST 8 OGG + 12 voces + 7 SFX + Arwing procedural)
+- **Tipo**: feature/game-dev
+- **Modificado**: `~/dev/godot/armada-starfox/` (audio completo, Audio autoload, música/SFX cableados, 4 escenas con visuales propios)
+- **Afecta a**: kalimete/godot
+- **Causa**: orden "sí, procede" (opción 1 adaptada: modelos originales bloqueados por login/CF)
+- **Estado**: ✅ verificado (humo 4/4, 18/18 escenas, 27 audios importados, screenshot Arwing + combate en vivo)
+- **Notas**: khinsider con token por pista; SFX generados con python stdlib; naves procedurales = cero riesgo IP. Detalle en `docs/CHANGELOG.md` + `docs/ASSETS.md`.
+
 ### [22:30] - Star Fox: guía de assets originales (docs/ASSETS.md) + aviso IP
 - **Tipo**: investigación/docs
 - **Modificado**: `~/dev/godot/armada-starfox/docs/ASSETS.md` (nuevo)
