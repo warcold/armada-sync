@@ -1,5 +1,13 @@
 ## 2026-10-06
 
+### [21:40] - Star Fox GameLogger + Parte C (matriz 15/15 VERDE, log con traza, 0 errores)
+- **Tipo**: feature/test (subagente Godot: logger + instrumentación; kalimete: validación final)
+- **Modificado**: `~/dev/godot/armada-starfox/` (game_logger.gd nuevo autoload, project.godot+bkup, 8 scripts, docs)
+- **Afecta a**: kalimete/godot
+- **Causa**: pedido "logger para errores + validar que funciona para humanos"
+- **Estado**: ✅ verificado (25/25 scripts, import limpio, 18/18 escenas, matriz 15/15, game.log 16 eventos/0 ERROR, screenshots en vivo, temporales borrados)
+- **Notas**: fix Continue→level_select path; overlay F3 solo debug; log en `~/.local/share/godot/app_userdata/Armada Star Fox/logs/game.log`. Detalle en `docs/CHANGELOG.md` del proyecto.
+
 ### [21:10] - TEST Star Fox en vivo display :1 (render OK, inputmap 10/10, XTEST roto)
 - **Tipo**: test (sin cambios de código)
 - **Modificado**: ninguno
