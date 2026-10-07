@@ -1,5 +1,13 @@
 ## 2026-10-06
 
+### [23:35] - Star Fox: enemigos Kenney reales + Arwing (screenshot combate)
+- **Tipo**: feature/game-dev
+- **Modificado**: `~/dev/godot/armada-starfox/` (3 enemy.tscn con OBJ, player revert a Arwing)
+- **Afecta a**: kalimete/godot
+- **Causa**: racer Kenney ilegible de cerca; mix final: jugador Arwing + enemigos Kenney
+- **Estado**: ✅ verificado (screenshot Arwing vs nave Kenney + score por combate, log limpio)
+- **Notas**: Kenney Space Kit CC0 en models/ (cero IP). Detalle en `docs/CHANGELOG.md` + `docs/ASSETS.md`.
+
 ### [23:20] - Star Fox: assets integrados (OST 8 OGG + 12 voces + 7 SFX + Arwing procedural)
 - **Tipo**: feature/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (audio completo, Audio autoload, música/SFX cableados, 4 escenas con visuales propios)
