@@ -1,5 +1,13 @@
 ## 2026-10-06
 
+### [20:15] - FIX Star Fox "no puedo jugar": disparo + fuego amigo + pausa (smoke 7/7)
+- **Tipo**: fix/game-dev
+- **Modificado**: `~/dev/godot/armada-starfox/` (player_ship.gd, bullet.gd)
+- **Afecta a**: kalimete/godot
+- **Causa**: reporte owner; humo headless reprodujo el fallo (fuego no salía; luego balas se autodestruían)
+- **Estado**: ✅ verificado (smoke 7/7 VERDE, runner borrado, escenas tocadas re-corridas OK)
+- **Notas**: fire_timer peleado entre _process/_physics → fire_cooldown único; balas ignoran grupo player + spawn fuera del casco; pausa sin soft-lock. Detalle en `docs/CHANGELOG.md` del proyecto.
+
 ### [19:45] - REPARACIÓN TOTAL Armada Star Fox validada (plan A1-E1, 18/18 escenas OK)
 - **Tipo**: fix/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (12 scripts, project.godot, 5 reescritas, 16 nuevos)
