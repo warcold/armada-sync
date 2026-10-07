@@ -1,5 +1,13 @@
 ## 2026-10-06
 
+### [22:15] - Star Fox Fase 2 tanda 1: bomba, spawner+enemigos, HUD y pausa en niveles (humo 8/8)
+- **Tipo**: feature/fix/game-dev
+- **Modificado**: `~/dev/godot/armada-starfox/` (player_ship.tscn, spawn_manager, 3 enemy.tscn, level_01 dict, hud.tscn+hud.gd, HUD en 5 niveles)
+- **Afecta a**: kalimete/godot
+- **Causa**: orden "procede" (pendientes Fase 2)
+- **Estado**: ✅ verificado (humo 8/8, 18/18 escenas, 500 frames sin errores, screenshot en vivo: HUD + enemigo + score por combate real)
+- **Notas**: fix global_position/add_child; pausa con panel; overlay F3 queda solo-debug. Pendiente: fuego amigo entre enemigos, jefe N1, minimapa, audio, export. Detalle en `docs/CHANGELOG.md` del proyecto.
+
 ### [21:40] - Star Fox GameLogger + Parte C (matriz 15/15 VERDE, log con traza, 0 errores)
 - **Tipo**: feature/test (subagente Godot: logger + instrumentación; kalimete: validación final)
 - **Modificado**: `~/dev/godot/armada-starfox/` (game_logger.gd nuevo autoload, project.godot+bkup, 8 scripts, docs)
