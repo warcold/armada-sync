@@ -1,18 +1,20 @@
 {
  "harness": "victoria-server",
- "updated": "2026-10-01",
+ "updated": "2026-10-07",
  "agent_file": "~/armada-sync/agents/victoria-server.md",
  "mode": "subagent",
  "hidden": false,
- "scope": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA)",
- "vivo_2026_10_01": "13 servicios active + digest 9204569b + upstream 8/8 ok (2026-10-01)",
- "live_check": "ssh victoria systemctl is-active (ver agente)",
+ "scope": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA) + granja de contenido (art API, TTS/STT :18810, video :18811, Sonic :18850)",
+ "vivo_2026_10_07": "13 servicios active + digest 9204569b + driver 580.178.04 + dashboard :18800 + E2E granja desde kalimete OK (imagen z-image-turbo ~20s + TTS es + STT roundtrip)",
+ "live_check": "ssh victoria systemctl is-active (ver agente) + curl victoria.local:8010/health + curl victoria.local:8010/v1/catalog",
  "upstream": {
   "fuente": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA)",
   "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
  },
  "docs": [
-  "~/armada-sync/agents/victoria-server.md"
+  "~/armada-sync/agents/victoria-server.md",
+  "~/.config/opencode/skills/art/SKILL.md",
+  "~/.config/opencode/skills/voice-video/SKILL.md"
  ],
  "changelog": "~/armada-sync/CHANGELOG.md",
  "name": "Victoria Server"

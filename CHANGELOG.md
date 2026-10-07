@@ -1,3 +1,13 @@
+## 2026-10-07
+
+### [01:25] - Granja de contenido de victoria documentada (Victoria Server + Godot + skills art/voice-video)
+- **Tipo**: docs/agentes (autorización del owner; TARGET=kalimete verificado; victoria SOLO lectura)
+- **Modificado**: `agents/victoria-server.md` (sección "Generar contenido desde kalimete": art API 3 templates, TTS/STT :18810, video-server :18811, Sonic :18850 + constraint rutas locales, VLM; fixes deriva: dashboard 18789→**18800** live 2026-10-05, driver →**580.178.04**), `agents/godot-dev.md` (sección "Assets desde Victoria" + fix paths `armada-godot`→`mario-bros`/`armada-starfox` + nota MCP un-proyecto-a-la-vez), `harness/{victoria-server,godot-dev}.harness.json`, `skills/voice-video/SKILL.md` (NUEVO: TTS/STT/video-server/Sonic), `~/dev/godot/mario-bros/AGENTS.md` (pipeline en Decisiones), `~/dev/godot/armada-starfox/AGENTS.md` (ledger NUEVO — antes no tenía)
+- **Afecta a**: kalimete (agentes Godot + Victoria Server, skills) — victoria intocada (solo lectura)
+- **Causa**: auditoría del owner: los agentes no informaban los modelos/APIs de imagen-video-voz disponibles en victoria; Godot no sabía de la granja de arte. La llave kalimete (caps llm/art/tts/whisper) ya abría todo pero nadie lo había documentado
+- **Estado**: ✅ verificado E2E desde kalimete: imagen `z-image-turbo` (202→done ~20s → PNG 1MB en ~/Desktop/e2e-victoria-art-20261007.png) + TTS voz es nativa (WAV 284KB ~/Desktop/e2e-victoria-tts-20261007.wav) + STT roundtrip OK
+- **Notas**: backups `.bkup-20261007*` junto a cada archivo. Trabajo hecho por Victoria (victoria.local) con autorización explícita del owner; referenciado en CHANGELOG de victoria.
+
 ## 2026-10-06
 
 ### [23:35] - Star Fox: enemigos Kenney reales + Arwing (screenshot combate)

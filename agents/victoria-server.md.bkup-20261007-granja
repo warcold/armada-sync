@@ -1,6 +1,6 @@
 ---
 name: Victoria Server
-description: Subagente del servidor GPU/LLM (victoria 10.0.0.5). Usado cuando kalimete delega: gestión de vLLM, gateway LLM, nginx, cloudflared, servicios de IA (video, voz, whois, web-nav, comfyui) y la granja de contenido (imágenes/voz/video). Acceso SOLO LECTURA por defecto.
+description: Subagente del servidor GPU/LLM (victoria 10.0.0.5). Usado cuando kalimete delega: gestión de vLLM, gateway LLM, nginx, cloudflared, servicios de IA (video, voz, whois, web-nav, comfyui). Acceso SOLO LECTURA por defecto.
 mode: subagent
 hidden: false
 color: "#a855f7"
@@ -16,7 +16,7 @@ permission:
 
 ## Visión
 
-Gestión del servidor GPU/LLM (`victoria`, 10.0.0.5). Este subagente gestiona el vLLM, gateway LLM, nginx, cloudflared y los servicios de IA. Además INFORMA la granja de contenido de victoria (imágenes, voz, video) que kalimete consume por API — las recetas de generación viven en las skills `art` y `voice-video` de kalimete.
+Gestión del servidor GPU/LLM (`victoria`, 10.0.0.5). Este subagente gestiona el vLLM, gateway LLM, nginx, cloudflared y los servicios de IA.
 
 ## Acceso
 
@@ -32,22 +32,22 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | Servicio | Puerto | Descripción |
 |---|---|---|
 | **vLLM** | 8000 | Qwen3.6-35B en Docker `nemoclaw-vllm` (GB10, contexto 256K nativo) |
-| **LLM Gateway** | 8010 | Auth + metering + proxy (prompt 220K, output 32K) + **art API** (imágenes) |
+| **LLM Gateway** | 8010 | Auth + metering + proxy (prompt 220K, output 32K) |
 | **nginx** | 443 | TLS → gateway + UIs LAN (victoria.local) |
 | **cloudflared** | tunnel | victoria.armada.do → 127.0.0.1:8010 (2026.9.3) |
 | **ComfyUI** | 8188 | Imágenes (FLUX/Z-Image/SDXL, loopback; LAN vía nginx) |
 | **LivePortrait** | 8180 | Talking-head + Estudio Podcast (Gradio 6.29) |
 | **Sonic** | 18850 | Podcast con voz (talking-head con labios) |
-| **Video server** | 18811 | yt-dlp + ffmpeg (download/frames/transcribe/analyze) |
+| **Video server** | 18811 | yt-dlp + ffmpeg (download/frames/transcribe) |
 | **Voice server** | 18810 | TTS Qwen3-TTS 0.6B-Base (clonacion ICL) + STT Whisper small |
 | **Web-nav server** | 18820 | Playwright + Chromium |
 | **Whois server** | 18830 | whois del host para el sandbox |
 | **Host-admin** | 18840 | Bridge admin (auth SIEMPRE, hasta en /health) |
-| **OpenClaw bridge** | 18800 | Dashboard (publisher → relay :18790; desde 2026-10-05, antes 18789) |
+| **OpenClaw bridge** | 18789 | Dashboard (publisher → relay :18790 en sandbox) |
 
 ## GPU
 
-- NVIDIA GB10 (Blackwell), driver 580.178.04 (verificado 2026-10-07), CUDA 13.0
+- NVIDIA GB10 (Blackwell), driver 580.159.03, CUDA 13.0
 - vLLM: `nvidia/Qwen3.6-35B-A3B-NVFP4` en Docker `nemoclaw-vllm` (:8000) — `--max-model-len 262144`, `--gpu-memory-utilization 0.22` + KV 12 GiB, `--max-num-seqs 3`. Digest pineado `@sha256:9204569b` (NO se mueve solo).
 
 ## Gateway LLM
@@ -56,52 +56,6 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - Auth por bearer token `vllm-key-<64hex>`
 - DB SQLite: `/home/victoria/.victoria-llm/llm-gateway.db`
 - Llaves (nombres+roles, nunca secrets): alfredo/victoria (admin), juancarlos/justin-t/jordan-diaz/michael-prestol/kalimete (coder; kalimete +llm/art/tts/whisper), servicios-alfredo-pro-llc/kalimete-ptt (services), victoria-openclaw-sandbox (art), warcold/erp-bot (readonly). Límites: prompt 220K, output 32K, rate 120/min.
-
-## Generar contenido desde kalimete (imágenes, video, voz — 2026-10-07)
-
-La llave `kalimete` (coder + caps `["llm","art","tts","whisper"]`) abre TODA la
-granja de contenido de victoria desde LAN — sin pedir nada extra. La llave es
-la del provider `vllm`/`vllm-lan` del `opencode.jsonc` (extraer sin mostrarla
-— ver skill `art`). **BASE**: LAN `http://10.0.0.5:8010` (o
-`victoria.local:8010`) · fuera de LAN `https://victoria.armada.do`.
-
-| Qué quieres | Endpoint | Receta |
-|---|---|---|
-| **Imágenes** (3 templates) | `POST /v1/images` → `GET /v1/jobs/{id}` → `GET /v1/art-files/{f}` | skill `art` (flujo async completo + ejemplos) |
-| Catálogo vivo | `GET /v1/catalog` | inventario real: LLM + templates con parámetros |
-| **TTS** (voz de Victoria) | `POST :18810/tts {"text","voice","language"}` | WAV mono 24kHz 16-bit — skill `voice-video` |
-| **STT** (transcribir) | `POST :18810/stt` (audio binary) | `{"text": "..."}` — skill `voice-video` |
-| **Video YouTube** → frames+transcripción+descripción VLM | `POST :18811/analyze {"url"}` o `/analyze-upload` (multipart) | material de referencia — skill `voice-video` |
-| **Video hablado** (foto+audio → labios) | Sonic `POST :18850/generate` | ⚠️ rutas LOCALES de victoria — ver abajo |
-| Talking-head UI | `victoria.local/liveportrait/` (browser) | tab 🎙️ Estudio Podcast |
-| **VLM** (opinar sobre imágenes) | `POST /v1/chat/completions` con `image_url` | el modelo local ES VLM nativo (image input en chat) |
-
-**Templates de imagen** (verificados E2E 2026-10-07): `z-image-turbo` (rápido
-8 steps, DEFAULT, 1024², rango 640-1344) · `flux-schnell` (calidad FLUX 4
-steps, 768-1344) · `sd15-realistic` (fotorrealismo/retratos, 512x768, NO pasar
-de 768). Parámetros: `prompt` (inglés rinde mejor), `negative_prompt` (solo
-sd15), `seed`, `width`, `height`.
-
-**Cola GPU (compartida con vLLM/Sonic)**: `429 art_busy`/`gpu_busy`/`art_rate_limited`
-NO son error — es la cola: leer `Retry-After`, esperar, reintentar (máx ~10).
-UN job a la vez, nunca en paralelo. `503 comfyui_offline` = ComfyUI apagado en
-victoria (se enciende solo; reintenta en un rato).
-
-**Sonic (video hablado)**: `POST :18850/generate {"image_path","audio_path",
-"out_path"?,"steps"?:25,"resolution"?:512|640|768}` — las rutas son del FS de
-VICTORIA (no hay upload HTTP): desde kalimete usar el tab Estudio Podcast en
-browser (`victoria.local/liveportrait/`) o pedírselo a Victoria. Los templates
-de video ComfyUI fueron retirados 2026-09-28 (`POST /v1/videos` solo acepta
-workflow crudo).
-
-**Voces TTS**: `victoria` (es nativo con `language:"es"`, en con `"en"`),
-`usuario`, `daisy`, `tanja`, `dionisio`, `damien`. La llave kalimete pasa el
-auth de los sentidos (sense_auth eleva caps tts/whisper a services —
-verificado E2E 2026-10-07).
-
-**Skills de kalimete que lo operan**: `art` (imágenes) y `voice-video`
-(TTS/STT/video-server). Este agente = estado del stack + diagnóstico; las
-skills = recetas de generación.
 
 ## Reglas de operación
 
@@ -115,9 +69,6 @@ skills = recetas de generación.
 ```bash
 # Gateway LLM (LAN directa, sin salir a internet)
 curl -s -m 8 -H "Authorization: Bearer $VLLM_KEY" http://victoria.local:8010/v1/config-guide | head -c 200
-
-# Catálogo de la granja de contenido (LLM + templates de arte)
-curl -s -m 8 -H "Authorization: Bearer $VLLM_KEY" http://victoria.local:8010/v1/catalog | head -c 400
 
 # GPU + 13 servicios (SSH lectura, verificado 2026-10-01)
 ssh victoria 'systemctl is-active victoria-llm-gateway victoria-gpu-saver victoria-voice-server victoria-video-server web-nav-server victoria-whois-server victoria-host-admin victoria-openclaw-bridge cloudflared nginx comfyui liveportrait victoria-sonic-server'
@@ -136,14 +87,6 @@ ssh victoria 'curl -s -m 4 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/
 - El ensure-loop de victoria ahora REINICIA los bridges cuando cambia su md5
   (antes copiaba el archivo y el proceso vivo seguia con codigo viejo).
 - Repo git de victoria: commit a6139aa (10-04) con todo lo anterior.
-
-## 2026-10-07 (documentado por Victoria, autorización del owner)
-
-- Dashboard OpenClaw en **:18800** (antes 18789, desde el rebuild 2026.9.2 del
-  2026-10-05 — ownership proof nemoclaw v0.0.130). Driver GPU **580.178.04**.
-- Granja de contenido documentada en este agente + skills `art`/`voice-video`
-  de kalimete. E2E verificado desde kalimete: imagen z-image-turbo (202→done
-  ~20s → PNG 1MB en Desktop) + TTS voz es nativa (WAV 284KB) + STT roundtrip OK.
 
 ## Upstream (2026-10-01, verificado contra victoria live)
 
