@@ -1,5 +1,13 @@
 ## 2026-10-06
 
+### [22:30] - Star Fox: guía de assets originales (docs/ASSETS.md) + aviso IP
+- **Tipo**: investigación/docs
+- **Modificado**: `~/dev/godot/armada-starfox/docs/ASSETS.md` (nuevo)
+- **Afecta a**: kalimete/godot
+- **Causa**: pedido "assets tal cual en vez de placeholders"
+- **Estado**: ✅ fuentes localizadas (Models/Spriters/Sounds-Resource, Sketchfab CC, voces, OST) + alternativa legal Kenney CC0 + pipeline Godot
+- **Notas**: prototipo con originales → release con CC0 (IP Nintendo). Pendiente decisión/descarga.
+
 ### [22:15] - Star Fox Fase 2 tanda 1: bomba, spawner+enemigos, HUD y pausa en niveles (humo 8/8)
 - **Tipo**: feature/fix/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (player_ship.tscn, spawn_manager, 3 enemy.tscn, level_01 dict, hud.tscn+hud.gd, HUD en 5 niveles)
