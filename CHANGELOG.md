@@ -1,5 +1,13 @@
 ## 2026-10-07
 
+### [23:55] - Fase 3 ERP implementada y enviada a Juan (G1+G2+G3+G4+G6 vía dev/ecomm-erp) + limpieza export/ plugin
+- **Tipo**: feature | fix | integración | wordpress-dev (TARGET=kalimete; upstream soycarlosjerez-hub/sistema-facturacion)
+- **Modificado**: ERP `dev/ecomm-erp` — 6 commits pushed `7a4060f..8ae9bb2`: `ff64301` fix(tienda) G6 ajusteInventario (**4 bugs, no 2**: notas sin ??, linea_negocio inexistente, tipo fuera del enum entrada/salida, almacen_id sin default), `601959e` feat(webhooks) comando retry-failed, `5ace5aa` feat(webhooks) evento invoice.issued post-NCF, `f961503` feat(webhooks) CRUD webhook endpoints API (staff only, secret nunca en respuestas), `e495454` feat(ecomm) PATCH orders/{id}/cancel (scoping auth.cliente, ventana 120min, stock repuesto + order.cancelled), `8ae9bb2` test 11 feature tests. Plugin: `~/dev/wordpress/export/` limpiado (5 zips era pre-rename → `backups/export-legacy/`), DEPLOY-GUIA.md actualizado
+- **Afecta a**: erpipo preprod (kalimete) + plugin Armada Suite 5.3.0 (agente IA ahora tiene cancelar pedido + ciclo webhooks completo del lado ERP)
+- **Causa**: pedido del owner — el plugin 5.3.0 necesita del ERP los gaps de RECOMENDACIONES-FASE3-AGENTE que Juan aún no implementó; PR #14 de Juan no rompió el contrato del plugin (verificado: su cambio fue en API interna del panel)
+- **Estado**: ✅ verificado: tests 16/16 (11 nuevos + 5 baseline Juan sin regresión), smoke en vivo (ajuste 4×200 + 422 ajeno, CRUD webhook 201/200/200/200 con limpieza, retry-failed OK, route:cache restaurado, queue:restart, migrate:status sin pendientes, cero migraciones); zip 5.3.0 validado al día con HEAD c084cdb (los 2 archivos "borrados" los auto-regenera el plugin — tree limpio solo)
+- **Notas**: export/ confirmado ruta canónica (decisión owner 2026-10-01, sin huérfanos). Adopción Juan: review dev/ecomm-erp → PR a main/develop, sin migrate, queue:restart tras deploy. Pendientes: G5 (fase futura), ventana cancelación como constante (mover a settings si la quiere por-tenant), ancla e-CF de invoice.issued. Trabajo delegado a subagente ERP Dev (5 sesiones por límite de pasos).
+
 ### [22:35] - Preprod ERP sincronizado con PR #14 de Juan Carlos (dev/ecomm-erp → 7a4060f) + smoke E2E PASS
 - **Tipo**: infra | servicio | integración (TARGET=kalimete local; repo upstream soycarlosjerez-hub/sistema-facturacion)
 - **Modificado**: `~/dev/erpipo-preprod/code/sistema-facturacion` rama `dev/ecomm-erp` (pull 00a255e→7a4060f: merge PR #14 + commit "Update" de Juan — refactor ventas SaleService/SaleCancelService/SaleStockService, VentaController API+web, landing, migración corregida `almacen_id` nullable en venta_detalles, tests nuevos VentaAnulacionTest/VentaIndexTest)
