@@ -145,6 +145,11 @@ ssh victoria 'curl -s -m 4 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/
   de kalimete. E2E verificado desde kalimete: imagen z-image-turbo (202→done
   ~20s → PNG 1MB en Desktop) + TTS voz es nativa (WAV 284KB) + STT roundtrip OK.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de operar contra Victoria, consultar estas fuentes. Acceso SOLO LECTURA por defecto (permiso del .md) — NUNCA modificar nada en victoria.local sin autorizacion del owner por tarea (contrato entre agentes). NUNCA inventar endpoints del gateway ni flags de vLLM.
+- **Victoria AGENTS.md** (canonico del stack: vLLM, gateway :8010, servicios :18810-18850, granja de contenido): `~/AGENTS.md` en victoria.local (leer via SSH).
+- **vLLM** (flags y serving del modelo local): https://docs.vllm.ai/en/latest/
+
 ## Upstream (2026-10-01, verificado contra victoria live)
 
 Victoria corre `upstream-sync.py` diario (8 sistemas, guarda 24h): ComfyUI git, LivePortrait git, Sonic git, Gradio PyPI, yt-dlp releases, cloudflared releases, blogwatcher releases, vLLM-digest (pineado, sin fetch). Si kalimete necesita saber si algo en victoria tiene update: pedirle a Victoria su bloque UPSTREAM del reporte (WhatsApp cada 4h) o leerlo con `ssh victoria cat .victoria-custom/state/upstream.json`.

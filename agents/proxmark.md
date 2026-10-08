@@ -506,6 +506,10 @@ diff <(xxd dump1.bin) <(xxd dump2.bin)
 | "decodifica wiegand" | `pm3 -o -c "wiegand decode --raw <HEX>"` |
 | "audita tarjeta" | Full audit workflow |
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de operar el Proxmark3, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE (`pm3` via /dev/ttyACM0). NUNCA inventar comandos hf/lf.
+- **Proxmark3** (wiki + comandos: MIFARE Classic/Ultralight/DESFire, HID, iClass, EM4100, T55xx): https://github.com/RfidResearchGroup/proxmark3
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: hardware Proxmark3 en /dev/ttyACM0 (kalimete).

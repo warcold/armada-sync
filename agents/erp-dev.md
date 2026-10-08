@@ -159,6 +159,11 @@ Verificado: `origin/dev/ecomm-erp` @`00a255e` en sync (Juan no ha empujado nada 
 
 **Pendientes siguientes (no implementados)**: G1 (cancelar pedido, M), G2 (alta webhooks por API, S), G3 (invoice.issued, S), G4 (retry-failed, S), G5 (teléfono/stock-sucursal/detalle, S/M), G6 (ajuste 500, Juan).
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar contra el ERP, consultar estas fuentes. El upstream es de Juan Carlos (recomendaciones via branch `dev/ecomm-erp`) — NUNCA tocar prod (desvinculada 2026-09-19). NUNCA inventar endpoints del contrato ecomm API.
+- **Upstream erpipo**: repo de Juan Carlos, rama `dev/ecomm-erp` + `docker-compose.yml` local + fases del .md (canonico del contrato).
+- **Componentes verificados**: nginx https://nginx.org/en/docs/ · MySQL 8.0 https://dev.mysql.com/doc/ · Redis https://redis.io/docs/
+
 ## Upstream (2026-10-06)
 
 - **Fuente**: `soycarlosjerez-hub/sistema-facturacion` (upstream de Juan Carlos) + stack erpipo-* (kalimete :8100).

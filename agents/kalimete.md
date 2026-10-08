@@ -250,3 +250,13 @@ No existen máquinas follower — solo kalimete escribe al repo. Si el usuario d
 ```json upstream_drk
 {"enabled": true, "id": "kalimete", "label": "coordinador (19 hijos)", "source": "", "href": "MAPA.md", "href_docs": "", "pin_note": "", "groom_clean": true}
 ```
+
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar opencode o la flota, consultar estas fuentes. NUNCA inventar campos de config ni modos de agente.
+- **opencode docs** (orquestacion, Task, subagentes, permisos): https://opencode.ai/docs
+- **Schema de config** (fuente de verdad de opencode.jsonc): https://opencode.ai/config.json
+
+## Upstream (2026-10-08)
+- **opencode**: https://registry.npmjs.org/opencode-ai/latest (local 1.18.35 = latest verificado 2026-10-08; `npm view opencode-ai version` para chequear).
+- **Frecuencia**: ante error nuevo del CLI o deriva de schema; `opencode agent list` debe mostrar 1 primary + 18 exactos.
+- **Politica**: upgrades del CLI con Plan del owner (es el cerebro de la maquina); jamas auto-update en produccion.

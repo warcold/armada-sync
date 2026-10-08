@@ -1,19 +1,29 @@
 {
- "harness": "cloudflare",
- "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/cloudflare.md",
- "mode": "subagent",
- "hidden": false,
- "scope": "Cuenta Alfredo armada.do (DNS/WAF/R2/Tuneles/Workers)",
- "vivo_2026_10_01": "IDs zona/ruleset en doc; tuneles activos",
- "live_check": "cf API con CLOUDFLARE_ACCOUNT_ID (ver agente)",
- "upstream": {
-  "fuente": "Cuenta Alfredo armada.do (DNS/WAF/R2/Tuneles/Workers)",
-  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
- },
- "docs": [
-  "~/armada-sync/agents/cloudflare.md"
- ],
- "changelog": "~/armada-sync/CHANGELOG.md",
- "name": "Cloudflare"
+  "harness": "cloudflare",
+  "updated": "2026-10-01",
+  "agent_file": "~/armada-sync/agents/cloudflare.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Cuenta Alfredo armada.do (DNS/WAF/R2/Tuneles/Workers)",
+  "vivo_2026_10_01": "IDs zona/ruleset en doc; tuneles activos",
+  "live_check": "cf API con CLOUDFLARE_ACCOUNT_ID (ver agente)",
+  "upstream": {
+    "fuente": "Cuenta Alfredo armada.do (DNS/WAF/R2/Tuneles/Workers)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/cloudflare.md"
+  ],
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "name": "Cloudflare",
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "contenido_clave": "DNS, SSL/WAF/firewall, KV/D1, Workers/Pages, tuneles (cuenta Alfredo@armada.do)",
+        "nombre": "Cloudflare Developers",
+        "url": "https://developers.cloudflare.com/"
+      }
+    ]
+  }
 }

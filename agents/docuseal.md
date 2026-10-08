@@ -60,6 +60,11 @@ ssh vps-preprod 'docker logs docuseal --tail 50'
 4. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
 5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar contra DocuSeal, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar endpoints de API ni usar features de versiones no desplegadas.
+- **DocuSeal GitHub** (canonico — README + `docs/` + `docker-compose.yml`; firma PDF, SMTP, API/webhooks, Rails, AGPLv3): https://github.com/docusealco/docuseal
+- NOTA verificada 2026-10-08: `docs.docuseal.com` NO resuelve — el repo es la fuente viva.
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: docuseal/docuseal:latest (docuseal.armada.do).

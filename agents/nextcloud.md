@@ -70,6 +70,10 @@ ssh vps-preprod 'docker exec nextcloud-stack-nextcloud-1 php occ user_oidc:provi
 4. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
 5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar Nextcloud, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar endpoints OCS ni usar features de versiones no desplegadas.
+- **Nextcloud** (nextcloud.armada.do, whiteboard, OIDC con Authentik): https://docs.nextcloud.com/
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: imagenes oficiales nextcloud:fpm + caddy:2 + mariadb:10.11 + redis.

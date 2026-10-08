@@ -1,4 +1,12 @@
 ## 2026-10-08
+### [20:05] - Uplift flota: Docs oficiales en 19 agent files + docs_oficiales en 19 harnesses (aplicado por Victoria, autorizacion del owner)
+- **Tipo**: docs | flota | victoria-cross (TARGET=kalimete, hostname verificado; autorizacion expresa del owner 2026-10-08)
+- **Modificado**: ~/armada-sync/agents/*.md (19/19: seccion Docs oficiales antes de Upstream; kalimete.md ademas +Upstream que faltaba) + ~/armada-sync/harness/*.json (19/19: bloque docs_oficiales); backups .bkup-20261008-docs por archivo; /tmp limpio
+- **Afecta a**: los 19 agentes (docs de referencia para programar segun estandares de los creadores, sin adivinar); frontmatter y operativa intactos
+- **Causa**: directiva del owner — patron vLLM de victoria aplicado a TODA la flota sin excepcion, impecable en ambos hosts
+- **Estado**: verificado opencode agent list 1 primary + 18 exactos, 0 duplicados; harnesses 19/19 JSON validos; doc-fresh y revision de la primaria pendientes
+- **Notas**: DocuSeal usa el repo GitHub como canonico (docs.docuseal.com NO resuelve, verificado); rAthena wiki viva (189 pags); InspIRCd v4 estable (v3 EOL 2026-01-01); customs referencian ledger del proyecto + framework docs
+
 
 ### [12:35] - Plugin Armada Suite 5.3.1: simplificación admin implementada (D1+D2+P1+P2+P3) + ZIP canónico
 - **Tipo**: release | refactor-ui | wordpress-dev (TARGET=kalimete local; repo wordpress sin remoto)

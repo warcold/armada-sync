@@ -218,6 +218,11 @@ godot --headless --path ~/dev/godot/mario-bros --export-release "HTML5" ./export
 - **2026-10-07**: Sección "Assets desde Victoria" (skill art + voice-video + Sonic + video-server + VLM). Fix paths: `armada-godot` (inexistente) → `mario-bros` + `armada-starfox` (live). Nota MCP un-proyecto-a-la-vez. E2E verificado: imagen z-image-turbo → Desktop + TTS voz es.
 - **2026-09-30**: Creación del agente. Godot 4.7.2 + @yanhuifair/godot-mcp 1.12.3 configurados. Proyecto de demostración en ~/dev/godot/armada-godot/. MCP integrado en opencode.jsonc.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar en Godot, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE (editor/proyecto). NUNCA inventar APIs de nodos ni usar features de Godot 3.x (el stack es 4.x).
+- **Godot Engine 4.x** (escenas, shaders, animacion, audio, export): https://docs.godotengine.org/en/stable/
+- **GDScript** (referencia del lenguaje): https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: Godot 4.x + MCP godot (386 tools) + proyectos ~/dev/godot/.

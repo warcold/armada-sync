@@ -144,6 +144,12 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 - **2026-10-03**: stack TLS (CA bundle mkcert + extra_hosts en docker-compose).
 - **2026-10-01**: Armada Suite 5.0.0 super-plugin (vendored erp-commerce-suite+WPVibe+AIOWPM); consolidación API propia erpsuite/v1/ops.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar WordPress o el plugin, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE (kalimete dev). NUNCA inventar hooks/filtros WP ni APIs del plugin.
+- **WordPress Developer** (WP 7.1.2, APIs, Armada Suite 5.2.0, integracion erpipos :8100): https://developer.wordpress.org/
+- **WordPress Documentation** (guia del stack): https://wordpress.org/documentation/
+- **Plugin Handbook** (super-plugin: chat IA + e-commerce ERP + backup): https://developer.wordpress.org/plugins/
+
 ## Upstream (2026-10-05)
 
 - **Fuente**: wordpress:6.7-php8.3-apache + mariadb:10.11 (kalimete).

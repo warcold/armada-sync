@@ -1,0 +1,68 @@
+{
+  "harness": "erp-dev",
+  "updated": "2026-10-05",
+  "agent_file": "~/armada-sync/agents/erp-dev.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "ERP erpipo preprod (kalimete :8100) — sandbox local de desarrollo. Upstream de Juan Carlos (soycarlosjerez-hub/sistema-facturacion); enviamos recomendaciones via rama dev/ecomm-erp. Push a origin SOLO con autorizacion del owner.",
+  "ownership": "Repo upstream = Juan Carlos. Copia local = sandbox para validar integraciones (WP/Alfredo Ecomm) sin tocar prod. main/develop read-only (politica rama unica, commit dd66417).",
+  "git": {
+    "rama_activa": "dev/ecomm-erp (el stack SIRVE esta rama)",
+    "head_verificado": "00a255e (Fase3 doc + G6 ajusteInventario) PUSHED a origin",
+    "fase_2_pushed": "2026-10-06: 10 commits Fase 2 pushed a origin (4415e27..790cc8a + merge 2c8fca9) — autorizacion owner; Juan Carlos revisa",
+    "fase_3_pushed": "2026-10-06: 95d17d8 (RECOMENDACIONES-FASE3-AGENTE G1-G5) + 00a255e (G6: ajusteInventario 500 siempre — notas sin ?? + linea_negocio inexistente en almacen_movimientos) — pushed a origin",
+    "remotes": "SOLO origin = ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git (upstream Juan Carlos). NO existe remote preprod en este clon.",
+    "regla": "push a origin SOLO con autorizacion explicita del owner"
+  },
+  "webhooks_activos_2026_10_06": "endpoint WP dado de alta (webhook_endpoints id=2, instance 10 MaganTech, events order.created/stock.updated/price.updated, active); e2e checkout->deliveries sent/200->WP flush_cache verificado; red compartida erpipo-dev-network con stack WP (URL interna http://wordpress-local/wp-json/erpsuite/v1/erp-webhook)",
+  "aviso_ajuste_500": "POST /api/tienda/inventario/ajuste devuelve 500 SIEMPRE (G6, lado Juan): usar checkout para mover stock hasta correccion",
+  "vivo_2026_10_06": "8/8 containers Up; dev/ecomm-erp @00a255e PUSHED a origin; migraciones 655 (batch 150); queue worker con --queue=default,webhooks; contrato ecomm Fase 2 verificado e2e; webhooks activos hacia WP",
+  "live_check": "docker ps -f name=erpipo",
+  "checks": [
+    "curl -sk -o /dev/null -w '%{http_code}' https://erp.kalimete.local/login",
+    "docker ps -f name=erpipo",
+    "docker exec erpipo-preprod-app php artisan migrate:status | tail -3"
+  ],
+  "puertos": {
+    "nginx": "8100 (frontal TLS erp.kalimete.local)",
+    "db": "3310 (mysql:8.0)",
+    "redis": "6390",
+    "phpmyadmin": "8102",
+    "mailpit": "8025",
+    "app": "9000/tcp INTERNO (sin puerto host — NO existe :8101)"
+  },
+  "contrato_ecomm_2026_10_06": {
+    "auth": "Authorization: Bearer iak_* (InstanceApiKey sha256); /api/ecomm/tienda/config tambien acepta ?api_key=",
+    "rutas": "GET /api/tienda/{productos,categorias,inventario,kardex/{id},config}; ecomm: register/login/me/carts/items/checkout/guest/orders(?customer_id=)/orders/{id}(NUEVO)/promociones/validar/lealtad",
+    "register_fase_2": "tenant_id explicito > api_key (body/X-API-Key/Bearer) > 422 tenant_required (fin default tenant 3)",
+    "checkout_fase_2": "SIN caja POS abierta funciona: venta con sesion_caja_id/user_id NULL (migracion 2026_10_05_230000); POS intacto",
+    "health_fase_2": "GET /up -> JSON {status,database,redis,timestamp} 200 ok / 503 degraded",
+    "webhooks_fase_2": "tablas webhook_endpoints/webhook_deliveries; WebhookService::dispatch; job HMAC-SHA256 (X-Webhook-Signature) retries [30,60,120,300] afterCommit; eventos: order.created (ecomm submit+guest), stock.updated (venta+ajuste), price.updated (admin); alta via tinker (soporta wildcard *); verificado e2e sent/200 firma OK",
+    "throttles": "register/login 10/min; tienda/config 30/min; grupo privado 60/min",
+    "gotchas": [
+      "imagenes = URLs absolutas a erp.kalimete.local; total del catalogo en meta.total (keys: productos+meta)",
+      "telefono unique scoped por tenant en codigo; SIN index DB (duplicados cross-tenant impiden index compuesto hasta dedupe)",
+      "queue worker REQUIERE --queue=default,webhooks (sin --queue= los webhooks nunca se procesan)",
+      "job de webhook ejecuta en el contenedor QUEUE (no app) — los endpoints de test deben vivir ahi o usar URLs alcanzables"
+    ],
+    "keys_dir": "~/dev/erpipo-preprod/keys/ (700/600; ecomm-test-customer.txt = cliente 208 tenant 10)"
+  },
+  "fase_2_estado": "IMPLEMENTADA y PUSHED (2026-10-06). 10 commits: orders/{id} 4415e27, tenant-por-key ba62435, logging 4e1a216, /up c470bf2, checkout-sin-caja a2b183e, webhooks dbb1998+27be061+2893551, docs 9a18a04+790cc8a. Evidencia: docs/RECOMENDACIONES-FASE2-ECOMM.md + CHANGELOG del repo.",
+  "pendientes_siguientes": [
+    "evento invoice.issued (infra ya lo soporta, falta anclaje)",
+    "UI admin para webhook_endpoints",
+    "index compuesto (tenant_id, telefono) — requiere dedupe previo",
+    "UpdateClienteRequest: email/rnc_cedula unique GLOBAL (flujo admin)",
+    "comando re-proceso para deliveries failed"
+  ],
+  "upstream": {
+    "fuente": "soycarlosjerez-hub/sistema-facturacion (Juan Carlos) + stack erpipo-* (kalimete :8100)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/erp-dev.md"
+  ],
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "changelog_2026_10_05": "Doc curada: app sin :8101 (9000 interno), mailpit :8025 anadido a tabla, migraciones 653/b149, dump db.sql 553MB en ~/dev/erpipo-preprod (no /tmp), remotos corregidos (solo origin, sin preprod), politica rama unica dev/ecomm-erp, secrets DB fuera del doc (preprod.env), contrato ecomm verificado + gotchas, candidatos Fase 2. 5 .bkup untracked movidos a ~/dev/erpipo-preprod/backups-bkup-20261003/ (tree limpio).",
+  "name": "ERP Dev"
+}

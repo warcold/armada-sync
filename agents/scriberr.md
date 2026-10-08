@@ -61,6 +61,11 @@ ssh vps-preprod 'docker logs scriberr --tail 50'
 4. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
 5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar Scriberr, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar endpoints.
+- **Ledger del proyecto** (AGENTS.md del repo — fuente y despliegue; el codigo manda).
+- **Caddy** (TLS scriberr.armada.do): https://caddyserver.com/docs/
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: imagen local scriberr-custom:latest (scriberr.armada.do).

@@ -1,0 +1,21 @@
+{
+ "harness": "godot-dev",
+ "updated": "2026-10-07",
+ "agent_file": "~/armada-sync/agents/godot-dev.md",
+ "mode": "subagent",
+ "hidden": false,
+ "scope": "Godot 4.x + MCP 386 tools (~/dev/godot/ — mario-bros y armada-starfox) + assets desde la granja de victoria (skills art/voice-video)",
+ "vivo_2026_10_07": "MCP godot en opencode.jsonc apunta a mario-bros; armada-starfox activo (docs/ propios); E2E granja: imagen art + TTS voz es verificados desde kalimete",
+ "live_check": "ls ~/dev/godot/ && godot-mcp --version",
+ "upstream": {
+  "fuente": "Godot 4.x + MCP godot (386 tools) + proyectos ~/dev/godot/",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+ },
+ "docs": [
+  "~/armada-sync/agents/godot-dev.md",
+  "~/dev/godot/mario-bros/AGENTS.md",
+  "~/dev/godot/armada-starfox/AGENTS.md"
+ ],
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "name": "Godot"
+}

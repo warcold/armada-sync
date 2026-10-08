@@ -13,13 +13,27 @@
     "docs": "~/dev/webs/alfredo-pro-ecomm/docs/",
     "smoke": "~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh",
     "archived_shell": "~/projects/alfredo-pro-ecomm.archived-20261005 (cascara VACIA — NO usar, NO borrar)",
-    "no_touch": ["~/dev/wordpress", "armada-suite.php", "~/dev/apps/woodly/.env (secrets)"]
+    "no_touch": [
+      "~/dev/wordpress",
+      "armada-suite.php",
+      "~/dev/apps/woodly/.env (secrets)"
+    ]
   },
   "git": {
     "init": "2026-10-05, rama master, LOCAL sin remote",
     "baseline": "01fe048 chore: baseline Alfredo Pro Ecomm backend (import 2026-10-05)",
     "smoke_commit": "e39fa99 chore: add smoke script",
-    "gitignored": [".env", "node_modules/", "dist/", "backups/", "uploads/", "*.bkup", "*.bkup-*", "*.sql", "secrets/"]
+    "gitignored": [
+      ".env",
+      "node_modules/",
+      "dist/",
+      "backups/",
+      "uploads/",
+      "*.bkup",
+      "*.bkup-*",
+      "*.sql",
+      "secrets/"
+    ]
   },
   "ports_live": {
     "api": "3004 (docker alfredo-ecomm-api, imagen backend-api, runtime /app/dist)",
@@ -59,5 +73,40 @@
   "diseno_plugin_implementado_2026_10_06": "El diseno de este agente (8 feature flags + rebrand Puente IA F1-F4 + arquitectura agente mixto con matriz tool->origen) se implemento integro en ~/dev/wordpress (13 commits f0d1572..b289ba1, regresion 19/19, webhooks e2e sent/200). Backend :3004 intacto.",
   "changelog_2026_10_06": "Cierre de seccion: Fase 1 hardening + contexto ecosistema registrados en el CHANGELOG del proyecto (commit 2dd567c).",
   "changelog_2026_10_05": "Fase 1: compose curado (mount src vacio eliminado, name: backend), cascara ~/projects archivada, git baseline 01fe048 + smoke e39fa99, JWT/JWT_REFRESH/DB rotados, CORS alineado, smoke.sh 4/4, red huerfana backend_alfredo-ecomm eliminada, snapshot pre-fase1. Docs curadas a paths canonicos ~/dev/webs/.",
-  "changelog_2026_10_02": "Docs curados a :3004 (README.md + Caddyfile.dev 5x); agent doc reescrito con LIVE verificado; harness expandido; freeze legacy D6-D9 (namespace erp-suite); entrada en CHANGELOG.md del proyecto"
+  "changelog_2026_10_02": "Docs curados a :3004 (README.md + Caddyfile.dev 5x); agent doc reescrito con LIVE verificado; harness expandido; freeze legacy D6-D9 (namespace erp-suite); entrada en CHANGELOG.md del proyecto",
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "contenido_clave": "Node 20 API (Express+TS corre sobre Node 20)",
+        "nombre": "Node.js 20 docs",
+        "url": "https://nodejs.org/docs/latest-v20.x/api/"
+      },
+      {
+        "contenido_clave": "routing, middleware, API REST del backend :3004",
+        "nombre": "Express",
+        "url": "https://expressjs.com/"
+      },
+      {
+        "contenido_clave": "schema.prisma, migraciones, 12 tablas PG",
+        "nombre": "Prisma",
+        "url": "https://www.prisma.io/docs"
+      },
+      {
+        "contenido_clave": "PostgreSQL 16-alpine (backend_postgres_data)",
+        "nombre": "PostgreSQL 16",
+        "url": "https://www.postgresql.org/docs/16/"
+      },
+      {
+        "contenido_clave": "frontend Woodly React 19 + Vite + TS",
+        "nombre": "React + Vite",
+        "url": "https://react.dev/"
+      },
+      {
+        "contenido_clave": "fuente canonica del proyecto (endpoints, seed, deploy)",
+        "nombre": "Ledger del proyecto (AGENTS.md)",
+        "url": "repo-del-proyecto"
+      }
+    ]
+  }
 }

@@ -171,6 +171,15 @@ El plugin WP Armada Suite arrastra namespace histórico **erp-suite**. Se MANTIE
 - **2026-10-02**: Cierre de discrepancias docs vs LIVE — README.md y Caddyfile.dev curados a `:3004` (5× en Caddyfile); namespace legacy erp-suite CONGELADO (D6–D9, decisión owner).
 - **2026-10-01**: Nuevo endpoint `GET /v1/stores/:slug/categories` (en `stores.ts` OBLIGATORIAMENTE ANTES de `/:slug` — si no, Express lo interpreta como slug → 404). CORS a variable `${CORS_ORIGIN:-...}`. Bugfix docker-compose: eliminado `version:` obsoleto.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar contra este stack, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar APIs ni usar features de versiones no desplegadas.
+- **Node.js 20**: https://nodejs.org/docs/latest-v20.x/api/ (el backend :3004 corre Node 20 + Express + TS)
+- **Express**: https://expressjs.com/ (routing, middleware, API REST)
+- **Prisma**: https://www.prisma.io/docs (schema.prisma, migraciones, 12 tablas)
+- **PostgreSQL 16**: https://www.postgresql.org/docs/16/ (backend_postgres_data)
+- **React 19 + Vite + TS** (frontend Woodly): https://react.dev/ + https://vite.dev/guide/
+- **Canonica del proyecto**: su ledger AGENTS.md (endpoints, seed demo, deploy) — el codigo manda sobre docs externas.
+
 ## Upstream (2026-10-05)
 
 - **Fuente**: backend-api custom local + redis:7 + postgres:16 (kalimete dev).

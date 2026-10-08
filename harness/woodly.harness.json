@@ -1,19 +1,34 @@
 {
- "harness": "woodly",
- "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/woodly.md",
- "mode": "subagent",
- "hidden": false,
- "scope": "Woodly (woodly.armada.do)",
- "vivo_2026_10_01": "woodly-woodly Up 4w (vps) + Up 3d (kalimete dev)",
- "live_check": "docker ps -f name=woodly en ambos hosts",
- "upstream": {
-  "fuente": "Woodly (woodly.armada.do)",
-  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
- },
- "docs": [
-  "~/armada-sync/agents/woodly.md"
- ],
- "changelog": "~/armada-sync/CHANGELOG.md",
- "name": "Woodly"
+  "harness": "woodly",
+  "updated": "2026-10-01",
+  "agent_file": "~/armada-sync/agents/woodly.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Woodly (woodly.armada.do)",
+  "vivo_2026_10_01": "woodly-woodly Up 4w (vps) + Up 3d (kalimete dev)",
+  "live_check": "docker ps -f name=woodly en ambos hosts",
+  "upstream": {
+    "fuente": "Woodly (woodly.armada.do)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/woodly.md"
+  ],
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "name": "Woodly",
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "nombre": "React + Vite",
+        "url": "https://react.dev/",
+        "contenido_clave": "frontend React 19 + Vite + TS (el ERP controla el frontend)"
+      },
+      {
+        "nombre": "Alfredo Ecomm",
+        "url": "repo-del-proyecto",
+        "contenido_clave": "backend que manda (ver agente Alfredo Ecomm)"
+      }
+    ]
+  }
 }

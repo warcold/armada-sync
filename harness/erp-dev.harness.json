@@ -64,5 +64,30 @@
   ],
   "changelog": "~/armada-sync/CHANGELOG.md",
   "changelog_2026_10_05": "Doc curada: app sin :8101 (9000 interno), mailpit :8025 anadido a tabla, migraciones 653/b149, dump db.sql 553MB en ~/dev/erpipo-preprod (no /tmp), remotos corregidos (solo origin, sin preprod), politica rama unica dev/ecomm-erp, secrets DB fuera del doc (preprod.env), contrato ecomm verificado + gotchas, candidatos Fase 2. 5 .bkup untracked movidos a ~/dev/erpipo-preprod/backups-bkup-20261003/ (tree limpio).",
-  "name": "ERP Dev"
+  "name": "ERP Dev",
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "contenido_clave": "fuente canonica: rama dev/ecomm-erp + docker-compose.yml + fases documentadas en el .md",
+        "nombre": "Upstream erpipo (Juan Carlos)",
+        "url": "repo-upstream-rama-dev-ecomm-erp"
+      },
+      {
+        "contenido_clave": "nginx:1.25-alpine (:8100)",
+        "nombre": "nginx",
+        "url": "https://nginx.org/en/docs/"
+      },
+      {
+        "contenido_clave": "mysql:8.0 (:3310)",
+        "nombre": "MySQL 8.0",
+        "url": "https://dev.mysql.com/doc/"
+      },
+      {
+        "contenido_clave": "redis:7-alpine (:6390)",
+        "nombre": "Redis",
+        "url": "https://redis.io/docs/"
+      }
+    ]
+  }
 }

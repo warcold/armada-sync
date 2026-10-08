@@ -100,6 +100,11 @@ ssh vps-preprod 'docker logs ragnarok-fluxcp --tail 30'
 4. Destructivo (wipe DB, rebuild, cambio de URL pública) = confirmar con el usuario.
 5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar el servidor Ragnarok, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE (/srv/ragnarok). NUNCA inventar configs de rAthena ni scripts NPC sin validar sintaxis.
+- **rAthena Wiki** (canonico — install, config, scripting, DB; C++, 189 paginas): https://github.com/rathena/rathena/wiki — verificada viva 2026-10-08.
+- **FluxCP + roBrowser** (panel + cliente): https://github.com/rathena/FluxCP
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: github.com/rathena/rathena + FluxCP + roBrowser + wsProxy (/srv/ragnarok).

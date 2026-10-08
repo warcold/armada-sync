@@ -1,19 +1,29 @@
 {
- "harness": "authentik",
- "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/authentik.md",
- "mode": "subagent",
- "hidden": false,
- "scope": "SSO Authentik (auth.armada.do)",
- "vivo_2026_10_01": "server x2 healthy + redis + postgres:16 Up 4w",
- "live_check": "docker ps -f name=authentik en vps-preprod",
- "upstream": {
-  "fuente": "SSO Authentik (auth.armada.do)",
-  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
- },
- "docs": [
-  "~/armada-sync/agents/authentik.md"
- ],
- "changelog": "~/armada-sync/CHANGELOG.md",
- "name": "Authentik"
+  "harness": "authentik",
+  "updated": "2026-10-01",
+  "agent_file": "~/armada-sync/agents/authentik.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "SSO Authentik (auth.armada.do)",
+  "vivo_2026_10_01": "server x2 healthy + redis + postgres:16 Up 4w",
+  "live_check": "docker ps -f name=authentik en vps-preprod",
+  "upstream": {
+    "fuente": "SSO Authentik (auth.armada.do)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/authentik.md"
+  ],
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "name": "Authentik",
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "contenido_clave": "SSO, usuarios, aplicaciones, flujos, OIDC (auth.armada.do)",
+        "nombre": "Authentik docs",
+        "url": "https://docs.goauthentik.io/docs/"
+      }
+    ]
+  }
 }

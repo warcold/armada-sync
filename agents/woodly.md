@@ -108,6 +108,11 @@ Esto es exactamente cómo funciona *Mitiba Klas Soliaria* para cualquier nuevo c
 - **Prod vps-preprod**: `/opt/woodly` (contenedor `woodly-woodly-1`). Flujo: editar en kalimete → commit/push → `cd /opt/woodly && git pull && ./update.sh`.
 - **Edge**: Caddy (`nextcloud-stack-caddy-1`, Caddyfile ro en `/opt/nextcloud-stack/`) — `caddy reload` NO aplica, usar `docker restart`; `woodly.alfredo.pro` retirado 2026-08-07.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar Woodly, consultar estas fuentes. Principio del .md: el ERP controla el frontend. NUNCA inventar endpoints (vienen de Alfredo Ecomm :3004).
+- **React 19 + Vite + TS** (frontend, multi-marca): https://react.dev/ + https://vite.dev/guide/
+- **Alfredo Ecomm** (backend que manda — ver agente `Alfredo Ecomm` + su ledger).
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: imagen local woodly-woodly (woodly.armada.do).

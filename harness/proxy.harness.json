@@ -1,19 +1,34 @@
 {
- "harness": "proxy",
- "updated": "2026-10-01",
- "agent_file": "~/armada-sync/agents/proxy.md",
- "mode": "subagent",
- "hidden": false,
- "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)",
- "vivo_2026_10_01": "host Up 228d (dato 2026-09-19); revalidar",
- "live_check": "ssh vps-proxy systemctl is-active squid",
- "upstream": {
-  "fuente": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)",
-  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
- },
- "docs": [
-  "~/armada-sync/agents/proxy.md"
- ],
- "changelog": "~/armada-sync/CHANGELOG.md",
- "name": "Proxy"
+  "harness": "proxy",
+  "updated": "2026-10-01",
+  "agent_file": "~/armada-sync/agents/proxy.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)",
+  "vivo_2026_10_01": "host Up 228d (dato 2026-09-19); revalidar",
+  "live_check": "ssh vps-proxy systemctl is-active squid",
+  "upstream": {
+    "fuente": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/proxy.md"
+  ],
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "name": "Proxy",
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "nombre": "Squid docs",
+        "url": "http://www.squid-cache.org/Doc/",
+        "contenido_clave": "Squid (usuarios, filtros, rate limiting, filedescriptors, vps-proxy)"
+      },
+      {
+        "nombre": "SOCKS5 RFC 1928",
+        "url": "https://www.rfc-editor.org/rfc/rfc1928",
+        "contenido_clave": "protocolo SOCKS5 del servicio"
+      }
+    ]
+  }
 }

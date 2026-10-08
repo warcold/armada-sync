@@ -68,6 +68,10 @@ docker ps --filter name=taohemps --format "{{.Names}} | {{.Image}} | {{.Status}}
 5. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
 6. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar Taohemps, consultar estas fuentes. Zona Cloudflare: NO TOCAR correo (regla del .md). NUNCA inventar endpoints.
+- **Ledger del proyecto** (AGENTS.md del repo — frontend+backend, fuente y despliegue; el codigo manda).
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: imagenes locales taohemps-frontend/backend (taohemps.com).

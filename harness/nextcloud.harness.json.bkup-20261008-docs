@@ -1,0 +1,19 @@
+{
+ "harness": "nextcloud",
+ "updated": "2026-10-01",
+ "agent_file": "~/armada-sync/agents/nextcloud.md",
+ "mode": "subagent",
+ "hidden": false,
+ "scope": "Nextcloud (nextcloud.armada.do)",
+ "vivo_2026_10_01": "caddy:2 + nextcloud:fpm x2 + mariadb:10.11 + redis + cron Up 4w",
+ "live_check": "docker ps -f name=nextcloud en vps-preprod",
+ "upstream": {
+  "fuente": "Nextcloud (nextcloud.armada.do)",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+ },
+ "docs": [
+  "~/armada-sync/agents/nextcloud.md"
+ ],
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "name": "Nextcloud"
+}

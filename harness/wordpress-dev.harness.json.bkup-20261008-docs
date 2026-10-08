@@ -1,0 +1,82 @@
+{
+ "harness": "wordpress-dev",
+ "updated": "2026-10-05",
+ "agent_file": "~/armada-sync/agents/wordpress-dev.md",
+ "mode": "subagent",
+ "hidden": false,
+ "scope": "WordPress dev (kalimete) — stack WP 7.1.2 + plugin Armada Suite 5.2.0 (super-plugin unico en live) y su integracion con erpipos :8100 tenant 10",
+ "vivo_2026_10_05": "wordpress-local healthy Up 7h (WP 7.1.2, imagen 6.7-php8.3-apache) + wordpress-db (mariadb:10.11) healthy; plugin UNICO armada-suite 5.2.0; REST erpsuite/v1/ops 200 auth / 403 anon; ping-erp 200 ok (119ms, api_host 172.19.0.1, key_fp 0b0e33e7); catalogo via plugin 200/55 productos; regresion 14/14",
+ "live_check": "docker ps -f name=wordpress",
+ "checks": [
+  "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/",
+  "docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php",
+  "curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u \"admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)\" -o /dev/null -w '%{http_code}' \"https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status\""
+ ],
+ "upstream": {
+  "fuente": "WordPress dev (kalimete)",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+ },
+ "docs": [
+  "~/armada-sync/agents/wordpress-dev.md",
+  "~/dev/wordpress/CHANGELOG.md",
+  "~/dev/wordpress/export/DEPLOY-GUIA.md"
+ ],
+ "rutas_canonicas": {
+  "proyecto": "~/dev/wordpress/ (repo git propio — versiona el plugin; ~/Desktop/dev es solo symlink alias — nunca usar en docs)",
+  "artefactos_zip": "~/dev/wordpress/export/ (UNICA ruta; prohibido export/ top-level dentro del plugin; los export/ internos de SiteBackup son codigo y NO se excluyen)",
+  "plugin": "~/dev/wordpress/wp-content/plugins/armada-suite (Armada Suite 5.2.0 — super-plugin vendored; ya NO existe erp-commerce-suite/ como plugin separado)",
+  "secrets": "~/dev/wordpress/secrets/ (App Passwords, dir 700 file 600, gitignored, fuera del ZIP)",
+  "certs": "~/dev/wordpress/certs/ca-bundle.crt (mkcert, para curl https)",
+  "erp_local": "erpipos :8100 tenant 10 (ERP Dev; conexion del plugin en modo Local SELLADA en includes/Core/Environment.php: http://172.19.0.1:8100/api)"
+ },
+ "zip_5_2_0": {
+  "path": "~/dev/wordpress/export/armada-suite-5.2.0.zip",
+  "files": 498,
+  "bytes": 2194876,
+  "sha256": "b4e5348d30397e9b74ca1b2c1857a8b7b366aab7fb0297c5f60731aa41bc30b9",
+  "verificado": "sin .env/secrets/.bkup/.git; storage files presentes"
+ },
+ "auth": "REST = App Passwords (Basic). Activas user admin: mcp-kalimete-2026 + alfredo-ecomm (en secrets/, 600). Password de login NO sirve para REST (401). Receta rotacion: plaintext es $new[0] (NO $new[1]); escribir a /tmp dentro del contenedor + docker cp.",
+ "modulos_historicos": "Elementor 4.2.4 / EMCP Tools v3.16.1 / MCP Adapter v0.5.0 NO instalados en live (namespace mcp ausente). mcp-proxy.mod.js existe como archivo pero el bridge NO es funcional sin el plugin. Reinstalar solo por decision owner.",
+ "legacy_frozen": "Namespace erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, ERPSUITE_*, erp_suite_*/erpc_*, erpsuite/v1, shortcodes erpc_* — NO renombrar.",
+ "integracion_erp_2026_10_06": {
+  "fase_1": "VALIDADA: ping-erp 200 ok (119ms, key_fp 0b0e33e7), catalogo via plugin 200/55 productos, ZIP 5.2.0, App Password operativa, regresion 14/14",
+  "fase_2_consumida": "orders/{id} via ApiClient::get_order (tool ver_pedido); register con tenant_id=10 (compatible); checkout sin caja verificado e2e; /up monitoreo; WEBHOOKS ACTIVOS: endpoint http://wordpress-local/wp-json/erpsuite/v1/erp-webhook dado de alta en ERP (webhook_endpoints id=2, tenant 10, events order.created/stock.updated/price.updated) — e2e checkout->sent/200->WP flush_cache verificado",
+  "red_compartida": "wordpress-local unido a erpipo-dev-network (compose WP con .bkup-20261006-C2); WORDPRESS_DB_HOST=wordpress-db:3306 (container_name unico — `db` colisionaba con el db de erpipo y WP intentaba loguearse en la DB ajena: 1045)",
+  "fase_3_para_juan": "RECOMENDACIONES-FASE3-AGENTE.md pushed (95d17d8) + G6 (00a255e): ajusteInventario 500 siempre (notas sin ?? fuera del try + columna linea_negocio inexistente en almacen_movimientos)",
+  "contrato_vigente": "Local sellado http://172.19.0.1:8100/api, tenant 10, Bearer iak_* (44 chars), throttles 10/30/60, imagenes URL absoluta, total en meta.total (keys productos+meta)",
+  "changelog_repo_wp": "dd2f1d2 (2026-10-06) — estado integracion registrado en ~/dev/wordpress/CHANGELOG.md"
+ },
+ "feature_flags_2026_10_06": {
+  "clase": "includes/Core/Features.php — ArmadaSuite_Features::enabled() (cache solo valor guardado, padres frescos, filtro armada_suite_feature_enabled)",
+  "flags": "erp_sync, catalog, checkout, ai_chat, puente_ia, remote_ops, backups, legacy_logs (default ON) en erp_suite_settings[features]",
+  "commits": "f0d1572 (nucleo+tab Modulos) + d51aed4 (gates modulo) + 81c2ea5 (gates UX)",
+  "caso_guia": "WP solo-chat-IA sin ERP soportado (modo local)"
+ },
+ "admin_uniforme_2026_10_06": {
+  "sistema": "familia ai1wm en las 6 superficies (verde #27ae60, radius 3px, bordes #dcdcde, espanol, 0 marcas ajenas visibles, 0 inline styles)",
+  "commits": "52aa796 (core) + 084c0a6 (Puente IA pantallas) + eee8dca (AiBridge resto+CSS) + ef0642f (Registro IA+ERPC Logs al menu Armada) + e55ed39 (Panel restyle solo-CSS) + fd2cff0 (129 strings ServMask a espanol)",
+  "congelado": "text-domains, slugs, option keys, REST wpvibe/v1, clases/funciones, cabeceras GPL, die Kangaroos"
+ },
+ "agente_mixto_2026_10_06": {
+  "schema": "erp_suite_settings[agente]: modo mixto|erp_solo|local_solo, instrucciones_extra<=2000, tono, tools 8 toggles, mensaje_sin_erp, base_negocio 6 campos, memoria turnos 4-20 + recordar_cliente",
+  "commits": "2294e58 (schema+UI+sanitize+Guard) + 79ed47d (prompt componible+modo local+ver_pedido+leer_politicas — regresion 17) + b289ba1 (receptor webhooks+tarjeta Avanzado — regresion 19)",
+  "prompt": "PERSONALIDAD + 10 REGLAS intactas (test #4) + CONOCIMIENTO_LOCAL + HERRAMIENTAS filtradas por modo/toggles/ecomm",
+  "webhook_receiver": "POST erpsuite/v1/erp-webhook — HMAC body crudo + skew 300s + allowlist 4 eventos + flush_cache; 401/400/503; secreto 48ch auto-generado (NO en Guard editable)",
+  "llm_verificado": "modo local responde sin ERP (Qwen via victoria)"
+ },
+ "lecciones_cli_2026_10_06": [
+  "smokes CLI: requires a mano + wp-admin/includes/template.php (submit_button no existe en CLI)",
+  "smokes que tocan DB: SIEMPRE backup+restore de erp_suite_settings (un run muerto contamino la DB con erp_sync=0)",
+  "regresion por ruta de contenedor (por stdin __DIR__ no resuelve: 2 falsos FAIL)",
+  "exit codes: no pipear sin PIPESTATUS (tail enmascara); scripts terminan exit($fail)",
+  "Features: cache SOLO del valor guardado, padres frescos (filtro mid-request)",
+  "docker: container_name unico como DB host si hay redes compartidas (service name `db` colisiona)"
+ ],
+ "pendiente_release": "HECHO 2026-10-06: 5.3.0 (commit c084cdb) — bump header+define+readme, ZIP export/armada-suite-5.3.0.zip (2198973 bytes, sha256 6fbf47f8d03d5cdf6238e01efba9feafefb07511a263cad0b21919b9764099fc, sin bkup/secrets), CHANGELOG + DEPLOY-GUIA al dia, regresion 19/19",
+ "release_5_3_0": "2026-10-06 c084cdb: Fases A+B+C empaquetadas (flags, admin uniforme ai1wm en espanol, agente mixto con webhooks). Instalable desde export/armada-suite-5.3.0.zip.",
+ "changelog": "~/armada-sync/CHANGELOG.md",
+ "changelog_2026_10_06": "Cierre de seccion: integracion ERP registrada en CHANGELOG del repo WP (dd2f1d2) + doc/harness con estado Fase 1 validada + Fase 2 disponible.",
+ "changelog_2026_10_05": "Fase 1: regresion 14/14, commits 67ed6d4+be15cab, ZIP 5.2.0 canonico, App Password alfredo-ecomm creada+rotada (receta $new[0]), REST ops 200/403, ping-erp 200 ok, catalogo via plugin 55 productos. Doc reescrita: Armada Suite 5.2.0 super-plugin, Elementor/EMCP/MCP declarados historicos (no-live).",
+ "name": "WordPress"
+}

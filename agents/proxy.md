@@ -115,6 +115,11 @@ Cuando se agreguen más IPs al servidor, descomentar en `/etc/squid/squid.conf`:
 5. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio
 6. **Backup** de configs antes de modificar (`.bkup-YYYYMMDD`)
 7. **Documentar** en `/opt/proxy-configs/proxy-credenciales.txt` los usuarios activos
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar el proxy, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar directivas squid ni tocar la politica de filtros sin el owner.
+- **Squid** (usuarios, filtros de contenido, rate limiting, filedescriptors, vps-proxy 31.220.102.176): http://www.squid-cache.org/Doc/
+- **SOCKS5** (protocolo del servicio): https://www.rfc-editor.org/rfc/rfc1928
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: vps-proxy 31.220.102.176 (Squid :3128 + SOCKS5 :1080).

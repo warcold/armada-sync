@@ -76,6 +76,11 @@ ssh vps-preprod 'curl -s http://127.0.0.1:4000/api/health'
 4. Destructivo = confirmar con el usuario mostrando exactamente qué se elimina.
 5. Tras cada cambio: actualizar este archivo + `CHANGELOG.md`.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar PetSuite, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar endpoints de la API.
+- **Ledger del proyecto** (AGENTS.md del repo — API, DB, despliegue; el codigo manda).
+- **Caddy** (TLS pets.armada.do → petsuite:80): https://caddyserver.com/docs/
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: imagen local petsuite:v2 (pets.armada.do).

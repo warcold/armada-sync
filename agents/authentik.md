@@ -100,6 +100,10 @@ for p in OAuth2Provider.objects.all():
 1. **NUNCA** modificar configs sin backup (.bkup)
 2. **Siempre** verificar estado de los contenedores antes de asumir
 3. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar contra Authentik, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar flujos ni usar features de versiones no desplegadas.
+- **Authentik** (SSO auth.armada.do, usuarios, apps, flujos OIDC): https://docs.goauthentik.io/docs/
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: ghcr.io/goauthentik/server (auth.armada.do).

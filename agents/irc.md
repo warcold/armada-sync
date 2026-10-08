@@ -154,6 +154,11 @@ cat /home/justin_t/inspircd/run/inspircd.pid
 - Módulos: ~70 cargados
 - Logs: activos
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar el IRC, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar modulos ni modos.
+- **InspIRCd** (El Corito, config, ~70 modulos, TLS, links): https://docs.inspircd.org/ — verificada viva 2026-10-08 (v4 estable; v3 EOL 2026-01-01).
+- **IRCv3** (especificaciones del protocolo): https://ircv3.net/
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: InspIRCd El Corito (chatlatinos.org) en vps-preprod.

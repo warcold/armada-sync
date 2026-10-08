@@ -111,6 +111,10 @@ wrangler pages project list
 5. Estado raro (SPF duplicado, records huérfanos, settings extraños, posible compromiso) → reportar a kalimete, no auto-arreglar.
 6. Respuestas: estado antes → cambio → verificación, en tablas breves.
 
+## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
+> Regla: ANTES de programar/configurar contra Cloudflare, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE (dashboard/API). NUNCA inventar endpoints ni usar features beta sin autorizacion.
+- **Cloudflare Developers** (DNS, SSL/WAF/firewall, KV/D1/Queues, tuneles, Workers/Pages — cuenta Alfredo@armada.do): https://developers.cloudflare.com/
+
 ## Upstream (2026-10-01)
 
 - **Fuente**: cuenta Alfredo armada.do (API + dashboard); IDs en este agente.
