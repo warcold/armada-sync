@@ -1,5 +1,13 @@
 ## 2026-10-07
 
+### [22:35] - Preprod ERP sincronizado con PR #14 de Juan Carlos (dev/ecomm-erp → 7a4060f) + smoke E2E PASS
+- **Tipo**: infra | servicio | integración (TARGET=kalimete local; repo upstream soycarlosjerez-hub/sistema-facturacion)
+- **Modificado**: `~/dev/erpipo-preprod/code/sistema-facturacion` rama `dev/ecomm-erp` (pull 00a255e→7a4060f: merge PR #14 + commit "Update" de Juan — refactor ventas SaleService/SaleCancelService/SaleStockService, VentaController API+web, landing, migración corregida `almacen_id` nullable en venta_detalles, tests nuevos VentaAnulacionTest/VentaIndexTest)
+- **Afecta a**: erpipo-preprod (kalimete docker) + plugin Armada Suite 5.3.0 (consumidor del API)
+- **Causa**: validación de owner: confirmar que TODO nuestro trabajo (Fase 2 ecomm 9 commits + docs RECOMENDACIONES-FASE2/FASE3 + G6) llegó a Juan Carlos → verificado: PR #14 MERGED hoy 20:10, nada pendiente de push (ahead 0); faltaba traer los 2 commits nuevos del remoto
+- **Estado**: ✅ verificado E2E: schema `venta_detalles.almacen_id` nullable (IS_NULLABLE=YES, coincide con migración corregida — sin mutación de DB requerida); housekeeping composer dump-autoload + view:clear + queue:restart (worker Up 16min con código nuevo); smoke: ERP `/up` ok db+redis, `tienda/config` 200 tenant 10 MaganTech, ping-erp desde plugin POST admin → 200 ok:true 182ms key_fp 0b0e33e7, home + /productos/ renderizan, rutas Fase 2 (`orders/{id}`) registradas, admin-ajax catálogo protegido por nonce (CSRF OK)
+- **Notas**: el -1 de admin-ajax sin nonce = check_ajax_referer funcionando (no es bug). Los tests nuevos de Juan no se corren en preprod (su CI). Plugin 5.3.0 listo para adoptar Fase 2 (orders/{id}, checkout sin caja, /up, webhooks) — ya materializada en main del ERP.
+
 ### [01:25] - Granja de contenido de victoria documentada (Victoria Server + Godot + skills art/voice-video)
 - **Tipo**: docs/agentes (autorización del owner; TARGET=kalimete verificado; victoria SOLO lectura)
 - **Modificado**: `agents/victoria-server.md` (sección "Generar contenido desde kalimete": art API 3 templates, TTS/STT :18810, video-server :18811, Sonic :18850 + constraint rutas locales, VLM; fixes deriva: dashboard 18789→**18800** live 2026-10-05, driver →**580.178.04**), `agents/godot-dev.md` (sección "Assets desde Victoria" + fix paths `armada-godot`→`mario-bros`/`armada-starfox` + nota MCP un-proyecto-a-la-vez), `harness/{victoria-server,godot-dev}.harness.json`, `skills/voice-video/SKILL.md` (NUEVO: TTS/STT/video-server/Sonic), `~/dev/godot/mario-bros/AGENTS.md` (pipeline en Decisiones), `~/dev/godot/armada-starfox/AGENTS.md` (ledger NUEVO — antes no tenía)
