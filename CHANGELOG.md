@@ -1,3 +1,13 @@
+## 2026-10-08
+
+### [10:20] - Sync bidireccional con Juan: su renta-vehículos traído (merge+16 migraciones) — nuestra Fase 3 sigue pendiente de su PR
+- **Tipo**: sync | infra | servicio (TARGET=kalimete; upstream soycarlosjerez-hub/sistema-facturacion)
+- **Modificado**: ERP `dev/ecomm-erp` — merge `2306b64` de origin/main (bd1a879 de Juan: módulo renta de vehículos, 116 archivos, 8 sub-reportes) + push `8ae9bb2..2306b64`; preprod: 16 migraciones renta aplicadas (5 alter + 10 create + 1 constraint tenant_id, todas DONE), autoload+view:clear+queue:restart
+- **Afecta a**: erpipo preprod (kalimete) — módulo renta inerte sin seeders (tenant 10 MaganTech es tienda; seeders de Juan NO corridos, documentado)
+- **Causa**: pedido del owner — validar si Juan integró nuestra Fase 3 (NO aún: sin PR #15, se la enviamos anoche) y traer lo nuevo de él (bd1a879 en main, hoy 08:47)
+- **Estado**: ✅ smoke PASS: /up ok db+redis, 0 migraciones pending, 5 rutas Fase 3 vivas (cancel + webhook-endpoints), ping-erp 200 (178ms, key_fp 0b0e33e7); merge sin conflictos (renta no toca ecomm/webhooks)
+- **Notas**: todo a la par salvo el PR de Juan: dev/ecomm-erp = main + Fase 3 + merge. Juan solo: review → PR → queue:restart (sin migrate extra, ya documentado). Seeders renta (ModuloSeeder/PermissionSeeder instance 14) quedan sin correr en preprod — correr si se quiere el catálogo renta visible.
+
 ## 2026-10-07
 
 ### [23:55] - Fase 3 ERP implementada y enviada a Juan (G1+G2+G3+G4+G6 vía dev/ecomm-erp) + limpieza export/ plugin
