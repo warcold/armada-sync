@@ -13,7 +13,7 @@
   "host": "kalimete",
   "ip": "10.0.0.106",
   "rol": "desarrollo + ethical",
-  "scope_agentes": "18 subagentes con NOMBRES REALES (Alfredo Ecomm, Authentik, Cloudflare, DocuSeal, IRC, Nextcloud, PetSuite, Proxy, Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, Woodly, ERP Dev, Godot, Proxmark, WordPress) — visibles en @ (hidden:false)"
+  "scope_agentes": "19 subagentes con NOMBRES REALES (Armada Arcade, Alfredo Ecomm, Authentik, Cloudflare, DocuSeal, IRC, Nextcloud, PetSuite, Proxy, Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, Woodly, ERP Dev, Godot, Proxmark, WordPress) — visibles en @ (hidden:false)"
  },
  "hermanos": {
   "victoria": {
@@ -121,6 +121,8 @@
    "scope": "Woodly (woodly.armada.do)",
    "hidden": false
   },
+  {
+   "name": "Armada Arcade",
   {
    "name": "ERP Dev",
    "id": "erp-dev",
