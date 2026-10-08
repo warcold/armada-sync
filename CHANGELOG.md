@@ -1,5 +1,13 @@
 ## 2026-10-08
 
+### [12:35] - Plugin Armada Suite 5.3.1: simplificación admin implementada (D1+D2+P1+P2+P3) + ZIP canónico
+- **Tipo**: release | refactor-ui | wordpress-dev (TARGET=kalimete local; repo wordpress sin remoto)
+- **Modificado**: `~/dev/wordpress` commit `819c7e1` (9 archivos, +707/-274): LLM unificado (Puente IA solo-lectura), tab Negocio nuevo, Asistente IA en 3 forms, MCP→Estado del sistema, labels claros, espejo api_key marcado legacy; `export/armada-suite-5.3.1.zip` (2.201.803 bytes, sha256 `d018a73b…3d8bd`); DEPLOY-GUIA + CHANGELOG wordpress al día
+- **Afecta a**: wordpress-local (kalimete :8091, plugin 5.3.1 instalado y verificado en vivo)
+- **Causa**: pedido del owner — auditoría previa halló 2 duplicados funcionales (D1 credenciales LLM, D2 datos negocio) + tab MCP sin campos + técnicos sin colapsar
+- **Estado**: ✅ php-l 6/6 + render vivo sin fatal + ZIP verificado (versión 5.3.1 en header/define); rollback N-1: 5.3.0
+- **Notas**: detectado y eliminado `includes/includes/` duplicado (artefacto docker cp en bind-mount) antes de empaquetar; trabajo delegado a subagente WordPress (4 sesiones por límite de pasos), cierre directo por kalimete.
+
 ### [10:20] - Sync bidireccional con Juan: su renta-vehículos traído (merge+16 migraciones) — nuestra Fase 3 sigue pendiente de su PR
 - **Tipo**: sync | infra | servicio (TARGET=kalimete; upstream soycarlosjerez-hub/sistema-facturacion)
 - **Modificado**: ERP `dev/ecomm-erp` — merge `2306b64` de origin/main (bd1a879 de Juan: módulo renta de vehículos, 116 archivos, 8 sub-reportes) + push `8ae9bb2..2306b64`; preprod: 16 migraciones renta aplicadas (5 alter + 10 create + 1 constraint tenant_id, todas DONE), autoload+view:clear+queue:restart
