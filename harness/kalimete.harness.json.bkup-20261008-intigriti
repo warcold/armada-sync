@@ -1,6 +1,6 @@
 {
   "harness": "kalimete",
-  "updated": "2026-10-08",
+  "updated": "2026-10-01",
   "principal": {
     "name": "kalimete",
     "file": "~/armada-sync/agents/kalimete.md",
@@ -13,7 +13,7 @@
     "host": "kalimete",
     "ip": "10.0.0.106",
     "rol": "desarrollo + ethical",
-    "scope_agentes": "19 subagentes con NOMBRES REALES (Alfredo Ecomm, Authentik, Cloudflare, DocuSeal, IRC, Intigriti, Nextcloud, PetSuite, Proxy, Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, Woodly, ERP Dev, Godot, Proxmark, WordPress) — visibles en @ (hidden:false)"
+    "scope_agentes": "18 subagentes con NOMBRES REALES (Alfredo Ecomm, Authentik, Cloudflare, DocuSeal, IRC, Nextcloud, PetSuite, Proxy, Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, Woodly, ERP Dev, Godot, Proxmark, WordPress) — visibles en @ (hidden:false)"
   },
   "hermanos": {
     "victoria": {
@@ -147,13 +147,6 @@
       "id": "wordpress-dev",
       "file": "wordpress-dev.md",
       "scope": "WordPress dev (kalimete)",
-      "hidden": false
-    },
-    {
-      "name": "Intigriti",
-      "id": "intigriti",
-      "file": "intigriti.md",
-      "scope": "Bug bounty Intigriti (~/dev/ethical-hacking) — CoC+T&C estrictos, no-destructivo",
       "hidden": false
     }
   ],

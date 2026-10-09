@@ -1,0 +1,39 @@
+{
+  "harness": "intigriti",
+  "updated": "2026-10-08",
+  "agent_file": "~/armada-sync/agents/intigriti.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Bug bounty Intigriti (~/dev/ethical-hacking, kalimetehunt.sh) — PII leaks, priv esc, SQLi, Log4Shell; no-destructivo",
+  "vivo_2026_10_08": "proyecto existe (kalimetehunt.sh 364 líneas, dirs recon/scanning/exploitation/reports); tools por verificar",
+  "live_check": "cd ~/dev/ethical-hacking && ls kalimetehunt.sh && command -v nuclei subfinder httpx",
+  "upstream": {
+    "fuente": "Intigriti bug bounty platform (app.intigriti.com)",
+    "nota": "LIVE manda; scope del programa se lee en la plataforma ANTES de testear; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/intigriti.md"
+  ],
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "name": "Intigriti",
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "nombre": "Intigriti Community Code of Conduct",
+        "url": "https://go.intigriti.com/coc",
+        "contenido_clave": "scope estricto, no intrusive testing, PII mínimo, pivoting=parar, 48h report, AI disclosure, confidencialidad total"
+      },
+      {
+        "nombre": "Intigriti Researcher Terms & Conditions",
+        "url": "https://go.intigriti.com/tac",
+        "contenido_clave": "prohibited actions (no DoS/SE/malware/writes), GDPR art.10, confidencialidad, liability"
+      },
+      {
+        "nombre": "Intigriti platform (programas y scope)",
+        "url": "https://app.intigriti.com",
+        "contenido_clave": "scope/Program Conditions por programa — fuente única de qué está autorizado"
+      }
+    ]
+  }
+}
