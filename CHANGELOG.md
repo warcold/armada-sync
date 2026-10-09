@@ -1,4 +1,12 @@
 ## 2026-10-08
+### [23:55] - Nuevo subagente Intigriti (bug bounty, proyecto ~/dev/ethical-hacking) + auditoría de flota limpia
+- **Tipo**: agente | flota | seguridad (TARGET=kalimete local)
+- **Modificado**: `agents/intigriti.md` (NUEVO, temp 0.1, steps 30, edit/write deny + bash/webfetch allow) + symlink `~/.config/opencode/agent/intigriti.md` + `harness/intigriti.harness.json` (NUEVO) + `harness/kalimete.harness.json` (subagentes 18→19, scope_agentes) + `agents/kalimete.md` (frontmatter permission.task +Intigriti, counts 18→19, tabla subagentes, infra 0.1, harness central+20, label 20 hijos) + `MAPA.md` (fila intigriti); backups .bkup-20261008-intigriti en kalimete.md/harness central/MAPA.md
+- **Afecta a**: kalimete (nueva delegación posible), flota 18→19 subagentes
+- **Causa**: pedido del owner — agente experto en Intigriti para ethical-hacking, enfocado en PII leaks, priv esc horizontal/vertical, SQLi, Log4Shell, SIN ROMPER NADA
+- **Estado**: ✅ CoC (go.intigriti.com/coc, v2026-03-09) + Researcher T&C (go.intigriti.com/tac, v2023-08-21) leídos completos e incorporados como reglas duras del agente (scope primero, no-DoS, PII mínimo, pivoting=parar, 48h, AI disclosure, confidencialidad); auditoría previa de flota: 19/19 harness JSON válidos, symlinks OK, temperaturas conformes, git limpio
+- **Notas**: el agente NUNCA sube submits a la plataforma (prepara el report, el usuario lo sube); tools del framework (nuclei/subfinder/etc.) pendientes de verificación en vivo; flags no-destructivos documentados por herramienta (sqlmap sin --dump, nuclei -rl 10, ffuf -rate 50)
+
 ### [20:05] - Uplift flota: Docs oficiales en 19 agent files + docs_oficiales en 19 harnesses (aplicado por Victoria, autorizacion del owner)
 - **Tipo**: docs | flota | victoria-cross (TARGET=kalimete, hostname verificado; autorizacion expresa del owner 2026-10-08)
 - **Modificado**: ~/armada-sync/agents/*.md (19/19: seccion Docs oficiales antes de Upstream; kalimete.md ademas +Upstream que faltaba) + ~/armada-sync/harness/*.json (19/19: bloque docs_oficiales); backups .bkup-20261008-docs por archivo; /tmp limpio

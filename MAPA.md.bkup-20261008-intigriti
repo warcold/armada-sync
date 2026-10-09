@@ -189,7 +189,6 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
 | godot-dev | Juegos Godot 4.x + MCP 386 tools | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
-| intigriti | Bug bounty Intigriti (~/dev/ethical-hacking, kalimetehunt.sh) — NUEVO (2026-10-08) | ✅ |
 | eco-accesos | ~~SSH/access management~~ | 🔴 roto (symlink sin target) |
 | eco-voice | ~~Voz/STT/TTS~~ | 🔴 roto (servicio ELIMINADO) |
 
