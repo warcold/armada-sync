@@ -1,3 +1,12 @@
+## 2026-10-09
+### [00:50] - Sistema Victoria: rename BillyCode→Victoria + Overlay Electron con avatar caminando sobre el taskbar
+- **Tipo**: servicio | proyecto (TARGET=kalimete local)
+- **Modificado**: `~/dev/billycode` → `~/dev/victoria` (rename completo: folder, scripts vcc-*→victoria-*, docs/vcc→docs/victoria-docs, TODAS las refs BillyCode/VCC/vcc→Victoria/victoria en código+docs, endpoints /vcc/*→/victoria/*, env VCC_*→VICTORIA_*, package @vcc/server→@victoria/server); NUEVO `apps/overlay/` (Electron 33 + sprites): main.js (ventana transparente alwaysOnTop screen-saver, skipTaskbar, focusable:false, click-through forward:true), preload.js, index.html (escena CSS 3D, avatar 170x260px, burbuja, chatbox, modal D7, toast), renderer.js (máquina de estados idle/walk/listen/think/talk/work, caminata infinita con bobbing+flip, pass-through por hover, WS voz /victoria/voice con downsample 48k→16k, WS stream /victoria/stream, chat POST /victoria/chat, aprobaciones POST /victoria/approve, poll approvals 5s); assets: 5 PNG de ~/Documents/Victoria con fondo removido (flood-fill luminance, PIL); launcher `scripts/victoria-overlay.sh` + `~/.local/share/applications/victoria-overlay.desktop`; AGENTS.md del proyecto actualizado; readme.txt temporal eliminado
+- **Afecta a**: kalimete (nuevo servicio overlay + rename del proyecto; sin tocar opencode config ni armada-sync agents)
+- **Causa**: pedido del owner — un solo sistema unificado bajo el nombre Victoria, con avatar humanoide overlay que camina sobre el taskbar, control de PC vía opencode con aprobación previa de acciones destructivas
+- **Estado**: ✅ verificado en vivo: serve :4096 UP (v1.18.35), backend :8931 UP (health ok, primary kalimete, voz qwen3 TTS+STT ok), overlay corriendo (Electron 33.4.11, transparencia confirmada por análisis de screenshot: 565 colores taskbar visibles + 1549 px sprite Victoria), chat E2E OK (conv creada, respuesta stream, state idle), sintaxis JS OK, sin errores en logs
+- **Notas**: atajo global Ctrl+Shift+V oculta/muestra a Victoria; pendientes: modelo glTF real (sprites por ahora), wake word hands-free, git init del repo; kalimete-ptt sigue intacto (retiro solo tras confirmación del owner)
+
 ## 2026-10-08
 ### [23:55] - Nuevo subagente Intigriti (bug bounty, proyecto ~/dev/ethical-hacking) + auditoría de flota limpia
 - **Tipo**: agente | flota | seguridad (TARGET=kalimete local)
