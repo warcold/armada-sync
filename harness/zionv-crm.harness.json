@@ -5,7 +5,7 @@
   "mode": "subagent",
   "hidden": false,
   "scope": "ZionV CRM dev (kalimete) — stack WP 6.7-php8.3-apache + plugin ZionV CRM 1.53.1 (CRM independiente con React/Vite, 28+ REST controllers, Google Calendar, automatizaciones), completamente aislado de Armada Suite (8091)",
-  "vivo_2026_10_13": "zionv-local + zionv-db healthy; plugin 1.54.0 activo; migraciones DB 1.23.0 (ms365_connection + ms365_event_id auto-aplicadas); permalinks pretty; login e2e OK (302 → /crm/dashboard/ → SPA 200); página Estado del sistema (wp-admin) renderiza 5 tabs (Diagnóstico/Correo/Google/MS365/IA); REST nuevos settings/ai + settings/ms365 + ms365/status (401 sin nonce = seguro); IA e2e contra Victoria vLLM: test 29ms lista Qwen3.6 + chat real responde; curl interno host TLS 200 (CA dual); WP-CLI 2.12.0 persistente; GitHub privado warcold/zionv-crm al día (ffde9a7); ZIP producción export/zionv-crm-1.54.0.zip (7.3MB, sha256 0fa5769c…)",
+  "vivo_2026_10_13": "zionv-local + zionv-db healthy; plugin 1.55.0 activo; migraciones DB 1.24.0 (nextcloud_event_id auto-aplicada); permalinks pretty; login e2e OK (302 → /crm/dashboard/ → SPA 200); página Estado del sistema (wp-admin) renderiza 7 tabs (Diagnóstico/Correo/Google/MS365/Nextcloud/HubSpot/IA) + selector de proveedor de calendario; REST settings/nextcloud + settings/hubspot (401 sin nonce = seguro); IA configurada con Victoria PUBLIC https://victoria.armada.do/v1 (212ms, Qwen3.6); acción automatización ai_prompt e2e OK (variables reemplazadas + respuesta LLM real); curl interno host TLS 200 (CA dual); WP-CLI 2.12.0 persistente; GitHub privado warcold/zionv-crm al día (44596ba); ZIP producción export/zionv-crm-1.55.0.zip (7.3MB, sha256 b3edf46f…)",
   "live_check": "docker ps --filter name=zionv",
   "checks": [
     "curl -s -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/crm/dashboard/  (302 sin sesión = correcto)",
@@ -52,13 +52,13 @@
     "ssl": "/etc/ssl/local-certs/zionv.kalimete.local.{crt,key} (mkcert, expira 2029-01-13, firmado por CA de ROOT — ver lecciones)"
   },
   "plugin": {
-    "version": "1.54.0",
-    "db_version": "1.23.0",
-    "modulos": "Contacts, Companies, Opportunities, Pipelines, Proposals, Bookings, Forms, Automations, Emails, Tasks, Training, Reports, Dashboard, Activities, Timeline, Notifications, Audit, DataTools, Elementor, GoogleCalendar, Ms365 (NUEVO 1.54.0), Ai (NUEVO 1.54.0)",
+    "version": "1.55.0",
+    "db_version": "1.24.0",
+    "modulos": "Contacts, Companies, Opportunities, Pipelines, Proposals, Bookings, Forms, Automations, Emails, Tasks, Training, Reports, Dashboard, Activities, Timeline, Notifications, Audit, DataTools, Elementor, GoogleCalendar, Ms365, Nextcloud (NUEVO 1.55.0), Hubspot (NUEVO 1.55.0), Ai",
     "composer_deps": "dompdf/dompdf, phpoffice/phpspreadsheet, woocommerce/action-scheduler (vendor/ en git)",
-    "rest": "zion-crm/v1/* — 30+ controllers; NUEVOS 1.54.0: settings/ai (+test), ai/chat (proxy server-side), settings/ms365, ms365/status, ms365/test",
+    "rest": "zion-crm/v1/* — 34+ controllers; NUEVOS 1.55.0: settings/nextcloud (+test), settings/hubspot (+test)",
     "spa": "/crm/ (AppShell + React Router, bundle assets/dist/admin/), reservaciones públicas /reservar/{slug}/, formularios públicos por shortcode",
-    "integraciones_1_54_0": "SMTP con presets + test de envío; Google Calendar OAuth; Microsoft 365 (Azure AD + Graph, sync paralelo); Asistente IA OpenAI-compat (base_url+key cifrada+modelo; Victoria vLLM verificado 29ms); TODO configurable desde wp-admin → Zion CRM → Estado del sistema (PHP clásico, sin depender del SPA React)",
+    "integraciones_1_55_0": "SMTP con presets + test; Google Calendar OAuth; Microsoft 365 (Azure AD + Graph + enlace Teams); Nextcloud CalDAV (self-hosted, app password cifrada, UID determinista); HubSpot CRM-to-CRM (upsert contactos por email + deals por zioncrm_opportunity_id, push por hooks, no bloqueante); Asistente IA OpenAI-compat (ACTIVO con Victoria PUBLIC victoria.armada.do/v1, 212ms); selector calendar_provider (all|google|ms365|nextcloud|none); acción automatización ai_prompt (variables + nota en timeline); TODO configurable desde wp-admin → Zion CRM → Estado del sistema (7 tabs)",
     "instalacion_remota": "ZIP por wp-admin → Plugins → Subir plugin → Activar. Auto: migraciones + roles + permalinks (si faltan) + aviso de bienvenida. Ver DEPLOY-GUIA.md del repo"
   },
   "auth": "WP-Admin: admin/admin123 (solo dev local). REST: cookie+nonce (SPA) o Application Passwords (pendiente crear la primera si se necesita acceso externo).",
