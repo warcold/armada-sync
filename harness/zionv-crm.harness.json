@@ -5,7 +5,7 @@
   "mode": "subagent",
   "hidden": false,
   "scope": "ZionV CRM dev (kalimete) — stack WP 6.7-php8.3-apache + plugin ZionV CRM 1.53.1 (CRM independiente con React/Vite, 28+ REST controllers, Google Calendar, automatizaciones), completamente aislado de Armada Suite (8091)",
-  "vivo_2026_10_13": "zionv-local + zionv-db healthy; plugin 1.55.2 activo; migraciones DB 1.24.0; permalinks pretty; login e2e OK; Estado del sistema 5 tabs (Diagnóstico/Correo/Calendario unificada/HubSpot/IA) todas 200; banner puente en /crm/configuracion/ con links a calendario/hubspot/ia (la SPA React original conserva sus tabs General/Antispam/SMTP/Google Calendar — compiladas, no modificables sin source); IA con Victoria PUBLIC victoria.armada.do/v1 (212ms); acción ai_prompt e2e OK; GitHub warcold/zionv-crm al día (49b5756); ZIP export/zionv-crm-1.55.2.zip (sha256 e857046c…)",
+  "vivo_2026_10_13": "zionv-local + zionv-db healthy; plugin 1.56.0 activo; migraciones DB 1.24.0; permalinks pretty; UNA sola configuración: /crm/configuracion/ sirve CrmSettingsPage con look del CRM y 6 tabs (General/Antispam/Correo/Calendario/HubSpot/IA) — POST guarda y redirige al CRM (verificado), dashboard SPA intacto, bundle parcheado con tools/patch-config-route.sh (marker __zionCfgUnified, sidebar recarga hacia la unificada, banner solo como fallback sin parche); Estado del sistema wp-admin queda como diagnóstico; IA con Victoria PUBLIC (212ms); acción ai_prompt e2e OK; GitHub warcold/zionv-crm al día (bc03874); ZIP export/zionv-crm-1.56.0.zip (sha256 1bdfd252…)",
   "live_check": "docker ps --filter name=zionv",
   "checks": [
     "curl -s -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/crm/dashboard/  (302 sin sesión = correcto)",
@@ -52,14 +52,14 @@
     "ssl": "/etc/ssl/local-certs/zionv.kalimete.local.{crt,key} (mkcert, expira 2029-01-13, firmado por CA de ROOT — ver lecciones)"
   },
   "plugin": {
-    "version": "1.55.2",
+    "version": "1.56.0",
     "db_version": "1.24.0",
     "modulos": "Contacts, Companies, Opportunities, Pipelines, Proposals, Bookings, Forms, Automations, Emails, Tasks, Training, Reports, Dashboard, Activities, Timeline, Notifications, Audit, DataTools, Elementor, GoogleCalendar, Ms365, Nextcloud (NUEVO 1.55.0), Hubspot (NUEVO 1.55.0), Ai",
     "composer_deps": "dompdf/dompdf, phpoffice/phpspreadsheet, woocommerce/action-scheduler (vendor/ en git)",
     "rest": "zion-crm/v1/* — 34+ controllers; NUEVOS 1.55.0: settings/nextcloud (+test), settings/hubspot (+test)",
     "spa": "/crm/ (AppShell + React Router, bundle assets/dist/admin/), reservaciones públicas /reservar/{slug}/, formularios públicos por shortcode",
     "integraciones_1_55_0": "SMTP con presets + test; Google Calendar OAuth; Microsoft 365 (Azure AD + Graph + Teams links); Nextcloud CalDAV (self-hosted); HubSpot CRM-to-CRM (upsert contactos/deals); Asistente IA OpenAI-compat (Victoria PUBLIC activa); selector calendar_provider; acción automatización ai_prompt; TODO en wp-admin → Zion CRM → Estado del sistema — tab Calendario unificada (selector + 3 proveedores como secciones con el mismo estilo CSS)",
-    "instalacion_remota": "ZIP por wp-admin → Plugins → Subir plugin → Activar. Auto: migraciones + roles + permalinks (si faltan) + aviso de bienvenida. Ver DEPLOY-GUIA.md del repo"
+    "instalacion_remota": "ZIP por wp-admin → Plugins → Subir plugin → Activar. Auto: migraciones + roles + permalinks + aviso de bienvenida. El bundle del panel va YA parcheado en el ZIP (configuración unificada activa). Ver DEPLOY-GUIA.md"
   },
   "auth": "WP-Admin: admin/admin123 (solo dev local). REST: cookie+nonce (SPA) o Application Passwords (pendiente crear la primera si se necesita acceso externo).",
   "legacy_frozen": "Namespace ZionCrm\\ (PSR-4), constantes ZIONV_CRM_*/ZION_CRM_*, options zion_crm_*, tablas zion_{prefix}zion_crm_*, REST zion-crm/v1, text-domain zionv-crm/zion-crm, rutas /crm/ y /reservar/ — NO renombrar.",
