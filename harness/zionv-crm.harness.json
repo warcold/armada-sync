@@ -4,58 +4,76 @@
   "agent_file": "~/armada-sync/agents/zionv-crm.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "ZionV CRM dev (kalimete) — stack WP 6.7-php8.3-apache + plugin ZionV CRM 1.53.1 (CRM independiente con React/Vite, 28+ REST endpoints, Google Calendar, automatizaciones), completamente aislado de Armada Suite",
-  "vivo_2026_10_13": "zionv-local + zionv-db containers corriendo (docker-compose up -d), puerto 8092 activo, puerto DB 3308, nginx conf lista pero por desplegar, mkcert pendiente",
+  "scope": "ZionV CRM dev (kalimete) — stack WP 6.7-php8.3-apache + plugin ZionV CRM 1.53.1 (CRM independiente con React/Vite, 28+ REST controllers, Google Calendar, automatizaciones), completamente aislado de Armada Suite (8091)",
+  "vivo_2026_10_13": "zionv-local + zionv-db healthy; plugin 1.53.1 activo; migraciones DB 1.21.0 aplicadas (tablas zionv_zion_crm_*); permalinks pretty /%postname%/ (requisito del plugin); login e2e OK (302 → /crm/dashboard/ → SPA 200 con bundle React index-cdQZuApB.js); REST 200; curl interno al host TLS 200 (CA dual mkcert en bundle 142 certs); WP-CLI 2.12.0 persistente montado; GitHub privado warcold/zionv-crm con import inicial",
   "live_check": "docker ps --filter name=zionv",
   "checks": [
-    "curl -s -o /dev/null -w '%{http_code}' http://localhost:8092/",
-    "docker exec zionv-local wp plugin list --allow-root",
-    "curl -sI http://localhost:8092/wp-login.php"
+    "curl -s -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/crm/dashboard/  (302 sin sesión = correcto)",
+    "docker exec zionv-local wp option get zion_crm_db_version --allow-root  (1.21.0)",
+    "docker exec zionv-local wp option get permalink_structure --allow-root  (/%postname%/)",
+    "docker exec zionv-local curl -s -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/  (200)"
   ],
   "upstream": {
-    "fuente": "ZionV CRM (kalimete) — stack WP 6.7-php8.3-apache + mariadb:10.11",
+    "fuente": "ZionV CRM (kalimete) — stack WP 6.7-php8.3-apache + mariadb:10.11; plugin en GitHub privado warcold/zionv-crm",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
   },
   "docs": [
     "~/armada-sync/agents/zionv-crm.md",
-    "~/dev/zionv-crm/zionv-crm.zip"
+    "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/README.md",
+    "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/CHANGELOG.md"
   ],
   "rutas_canonicas": {
-    "proyecto": "~/dev/zionv-crm/ (repo git propio — versiona el plugin)",
-    "plugin": "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/",
-    "secrets": "~/dev/zionv-crm/secrets/ (App Passwords, dir 700 file 600, gitignored, fuera del ZIP)",
-    "certs": "~/dev/zionv-crm/certs/ (mkcert, para curl https)",
-    "zip_origen": "~/dev/zionv-crm/zionv-crm.zip (ZIP original del plugin, versionado)"
+    "proyecto": "~/dev/zionv-crm/ (stack: compose + nginx conf + certs + bin)",
+    "plugin": "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/ (repo git propio → GitHub privado warcold/zionv-crm, rama main)",
+    "secrets": "~/dev/zionv-crm/secrets/ (App Passwords, dir 700 file 600, gitignored)",
+    "certs": "~/dev/zionv-crm/certs/ca-bundle-full.crt (142 certs: 140 Debian + mkcert warcold + mkcert root — montado en el contenedor)",
+    "wp_cli": "~/dev/zionv-crm/bin/wp-cli.phar (montado ro en /usr/local/bin/wp — persistente)",
+    "zip_origen": "~/dev/zionv-crm/zionv-crm.zip (ZIP original del plugin)"
+  },
+  "github_repo": {
+    "url": "https://github.com/warcold/zionv-crm",
+    "visibility": "PRIVATE",
+    "branch": "main",
+    "contenido": "plugin completo con vendor/ (deploy directo), README.md, CHANGELOG.md (70 versiones 1.0.0→1.53.1), .gitignore",
+    "import": "2026-10-13, 1642 archivos, commit 'ZionV CRM 1.53.1 — import inicial del plugin'"
   },
   "docker": {
-    "compose": "~/dev/zionv-crm/docker-compose.yml",
+    "compose": "~/dev/zionv-crm/docker-compose.yml (con .bkup-20261013-mejoras)",
     "contenedor_wp": "zionv-local (wordpress:6.7-php8.3-apache, puerto 8092:80)",
     "contenedor_db": "zionv-db (mariadb:10.11, puerto 3308:3306)",
     "red": "zionv-net (bridge)",
-    "vars_db": "DB=zionv_crm, user=zionv_user, pass=zionv_pass_2026",
-    "perm": "plain (index.php?rest_route=)"
+    "vars_db": "DB=zionv_crm, user=zionv_user, prefijo tablas zionv_",
+    "extra_hosts": "zionv.kalimete.local:host-gateway (contenedor resuelve su propio host TLS)",
+    "perm": "PRETTY /%postname%/ — OBLIGATORIO para el plugin (rewrite /crm/ y /reservar/)"
   },
   "nginx": {
     "config": "~/dev/zionv-crm/zionv.kalimete.local.conf",
-    "deploy_cmd": "sudo cp zionv.kalimete.local.conf /etc/nginx/sites-available/ && sudo ln -sf /etc/nginx/sites-available/zionv.kalimete.local /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx",
-    "ssl_cmd": "mkcert -cert-file /etc/ssl/local-certs/zionv.kalimete.local.crt -key-file /etc/ssl/local-certs/zionv.kalimete.local.key zionv.kalimete.local localhost 127.0.0.1"
+    "deploy": "/etc/nginx/sites-available/zionv.kalimete.local → sites-enabled (nginx -t OK, reload OK)",
+    "ssl": "/etc/ssl/local-certs/zionv.kalimete.local.{crt,key} (mkcert, expira 2029-01-13, firmado por CA de ROOT — ver lecciones)"
   },
   "plugin": {
     "version": "1.53.1",
     "db_version": "1.21.0",
-    "modulos": "Contacts, Companies, Opportunities, Pipelines, Proposals, Bookings, Forms, Automations, Emails, Tasks, Training, Reports, Dashboard, Activities, Timeline, Notifications, Audit, Data Tools, Elementor, Google Calendar",
-    "composer_deps": "dompdf/dompdf, phpoffice/phpspreadsheet, woocommerce/action-scheduler",
-    "rest_endpoints": "28+ registrados en Plugin::register_rest_routes()"
+    "modulos": "Contacts, Companies, Opportunities, Pipelines, Proposals, Bookings, Forms, Automations, Emails, Tasks, Training, Reports, Dashboard, Activities, Timeline, Notifications, Audit, DataTools, Elementor, GoogleCalendar",
+    "composer_deps": "dompdf/dompdf, phpoffice/phpspreadsheet, woocommerce/action-scheduler (vendor/ en git)",
+    "rest": "zion-crm/v1/* — 28+ controllers registrados en Plugin::register_rest_routes()",
+    "spa": "/crm/ (AppShell + React Router, bundle assets/dist/admin/), reservaciones públicas /reservar/{slug}/, formularios públicos por shortcode"
   },
-  "auth": "REST = App Passwords (Basic). Configurar nuevo user admin en instalación. Password de login NO sirve para REST (401).",
-  "modulos_historicos": "Ninguno — plugin fresco, sin módulos históricos removidos.",
-  "legacy_frozen": "Namespace zionv_crm CONGELADO: slug zionv-crm, constantes ZIONV_CRM_*/ZION_CRM_*, options zion_crm_*/zionv_crm_*, REST zionv-crm/*, text-domain zionv-crm — NO renombrar.",
+  "auth": "WP-Admin: admin/admin123 (solo dev local). REST: cookie+nonce (SPA) o Application Passwords (pendiente crear la primera si se necesita acceso externo).",
+  "legacy_frozen": "Namespace ZionCrm\\ (PSR-4), constantes ZIONV_CRM_*/ZION_CRM_*, options zion_crm_*, tablas zion_{prefix}zion_crm_*, REST zion-crm/v1, text-domain zionv-crm/zion-crm, rutas /crm/ y /reservar/ — NO renombrar.",
+  "lecciones_2026_10_13": [
+    "permalinks PRETTY son requisito duro del plugin: con plain, /crm/ no existe y el menú admin manda al home (bug reportado por el owner, fix = permalink_structure /%postname%/ + wp rewrite flush)",
+    "CA dual mkcert en kalimete: certs generados con 'sudo mkcert' los firma /root/.local/share/mkcert/rootCA.pem (OU=root@victoria), NO el de warcold; el bundle del contenedor necesita AMBOS CAs o curl interno da 'unable to get local issuer certificate'",
+    "WP-CLI instalado con curl dentro del contenedor se PIERDE al recrear el volumen wp_data; fix: bin/wp-cli.phar del host montado ro en /usr/local/bin/wp",
+    "el menú admin 'Zion CRM' es solo un redirect (AppShell::maybe_redirect_admin_menu_page en admin_init) — no renderiza nada en wp-admin por diseño",
+    "bind-mount de wp-content/plugins con permisos www-data: al recrear volumen wp_data, Docker rellena los mounts con los plugins default; el plugin se restaura copiando desde el ZIP a la carpeta host del bind-mount (chown warcold primero)",
+    "docker compose up -d NO recrea el contenedor si solo cambió un comentario; cambios reales en volumes/extra_hosts sí fuerzan recreate — verificar con docker inspect"
+  ],
   "integration_potential": {
-    "victoria_llm": "Plugin no tiene modulo IA integrado. Podria extenderse con chatbot similar a Armada Suite (gateway Victoria :8010, modelo nvidia/Qwen3.6-35B-A3B-NVFP4)",
-    "erp_integration": "Sin integracion ERP activa (plugin es standalone). Podria adicionarse modulo de integracion en el futuro"
+    "victoria_llm": "Plugin sin módulo IA. Podría extenderse con chatbot similar a Armada Suite (gateway Victoria :8010, modelo nvidia/Qwen3.6-35B-A3B-NVFP4)",
+    "erp_integration": "Sin integración ERP activa (plugin standalone). Módulo de integración futuro opcional"
   },
   "changelog": "~/armada-sync/CHANGELOG.md",
-  "changelog_2026_10_13": "Creacion stack independiente: docker-compose, agente zionv-crm.md, harness, nginx conf, gitignore, ZIP movido a ~/dev/zionv-crm/",
   "name": "ZionV CRM",
   "docs_oficiales": {
     "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
@@ -63,7 +81,7 @@
       {
         "nombre": "WordPress Developer",
         "url": "https://developer.wordpress.org/",
-        "contenido_clave": "WP 6.7-php8.3 + plugin ZionV CRM"
+        "contenido_clave": "WP 6.7 + plugin ZionV CRM (hooks, REST, rewrite rules)"
       },
       {
         "nombre": "WordPress Documentation",

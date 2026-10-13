@@ -38,11 +38,11 @@ kalimete (localhost:8092 / zionv.kalimete.local)
 ```
 
 ### Plugin ZionV CRM
-- **Path**: `~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/`
+- **Path**: `~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/` (repo git propio → **GitHub privado `warcold/zionv-crm`**, rama main)
 - **Version**: 1.53.1 (cod), DB 1.21.0 (21 migraciones auto-ascendentes)
-- **Requisitos**: WordPress 6.4+, PHP 8.1+
-- **Frontend**: React + Vite (admin SPA, public-forms, public-bookings)
-- **Composer deps**: `dompdf/dompdf`, `phpoffice/phpspreadsheet`, `woocommerce/action-scheduler`
+- **Requisitos**: WordPress 6.4+, PHP 8.1+, **permalinks PRETTY obligatorios** (`/%postname%/`) — la SPA vive en `/crm/` y las reservaciones en `/reservar/` vía rewrite rules; con permalinks plain el menú admin redirige al home (bug real 2026-10-13, ya corregido)
+- **Frontend**: React + Vite (admin SPA, public-forms, public-bookings) — solo `assets/dist/` compilado (el source React/TSX NO está en el repo)
+- **Composer deps**: `dompdf/dompdf`, `phpoffice/phpspreadsheet`, `woocommerce/action-scheduler` (vendor/ incluido en git para deploy directo)
 
 ### Módulos del plugin (28+ endpoints REST)
 | Módulo | Funcionalidad |
@@ -70,18 +70,25 @@ kalimete (localhost:8092 / zionv.kalimete.local)
 # Verificar stack Docker
 docker ps --filter name=zionv
 
-# Servicios WP (permalinks PLAIN — usar ?rest_route=)
-curl -s "http://localhost:8092/index.php?rest_route=/wp/v2/settings"
+# Servicios WP (permalinks PRETTY — REST también responde en /wp-json/)
+curl -s "http://localhost:8092/wp-json/"          # vía loopback
+curl -s "https://zionv.kalimete.local/wp-json/"    # vía TLS
+
+# CRM SPA (sin sesión → 302 a login con redirect de vuelta)
+curl -s -o /dev/null -w "%{http_code} -> %{redirect_url}" "https://zionv.kalimete.local/crm/dashboard/"
 
 # Docker logs / reinicio / DB shell
 docker logs zionv-local -f
 docker restart zionv-local zionv-db
 docker exec -it zionv-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" zionv_crm'
 
-# WP-CLI (dentro del contenedor)
-docker exec -it zionv-local wp plugin list
-docker exec -it zionv-local wp plugin activate zionv-crm-plugin
-docker exec -it zionv-local wp db export /tmp/zionv-backup.sql
+# WP-CLI (montado persistente desde bin/wp-cli.phar)
+docker exec zionv-local wp plugin list --allow-root
+docker exec zionv-local wp option get zion_crm_db_version --allow-root   # 1.21.0
+docker exec zionv-local wp option get permalink_structure --allow-root   # /%postname%/
+
+# Git del plugin (repo GitHub privado)
+cd ~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin && git log --oneline -5
 ```
 
 ## Reglas de Operación
@@ -98,10 +105,14 @@ docker exec -it zionv-local wp db export /tmp/zionv-backup.sql
 - El plugin no tiene módulo de IA integrado. Podría extenderse con chatbot IA similar a Armada Suite (gateway Victoria :8010, modelo `nvidia/Qwen3.6-35B-A3B-NVFP4`).
 
 ## Notas Técnicas
-- WordPress usa permalinks `plain` — toda llamada REST vía `index.php?rest_route=`
+- **Permalinks PRETTY obligatorios** (`/%postname%/`): la SPA del CRM vive en `/crm/` vía rewrite rules (`Rewrite.php` registra `^crm/?$` y `^crm/(.+)/?$`); el asistente público de reservaciones en `/reservar/{slug}/`. Con permalinks plain esas rutas no existen y el menú admin "Zion CRM" (que es solo un redirect a `dashboard_url()`) manda al home. Verificado 2026-10-13: fix aplicado con `wp option update permalink_structure '/%postname%/'` + `wp rewrite flush`.
+- El menú lateral "Zion CRM" de wp-admin NO renderiza nada propio: `AppShell::maybe_redirect_admin_menu_page()` redirige a `/crm/dashboard/` en `admin_init` (no puede hacerlo en el callback de `add_menu_page` porque los headers ya salieron).
 - El plugin tiene un SPA React (Vite) para el admin — los assets compilados están en `assets/dist/`
 - Vendor con `woocommerce/action-scheduler` para cron jobs internos del plugin
 - Google Calendar OAuth requiere credenciales de Google Cloud API (pendiente de configuración)
+- **CA dual mkcert en kalimete** (lección 2026-10-13): existen DOS CAs — `~/.local/share/mkcert/rootCA.pem` (warcold, OU=warcold@victoria) y `/root/.local/share/mkcert/rootCA.pem` (root, OU=root@victoria). Los certs generados con `sudo mkcert` los firma el CA de ROOT. El bundle del contenedor (`certs/ca-bundle-full.crt`, 142 certs = 140 Debian + ambos mkcert) debe incluir AMBOS o curl interno falla con "unable to get local issuer certificate".
+- **WP-CLI persistente**: `bin/wp-cli.phar` montado read-only en `/usr/local/bin/wp` (sobrevive recreaciones del contenedor; instalarlo con curl dentro del contenedor se pierde al recrear el volumen).
+- `extra_hosts: zionv.kalimete.local:host-gateway` en el compose: el contenedor resuelve su propio host TLS (webhooks, OAuth callbacks, curl interno → HTTP 200 verificado).
 
 ## Docs oficiales (2026-10-08)
 > Regla: ANTES de programar/configurar contra el servicio, consultar estas fuentes. NUNCA inventar hooks/filtros WP ni APIs del plugin.
@@ -111,9 +122,9 @@ docker exec -it zionv-local wp db export /tmp/zionv-backup.sql
 
 ## Upstream (2026-10-13)
 
-- **Fuente**: zionv-crm.zip descargado por usuario. Stack Docker: wordpress:6.7-php8.3-apache + mariadb:10.11.
-- **Vivo**: stack corriendo (docker-compose up -d), contenedores zionv-local y zionv-db activos.
-- **Check**: `docker ps -f name=zionv` + `curl -sI http://localhost:8092/`
+- **Fuente**: zionv-crm.zip (import inicial). Stack Docker: wordpress:6.7-php8.3-apache + mariadb:10.11. Plugin versionado en **GitHub privado `warcold/zionv-crm`** (rama main, import 1.53.1 con README.md + CHANGELOG.md de 70 versiones).
+- **Vivo 2026-10-13 (verificado)**: zionv-local + zionv-db healthy; plugin 1.53.1 activo; migraciones DB 1.21.0 aplicadas (tablas `zionv_zion_crm_*`); permalinks pretty activos; login e2e OK (302 → `/crm/dashboard/` → SPA 200 con bundle React); REST 200; curl interno al host TLS 200 (CA dual en bundle).
+- **Check**: `docker ps -f name=zionv` + `curl -sI https://zionv.kalimete.local/crm/dashboard/` (302 esperado sin sesión)
 - **Regla**: LIVE manda (doc vs live); propone updates al owner, nunca auto-actualiza sin autorizacion.
 
 
