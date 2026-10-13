@@ -39,7 +39,7 @@ kalimete (localhost:8092 / zionv.kalimete.local)
 
 ### Plugin ZionV CRM
 - **Path**: `~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/` (repo git propio → **GitHub privado `warcold/zionv-crm`**, rama main)
-- **Version**: 1.55.0 (cod), DB 1.24.0 (24 migraciones auto-ascendentes)
+- **Version**: 1.55.1 (cod), DB 1.24.0 (24 migraciones auto-ascendentes)
 - **Requisitos**: WordPress 6.4+, PHP 8.1+, **permalinks PRETTY obligatorios** (`/%postname%/`) — la SPA vive en `/crm/` y las reservaciones en `/reservar/` vía rewrite rules; desde 1.54.0 el Activator los auto-activa si el sitio no tiene estructura (bug real 2026-10-13, resuelto)
 - **Frontend**: React + Vite (admin SPA, public-forms, public-bookings) — solo `assets/dist/` compilado (el source React/TSX NO está en el repo)
 - **Composer deps**: `dompdf/dompdf`, `phpoffice/phpspreadsheet`, `woocommerce/action-scheduler` (vendor/ incluido en git para deploy directo)
@@ -131,8 +131,8 @@ cd ~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin && git log --oneline -5
 
 ## Upstream (2026-10-13)
 
-- **Fuente**: zionv-crm.zip (import inicial) → desarrollo propio continuo. Stack Docker: wordpress:6.7-php8.3-apache + mariadb:10.11. Plugin versionado en **GitHub privado `warcold/zionv-crm`** (rama main; 1.55.0 con módulos Ai + Ms365 + Nextcloud + Hubspot + SystemStatusPage + DEPLOY-GUIA).
-- **Vivo 2026-10-13 (verificado)**: zionv-local + zionv-db healthy; plugin **1.55.0** activo; migraciones DB **1.24.0** (columna `nextcloud_event_id` auto-aplicada); permalinks pretty; login e2e OK (302 → `/crm/dashboard/` → SPA 200); página **Estado del sistema** renderiza 7 tabs (Diagnóstico/Correo/Google/MS365/Nextcloud/HubSpot/IA) + selector de calendario; REST nuevos `settings/nextcloud`, `settings/hubspot` (401 sin nonce = seguro); **IA configurada con Victoria PUBLIC `https://victoria.armada.do/v1` (212ms, modelo Qwen3.6)**; **acción de automatización `ai_prompt` e2e OK** (variables {{contact_name}} reemplazadas, respuesta real del LLM); curl interno al host TLS 200 (CA dual).
+- **Fuente**: zionv-crm.zip (import inicial) → desarrollo propio continuo. Stack Docker: wordpress:6.7-php8.3-apache + mariadb:10.11. Plugin versionado en **GitHub privado `warcold/zionv-crm`** (rama main; 1.55.1 con módulos Ai + Ms365 + Nextcloud + Hubspot + SystemStatusPage (tab Calendario unificada) + DEPLOY-GUIA).
+- **Vivo 2026-10-13 (verificado)**: zionv-local + zionv-db healthy; plugin **1.55.1** activo; migraciones DB **1.24.0** (columna `nextcloud_event_id` auto-aplicada); permalinks pretty; login e2e OK (302 → `/crm/dashboard/` → SPA 200); página **Estado del sistema** renderiza 5 tabs (Diagnóstico/Correo/Calendario unificada con selector+Google+MS365+Nextcloud como secciones/HubSpot/IA); REST nuevos `settings/nextcloud`, `settings/hubspot` (401 sin nonce = seguro); **IA configurada con Victoria PUBLIC `https://victoria.armada.do/v1` (212ms, modelo Qwen3.6)**; **acción de automatización `ai_prompt` e2e OK** (variables {{contact_name}} reemplazadas, respuesta real del LLM); curl interno al host TLS 200 (CA dual).
 - **Check**: `docker ps -f name=zionv` + `curl -sI https://zionv.kalimete.local/crm/dashboard/` (302 esperado sin sesión)
 - **Regla**: LIVE manda (doc vs live); propone updates al owner, nunca auto-actualiza sin autorizacion.
 
