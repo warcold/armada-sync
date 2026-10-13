@@ -1,3 +1,13 @@
+## 2026-10-13
+
+### [HH:MM] - Nuevo stack WordPress independiente para ZionV CRM (plugin/zionv-crm)
+- **Tipo**: infra | config | agente (TARGET=kalimete local)
+- **Modificado**: `~/dev/zionv-crm/` (NUEVO: docker-compose.yml, .gitignore, nginx.conf, ZIP plugin), `agents/zionv-crm.md` (NUEVO), `harness/zionv-crm.harness.json` (NUEVO), CHANGELOG.md
+- **Afecta a**: kalimete.local (nuevos puertos 8092, 3308, nuevo host zionv.kalimete.local)
+- **Causa**: pedido del owner — nuevo plugin ZionV CRM que necesita stack independiente para NO confliger con Armada Suite (8091). Plugin CRM completo (28+ REST endpoints, React/Vite admin SPA, Google Calendar, automatizaciones, formularios, vendor composer ~5MB).
+- **Estado**: ✅ docker-compose up -d OK (zionv-local + zionv-db corriendo); 🔜 mkcert pendiente; 🔜 nginx deploy pendiente; 🔜 WP-CLI admin setup pendiente
+- **Notas**: Stack aislado con red propia zionv-net. No tocar wordpress-local (8091 ni armada-suite). Agent zionv-crm creado con temp 0.6, steps 15. ZIP movido de Downloads a ~/dev/zionv-crm/. Plugin version 1.53.1, DB 1.21.0 (21 migraciones).
+
 ## 2026-10-09
 ### [01:15] - FIX overlay Victoria: sprites no cargaban (ruta assets) + avatar 200x300
 - **Tipo**: fix | servicio (TARGET=kalimete local)
