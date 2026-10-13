@@ -1,11 +1,19 @@
 ## 2026-10-13
 
-### [HH:MM] - Nuevo stack WordPress independiente para ZionV CRM (plugin/zionv-crm)
+### [14:15] - ZionV CRM: FIX bug admin→frontend + GitHub privado + mejoras stack (cierre del día)
+- **Tipo**: fix | infra | repos (TARGET=kalimete local)
+- **Modificado**: WP zionv `permalink_structure` (plain→`/%postname%/` + rewrite flush); `~/dev/zionv-crm/docker-compose.yml` (WP-CLI persistente `bin/wp-cli.phar` montado ro, CA bundle `certs/ca-bundle-full.crt` 142 certs, `extra_hosts zionv.kalimete.local:host-gateway`; .bkup-20261013-mejoras); NUEVO repo **GitHub privado `warcold/zionv-crm`** (rama main, import 1.53.1: 1642 archivos con vendor/, README.md, CHANGELOG.md 70 versiones, .gitignore); `agents/zionv-crm.md` + `harness/zionv-crm.harness.json` curados con estado verificado
+- **Afecta a**: kalimete (zionv :8092), flota (subagente ZionV CRM operativo)
+- **Causa**: reporte del owner — "al intentar usar el plugin en el panel admin me envía al frontend"; pedido de subir el plugin a GitHub privado con readme/changelog y validar todo el setup como los demás proyectos
+- **Estado**: ✅ verificado e2e: login admin → 302 `/crm/dashboard/` → SPA 200 (bundle React carga); REST 200; migraciones DB 1.21.0 (tablas `zionv_zion_crm_*`); curl interno contenedor→host TLS 200; ambos stacks simultáneos (8091 armada + 8092 zionv healthy); `gh repo view` = PRIVATE/main
+- **Notas**: ROOT CAUSE del bug: la SPA del CRM vive en `/crm/` vía rewrite rules (`Rewrite.php`) y con permalinks plain esas rutas no existen — el menú admin "Zion CRM" es solo un redirect a `dashboard_url()` y caía en el home. LECCIONES: (1) permalinks pretty son requisito DURO del plugin; (2) kalimete tiene CA mkcert DUAL (warcold + root — los certs generados con `sudo mkcert` los firma el de root; el bundle del contenedor necesita AMBOS); (3) WP-CLI instalado in-container se pierde al recrear el volumen → montar phar persistente; (4) el source React/TSX del frontend NO está en el ZIP (solo assets/dist compilado) — documentado en README.
+
+### [13:25] - Nuevo stack WordPress independiente para ZionV CRM (plugin/zionv-crm)
 - **Tipo**: infra | config | agente (TARGET=kalimete local)
 - **Modificado**: `~/dev/zionv-crm/` (NUEVO: docker-compose.yml, .gitignore, nginx.conf, ZIP plugin), `agents/zionv-crm.md` (NUEVO), `harness/zionv-crm.harness.json` (NUEVO), CHANGELOG.md
 - **Afecta a**: kalimete.local (nuevos puertos 8092, 3308, nuevo host zionv.kalimete.local)
 - **Causa**: pedido del owner — nuevo plugin ZionV CRM que necesita stack independiente para NO confliger con Armada Suite (8091). Plugin CRM completo (28+ REST endpoints, React/Vite admin SPA, Google Calendar, automatizaciones, formularios, vendor composer ~5MB).
-- **Estado**: ✅ docker-compose up -d OK (zionv-local + zionv-db corriendo); 🔜 mkcert pendiente; 🔜 nginx deploy pendiente; 🔜 WP-CLI admin setup pendiente
+- **Estado**: ✅ docker-compose up OK (zionv-local + zionv-db healthy); mkcert emitido (expira 2029); nginx deploy + reload OK; WP install (admin) + plugin 1.53.1 activo; migraciones 1.21.0 aplicadas
 - **Notas**: Stack aislado con red propia zionv-net. No tocar wordpress-local (8091 ni armada-suite). Agent zionv-crm creado con temp 0.6, steps 15. ZIP movido de Downloads a ~/dev/zionv-crm/. Plugin version 1.53.1, DB 1.21.0 (21 migraciones).
 
 ## 2026-10-09
