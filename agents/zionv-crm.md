@@ -39,7 +39,7 @@ kalimete (localhost:8092 / zionv.kalimete.local)
 
 ### Plugin ZionV CRM
 - **Path**: `~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/` (repo git propio → **GitHub privado `warcold/zionv-crm`**, rama main)
-- **Version**: 1.55.1 (cod), DB 1.24.0 (24 migraciones auto-ascendentes)
+- **Version**: 1.55.2 (cod), DB 1.24.0 (24 migraciones auto-ascendentes)
 - **Requisitos**: WordPress 6.4+, PHP 8.1+, **permalinks PRETTY obligatorios** (`/%postname%/`) — la SPA vive en `/crm/` y las reservaciones en `/reservar/` vía rewrite rules; desde 1.54.0 el Activator los auto-activa si el sitio no tiene estructura (bug real 2026-10-13, resuelto)
 - **Frontend**: React + Vite (admin SPA, public-forms, public-bookings) — solo `assets/dist/` compilado (el source React/TSX NO está en el repo)
 - **Composer deps**: `dompdf/dompdf`, `phpoffice/phpspreadsheet`, `woocommerce/action-scheduler` (vendor/ incluido en git para deploy directo)

@@ -1,5 +1,13 @@
 ## 2026-10-13
 
+### [18:20] - ZionV CRM 1.55.2: banner puente Configuración → Estado del sistema
+- **Tipo**: release | ui | plugin (TARGET=kalimete local; repo GitHub warcold/zionv-crm)
+- **Modificado**: plugin 1.55.1→**1.55.2** (commit `49b5756` pushed): AppShell — aviso permanente al inicio de `/crm/configuracion/` con links directos a las tabs Calendario/HubSpot/Asistente de IA de Estado del sistema (estilos adaptativos light/dark, tipografía Outfit); ZIP `export/zionv-crm-1.55.2.zip` (sha256 `e857046c…`)
+- **Afecta a**: zionv-local (kalimete :8092), repo GitHub warcold/zionv-crm
+- **Causa**: feedback del owner — "sigo viendo el tab Google Calendar en configuración, no veo Nextcloud/Microsoft ni dónde está el chat/IA". ROOT CAUSE: el owner navega la Configuración de la SPA React (`/crm/configuracion/`), cuyas tabs (General/Antispam/SMTP/Google Calendar) están COMPILADAS en `index-cdQZuApB.js` — no modificables sin el source TSX. Las integraciones nuevas viven en wp-admin → Estado del sistema, pero nada lo decía desde el panel
+- **Estado**: ✅ verificado: banner renderiza en `/crm/configuracion/` (200, links a las 3 tabs); lint OK
+- **Notas**: LECCIÓN — al añadir features fuera del panel React (PHP clásico), SIEMPRE debe existir un puente de descubrimiento desde el panel: el usuario vive en la SPA, no en wp-admin. La tab "Google Calendar" de la SPA seguirá existiendo (es del plugin original compilado) — el banner explica que las integraciones completas están en Estado del sistema.
+
 ### [17:40] - ZionV CRM 1.55.1: tab Calendario unificada + fix use latente
 - **Tipo**: release | ui | fix | plugin (TARGET=kalimete local; repo GitHub warcold/zionv-crm)
 - **Modificado**: plugin 1.55.0→**1.55.1** (5 archivos, commit `bc376ec` pushed): SystemStatusPage — las tabs Google Calendar/MS365/Nextcloud se unifican en una sola **"Calendario"** (selector de proveedor arriba + las 3 integraciones como secciones con el mismo estilo: h2.title + hr + form-table + regular-text + submit_button); Diagnóstico muestra el proveedor activo como check informativo; OAuth MS365 y test Nextcloud regresan a la tab calendario; **FIX latente**: faltaba `use ZionCrm\Modules\Ms365\Ms365Settings` en SystemStatusPage (la tab ms365 individual nunca se probó renderizada en 1.55.0 — detectado al unificar); ZIP `export/zionv-crm-1.55.1.zip` (sha256 `568954cd…`)
