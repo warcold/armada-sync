@@ -1,0 +1,40 @@
+{
+  "harness": "zionv-crm",
+  "updated": "2026-10-13",
+  "agent_file": "~/armada-sync/agents/zionv-crm.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "ZionV CRM dev (kalimete) — stack WP 7.1.2 + plugin ZionV CRM 1.53.1 (CRM con React/Vite, leads, pipeline, reservaciones, automatizaciones, Google Calendar, SMTP), stack independiente aislado de Armada Suite",
+  "vivo_2026_10_13": "zionv-local (WP 7.1.2, imagen 6.7-php8.3-apache) + zionv-db (mariadb:10.11) healthy; plugin UNICO zionv-crm 1.53.1 instalado; puertos localhost:8092 WP, localhost:3308 DB, host zionv.kalimete.local via nginx SSL",
+  "live_check": "docker ps -f name=zionv",
+  "checks": [
+    "curl -s -o /dev/null -w '%{http_code}' http://localhost:8092/",
+    "docker exec zionv-local php -l /var/www/html/wp-content/plugins/zionv-crm-plugin/zionv-crm.php"
+  ],
+  "upstream": {
+    "fuente": "WordPress dev (kalimete)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/zionv-crm.md",
+    "~/dev/zionv-crm/docker-compose.yml",
+    "~/dev/zionv-crm/zionv.kalimete.local.conf"
+  ],
+  "rutas_canonicas": {
+    "proyecto": "~/dev/zionv-crm/ (stack docker-compose propio — aislado de ~/dev/wordpress/)",
+    "plugin": "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin (ZionV CRM 1.53.1 — extraído de zionv-crm.zip)",
+    "zip_fuente": "~/dev/zionv-crm/zionv-crm.zip (copia de ~/Downloads/zionv-crm.zip)",
+    "db_host": "zionv-db:3306 (container), localhost:3308 (host)",
+    "wp_host": "localhost:8092 (host loopback), zionv.kalimete.local (nginx SSL)",
+    "nginx_conf": "~/dev/zionv-crm/zionv.kalimete.local.conf (servidor nginx, copiar manualmente a sites-available + sites-enabled)"
+  },
+  "stack_comparado": {
+    "armada_suite": "wordpress-local :8091 (WP), :3307 (DB), wordpress.kalimete.local — NUNCA tocar",
+    "zionv_crm": "zionv-local :8092 (WP), :3308 (DB), zionv.kalimete.local — este stack"
+  },
+  "pendiente": {
+    "ssl_cert": "Regenerar certificado mkcert para zionv.kalimete.local si no existe: mkcert -cert-file /etc/ssl/local-certs/zionv.kalimete.local.crt -key-file /etc/ssl/local-certs/zionv.kalimete.local.key zionv.kalimete.local localhost 127.0.0.1",
+    "nginx_deploy": "Copiar zionv.kalimete.local.conf a /etc/nginx/sites-available/ + ln -s a sites-enabled/ + nginx -t + systemctl reload nginx",
+    "app_password": "Crear Application Password para REST API desde WP admin"
+  }
+}
