@@ -5,7 +5,7 @@
   "mode": "subagent",
   "hidden": false,
   "scope": "ZionV CRM dev (kalimete) — stack WP 6.7-php8.3-apache + plugin ZionV CRM 1.53.1 (CRM independiente con React/Vite, 28+ REST controllers, Google Calendar, automatizaciones), completamente aislado de Armada Suite (8091)",
-  "vivo_2026_10_13": "zionv-local + zionv-db healthy; plugin 1.56.0 activo; migraciones DB 1.24.0; permalinks pretty; UNA sola configuración: /crm/configuracion/ sirve CrmSettingsPage con look del CRM y 6 tabs (General/Antispam/Correo/Calendario/HubSpot/IA) — POST guarda y redirige al CRM (verificado), dashboard SPA intacto, bundle parcheado con tools/patch-config-route.sh (marker __zionCfgUnified, sidebar recarga hacia la unificada, banner solo como fallback sin parche); Estado del sistema wp-admin queda como diagnóstico; IA con Victoria PUBLIC (212ms); acción ai_prompt e2e OK; GitHub warcold/zionv-crm al día (bc03874); ZIP export/zionv-crm-1.56.0.zip (sha256 1bdfd252…)",
+  "vivo_2026_10_13": "zionv-local + zionv-db healthy; plugin 1.56.1 activo; migraciones DB 1.24.0; permalinks pretty; UNA sola configuración: /crm/configuracion/ con CrmSettingsPage (look CRM + sidebar completo del panel replicado en PHP: 9 secciones, 26 items, iconos SVG del bundle, filtrado por capability, item activo, colapso a iconos <860px) y 6 tabs; POST guarda y redirige al CRM; dashboard SPA intacto; bundle parcheado (tools/patch-config-route.sh); IA con Victoria PUBLIC (212ms); GitHub warcold/zionv-crm al día (2601191); ZIP export/zionv-crm-1.56.1.zip (sha256 1518a7d4…)",
   "live_check": "docker ps --filter name=zionv",
   "checks": [
     "curl -s -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/crm/dashboard/  (302 sin sesión = correcto)",
@@ -52,7 +52,7 @@
     "ssl": "/etc/ssl/local-certs/zionv.kalimete.local.{crt,key} (mkcert, expira 2029-01-13, firmado por CA de ROOT — ver lecciones)"
   },
   "plugin": {
-    "version": "1.56.0",
+    "version": "1.56.1",
     "db_version": "1.24.0",
     "modulos": "Contacts, Companies, Opportunities, Pipelines, Proposals, Bookings, Forms, Automations, Emails, Tasks, Training, Reports, Dashboard, Activities, Timeline, Notifications, Audit, DataTools, Elementor, GoogleCalendar, Ms365, Nextcloud (NUEVO 1.55.0), Hubspot (NUEVO 1.55.0), Ai",
     "composer_deps": "dompdf/dompdf, phpoffice/phpspreadsheet, woocommerce/action-scheduler (vendor/ en git)",
