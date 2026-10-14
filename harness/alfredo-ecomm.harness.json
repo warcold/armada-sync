@@ -20,7 +20,7 @@
     ]
   },
   "git": {
-    "init": "2026-10-05, rama master, LOCAL sin remote",
+    "init": "2026-10-05, rama master; origin = git@github.com:warcold/alfredo-pro-ecomm.git (GitHub PRIVADO, push 2026-10-14, autorizacion owner)",
     "baseline": "01fe048 chore: baseline Alfredo Pro Ecomm backend (import 2026-10-05)",
     "smoke_commit": "e39fa99 chore: add smoke script",
     "hardening_commit": "b6d9e70 chore: smoke 5/5 (categories) + healthchecks api/redis + drifts conciliados (2026-10-13)",
@@ -62,7 +62,7 @@
     "RESUELTO 2026-10-13 schema: 12 tablas = 11 negocio + _prisma_migrations (interna Prisma, 4 migraciones OK, ultima 2026-09-06) — el '11 vs 12' era falso drift de conteo",
     "repo woodly (fuera de scope, PAUSADO owner 2026-10-13): nginx proxyea /api/ → erp.kalimete.local:3001 (stale); frontend mock-only + CSP connect-src 'self'"
   ],
-  "git_remote_pendiente": "Recomendacion 2026-10-13: crear repo GitHub privado (p.ej. armada/alfredo-pro-ecomm) + push para backup off-site del codigo (hoy el repo solo vive en kalimete). REQUIERE autorizacion del owner.",
+  "git_remote_2026_10_14": "RESUELTO: repo GitHub privado warcold/alfredo-pro-ecomm creado + push master (01fe048, e39fa99, b6d9e70). Verificado: nada sensible tracked (.env/secrets/*.sql/*.bkup* gitignored). El pendiente del 2026-10-13 queda CERRADO.",
   "upstream": {
     "fuente": "backend-api custom local + redis:7 + postgres:16 (kalimete dev)",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"

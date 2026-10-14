@@ -1,3 +1,17 @@
+## 2026-10-14
+
+### [00:25] - Pendientes ejecutados: repo GitHub alfredo-pro-ecomm + release 5.3.2 (fix ZIP) + decisiones owner documentadas
+- **Tipo**: servicio | sync | docs (TARGET=kalimete local + GitHub)
+- **Modificado**:
+  - **Alfredo Ecomm**: repo GitHub PRIVADO `warcold/alfredo-pro-ecomm` creado + push de `master` (01fe048, e39fa99, b6d9e70) — backup off-site del código; verificado sin secrets tracked; CHANGELOG del proyecto actualizado (commit `f9f29e8` pushed); docs agente+harness curadas (pendiente git_remote CERRADO)
+  - **WordPress**: **release 5.3.2** (commit `a838486`) — fix empaquetado: el ZIP 5.3.1 excluía `SiteBackup/storage/` por un comando ad-hoc (los archivos existían en disco; diff 5.3.0 vs 5.3.1 = exactamente storage/); ZIP 5.3.2 (2.203.552 bytes, sha256 `d8952c61…`) con storage/ incluido, lista idéntica al 5.3.0, sin secrets; **comando canónico de empaquetado versionado en DEPLOY-GUIA** (cura la causa raíz); regresión 19/19 post-bump; docs agente+harness a 5.3.2
+  - **ERP Dev**: decisiones owner 2026-10-13 documentadas en erp-dev.md + harness — **mailpit = dev-only intencional** (catcher SMTP local para no operar servidor de correos; producción usa mail real según main de Juan Carlos; NO investigar el 7.41% CPU, NO tocar ni allá ni aquí); latencia TLS/nginx = esperada del dev local; el preprod se alimenta de main de Juan Carlos adaptado a la red local (pruebas lo más cerca de producción)
+  - **WordPress deuda P3**: decisión owner registrada — mantener espejo `tenant.api_key` hasta que main de Juan Carlos deje de leerla (no modificamos el contrato por nuestro lado)
+- **Afecta a**: kalimete local (WP :8091, alfredo :3004, erpipo :8100); GitHub (repo nuevo warcold/alfredo-pro-ecomm); repo armada-sync (docs+harness)
+- **Causa**: orden del owner — "procede con los pendientes" + aclaración mailpit (dev-only, producción diferente según main de Juan Carlos, sin tocar ni allá ni aquí)
+- **Estado**: ✅ todo verificado (push OK, ZIP storage/ incluido + sin secrets, regresión 19/19, JSON harness válidos)
+- **Notas**: los 4 pendientes del 2026-10-13 quedan CERRADOS: (1) git remote ✅; (2) gap ZIP → release 5.3.2 ✅; (3) mailpit/latencia → decisión owner documentada ✅; (4) deuda P3 → decisión owner documentada, cerrable solo cuando main de Juan evolucione ✅
+
 ## 2026-10-13
 
 ### [23:45] - Mantenimiento: hardening WordPress + Alfredo Ecomm; upstream ERP 100% al día; Woodly PAUSADO

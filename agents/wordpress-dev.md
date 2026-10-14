@@ -1,6 +1,6 @@
 ---
 name: WordPress
-description: Subagente del stack WordPress Dev en kalimete (WordPress 7.1.3 + plugin Armada Suite 5.3.1, super-plugin que unifica chat IA + e-commerce ERP + backup). Usado cuando kalimete delega desarrollo, mantenimiento y pruebas del plugin y su integración con erpipos :8100 (tenant 10 MaganTech).
+description: Subagente del stack WordPress Dev en kalimete (WordPress 7.1.3 + plugin Armada Suite 5.3.2, super-plugin que unifica chat IA + e-commerce ERP + backup). Usado cuando kalimete delega desarrollo, mantenimiento y pruebas del plugin y su integración con erpipos :8100 (tenant 10 MaganTech).
 mode: subagent
 hidden: false
 color: "#21759b"
@@ -17,7 +17,7 @@ permission:
 
 ## Visión General
 
-**WordPress Dev** gestiona el stack Docker local de WordPress con el plugin **Armada Suite 5.3.1** (super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored). Desarrollo, mantenimiento y pruebas del plugin y su integración con el ERP erpipos local.
+**WordPress Dev** gestiona el stack Docker local de WordPress con el plugin **Armada Suite 5.3.2** (super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored). Desarrollo, mantenimiento y pruebas del plugin y su integración con el ERP erpipos local.
 
 ## Infraestructura (validada 2026-10-13)
 
@@ -35,7 +35,7 @@ permission:
 ```
 kalimete (localhost:8091 / wordpress.kalimete.local)
     ├── WordPress 7.1.3 (PHP 8.3, imagen 6.7-php8.3-apache)
-    ├── Armada Suite 5.3.1 (plugin ÚNICO en live — super-plugin:
+    ├── Armada Suite 5.3.2 (plugin ÚNICO en live — super-plugin:
     │     erp-commerce-suite + WPVibe + AIOWPM vendored; menú único;
     │     REST propio erpsuite/v1/ops (15 rutas, OpsMotor);
     │     nube wpvibe.ai amputada; custom-model→gateway propio;
@@ -44,10 +44,10 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 ```
 
 ### Plugin custom (desarrollo activo)
-- **Armada Suite** (`wp-content/plugins/armada-suite/`, v5.3.1, header verificado 2026-10-13; versionado en el git de `~/dev/wordpress`, HEAD `040682a`): plugin ÚNICO. Asistente de ventas con IA server-side (custom-model→gateway propio), chat + voz modo teléfono + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Identidad configurable.
+- **Armada Suite** (`wp-content/plugins/armada-suite/`, v5.3.2, header verificado 2026-10-14; versionado en el git de `~/dev/wordpress`, HEAD `a838486`): plugin ÚNICO. Asistente de ventas con IA server-side (custom-model→gateway propio), chat + voz modo teléfono + canal WhatsApp (Cloud API, desactivado sin token). Vende, agrega al carrito, crea pedidos PENDIENTES. Identidad configurable.
 - **Switch Local/Público (regla del owner)**: el admin solo ve el toggle Local↔Público (tab Entorno). **Local** = conexión SELLADA hardcodeada al erpipos preprod de kalimete (`http://172.19.0.1:8100/api`, tenant 10, `includes/Core/Environment.php`) — NO editable NI visible en la UI. **Público** = URL/tenant/key de erpipos PROD editables por el admin (`wp_options.erp_suite_settings.public.*`). Local NUNCA toca producción.
 - **Backend e-commerce local**: ERP real = **erpipos LOCAL :8100** (ERP Dev, repo `sistema-facturacion` rama `dev/ecomm-erp`, tenant 10, tienda MaganTech; auth Bearer `iak_*`). La URL pública solo aplica con switch=Público.
-- **Empaquetado**: ZIP de producción SOLO en `~/dev/wordpress/export/armada-suite-<version>.zip` (excluir `.git`, `*.bkup*`, `export/` top-level, `node_modules`, `.env`, `secrets/`; los `export/` internos de SiteBackup son código y NO se excluyen). **5.3.1 hecho**: 2.201.803 bytes, sha256 `d018a73b9153d8bde9000e66910496c26e5bb097f3d5f9fb9dbeee4e3f949603`. **Gap conocido (2026-10-13)**: el ZIP 5.3.1 excluyó `SiteBackup/storage/` (5.2.0/5.3.0 lo incluían) — mitigado por self-heal (`admin_init → setup_storage_folder()` auto-crea carpeta + 4 protecciones); corregir inclusión en el próximo release; NO regenerar 5.3.1 (artefacto liberado, decisión owner 2026-10-13).
+- **Empaquetado**: ZIP de producción SOLO en `~/dev/wordpress/export/armada-suite-<version>.zip` (excluir `.git`, `*.bkup*`, `export/` top-level, `node_modules`, `.env`, `secrets/`; los `export/` internos de SiteBackup son código y NO se excluyen). **5.3.2 hecho (2026-10-14)**: 2.203.552 bytes, sha256 `d8952c61ccfdd60efbd2d714a8c1007fd41e177422fd3bb392500b91f630f3b3` — **fix empaquetado**: restaura `SiteBackup/storage/` (excluido por error en 5.3.1 por un comando ad-hoc; lista de archivos IDÉNTICA al 5.3.0). **Comando canónico de empaquetado versionado en `export/DEPLOY-GUIA.md`** — SIEMPRE usarlo, nunca ad-hoc; verificación obligatoria: `unzip -l | grep -i storage` (debe listar) + `unzip -l | grep -iE "\.env|secret"` (debe dar vacío). Histórico 5.3.1: 2.201.803 bytes, sha256 `d018a73b…` (gap storage/, mitigado por self-heal; NO regenerar — artefacto liberado).
 
 ### Autenticación (curada 2026-10-05)
 - **WP-Admin**: usuario `admin` (login por UI; la password de login NO sirve para REST — da 401)
@@ -141,6 +141,7 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 
 ## Cambios recientes
 
+- **2026-10-14 (release 5.3.2, commit `a838486`)**: fix empaquetado — el ZIP 5.3.1 excluyó `SiteBackup/storage/` por un comando ad-hoc (los archivos SÍ existían en disco; diff 5.3.0 vs 5.3.1 = exactamente storage/, 500→495 entradas). Bump 5.3.1→5.3.2 (header+define+readme), CHANGELOG, DEPLOY-GUIA con **comando canónico de empaquetado** (cura la causa raíz). ZIP `export/armada-suite-5.3.2.zip` (2.203.552 bytes, sha256 `d8952c61…`, storage/ incluido, lista idéntica al 5.3.0, sin secrets). Regresión 19/19 post-bump. ZIP 5.3.1 intacto (no regenerado).
 - **2026-10-13 (housekeeping, commit `040682a`, sin release)**: restaurados `SiteBackup/storage/.htaccess` + `web.config` (borrados sin commit desde oct-09; verificados en disco + contenedor vía bind-mount); regresión **19/19 PASS**; self-heal confirmado (key `features` ausente → defaults-ON; SiteBackup auto-repara storage/); ZIP 5.3.1 verificado (2.201.803 bytes, sha256 `d018a73b…`, gap storage/ documentado); deuda P3 `tenant.api_key` localizada (4 archivos, bloqueada por ERP); latencia ping-erp diagnosticada ERP-side (~250-300ms; `/up` 132-162ms; mailpit 7.41% CPU reportado a ERP Dev); docs agente + harness sincronizados.
 - **2026-10-08 (release 5.3.1, commit `819c7e1`)**: simplificación admin — LLM unificado, tab Negocio, Asistente IA en 3 forms, MCP→Estado del sistema, labels claros; deuda P3 marcada (espejo `tenant.api_key`); ZIP `export/armada-suite-5.3.1.zip` (2.201.803 bytes, sha256 `d018a73b9153d8bde9000e66910496c26e5bb097f3d5f9fb9dbeee4e3f949603`).
 - **2026-10-06 (release 5.3.0, commit `c084cdb`)**: bump versión (header+define+readme Stable tag) + ZIP canónico `export/armada-suite-5.3.0.zip` (2.198.973 bytes, sha256 `6fbf47f8d03d5cdf6238e01efba9feafefb07511a263cad0b21919b9764099fc`; sin `.bkup`, sin secrets) + entrada CHANGELOG + DEPLOY-GUIA al día. Regresión 19/19.
@@ -159,7 +160,7 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 ## Upstream (2026-10-13)
 
 - **Fuente**: wordpress:6.7-php8.3-apache + mariadb:10.11 (kalimete).
-- **Vivo 2026-10-13**: healthy Up 2d; WP 7.1.3; plugin Armada Suite 5.3.1 único en live; ping-erp OK (~250-300ms, causa ERP-side).
+- **Vivo 2026-10-14**: healthy Up 2d; WP 7.1.3; plugin Armada Suite 5.3.2 único en live; ping-erp OK (~250-300ms, overhead TLS del dev local — esperado).
 - **Check**: `docker ps -f name=wordpress` + regresión 19/19
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 

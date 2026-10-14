@@ -37,7 +37,7 @@ permission:
 
 - **Backend (CANÓNICO)**: `~/dev/webs/alfredo-pro-ecomm/backend` — `src/`, `prisma/`, `Dockerfile`, `docker-compose.yaml` (`name: backend`), `.env`, `.dockerignore`
 - **Repo root (CANÓNICO)**: `~/dev/webs/alfredo-pro-ecomm` — `README.md`, `Caddyfile.dev` (receta; Caddy NO corre en dev), `CHANGELOG.md`, `docs/`, `scripts/smoke.sh`
-- **Git**: versionado desde 2026-10-05 — baseline `01fe048` + smoke `e39fa99` + hardening `b6d9e70` (2026-10-13) (rama `master`, LOCAL, sin remote — crear GitHub privado pendiente de autorización owner; `.env`/`backups/`/`dist/`/`node_modules/`/`*.bkup*`/`*.sql` gitignored)
+- **Git**: versionado desde 2026-10-05 — baseline `01fe048` + smoke `e39fa99` + hardening `b6d9e70` (2026-10-13) (rama `master`, remote `origin` = `git@github.com:warcold/alfredo-pro-ecomm.git` — GitHub privado, push 2026-10-14; `.env`/`backups/`/`dist/`/`node_modules/`/`*.bkup*`/`*.sql` gitignored)
 - **Woodly frontend**: `~/dev/apps/woodly` (React 19 + Vite + TS + nginx; docker `woodly-woodly-1` :5173)
 - **⚠️ ARCHIVADO**: `~/projects/alfredo-pro-ecomm.archived-20261005` — era una cáscara VACÍA cuyo mount sombreaba `/app/src` (peligro: rebuild desde ahí = imagen vacía). NO usar; NO borrar (histórico).
 - **NO-TOUCH desde este agente**: `~/dev/wordpress` (plugin Armada Suite → subagente WordPress), `armada-suite.php`, `.env` de Woodly (secrets)
@@ -166,6 +166,7 @@ El plugin WP Armada Suite arrastra namespace histórico **erp-suite**. Se MANTIE
 
 ## Cambios recientes
 
+- **2026-10-14 (git remote, autorización owner)**: repo GitHub privado `warcold/alfredo-pro-ecomm` creado + push de `master` (3 commits) — backup off-site del código; verificado sin secrets tracked. Pendiente "git remote" del 2026-10-13 CERRADO.
 - **2026-10-13 (hardening, commit `b6d9e70`)**: smoke.sh 4→5 checks (añadido `GET /v1/stores/$SLUG/categories`, verificado 5/5); **healthchecks en docker-compose** (api: `wget --spider /health` 30s; redis: `redis-cli ping` 10s) — recreate sin `--build`, los 3 containers `(healthy)`, CORS ACAO intacto; **drifts conciliados**: schema 11-vs-12 era falso positivo (`_prisma_migrations`), imagen build 2026-10-01 IN SYNC con src (solo dist/ local stale); CHANGELOG del proyecto actualizado; git remote recomendado (pendiente autorización owner).
 - **2026-10-06 (diseño→implementación, plugin)**: el diseño de este agente (flags + rebrand + arquitectura del agente) se implementó completo en el plugin Armada Suite: 13 commits (`f0d1572`→`b289ba1`), regresión 19/19, webhooks e2e OK. Backend :3004 intacto (solo-Woodly, fuera de scope).
 - **2026-10-06**: Cierre de sección — CHANGELOG del proyecto con Fase 1 hardening + contexto ecosistema (commit `2dd567c`): split :3004 solo-Woodly vs :8100 erpipo/WP documentado; drift src↔dist y 11-modelos-vs-12-tablas registrados.
