@@ -17,7 +17,7 @@
   "webhooks_activos_2026_10_06": "endpoint WP dado de alta (webhook_endpoints id=2, instance 10 MaganTech, events order.created/stock.updated/price.updated, active); e2e checkout->deliveries sent/200->WP flush_cache verificado; red compartida erpipo-dev-network con stack WP (URL interna http://wordpress-local/wp-json/erpsuite/v1/erp-webhook)",
   "aviso_ajuste_500_RESUELTO_2026_10_13": "G6 corregido por NOSOTROS (ff64301) y LIVE en preprod (bind mount HEAD 2306b64) — POST /api/tienda/inventario/ajuste ya responde; WP puede reintentar el endpoint",
   "vivo_2026_10_06": "8/8 containers Up; dev/ecomm-erp @00a255e PUSHED a origin; migraciones 655 (batch 150); queue worker con --queue=default,webhooks; contrato ecomm Fase 2 verificado e2e; webhooks activos hacia WP",
-  "vivo_2026_10_13": "8/8 containers Up 2d (db/redis/mailpit healthy); dev/ecomm-erp @2306b64 = HEAD = origin (fetch OK, 0 commits de main faltantes); tenant 10 MaganTech activo=1 (tabla business_instances, NO tenants); latencia /up directo ~130ms, via HTTPS nginx 490-1140ms (overhead TLS — causa del ping-erp 250-300ms de WP); mailpit 7.41% CPU constante (anomalia, investigar); key ecomm-test-customer.txt STALE (401 Token invalido — regenerar para proximo e2e)",
+  "vivo_2026_10_13": "8/8 containers Up 2d (db/redis/mailpit healthy); dev/ecomm-erp @2306b64 = HEAD = origin (fetch OK, 0 commits de main faltantes); tenant 10 MaganTech activo=1 (tabla business_instances, NO tenants); latencia /up directo ~130ms, via HTTPS nginx 490-1140ms (overhead TLS esperado del dev local — owner 2026-10-13: no perseguir); mailpit 7.41% CPU = dev-only intencional (owner 2026-10-13: catcher SMTP local, produccion usa mail real segun main de Juan — NO investigar, NO tocar); key ecomm-test-customer.txt STALE (401 Token invalido — regenerar para proximo e2e)",
   "live_check": "docker ps -f name=erpipo",
   "checks": [
     "curl -sk -o /dev/null -w '%{http_code}' https://erp.kalimete.local/login",
@@ -54,9 +54,9 @@
     "UI admin para webhook_endpoints",
     "index compuesto (tenant_id, telefono) — requiere dedupe previo",
     "UpdateClienteRequest: email/rnc_cedula unique GLOBAL (flujo admin)",
-    "investigar mailpit 7.41% CPU constante (posible flood mail dev)",
     "regenerar key ecomm-test-customer.txt (stale 401) cuando toque otro e2e"
   ],
+  "decision_owner_2026_10_13": "mailpit = dev-only intencional (catcher SMTP local; produccion usa mail real segun main de Juan Carlos) — NO investigar el 7.41% CPU, NO tocar ni alla ni aqui. Latencia via TLS/nginx = esperada del dev local, no un bug. El preprod se alimenta de main de Juan Carlos adaptado a red local (pruebas lo mas cerca de produccion).",
   "upstream": {
     "fuente": "soycarlosjerez-hub/sistema-facturacion (Juan Carlos) + stack erpipo-* (kalimete :8100)",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"

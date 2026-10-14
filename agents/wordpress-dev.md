@@ -78,9 +78,9 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 
 Contrato vigente sin cambios: Local sellado `http://172.19.0.1:8100/api`, tenant 10, Bearer `iak_*` (44 chars), throttles 10/30/60, imágenes URL absoluta (proxy/rehost), total en `meta.total`.
 
-**Latencia (2026-10-13)**: curl crudo WP→ERP 246-301ms idéntico al plugin (keepalive sin efecto); `/up` directo 132-162ms — el framework erpipo solo ya supera el total antiguo (119ms oct-05); vía HTTPS nginx 490-1140ms. Regresión de performance del stack erpipo preprod — pendiente lado ERP Dev/Juan Carlos. Anomalía: `erpipo-preprod-mailpit` 7.41% CPU constante (posible flood de mail en preprod).
+**Latencia (2026-10-13)**: curl crudo WP→ERP 246-301ms idéntico al plugin (keepalive sin efecto); `/up` directo 132-162ms; vía HTTPS nginx 490-1140ms — overhead TLS/nginx **esperado del entorno dev local**, no un bug (decisión owner 2026-10-13: no perseguir). Mailpit = **dev-only intencional** (catcher SMTP local; en producción el mail es real según main de Juan Carlos) — no investigar, no tocar.
 
-**Deuda P3 (2026-10-13)**: espejo legacy `tenant.api_key` en sanitize — `AdminMenu.php:128-136`, `Environment.php:106-116`, `Main.php:175-179`, `LegacyConnectorAdmin.php:64-66`. NO eliminable desde WP hasta que el ERP lea solo `public.api_key` (dependencia cruzada con ERP Dev).
+**Deuda P3 (2026-10-13)**: espejo legacy `tenant.api_key` en sanitize — `AdminMenu.php:128-136`, `Environment.php:106-116`, `Main.php:175-179`, `LegacyConnectorAdmin.php:64-66`. NO eliminable desde WP hasta que el ERP lea solo `public.api_key` (dependencia cruzada con ERP Dev). **Decisión owner 2026-10-13**: mantener el espejo — el erp local se alimenta de main de Juan Carlos (no modificamos el contrato por nuestro lado); cerrar cuando main deje de leer `tenant.api_key`.
 
 ### Sistema de feature flags (Fase A, 2026-10-06)
 

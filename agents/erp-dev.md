@@ -25,7 +25,7 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 
 - **URL**: `https://erp.kalimete.local` (nginx TLS local, `-k` o CA mkcert)
 - **phpMyAdmin**: `https://erp.kalimete.local/phpmyadmin` (:8102)
-- **mailpit**: `http://localhost:8025` (captura email dev)
+- **mailpit**: `http://localhost:8025` (captura email dev — **dev-only intencional**, owner 2026-10-13; producción usa mail real según main de Juan Carlos)
 - **Stack Docker**: `~/dev/erpipo-preprod/` (docker-compose.yml)
 - **Código**: `~/dev/erpipo-preprod/code/sistema-facturacion/`
 - **Keys de integración**: `~/dev/erpipo-preprod/keys/` (dir 700, files 600 — p.ej. `ecomm-test-customer.txt`; NUNCA imprimir valores)
@@ -172,7 +172,7 @@ Verificado: `origin/dev/ecomm-erp` @`2306b64` = HEAD local (todo pushed); `origi
 
 - **Fuente**: `soycarlosjerez-hub/sistema-facturacion` (upstream de Juan Carlos) + stack erpipo-* (kalimete :8100).
 - **Vivo 2026-10-13**: 8/8 containers Up 2d (db/redis/mailpit healthy); rama `dev/ecomm-erp` @`2306b64` pushed = HEAD; **al día con origin/main** (fetch verificado, 0 commits faltantes); webhooks activos hacia WP (endpoint id=2); red compartida con WP; tenant 10 MaganTech activo.
-- **Latencia (2026-10-13)**: `/up` directo :8100 = ~130ms estable; vía HTTPS nginx = 490-1140ms — el ping-erp de WP (~250-300ms) es overhead TLS/nginx, no la app. Anomalía: `erpipo-preprod-mailpit` 7.41% CPU constante (posible flood de mail dev — investigar).
+- **Latencia (2026-10-13)**: `/up` directo :8100 = ~130ms estable; vía HTTPS nginx = 490-1140ms — el ping-erp de WP (~250-300ms) es overhead TLS/nginx **esperado del entorno dev local**, no un bug. **Decisión owner 2026-10-13**: mailpit es **dev-only intencional** (catcher SMTP local para no operar un servidor de correos; en producción el mail es real según main de Juan Carlos) — NO investigar más, NO tocar (ni producción ni preprod). El preprod se alimenta de main de Juan Carlos adaptado a la red local — pruebas lo más cerca posible de producción, sin vínculo con prod.
 - **Check**: `docker ps -f name=erpipo` + `curl -sk https://erp.kalimete.local/login` + `curl -s http://127.0.0.1:8100/up`
 - **Regla**: LIVE manda (doc vs live vs upstream); push a origin solo con autorización del owner.
 
