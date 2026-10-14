@@ -1,6 +1,9 @@
 {
   "harness": "woodly",
-  "updated": "2026-10-01",
+  "updated": "2026-10-13",
+  "status": "PAUSADO por decisión del owner 2026-10-13 — no aplicar cambios de integración con backend :3004 hasta nueva orden. Drifts conocidos quedan documentados (nginx :3001 stale, CSP restrictivo, mocks estáticos).",
+  "paused": true,
+  "paused_date": "2026-10-13",
   "agent_file": "~/armada-sync/agents/woodly.md",
   "mode": "subagent",
   "hidden": false,
