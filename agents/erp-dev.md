@@ -35,8 +35,8 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 
 - **Rama activa**: `dev/ecomm-erp` (el stack preprod SIRVE esta rama; `main`/`develop` son **read-only**)
 - **Remotos**: SOLO `origin` = `ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git` (upstream de Juan Carlos). **NO existe remote `preprod` en este clon**.
-- **Workflow**: desarrollar/probar local → commits limpios en `dev/ecomm-erp` → push a origin con autorización del owner → Juan Carlos revisa (él integra vía PR: el histórico muestra PR #13 suyo integrando nuestra base 2d0d97b a main/develop el 2026-10-06).
-- **Estado push (2026-10-06)**: Fase 2 COMPLETA pushed — HEAD `2c8fca9` (merge limpio con origin: PR #13 de Juan + su fix papel impresora `94484c6`, cero conflictos). 10 commits nuestros sobre `2d0d97b` + merge.
+- **Workflow**: desarrollar/probar local → commits limpios en `dev/ecomm-erp` → push a origin con autorización del owner → Juan Carlos revisa (él integra vía PR: #13 el 2026-10-06 integrando nuestra base 2d0d97b, **#14 el 2026-10-07 integrando nuestra Fase 2/3 a main**).
+- **Estado push (2026-10-13, verificado con fetch)**: HEAD `2306b64` pushed y **idéntico a origin/dev/ecomm-erp** — **100% al día con `origin/main`** (0 commits que nos falten; su refactor `34bd716` + módulo renta `bd1a879` ya mergeados sin conflictos). **7 commits nuestros esperando PR de Juan**: G6 fix `ff64301`, G1 cancel `e495454`+`8ae9bb2`, G2 webhooks CRUD `f961503`, G3 `invoice.issued` `5ace5aa`, G4 retry-failed `601959e`, merge `2306b64`.
 
 ## Stack (docker-compose.yml, verificado 2026-10-05)
 
@@ -56,6 +56,8 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 - **User app**: 1000:1000 (mismo UID que warcold en kalimete)
 - **DB**: `facturacion_db` — creds en `~/dev/erpipo-preprod/preprod.env` (NO en docs)
 - **.env**: preprod.env (APP_URL=https://erp.kalimete.local, APP_ENV=preprod, APP_DEBUG=false, verificado con `artisan about`)
+- **Tenants**: tabla **`business_instances`** (NO `tenants`) — tenant 10 MaganTech `activo=1` (verificado 2026-10-13)
+- **Key `ecomm-test-customer.txt` STALE (2026-10-13)**: `/api/ecomm/me` → 401 "Token inválido" (token de cliente expirado/revocado) — regenerar cuando se necesite otro e2e
 - **SSL**: mkcert (erp.kalimete.local.pem + -key.pem)
 - **App**: Laravel 12.16, PHP 8.3.33, cache/queue/session redis, db mysql, routes/events/views CACHED
 
@@ -147,27 +149,30 @@ Los 7 candidatos Fase 2 fueron implementados, verificados e2e y **pushed a origi
 | `dbb1998`+`27be061`+`2893551` | webhooks MVP (HMAC-SHA256, retries, afterCommit; order.created/stock.updated/price.updated) |
 | `9a18a04`+`790cc8a` | docs: RECOMENDACIONES-FASE2 + changelog del repo |
 
-## Fase 3 — doc pushed + webhooks ACTIVOS en preprod (2026-10-06)
+## Fase 3 — G1-G4+G6 IMPLEMENTADOS y pushed; webhooks ACTIVOS (estado 2026-10-13)
 
-- **Doc**: `docs/RECOMENDACIONES-FASE3-AGENTE.md` (`95d17d8`, pushed): matriz 26 capacidades, modelo auth mixto (store-key lo no personal / token per-cliente lo personal), gaps G1-G5 priorizados. **G6** (`00a255e`, pushed): bugs hallados en e2e — `ajusteInventario` 500 siempre (`notas` sin `??` fuera del try + columna `linea_negocio` inexistente en `almacen_movimientos`).
+- **Doc**: `docs/RECOMENDACIONES-FASE3-AGENTE.md` (`95d17d8`, pushed): matriz 26 capacidades, modelo auth mixto (store-key lo no personal / token per-cliente lo personal), gaps G1-G5 priorizados.
+- **G6 CORREGIDO POR NOSOTROS** (`ff64301`, 2026-10-08, pushed): `ajusteInventario` ya NO da 500 — `notas ?? null`, insert sin `linea_negocio`, tipo enum, `almacen_id` default. **Live en preprod** (bind mount HEAD). El doc viejo decía "lo corrige Juan" — deriva corregida: la corrección es nuestra.
+- **G1-G4 implementados** (2026-10-08, pushed): G1 `PATCH /api/ecomm/orders/{id}/cancel` + 11 tests (`e495454`+`8ae9bb2`); G2 CRUD webhook endpoints por API (`f961503`); G3 evento `invoice.issued` (`5ace5aa`); G4 `webhooks:retry-failed` (`601959e`). **Solo G5 queda pendiente** (teléfono/stock-sucursal/detalle).
 - **Webhooks activos**: endpoint WP dado de alta (`webhook_endpoints` id=2, instance 10, events order.created/stock.updated/price.updated). E2E verificado: checkout → deliveries `sent/200` → WP invalida caché. Red docker compartida `erpipo-dev-network` con el stack WP (container-to-container, sin exponer puertos).
-- **OJO ecomm**: `POST /api/tienda/inventario/ajuste` 500 por G6 (usar checkout para mover stock hasta que Juan lo corrija).
+- **Juan integró nuestra Fase 2/3 a main vía PR #14** (2026-10-07) + refactor `34bd716` (VentaController/SaleCancelService/SaleStockService/helpers.php) + módulo renta vehículos `bd1a879` (~20 controllers/models, ortogonal a ecomm) — todo ya mergeado en nuestro HEAD sin conflictos.
 
-## Review de Juan — estado (2026-10-06, rama lista)
+## Review de Juan — estado (2026-10-13, verificado con fetch)
 
-Verificado: `origin/dev/ecomm-erp` @`00a255e` en sync (Juan no ha empujado nada nuevo; `origin/main` sigue en su PR #13). La rama contiene, sobre su base: 8 commits Fase 2 (código) + 2 docs Fase 2 + merge + 2 docs Fase 3. Archivos de código tocados: `routes/api.php` (+1), controllers ecomm/tienda, `SaleCreateService`, `LogErrorToDatabase`, `HealthController`, `bootstrap/app.php`, webhooks (modelos+servicio+job), 2 migraciones. Cero conflictos con su trabajo (tickets/impresoras). Para integrar: revisar → `php artisan migrate` (2 migraciones) → `--queue=default,webhooks` en su worker → corregir G6 → G1-G5 a su criterio. Detalle por commit en `docs/RECOMENDACIONES-FASE2-ECOMM.md` y `docs/RECOMENDACIONES-FASE3-AGENTE.md` (viajan con la rama).
+Verificado: `origin/dev/ecomm-erp` @`2306b64` = HEAD local (todo pushed); `origin/main` con **0 commits que nos falten** (su PR #14 ya integró nuestra Fase 2/3; su refactor `34bd716` y módulo renta `bd1a879` ya viven en nuestro HEAD). La rama contiene 7 commits nuestros esperando su revisión (G1-G4+G6+merge). Para integrar: revisar → `php artisan migrate` (2 migraciones) → `--queue=default,webhooks` en su worker → G5 a su criterio. Detalle por commit en `docs/RECOMENDACIONES-FASE2-ECOMM.md` y `docs/RECOMENDACIONES-FASE3-AGENTE.md` (viajan con la rama).
 
-**Pendientes siguientes (no implementados)**: G1 (cancelar pedido, M), G2 (alta webhooks por API, S), G3 (invoice.issued, S), G4 (retry-failed, S), G5 (teléfono/stock-sucursal/detalle, S/M), G6 (ajuste 500, Juan).
+**Pendiente siguiente (no implementado)**: solo **G5** (teléfono/stock-sucursal/detalle, S/M).
 
 ## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
 > Regla: ANTES de programar/configurar contra el ERP, consultar estas fuentes. El upstream es de Juan Carlos (recomendaciones via branch `dev/ecomm-erp`) — NUNCA tocar prod (desvinculada 2026-09-19). NUNCA inventar endpoints del contrato ecomm API.
 - **Upstream erpipo**: repo de Juan Carlos, rama `dev/ecomm-erp` + `docker-compose.yml` local + fases del .md (canonico del contrato).
 - **Componentes verificados**: nginx https://nginx.org/en/docs/ · MySQL 8.0 https://dev.mysql.com/doc/ · Redis https://redis.io/docs/
 
-## Upstream (2026-10-06)
+## Upstream (2026-10-13)
 
 - **Fuente**: `soycarlosjerez-hub/sistema-facturacion` (upstream de Juan Carlos) + stack erpipo-* (kalimete :8100).
-- **Vivo 2026-10-06**: 8/8 containers Up; rama `dev/ecomm-erp` @00a255e **pushed** (Fase 2 + Fase 3 doc + G6); webhooks activos hacia WP (endpoint id=2); red compartida con WP.
+- **Vivo 2026-10-13**: 8/8 containers Up 2d (db/redis/mailpit healthy); rama `dev/ecomm-erp` @`2306b64` pushed = HEAD; **al día con origin/main** (fetch verificado, 0 commits faltantes); webhooks activos hacia WP (endpoint id=2); red compartida con WP; tenant 10 MaganTech activo.
+- **Latencia (2026-10-13)**: `/up` directo :8100 = ~130ms estable; vía HTTPS nginx = 490-1140ms — el ping-erp de WP (~250-300ms) es overhead TLS/nginx, no la app. Anomalía: `erpipo-preprod-mailpit` 7.41% CPU constante (posible flood de mail dev — investigar).
 - **Check**: `docker ps -f name=erpipo` + `curl -sk https://erp.kalimete.local/login` + `curl -s http://127.0.0.1:8100/up`
 - **Regla**: LIVE manda (doc vs live vs upstream); push a origin solo con autorización del owner.
 

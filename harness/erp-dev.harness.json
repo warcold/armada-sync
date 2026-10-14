@@ -1,6 +1,6 @@
 {
   "harness": "erp-dev",
-  "updated": "2026-10-05",
+  "updated": "2026-10-13",
   "agent_file": "~/armada-sync/agents/erp-dev.md",
   "mode": "subagent",
   "hidden": false,
@@ -8,15 +8,16 @@
   "ownership": "Repo upstream = Juan Carlos. Copia local = sandbox para validar integraciones (WP/Alfredo Ecomm) sin tocar prod. main/develop read-only (politica rama unica, commit dd66417).",
   "git": {
     "rama_activa": "dev/ecomm-erp (el stack SIRVE esta rama)",
-    "head_verificado": "00a255e (Fase3 doc + G6 ajusteInventario) PUSHED a origin",
-    "fase_2_pushed": "2026-10-06: 10 commits Fase 2 pushed a origin (4415e27..790cc8a + merge 2c8fca9) — autorizacion owner; Juan Carlos revisa",
-    "fase_3_pushed": "2026-10-06: 95d17d8 (RECOMENDACIONES-FASE3-AGENTE G1-G5) + 00a255e (G6: ajusteInventario 500 siempre — notas sin ?? + linea_negocio inexistente en almacen_movimientos) — pushed a origin",
+    "head_verificado": "2306b64 (2026-10-13, fetch verificado) PUSHED e identico a origin/dev/ecomm-erp — 100% al dia con origin/main (0 commits faltantes)",
+    "fase_2_pushed": "2026-10-06: 10 commits Fase 2 pushed a origin (4415e27..790cc8a + merge 2c8fca9) — Juan YA integro via PR #14 (2026-10-07)",
+    "fase_3_pushed": "2026-10-08: G6 CORREGIDO por nosotros (ff64301: notas ?? null, fin linea_negocio, tipo enum, almacen_id default) + G1 cancel order + 11 tests (e495454+8ae9bb2) + G2 CRUD webhooks API (f961503) + G3 invoice.issued (5ace5aa) + G4 retry-failed (601959e) + merge del main de Juan (2306b64) — 7 commits esperando PR de Juan",
     "remotes": "SOLO origin = ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git (upstream Juan Carlos). NO existe remote preprod en este clon.",
     "regla": "push a origin SOLO con autorizacion explicita del owner"
   },
   "webhooks_activos_2026_10_06": "endpoint WP dado de alta (webhook_endpoints id=2, instance 10 MaganTech, events order.created/stock.updated/price.updated, active); e2e checkout->deliveries sent/200->WP flush_cache verificado; red compartida erpipo-dev-network con stack WP (URL interna http://wordpress-local/wp-json/erpsuite/v1/erp-webhook)",
-  "aviso_ajuste_500": "POST /api/tienda/inventario/ajuste devuelve 500 SIEMPRE (G6, lado Juan): usar checkout para mover stock hasta correccion",
+  "aviso_ajuste_500_RESUELTO_2026_10_13": "G6 corregido por NOSOTROS (ff64301) y LIVE en preprod (bind mount HEAD 2306b64) — POST /api/tienda/inventario/ajuste ya responde; WP puede reintentar el endpoint",
   "vivo_2026_10_06": "8/8 containers Up; dev/ecomm-erp @00a255e PUSHED a origin; migraciones 655 (batch 150); queue worker con --queue=default,webhooks; contrato ecomm Fase 2 verificado e2e; webhooks activos hacia WP",
+  "vivo_2026_10_13": "8/8 containers Up 2d (db/redis/mailpit healthy); dev/ecomm-erp @2306b64 = HEAD = origin (fetch OK, 0 commits de main faltantes); tenant 10 MaganTech activo=1 (tabla business_instances, NO tenants); latencia /up directo ~130ms, via HTTPS nginx 490-1140ms (overhead TLS — causa del ping-erp 250-300ms de WP); mailpit 7.41% CPU constante (anomalia, investigar); key ecomm-test-customer.txt STALE (401 Token invalido — regenerar para proximo e2e)",
   "live_check": "docker ps -f name=erpipo",
   "checks": [
     "curl -sk -o /dev/null -w '%{http_code}' https://erp.kalimete.local/login",
@@ -49,11 +50,12 @@
   },
   "fase_2_estado": "IMPLEMENTADA y PUSHED (2026-10-06). 10 commits: orders/{id} 4415e27, tenant-por-key ba62435, logging 4e1a216, /up c470bf2, checkout-sin-caja a2b183e, webhooks dbb1998+27be061+2893551, docs 9a18a04+790cc8a. Evidencia: docs/RECOMENDACIONES-FASE2-ECOMM.md + CHANGELOG del repo.",
   "pendientes_siguientes": [
-    "evento invoice.issued (infra ya lo soporta, falta anclaje)",
+    "G5: telefono/stock-sucursal/detalle (unico gap Fase 3 no implementado)",
     "UI admin para webhook_endpoints",
     "index compuesto (tenant_id, telefono) — requiere dedupe previo",
     "UpdateClienteRequest: email/rnc_cedula unique GLOBAL (flujo admin)",
-    "comando re-proceso para deliveries failed"
+    "investigar mailpit 7.41% CPU constante (posible flood mail dev)",
+    "regenerar key ecomm-test-customer.txt (stale 401) cuando toque otro e2e"
   ],
   "upstream": {
     "fuente": "soycarlosjerez-hub/sistema-facturacion (Juan Carlos) + stack erpipo-* (kalimete :8100)",

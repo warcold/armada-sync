@@ -1,6 +1,6 @@
 {
   "harness": "alfredo-ecomm",
-  "updated": "2026-10-05",
+  "updated": "2026-10-13",
   "agent_file": "~/armada-sync/agents/alfredo-ecomm.md",
   "mode": "subagent",
   "hidden": false,
@@ -23,6 +23,7 @@
     "init": "2026-10-05, rama master, LOCAL sin remote",
     "baseline": "01fe048 chore: baseline Alfredo Pro Ecomm backend (import 2026-10-05)",
     "smoke_commit": "e39fa99 chore: add smoke script",
+    "hardening_commit": "b6d9e70 chore: smoke 5/5 (categories) + healthchecks api/redis + drifts conciliados (2026-10-13)",
     "gitignored": [
       ".env",
       "node_modules/",
@@ -44,10 +45,12 @@
   },
   "seguridad_2026_10_05": "JWT_SECRET/JWT_REFRESH_SECRET/DB_PASSWORD ROTADOS (openssl + ALTER USER; valores solo en .env). CORS final: localhost:5173, 127.0.0.1:5173, woodly.kalimete.local, erp.kalimete.local, localhost:8091. Backup pre-rotacion: backend/.env.bkup-20261005 (gitignored).",
   "vivo_2026_10_05": "api/db/redis Up (db healthy); :3004/health ok; stores/products(8)/deals/auth slug-scoped 200; smoke.sh 4/4; :5173 200 (mock)",
+  "vivo_2026_10_13": "api/db/redis Up 2d, los 3 (healthy) — healthchecks NUEVOS api (wget --spider /health, 30s) + redis (redis-cli ping, 10s), recreate sin --build; smoke.sh 5/5 (añadido categories); CORS ACAO http://localhost:5173 verificado; commit b6d9e70; Woodly PAUSADO (owner 2026-10-13)",
   "live_check": "docker ps --filter name=alfredo && bash ~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh",
   "checks": [
     "curl -s localhost:3004/health",
     "docker ps --filter name=alfredo",
+    "curl -s localhost:3004/v1/stores/woodly-park/categories",
     "curl -s localhost:3004/v1/stores/woodly-park/products",
     "bash ~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh",
     "curl -s -o /dev/null -w '%{http_code}' localhost:5173/"
@@ -55,10 +58,11 @@
   "standard_rule": "Armada Suite = plugin WP comercial/UI (erpipos :8100). Alfredo Pro Ecomm = backend ERP multitenant :3004, solo-Woodly.",
   "legacy_frozen": "Namespace plugin erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, constantes ERPSUITE_*, options erp_suite_*/erpc_*, REST erpsuite/v1, shortcodes erpc_* — se MANTIENEN como legacy efectivo; renombrar rompe DB/bookmarks/clientes REST. NO renombrar código.",
   "drift_pendiente": [
-    "src↔dist: imagen corre /app/dist (compilado 2026-09-05); NO --build sin validar src↔dist",
-    "repo woodly (fuera de scope): nginx proxyea /api/ → erp.kalimete.local:3001 (stale); frontend mock-only + CSP connect-src 'self'",
-    "schema.prisma lista 11 modelos vs 12 CREATE TABLE en DB (conciliar, menor)"
+    "RESUELTO 2026-10-13 src↔dist: imagen backend-api build 2026-10-01 IN SYNC con src (0 archivos src mas nuevos; /categories presente en dist del container); solo dist/ LOCAL stale (2026-09-05, gitignored, nada lo corre) — rebuild riesgo BAJO (npm run build → tsc OK → compose build → up -d → smoke 5/5)",
+    "RESUELTO 2026-10-13 schema: 12 tablas = 11 negocio + _prisma_migrations (interna Prisma, 4 migraciones OK, ultima 2026-09-06) — el '11 vs 12' era falso drift de conteo",
+    "repo woodly (fuera de scope, PAUSADO owner 2026-10-13): nginx proxyea /api/ → erp.kalimete.local:3001 (stale); frontend mock-only + CSP connect-src 'self'"
   ],
+  "git_remote_pendiente": "Recomendacion 2026-10-13: crear repo GitHub privado (p.ej. armada/alfredo-pro-ecomm) + push para backup off-site del codigo (hoy el repo solo vive en kalimete). REQUIERE autorizacion del owner.",
   "upstream": {
     "fuente": "backend-api custom local + redis:7 + postgres:16 (kalimete dev)",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"

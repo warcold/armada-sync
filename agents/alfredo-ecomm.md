@@ -23,21 +23,21 @@ permission:
 - **Armada Suite** = plugin WordPress comercial/UI (~/dev/wordpress, `armada-suite.php`) — pertenece al subagente WordPress. **NO consume este backend**: usa erpipos `:8100` (tenant 10).
 - **Alfredo Pro Ecomm** = backend ERP multitenant `:3004`, **solo-Woodly**. Este agente NO toca el plugin WP.
 
-## Stack Tecnológico (validado 2026-10-05)
+## Stack Tecnológico (validado 2026-10-13)
 
 | Componente | Detalle |
 |-----------|---------|
 | API | Node 20 + Express + TS — docker `alfredo-ecomm-api` (imagen `backend-api`, runtime desde `/app/dist`), puerto **3004** |
 | DB | PostgreSQL 16-alpine — docker `alfredo-ecomm-db` (healthy), volumen `backend_postgres_data` |
 | Caché | Redis 7-alpine — docker `alfredo-ecomm-redis`, volumen `backend_redis_data` |
-| ORM | Prisma (`prisma/schema.prisma`). DB con **12 tablas** (pg_dump 2026-10-05); el schema lista 11 modelos nombrados — diferencia menor pendiente de conciliar |
+| ORM | Prisma (`prisma/schema.prisma`). DB con **12 tablas** = 11 de negocio + `_prisma_migrations` (interna de Prisma; 4 migraciones OK, última 2026-09-06) — conciliado 2026-10-13: el "11 modelos vs 12 tablas" era falso drift de conteo |
 | Frontend cliente | Woodly — docker `woodly-woodly-1` (nginx), `127.0.0.1:5173->80` — **React 19 + Vite + TS** (NO Vue). Hoy **mock estático**: NO consume `:3004` todavía (CSP `connect-src 'self'` lo bloquearía) |
 
 ## Repositorios y Paths Exactos (curados 2026-10-05)
 
 - **Backend (CANÓNICO)**: `~/dev/webs/alfredo-pro-ecomm/backend` — `src/`, `prisma/`, `Dockerfile`, `docker-compose.yaml` (`name: backend`), `.env`, `.dockerignore`
 - **Repo root (CANÓNICO)**: `~/dev/webs/alfredo-pro-ecomm` — `README.md`, `Caddyfile.dev` (receta; Caddy NO corre en dev), `CHANGELOG.md`, `docs/`, `scripts/smoke.sh`
-- **Git**: versionado desde 2026-10-05 — baseline `01fe048` + smoke `e39fa99` (rama `master`, LOCAL, sin remote; `.env`/`backups/`/`dist/`/`node_modules/`/`*.bkup*`/`*.sql` gitignored)
+- **Git**: versionado desde 2026-10-05 — baseline `01fe048` + smoke `e39fa99` + hardening `b6d9e70` (2026-10-13) (rama `master`, LOCAL, sin remote — crear GitHub privado pendiente de autorización owner; `.env`/`backups/`/`dist/`/`node_modules/`/`*.bkup*`/`*.sql` gitignored)
 - **Woodly frontend**: `~/dev/apps/woodly` (React 19 + Vite + TS + nginx; docker `woodly-woodly-1` :5173)
 - **⚠️ ARCHIVADO**: `~/projects/alfredo-pro-ecomm.archived-20261005` — era una cáscara VACÍA cuyo mount sombreaba `/app/src` (peligro: rebuild desde ahí = imagen vacía). NO usar; NO borrar (histórico).
 - **NO-TOUCH desde este agente**: `~/dev/wordpress` (plugin Armada Suite → subagente WordPress), `armada-suite.php`, `.env` de Woodly (secrets)
@@ -49,12 +49,13 @@ curl -s localhost:3004/health
 # {"status":"ok","service":"alfredo-pro-ecomm","database":"up",...}
 
 docker ps --filter name=alfredo
-# alfredo-ecomm-api / alfredo-ecomm-db (healthy) / alfredo-ecomm-redis
+# alfredo-ecomm-api (healthy) / alfredo-ecomm-db (healthy) / alfredo-ecomm-redis (healthy)
+# healthchecks api/redis añadidos 2026-10-13 (antes solo db los tenía)
 
 curl -s localhost:3004/v1/stores
 curl -s localhost:3004/v1/stores/woodly-park/categories
 curl -s localhost:3004/v1/stores/woodly-park/products   # total: 8
-bash ~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh       # 4/4 OK
+bash ~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh       # 5/5 OK (health, stores, categories, products, deals)
 
 curl -s -o /dev/null -w '%{http_code}' localhost:5173/   # frontend woodly → 200
 ```
@@ -143,11 +144,11 @@ El plugin WP Armada Suite arrastra namespace histórico **erp-suite**. Se MANTIE
 
 - `JWT_SECRET` / `JWT_REFRESH_SECRET` / `DB_PASSWORD`: **ROTADOS 2026-10-05** (openssl + `ALTER USER` vía psql; valores solo en `.env`, jamás en docs/chat). Backup pre-rotación: `backend/.env.bkup-20261005` (gitignored, local).
 - `CORS_ORIGIN` final (verificado ACAO live): `http://localhost:5173, http://127.0.0.1:5173, http://woodly.kalimete.local, https://erp.kalimete.local, http://localhost:8091`
-- ⚠️ **Drift src↔dist**: la imagen corre `/app/dist` (compilado 2026-09-05); NO hacer `--build` sin validar antes que `src/` compila equivalente.
+- **src↔dist CONCILIADO (2026-10-13)**: la imagen `backend-api` es build **2026-10-01 12:45** y está **IN SYNC con `src/`** (0 archivos src más nuevos que el build; `/categories` presente en el dist del container y responde 200 live). El único stale es el `dist/` LOCAL (2026-09-05, gitignored — nada lo corre). Rebuild riesgo BAJO; procedimiento seguro: `npm run build` → validar tsc sin errores → `docker compose build` → `up -d` → smoke 5/5.
 
-## Schema de DB (12 tablas en DB)
+## Schema de DB (12 tablas = 11 negocio + 1 interna)
 
-`stores` → customers, carts, orders, products, deals, product_variants, cart_items, cart_deals, admin_users, refresh_tokens (+1 tabla por conciliar — pg_dump 2026-10-05 muestra 12 CREATE TABLE)
+`stores` → customers, carts, orders, products, deals, product_variants, cart_items, cart_deals, admin_users, refresh_tokens + **`_prisma_migrations`** (bookkeeping interno de Prisma — NO es un modelo). Conciliado 2026-10-13: los 11 modelos de `schema.prisma` mapean exactamente las 11 tablas de negocio; 4 migraciones aplicadas OK (última 2026-09-06).
 
 ## Deploy a producción (cuando el owner autorice)
 
@@ -165,6 +166,7 @@ El plugin WP Armada Suite arrastra namespace histórico **erp-suite**. Se MANTIE
 
 ## Cambios recientes
 
+- **2026-10-13 (hardening, commit `b6d9e70`)**: smoke.sh 4→5 checks (añadido `GET /v1/stores/$SLUG/categories`, verificado 5/5); **healthchecks en docker-compose** (api: `wget --spider /health` 30s; redis: `redis-cli ping` 10s) — recreate sin `--build`, los 3 containers `(healthy)`, CORS ACAO intacto; **drifts conciliados**: schema 11-vs-12 era falso positivo (`_prisma_migrations`), imagen build 2026-10-01 IN SYNC con src (solo dist/ local stale); CHANGELOG del proyecto actualizado; git remote recomendado (pendiente autorización owner).
 - **2026-10-06 (diseño→implementación, plugin)**: el diseño de este agente (flags + rebrand + arquitectura del agente) se implementó completo en el plugin Armada Suite: 13 commits (`f0d1572`→`b289ba1`), regresión 19/19, webhooks e2e OK. Backend :3004 intacto (solo-Woodly, fuera de scope).
 - **2026-10-06**: Cierre de sección — CHANGELOG del proyecto con Fase 1 hardening + contexto ecosistema (commit `2dd567c`): split :3004 solo-Woodly vs :8100 erpipo/WP documentado; drift src↔dist y 11-modelos-vs-12-tablas registrados.
 - **2026-10-05**: Fase 1 — compose canónico curado (bind mount `src` vacío ELIMINADO, `name: backend`, `.dockerignore`); cáscara `~/projects/alfredo-pro-ecomm` archivada como `.archived-20261005`; git init baseline `01fe048` + smoke `e39fa99`; JWT/JWT_REFRESH/DB_PASSWORD rotados; CORS alineado a live; `scripts/smoke.sh` 4/4; red huérfana `backend_alfredo-ecomm` eliminada; snapshot `backups/pre-fase1-20261005.sql`.
@@ -180,10 +182,10 @@ El plugin WP Armada Suite arrastra namespace histórico **erp-suite**. Se MANTIE
 - **React 19 + Vite + TS** (frontend Woodly): https://react.dev/ + https://vite.dev/guide/
 - **Canonica del proyecto**: su ledger AGENTS.md (endpoints, seed demo, deploy) — el codigo manda sobre docs externas.
 
-## Upstream (2026-10-05)
+## Upstream (2026-10-13)
 
 - **Fuente**: backend-api custom local + redis:7 + postgres:16 (kalimete dev).
-- **Vivo 2026-10-05**: api/db/redis Up 2h (db healthy); `:3004/health` ok; stores/products/deals/auth slug-scoped 200; smoke 4/4; frontend `:5173` 200 (mock).
+- **Vivo 2026-10-13**: api/db/redis Up 2d, los 3 `(healthy)` (healthchecks nuevos); `:3004/health` ok; stores/categories/products/deals/auth slug-scoped 200; smoke 5/5; frontend `:5173` 200 (mock — Woodly PAUSADO por owner 2026-10-13).
 - **Check**: `docker ps -f name=alfredo-ecomm` + `bash ~/dev/webs/alfredo-pro-ecomm/scripts/smoke.sh`
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 
