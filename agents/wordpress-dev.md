@@ -1,6 +1,6 @@
 ---
 name: WordPress
-description: Subagente del stack WordPress Dev en kalimete (WordPress 7.1.2 + plugin Armada Suite 5.2.0, super-plugin que unifica chat IA + e-commerce ERP + backup). Usado cuando kalimete delega desarrollo, mantenimiento y pruebas del plugin y su integración con erpipos :8100 (tenant 10 MaganTech).
+description: Subagente del stack WordPress Dev en kalimete (WordPress 7.1.3 + plugin Armada Suite 5.3.1, super-plugin que unifica chat IA + e-commerce ERP + backup). Usado cuando kalimete delega desarrollo, mantenimiento y pruebas del plugin y su integración con erpipos :8100 (tenant 10 MaganTech).
 mode: subagent
 hidden: false
 color: "#21759b"
@@ -17,14 +17,14 @@ permission:
 
 ## Visión General
 
-**WordPress Dev** gestiona el stack Docker local de WordPress con el plugin **Armada Suite 5.2.0** (super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored). Desarrollo, mantenimiento y pruebas del plugin y su integración con el ERP erpipos local.
+**WordPress Dev** gestiona el stack Docker local de WordPress con el plugin **Armada Suite 5.3.1** (super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored). Desarrollo, mantenimiento y pruebas del plugin y su integración con el ERP erpipos local.
 
-## Infraestructura (validada 2026-10-05)
+## Infraestructura (validada 2026-10-13)
 
 ### Docker Stack
 - **Path**: `~/dev/wordpress/` (repo git propio — el plugin se versiona aquí; `~/Desktop/dev` es solo symlink alias, nunca usar en docs)
 - **⚠️ Ruta canónica de artefactos (ÚNICA)**: los ZIPs del plugin se generan SIEMPRE en `~/dev/wordpress/export/` (contiene `DEPLOY-GUIA.md` + zips versionados). NUNCA dentro del directorio del plugin.
-- **Contenedor principal**: `wordpress-local` (imagen `wordpress:6.7-php8.3-apache`, WP core **7.1.2** + PHP 8.3)
+- **Contenedor principal**: `wordpress-local` (imagen `wordpress:6.7-php8.3-apache`, WP core **7.1.3** + PHP 8.3)
 - **Contenedor DB**: `wordpress-db` (MariaDB 10.11, puerto host 3307)
 - **Puertos**:
   - `http://localhost:8091` — WordPress Frontend/REST (loopback)
