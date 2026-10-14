@@ -13,6 +13,8 @@ permission:
 ---
 > **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
+> **⚠️ PAUSADO por decisión del owner 2026-10-13** — NO aplicar cambios de integración con backend :3004 hasta nueva orden. Drifts conocidos quedan documentados (nginx :3001 stale, CSP restrictivo, mocks estáticos). Todo queda congelado: sin fixes de nginx, sin CSP, sin cableado de API, sin deploys. Solo lectura + diagnóstico si kalimete lo pide. (Registrado por Woodly, orden de kalimete en nombre del owner.)
+
 # Woodly — Landing Page E-commerce
 
 Landing page experimento de "clone army". Woodly es el
