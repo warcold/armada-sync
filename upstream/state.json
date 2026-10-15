@@ -67,30 +67,6 @@
   "kind": "local",
   "ts": 1791039921
  },
- "eco-woodly": {
-  "id": "eco-woodly",
-  "label": "woodly-woodly (kalimete)",
-  "href": "",
-  "docs": "",
-  "local": "woodly-woodly",
-  "upstream": "?",
-  "latest": "",
-  "drift": null,
-  "kind": "local",
-  "ts": 1791039921
- },
- "eco-alfredo-ecomm": {
-  "id": "eco-alfredo-ecomm",
-  "label": "backend-api (kalimete)",
-  "href": "",
-  "docs": "",
-  "local": "backend-api",
-  "upstream": "?",
-  "latest": "",
-  "drift": null,
-  "kind": "local",
-  "ts": 1791039921
- },
  "eco-taohemps": {
   "id": "eco-taohemps",
   "label": "taohemps-frontend/backend (vps)",

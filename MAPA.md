@@ -28,7 +28,7 @@
 ### 1. kalimete (10.0.0.106) — HUB / Cerebral
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
-- Docker: 8 containers (tapmap, woodly, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
+- Docker: 7 containers (tapmap, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
 - **opencode.jsonc**: 4 providers + MCP `godot` (verificado 2026-10-01; el archivo es la fuente única)
   1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
       - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
@@ -45,7 +45,7 @@
 - WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1.3 (imagen base 6.7-php8.3-apache) — agente `wordpress-dev` = SISTEMA/umbrella (regla owner 2026-10-15: cada plugin su agente)
   - URL local: `http://localhost:8091` (loopback) | URL LAN/SSL: `https://wordpress.kalimete.local`
   - DB: localhost:3307 (wordpress-db container, MariaDB 10.11)
-  - Autenticación: WP-Admin `admin` (UI); REST = Application Passwords (mcp-kalimete-2026 + alfredo-ecomm en secrets/ 600) — la password de login NO sirve para REST
+  - Autenticación: WP-Admin `admin` (UI); REST = Application Passwords (activa: mcp-kalimete-2026; alfredo-ecomm REVOCADA 2026-10-15) — la password de login NO sirve para REST
   - SSL: mkcert CA instalada en sistema, certificado válido hasta 2028-11-30
   - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
   - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
@@ -82,10 +82,8 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### 3. vps-preprod (154.53.35.102) — VPS Production
 - User: root, SSH 1333, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-preprod`
-- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do, **alfredo-pro-ecomm (ERP backend)**
-- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, ragnarok.cp.armada.do, scriberr.armada.do, whiteboard.armada.do, woodly.armada.do → 154.53.35.102 (CF proxied)
-- **NUEVO 2026-09-05**: Backend Ecomm ERP — Node.js (3004) + Postgres + Redis
-- **NUEVO 2026-09-05**: Frontend Woodly (cliente Principal del ERP)
+- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do
+- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, ragnarok.cp.armada.do, scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied)
 - Proyectos locales: kalimete, victoria, jonas (fuera), Windows (10.0.0.64)
 - UFW: active (solo rangos CF en DOCKER-USER)
 - OpenVPN: active (openvpn@server.service)
@@ -171,8 +169,6 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | VPS | Servidor VPS producción (vps-preprod) | ✅ |
 | Victoria Server | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
 | PetSuite | Proyecto PetSuite (pets.armada.do) | ✅ |
-| Woodly | Proyecto Woodly (woodly.armada.do) — cliente principal ERP | ✅ |
-| Alfredo Ecomm | Backend ERP Alfredo Pro Ecomm (multin tenant) — NUEVO (2026-09-05) | ✅ |
 | Taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
 | Ragnarok | Servidor de juego Ragnarok | ✅ |
 | Nextcloud | Proyecto Nextcloud + whiteboard | ✅ |

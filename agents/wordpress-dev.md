@@ -55,7 +55,7 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 
 ## Autenticación (curada 2026-10-05)
 - **WP-Admin**: usuario `admin` (login por UI; la password de login NO sirve para REST — da 401)
-- **REST API**: Application Passwords (Basic Auth). Activas (user admin): `mcp-kalimete-2026` y `alfredo-ecomm` — esta última guardada en `~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt` (dir 700, file 600, gitignored + excluida del ZIP). **NUNCA imprimir ni commitear el valor.**
+- **REST API**: Application Passwords (Basic Auth). Activa (user admin): `mcp-kalimete-2026` — única restante (`alfredo-ecomm` REVOCADA 2026-10-15 al eliminarse el proyecto Alfredo Ecomm; archivo secrets borrado). **NUNCA imprimir ni commitear el valor.**
 - **Verificación REST**: `curl --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:<app-password>" "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"` → 200; anónimo → 403 `erpsuite_forbidden`. (Nota: el probe usa el namespace `erpsuite/v1` del plugin Armada Suite — la credencial es del SISTEMA.)
 - **Receta de rotación de App Password** (lección 2026-10-05): en este WP, `create_new_application_password()` devuelve `[$plaintext, $item]` — el plaintext es `$new[0]`, NO `$new[1]`. Escribir el plaintext a archivo DENTRO del contenedor (`file_put_contents('/tmp/newpw.txt', $new[0])`) y sacarlo con `docker cp` — nunca por stdout del exec.
 
@@ -67,7 +67,7 @@ docker ps --filter name=wordpress
 
 # Servicios WordPress (permalinks PLAIN — usar ?rest_route=)
 curl -s "http://localhost:8091/index.php?rest_route=/wp/v2/posts?_fields=title,slug"
-curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)" \
+curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:<app-password>" \
   "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"  # probe vía plugin Armada Suite
 
 # Docker logs / reinicio / DB shell (creds DB en el compose, no en docs)
