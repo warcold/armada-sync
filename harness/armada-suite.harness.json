@@ -10,8 +10,8 @@
   "checks": [
     "docker exec wordpress-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php",
     "docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php  (19/19 PASS)",
-    "curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u \"admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)\" -o /dev/null -w '%{http_code}' \"https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status\"  (200; anónimo 403 erpsuite_forbidden)",
-    "curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u \"admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)\" -X POST \"https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/ping-erp\"  (200 ok:true)"
+    "curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u \"admin:<app-password>\" -o /dev/null -w '%{http_code}' \"https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status\"  (200; anónimo 403 erpsuite_forbidden)",
+    "curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u \"admin:<app-password>\" -X POST \"https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/ping-erp\"  (200 ok:true)"
   ],
   "upstream": {
     "fuente": "Desarrollo propio continuo (vendored 5.0.0 2026-10-01: erp-commerce-suite + WPVibe v1.20.0 + AIOWPM v7.111). Sin imagen hub — el stack corre sobre wordpress:6.7-php8.3-apache (upstream del agente WordPress).",
@@ -85,7 +85,7 @@
     "WP Multisite sin probar — modelo = un WP por negocio",
     "Provisionar tenant 3 micaserogou (desbloquear + key + webhook) — lado ERP Dev"
   ],
-  "auth_ref": "REST = App Passwords del WP (gestiona el agente WordPress; activas: mcp-kalimete-2026 + alfredo-ecomm en secrets/ 600). Password de login NO sirve para REST (401).",
+  "auth_ref": "REST = App Passwords del WP (gestiona el agente WordPress; activa: mcp-kalimete-2026 — alfredo-ecomm REVOCADA 2026-10-15). Password de login NO sirve para REST (401).",
   "changelog": "~/armada-sync/CHANGELOG.md + ~/dev/wordpress/CHANGELOG.md (historial de releases del plugin)",
   "name": "Armada Suite",
   "docs_oficiales": {

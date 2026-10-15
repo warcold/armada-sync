@@ -96,11 +96,11 @@ docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/te
 docker exec wordpress-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php
 
 # Estado del OpsMotor (200 auth / 403 anónimo)
-curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)" \
+curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:<app-password>" \
   "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"
 
 # Ping al ERP (usa config sellada Local; rate-limit 30/60s)
-curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:$(cat ~/dev/wordpress/secrets/app-password-alfredo-ecomm.txt)" \
+curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:<app-password>" \
   -X POST "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/ping-erp"
 
 # Catálogo vía plugin (nonce erpc_cfg.nonce en páginas con shortcode, p.ej. /productos/)

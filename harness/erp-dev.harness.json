@@ -5,7 +5,7 @@
   "mode": "subagent",
   "hidden": false,
   "scope": "ERP erpipo preprod (kalimete :8100) — sandbox local de desarrollo. Upstream de Juan Carlos (soycarlosjerez-hub/sistema-facturacion); enviamos recomendaciones via rama dev/ecomm-erp. Push a origin SOLO con autorizacion del owner.",
-  "ownership": "Repo upstream = Juan Carlos. Copia local = sandbox para validar integraciones (WP/Alfredo Ecomm) sin tocar prod. main/develop read-only (politica rama unica, commit dd66417).",
+  "ownership": "Repo upstream = Juan Carlos. Copia local = sandbox para validar integraciones (WP/Armada Suite) sin tocar prod. main/develop read-only (politica rama unica, commit dd66417).",
   "git": {
     "rama_activa": "dev/ecomm-erp (el stack SIRVE esta rama)",
     "head_verificado": "2306b64 (2026-10-13, fetch verificado) PUSHED e identico a origin/dev/ecomm-erp — 100% al dia con origin/main (0 commits faltantes)",

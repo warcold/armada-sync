@@ -1,11 +1,11 @@
 {
   "harness": "vps",
-  "updated": "2026-10-01",
+  "updated": "2026-10-15",
   "agent_file": "~/armada-sync/agents/vps.md",
   "mode": "subagent",
   "hidden": false,
   "scope": "VPS produccion vps-preprod (154.53.35.102, root:1333)",
-  "vivo_2026_10_01": "25 contenedores Up 4w (petsuite, woodly, staging, nextcloud-stack, docuseal, scriberr, ragnarok, authentik, taohemps, apps)",
+  "vivo_2026_10_01": "25 contenedores Up 4w (petsuite, staging, nextcloud-stack, docuseal, scriberr, ragnarok, authentik, taohemps, apps; woodly eliminado 2026-10-15)",
   "live_check": "ssh vps-preprod docker ps",
   "upstream": {
     "fuente": "VPS produccion vps-preprod (154.53.35.102, root:1333)",

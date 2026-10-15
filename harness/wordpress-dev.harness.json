@@ -37,7 +37,7 @@
     "plugin_ref": "~/dev/wordpress/wp-content/plugins/armada-suite → agente armada-suite (harness/armada-suite.harness.json)",
     "artefactos_zip_ref": "~/dev/wordpress/export/ → agente armada-suite"
   },
-  "auth": "REST = App Passwords (Basic). Activas user admin: mcp-kalimete-2026 + alfredo-ecomm (en secrets/, 600). Password de login NO sirve para REST (401). Receta rotación: plaintext es $new[0] (NO $new[1]); escribir a /tmp dentro del contenedor + docker cp.",
+  "auth": "REST = App Passwords (Basic). Activa user admin: mcp-kalimete-2026 (única; alfredo-ecomm REVOCADA 2026-10-15, secrets file borrado). Password de login NO sirve para REST (401). Receta rotación: plaintext es $new[0] (NO $new[1]); escribir a /tmp dentro del contenedor + docker cp.",
   "modulos_historicos": "Elementor 4.2.4 / EMCP Tools v3.16.1 / MCP Adapter v0.5.0 NO instalados en live (namespace mcp ausente). mcp-proxy.mod.js existe como archivo pero el bridge NO es funcional sin el plugin. Reinstalar solo por decisión owner.",
   "lecciones_stack": [
     "docker: container_name único como DB host si hay redes compartidas (service name `db` colisiona con el db de erpipo: error 1045)",

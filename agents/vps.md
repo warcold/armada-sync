@@ -1,6 +1,6 @@
 ---
 name: VPS
-description: Subagente del servidor VPS de producción (vps-preprod 154.53.35.102). Usado cuando kalimete delega: gestión de contenedores Docker, servicios, caddy, authentik SSO, proyectos alojados. Cubre auth.armada.do, pets, woodly, ragnarok, scriberr, docuseal, nextcloud, whiteboard, taohemps.
+description: Subagente del servidor VPS de producción (vps-preprod 154.53.35.102). Usado cuando kalimete delega: gestión de contenedores Docker, servicios, caddy, authentik SSO, proyectos alojados. Cubre auth.armada.do, pets, ragnarok, scriberr, docuseal, nextcloud, whiteboard, taohemps.
 mode: subagent
 hidden: false
 color: "#f97316"
@@ -32,7 +32,6 @@ Gestión del servidor VPS de producción (`vps-preprod`, 154.53.35.102). Este su
 | **Authentik SSO** | authentik-server, authentik-worker, authentik-redis, authentik-db | Autenticación SSO |
 | **Nextcloud** | nextcloud-stack-nextcloud-1, nextcloud-stack-db-1, nextcloud-stack-redis-1, nextcloud-stack-cron-1 | Cloud/archivos |
 | **PetSuite** | petsuite | Plataforma de mascotas |
-| **Woodly** | woodly-woodly-1 | Proyecto Woodly |
 | **Ragnarok** | ragnarok-web, ragnarok-db, ragnarok-fluxcp, ragnarok-remoteclient, ragnarok-wsproxy | Juego Ragnarok |
 | **Scriberr** | scriberr | Servicio Scriberr |
 | **DocuSeal** | docuseal | Firma de documentos |
@@ -43,7 +42,7 @@ Gestión del servidor VPS de producción (`vps-preprod`, 154.53.35.102). Este su
 
 ## DNS (Cloudflare)
 
-- auth.armada.do, pets.armada.do, woodly.armada.do, ragnarok.armada.do, scriberr.armada.do, docuseal.armada.do, nextcloud.armada.do, whiteboard.armada.do, taohemps.com → 154.53.35.102 (proxied)
+- auth.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, docuseal.armada.do, nextcloud.armada.do, whiteboard.armada.do, taohemps.com → 154.53.35.102 (proxied)
 
 ## Seguridad
 
@@ -82,12 +81,12 @@ ssh vps-preprod 'uptime; df -h / | tail -1'
 ## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
 > Regla: ANTES de programar/configurar el VPS, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE (docker ps, caddy). NUNCA inventar flags de docker ni directivas Caddy.
 - **Docker** (contenedores, servicios en vps-preprod 154.53.35.102): https://docs.docker.com/
-- **Caddy** (TLS + reverse proxy de auth/pets/woodly/ragnarok/scriberr/docuseal/nextcloud/whiteboard/taohemps): https://caddyserver.com/docs/
+- **Caddy** (TLS + reverse proxy de auth/pets/ragnarok/scriberr/docuseal/nextcloud/whiteboard/taohemps): https://caddyserver.com/docs/
 
 ## Upstream (2026-10-01)
 
 - **Fuente**: vps-preprod 154.53.35.102 (root:1333, alias ssh vps-preprod).
-- **Vivo 2026-10-01**: 25 contenedores Up 4w (petsuite, woodly, staging, nextcloud-stack, docuseal, scriberr, ragnarok, authentik, taohemps, apps).
+- **Vivo 2026-10-01**: 25 contenedores Up 4w (petsuite, staging, nextcloud-stack, docuseal, scriberr, ragnarok, authentik, taohemps, apps; woodly eliminado 2026-10-15).
 - **Check**: ssh vps-preprod docker ps
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 
