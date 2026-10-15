@@ -262,4 +262,7 @@ No existen máquinas follower — solo kalimete escribe al repo. Si el usuario d
 - **opencode docs** (orquestacion, Task, subagentes, permisos): https://opencode.ai/docs
 - **Schema de config** (fuente de verdad de opencode.jsonc): https://opencode.ai/config.json
 
-## Upstream
+## Upstream (2026-10-08)
+- **opencode**: https://registry.npmjs.org/opencode-ai/latest (local 1.18.35 = latest verificado 2026-10-08; `npm view opencode-ai version` para chequear).
+- **Frecuencia**: ante error nuevo del CLI o deriva de schema; `opencode agent list` debe mostrar 1 primary + 18 exactos.
+- **Politica**: upgrades del CLI con Plan del owner (es el cerebro de la maquina); jamas auto-update en produccion.
