@@ -1,5 +1,18 @@
 ## 2026-10-15
 
+### [23:55] - ZionV CRM 1.56.3: auditoría de discrepancias docs vs live — welcome notice → Configuración unificada
+- **Tipo**: fix | docs | ui (TARGET=kalimete local; repos warcold/zionv-crm + armada-sync)
+- **Modificado**:
+  - **Hallazgo del owner confirmado**: README decía "Integraciones configurables desde wp-admin → Estado del sistema" (era 1.54) pese a que desde 1.56.0 toda la configuración vive en `/crm/configuracion/`. Auditoría completa encontró 9 puntos stale: README (3: header integraciones, selector "desde el Diagnóstico" —vive en tab Calendario desde 1.55.1—, desinstalación sin matiz), DEPLOY-GUIA (6: sección Configurar + Google/MS365/Nextcloud + selector + uninstall + troubleshooting apuntando a Estado del sistema).
+  - **Código**: `WelcomeNotice.php` — botón "Configurar correo e integraciones" apuntaba a `admin.php?page=zion-crm-status`; ahora a `/crm/configuracion/` (`CrmSettingsPage::ROUTE`, URL verificada live con `wp eval`: `https://zionv.kalimete.local/crm/configuracion/`). Docblock actualizado. Banner puente de AppShell queda como fallback correcto (solo renderiza sin parche).
+  - **Verificado en código**: el toggle `delete_data_on_uninstall` vive SOLO en Configuración → General (render_tab_general heredado; Estado del sistema no tiene tab General) — DEPLOY-GUIA decía "en Estado del sistema", corregido.
+  - **Plugin 1.56.2→1.56.3** (commit `5d3efab` pushed, ZIP `export/zionv-crm-1.56.3.zip` 7.3M sha256 `e0b730d8…` sin secrets, fix incluido): README + DEPLOY-GUIA + changelogs; `php -l` OK; live 1.56.3 activo, 302 dashboard + 302 configuración.
+  - **Agente + harness curados**: versiones 1.56.3/`5d3efab`/sha nuevo + lección nueva ("docs deben seguir la superficie canónica; cada cambio de 'dónde vive X' actualiza README+DEPLOY-GUIA+welcome notice+changelogs en el mismo commit").
+- **Afecta a**: zionv-local (:8092), GitHub warcold/zionv-crm, repo armada-sync
+- **Causa**: orden del owner — auditar documentación/readme/harness por discrepancias (ejemplo: integraciones ya unificadas) y proceder con mejoras
+- **Estado**: ✅ verificado (live 1.56.3, URL welcome generada OK, JSON harness válido, ZIP limpio, push OK)
+- **Notas**: Estado del sistema (wp-admin) queda como diagnóstico técnico + respaldo (tabs heredadas correo/calendario/hubspot/ia siguen funcionando ahí); la canónica es `/crm/configuracion/` con 6 tabs (incluye General+Antispam que Estado del sistema NO tiene).
+
 ### [23:27] - ZionV CRM 1.56.2: validación dónde quedamos + higiene desinstalación + agente/harness curados
 - **Tipo**: auditoría | fix | docs (TARGET=kalimete local; repos warcold/zionv-crm + armada-sync)
 - **Modificado**:
