@@ -42,23 +42,18 @@
      - baseURL: `https://integrate.api.nvidia.com/v1`
      - apiKey: `nvapi-...` (key compartida desde victoria)
      - Contexto nativo: 1M tokens (vs 262K del Qwen local)
-- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1.1 (imagen base 6.7-php8.3) + Elementor 4.2.4 + EMCP Tools 3.16.1 + MCP Adapter 0.5.0
+- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1.3 (imagen base 6.7-php8.3-apache) — agente `wordpress-dev` = SISTEMA/umbrella (regla owner 2026-10-15: cada plugin su agente)
   - URL local: `http://localhost:8091` (loopback) | URL LAN/SSL: `https://wordpress.kalimete.local`
-  - URL LAN: `http://wordpress.kalimete.local` (redirect 301 → HTTPS)
-  - DB: localhost:3307 (wordpress-db container)
-  - Autenticación: `admin:admin123` (Basic Auth REST)
+  - DB: localhost:3307 (wordpress-db container, MariaDB 10.11)
+  - Autenticación: WP-Admin `admin` (UI); REST = Application Passwords (mcp-kalimete-2026 + alfredo-ecomm en secrets/ 600) — la password de login NO sirve para REST
   - SSL: mkcert CA instalada en sistema, certificado válido hasta 2028-11-30
-  - Proxy MCP modificado: `mcp-proxy.mod.js` (usa ?rest_route=, captura Mcp-Session-Id)
-  - ~60+ herramientas EMCP Tools expuestas vía MCP (Elementor page builder)
-  - Se integra con vLLM de victoria para automatización de páginas Elementor
   - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
   - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
   - Puertos: nginx-TLS 443 + 8090 (mismo cert, ambas URLs válidas) → Docker loopback 8091 (8090 público ya NO es backend HTTP directo — fix redirects envenenados 2026-09-17)
-  - **Plugin único: `erp-commerce-suite` v4.4.0 (admin: 1 menú, 8 tabs reales; verificado 2026-10-01)** (unifica los 3 plugins viejos desde 4.0.0) — unifica los 3 plugins viejos (erp-chatbot 1.4.6 + erp-ecomm-connector 3.15.2 + mcp-basic-auth 1.1, rastro eliminado local+GitHub). Option única `erp_suite_settings`, sin roles (manage_options), modo sellado dev/público en Core/Environment: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Tienda "MaganTech" tenant 10. Tests regresión 8/8.
-  - Repo plugin: `github.com/warcold/erp-commerce-suite` (privado, rama `master`) — único rastro; repos viejos erp-chatbot/erp-ecomm-connector/erp-ecmm-connector BORRADOS 2026-09-29
-  - ERP local de pruebas: `~/dev/erpipo-preprod/` (erpipo-preprod-nginx :8100) — clavado a main puro de Juan Carlos `5c6ca70` (soycarlosjerez-hub/sistema-facturacion, sin edits; rama local dev/ecomm-erp preservada con commit 7d1e885 sin push)
-  - SSL: `mkcert` con CA instalada en sistema, Firefox y Chrome/Chromium (NSS) — verificado 2026-09-17
-  - Mu-plugins: `disable-mcp-host-guard.php` (MCP host guard off). `erpc-local.php` RETIRADO en 4.1.0 (Environment resuelve URLs/imágenes por modo sellado)
+  - **Plugin único: `Armada Suite` v5.3.2 (agente `armada-suite`) — super-plugin (unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0, 2026-10-01)**. Option única `erp_suite_settings`, sin roles (manage_options), modo sellado dev/público en Core/Environment: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Multitenant por-sitio (un WP = un tenant): local tenant 10 MaganTech; prod multi-negocio (magantech, micaserogou, futuros). Tests regresión 19/19. ZIPs canónicos en `~/dev/wordpress/export/` (5.3.2 sha256 d8952c61…).
+  - Repo: `~/dev/wordpress` (git local, sin remote — versiona stack+plugin; HEAD a838486). Repos viejos erp-chatbot/erp-ecomm-connector BORRADOS 2026-09-29; github.com/warcold/erp-commerce-suite = histórico pre-5.0.0
+  - ERP local de pruebas: `~/dev/erpipo-preprod/` (erpipo-preprod-nginx :8100) — rama dev/ecomm-erp @2306b64 (Fase 2/3 nuestras mergeadas vía PR #14 de Juan Carlos)
+  - Mu-plugins: `disable-mcp-host-guard.php` (MCP host guard off). Elementor/EMCP/MCP Adapter: NO instalados en live (históricos, namespace mcp ausente)
   - **Protección contra updates**:
     - mcp-proxy.mod.js: `~/dev/wordpress/` (fuera del contenedor Docker)
     - Nginx config: `/etc/nginx/sites-available/` (fuera del contenedor)
@@ -66,7 +61,6 @@
     - Permisos SSL: `chown root:www-data 640` (persisten)
     - Permisos WordPress: `chown -R www-data:www-data /var/www/html/wp-content` (persisten)
     - Mu-plugins: `/var/www/html/wp-content/mu-plugins/` (no se borran con updates)
-  - **Política de updates**: NO actualizar `mcp-adapter` (manual), NO actualizar `elementor` sin probar, actualizar `emcp-tools` solo patch updates (3.14.0 → 3.14.1)
 - Systemd: ssh, nginx, docker, containerd, cron, sddm, waydroid, kalimete-tunnel, publish-kalimete-subdomains, dnsmasq
 - opencode config: `~/.config/opencode/`
 - opencode.jsonc usa gateway LLM de victoria en LAN: `http://victoria.local:8010/v1` (verificado 2026-09-14)
@@ -185,13 +179,13 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | Authentik | SSO Authentik (auth.armada.do) | ✅ |
 | DocuSeal | Proyecto DocuSeal | ✅ |
 | Scriberr | Proyecto Scriberr | ✅ |
-| wordpress-dev | WordPress+Elementor+EMCP+MCP stack | ✅ |
+| wordpress-dev | SISTEMA WordPress (umbrella de plugins): stack :8091/:3307, compose, certs, secrets, DB | ✅ |
+| armada-suite | Plugin WP Armada Suite 5.3.2 (multitenant WP↔ERP, magantech/micaserogou/futuros) — NUEVO (2026-10-15) | ✅ |
+| zionv-crm | Plugin ZionV CRM 1.56.3 (stack propio :8092, GitHub warcold/zionv-crm) — NUEVO en registro (2026-10-15) | ✅ |
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
 | godot-dev | Juegos Godot 4.x + MCP 386 tools | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
 | intigriti | Bug bounty Intigriti (~/dev/ethical-hacking, kalimetehunt.sh) — NUEVO (2026-10-08) | ✅ |
-| eco-accesos | ~~SSH/access management~~ | 🔴 roto (symlink sin target) |
-| eco-voice | ~~Voz/STT/TTS~~ | 🔴 roto (servicio ELIMINADO) |
 
 ### Agentes retirados
 cloudflare → kalimete, ecosistema → kalimete, cf-dns→Cloudflare-dns, cf-security→Cloudflare-security, cf-storage→Cloudflare-storage, cf-tunnels→Cloudflare-tunnels, cf-workers→Cloudflare-workers, jonas-ro, kalimete-ro, kalimete-ro-agent — archivo backup BORRADO 2026-08-14, solo historial git.

@@ -1,5 +1,18 @@
 ## 2026-10-15
 
+### [12:55] - Flota: split agente-plugin — armada-suite creado, wordpress-dev redimensionado a SISTEMA (umbrella)
+- **Tipo**: agente | config | sync (TARGET=kalimete local; repo armada-sync)
+- **Modificado**:
+  - **Nuevo agente `armada-suite`** (regla owner 2026-10-15: cada plugin WP su agente, así como ZionV CRM): `agents/armada-suite.md` (frontmatter 0.6/0.95/15, edit+write allow) + `harness/armada-suite.harness.json` + symlink `~/.config/opencode/agent/armada-suite.md`. Contenido migrado íntegro desde wordpress-dev: plugin 5.3.2, OpsMotor 15 rutas, webhooks, feature flags, Fases A/B/C, integración ERP (Fases 1/2/3, deuda P3), empaquetado ZIPs, lecciones CLI, releases 5.x. **Nueva sección Multitenant** (modelo por-sitio verificado: un WP = un tenant; receta de alta por negocio; tenants live ERP: magantech=10 activo con key+webhook, micaserogou=3 bloqueado sin key — pendiente provisionar; IA por tenant vive en el plugin, la del ERP es panel-only).
+  - **`agents/wordpress-dev.md` redimensionado** a SISTEMA/umbrella: stack WP core, contenedores, compose, certs, secrets, DB, nginx/TLS, deploy. Nueva tabla **Plugins conocidos** (armada-suite ACTIVO / zionv-crm stack aparte :8092 / históricos Elementor-EMCP-MCP sin agente) + regla "wordpress-dev NUNCA desarrolla plugins — delega". Secciones del plugin removidas (migradas a armada-suite). Backup `.bkup-20261015-split`.
+  - **`harness/wordpress-dev.harness.json` redimensionado** en espejo: scope sistema-only, `plugins_conocidos[]`, `umbrella`; zip_*/feature_flags/agente_mixto/integracion_erp/lecciones_cli/deuda_p3 → harness armada-suite. Backup `.bkup-20261015-split`.
+  - **`agents/kalimete.md`**: permission.task +`"Armada Suite": allow` +`"ZionV CRM": allow` (ZionV faltaba en el registro — huérfano desde su creación 2026-10-13); lista de flota 19→21 subagentes; tabla de delegación con filas nuevas (WordPress=SISTEMA, Armada Suite=plugin multitenant WP↔ERP, ZionV CRM=plugin CRM :8092); lista creativos/dev + Armada Suite/ZionV CRM. Backup `.bkup-20261015-split`.
+  - **`MAPA.md` curado**: sección WordPress Dev stale (decía WP 7.1.1 + Elementor + erp-commerce-suite v4.4.0 8/8 + admin:admin123 + repo GitHub) → live real (WP 7.1.3, Armada Suite 5.3.2 19/19, App Passwords, repo local sin remote, rama dev/ecomm-erp @2306b64); tabla subagentes: fila wordpress-dev corregida + filas armada-suite/zionv-crm añadidas + eco-accesos/eco-voice retirados de la tabla activa. Backup `.bkup-20261015-split`.
+- **Afecta a**: kalimete (flota 21 subagentes), delegación futura plugin Armada Suite (antes vía WordPress), registro ZionV CRM
+- **Causa**: orden del owner — WordPress = sistema del mismo, no plugins; cada plugin su agente separado con docs/git/harness conocido por WordPress (umbrella); Armada Suite multitenant WP↔ERP (magantech 1 ejemplo, micaserogou y futuros igual: IA, inventario, comprar, usuarios por tenant)
+- **Estado**: ✅ verificado (symlinks OK, JSON harness válidos, grep flota consistente)
+- **Notas**: evaluación previa en 3 vías (WordPress: split línea a línea + patrón ZionV; ZionV CRM: plantilla referencia + drift de registro detectado; ERP Dev: 10 tenants live, micaserogou=3 pendiente desbloquear+key+webhook). Pendiente owner: provisionar tenant 3 micaserogou lado ERP; extracción del plugin a repo git propio = decisión futura.
+
 ### [23:55] - ZionV CRM 1.56.3: auditoría de discrepancias docs vs live — welcome notice → Configuración unificada
 - **Tipo**: fix | docs | ui (TARGET=kalimete local; repos warcold/zionv-crm + armada-sync)
 - **Modificado**:
