@@ -1,3 +1,17 @@
+## 2026-10-15
+
+### [23:27] - ZionV CRM 1.56.2: validación dónde quedamos + higiene desinstalación + agente/harness curados
+- **Tipo**: auditoría | fix | docs (TARGET=kalimete local; repos warcold/zionv-crm + armada-sync)
+- **Modificado**:
+  - **Dónde quedamos**: plugin en 1.56.1 (`2601191`) con config unificada `/crm/configuracion/` (sidebar PHP 9 secciones/26 items + 6 tabs) + bundle parcheado (`__zionCfgUnified`); live healthy (Up 29h/34h), DB 1.24.0, 43 tablas, pretty, 302 sin sesión; GitHub al día; zips hasta 1.56.1.
+  - **Por qué "escribir sobre el compilado"**: verificado exhaustivo (explore) — NO existe frontend React/TSX en ningún disco/ZIP/git (0 tsx/ts/vite.config/package.json, 0 sourcemaps, manifests huérfanos, fósiles jo-crm-root/localhost:8888; import 1.53.1 ya entró solo con `dist/`). El backend PHP SÍ está completo (1.5M, 24 migraciones, 34 controllers/123 rutas, auth 100%, sanitización por Service). Conclusión: continuar lo hecho ES correcto en PHP; en frontend la única vía temporal era el parche del bundle — la vía correcta a futuro es nuevo `admin-app/` Vite que consuma `zion-crm/v1` + manifest y retire `config_route_patched`.
+  - **Plugin 1.56.1→1.56.2** (commit `6479f78` pushed, ZIP `export/zionv-crm-1.56.2.zip` 7.3M sha256 `27b39cb6…` sin secrets): `Uninstaller` cubre `ms365_connection` (1.22.0) + options ai/ms365/nextcloud/hubspot + `just_activated`/`permalinks_auto_set`/`welcome_dismissed` (+ legacy `jo_crm_db_version`); bootstrap comenta 1.24.0; README (24 migraciones, 34+ controllers, módulos Ai/Ms365/Nextcloud/Hubspot, DB 1.24.0); DEPLOY-GUIA (versión actual, 43 tablas, nota parche, matiz `delete_data_on_uninstall=false`); bump header+define+Stable tag+changelogs; `php -l` OK, live 1.56.2 activo sin fatales.
+  - **Agente + harness curados** (con `.bkup-20261015-higiene`): `agents/zionv-crm.md` (scope 1.56.2, backend completo vs frontend solo-dist, integraciones live con Victoria PUBLIC, comandos con checks 1.24.0/tablas/marker, reglas 8-9 dist-artefacto + docs sincronizadas, Notas con estrategia `admin-app/`, Upstream vivo 2026-10-15); `harness/zionv-crm.harness.json` (updated 2026-10-15, checks ampliados, rutas export/tools, github head `6479f78`, plugin 1.56.2/43 tablas/123 rutas, `frontend_source: NO EXISTE` + estrategia, lecciones 2026-10-15 + 8 deudas priorizadas, `victoria_llm` live con throttle pendiente).
+- **Afecta a**: zionv-local (:8092), GitHub warcold/zionv-crm, repo armada-sync (agente+harness+CHANGELOG)
+- **Causa**: orden del owner — validar en qué quedamos, analizar por qué "escribir sobre el compilado" vs continuar bien, buscar en todo, mejorar y curar agente/harness/docs.
+- **Estado**: ✅ verificado (live 302, 1.56.2 activo, DB 1.24.0, marker 1, JSON válido, push OK, ZIP sin secrets)
+- **Notas**: deudas priorizadas documentadas (exports streaming, prune system_logs, RateLimiter REMOTE_ADDR, throttle ai/chat, args schema REST, tests/php/, AppShell split, import CSV duro). Próximo paso propuesto (con Plan del owner): `admin-app/` Vite reproducible.
+
 ## 2026-10-14
 
 ### [00:25] - Pendientes ejecutados: repo GitHub alfredo-pro-ecomm + release 5.3.2 (fix ZIP) + decisiones owner documentadas
