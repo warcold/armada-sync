@@ -89,7 +89,6 @@
 | victoria.armada.do | — | ❌→✅ **2026-08-13: CNAME al túnel victoria-armada** (ver CNAME) |
 | whiteboard.armada.do | 154.53.35.102 | ✅ VPS prod |
 | whiteboard.nextcloud.armada.do | 154.53.35.102 | ❌ |
-| woodly.armada.do | 154.53.35.102 | ✅ VPS prod |
 
 ### CNAME
 | Name | Content | Notas |

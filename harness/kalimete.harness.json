@@ -1,6 +1,6 @@
 {
   "harness": "kalimete",
-  "updated": "2026-10-08",
+  "updated": "2026-10-15",
   "principal": {
     "name": "kalimete",
     "file": "~/armada-sync/agents/kalimete.md",
@@ -13,7 +13,7 @@
     "host": "kalimete",
     "ip": "10.0.0.106",
     "rol": "desarrollo + ethical",
-    "scope_agentes": "19 subagentes con NOMBRES REALES (Alfredo Ecomm, Authentik, Cloudflare, DocuSeal, IRC, Intigriti, Nextcloud, PetSuite, Proxy, Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, Woodly, ERP Dev, Godot, Proxmark, WordPress) — visibles en @ (hidden:false)"
+    "scope_agentes": "19 subagentes con NOMBRES REALES (Armada Suite, Authentik, Cloudflare, DocuSeal, ERP Dev, Godot, Intigriti, IRC, Nextcloud, PetSuite, Proxmark, Proxy, Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, WordPress, ZionV CRM) — visibles en @ (hidden:false)"
   },
   "hermanos": {
     "victoria": {
@@ -23,6 +23,13 @@
     }
   },
   "subagentes": [
+    {
+      "name": "Armada Suite",
+      "id": "armada-suite",
+      "file": "armada-suite.md",
+      "scope": "Plugin WP Armada Suite 5.3.2 multitenant WP↔ERP (~/dev/wordpress)",
+      "hidden": false
+    },
     {
       "name": "Authentik",
       "id": "authentik",
@@ -140,6 +147,13 @@
       "id": "intigriti",
       "file": "intigriti.md",
       "scope": "Bug bounty Intigriti (~/dev/ethical-hacking) — CoC+T&C estrictos, no-destructivo",
+      "hidden": false
+    },
+    {
+      "name": "ZionV CRM",
+      "id": "zionv-crm",
+      "file": "zionv-crm.md",
+      "scope": "Plugin ZionV CRM (stack propio :8092, GitHub warcold/zionv-crm)",
       "hidden": false
     }
   ],
