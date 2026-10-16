@@ -7,7 +7,7 @@
   "scope": "SISTEMA WordPress Dev (kalimete, umbrella): WP core 7.1.3, contenedores wordpress-local :8091 + wordpress-db :3307 (MariaDB 10.11), compose, certs mkcert, nginx-TLS, DB, secrets, deploy del stack. NO desarrolla plugins — cada plugin su agente (armada-suite, zionv-crm).",
   "umbrella": "cada plugin su agente (regla owner 2026-10-15) — armada-suite (ACTIVO en este stack), zionv-crm (stack aparte :8092), históricos sin agente (Elementor/EMCP/MCP Adapter, NO instalados)",
   "plugins_conocidos": [
-    { "plugin": "Armada Suite", "version": "5.3.2", "estado": "ACTIVO (único instalado)", "agente": "armada-suite", "path": "~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/ (repo compartido; ZIPs en export/)" },
+    { "plugin": "Armada Suite", "version": "5.3.5", "estado": "ACTIVO (único instalado)", "agente": "armada-suite", "path": "~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/ (repo compartido; ZIPs en export/)" },
     { "plugin": "ZionV CRM", "version": "1.56.3", "estado": "NO instalado aquí (stack propio :8092)", "agente": "zionv-crm", "path": "~/dev/wordpress/zionv-crm/ + GitHub privado warcold/zionv-crm (main)" },
     { "plugin": "Elementor 4.2.4 / EMCP Tools 3.16.1 / MCP Adapter 0.5.0", "version": "—", "estado": "histórico, NO instalado (namespace mcp ausente)", "agente": "sin agente (recuperar = decisión owner)", "path": "—" }
   ],

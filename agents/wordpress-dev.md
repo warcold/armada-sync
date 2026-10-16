@@ -43,7 +43,7 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 
 | Plugin | Versión | Estado en este stack | Agente | Dónde vive |
 |---|---|---|---|---|
-| **Armada Suite** | 5.3.2 | **ACTIVO** (único instalado) | `armada-suite` (agents/armada-suite.md + harness/armada-suite.harness.json) | `~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/` (repo compartido; ZIPs en `export/`) |
+| **Armada Suite** | 5.3.5 | **ACTIVO** (único instalado) | `armada-suite` (agents/armada-suite.md + harness/armada-suite.harness.json) | `~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/` (repo compartido; ZIPs en `export/`) |
 | **ZionV CRM** | 1.56.3 | NO instalado aquí (stack propio :8092, `~/dev/wordpress/zionv-crm/`) | `zionv-crm` | GitHub privado `warcold/zionv-crm` (rama main) |
 | Elementor 4.2.4 / EMCP Tools 3.16.1 / MCP Adapter 0.5.0 | — | Histórico, NO instalados (namespace REST `mcp` ausente; `mcp-proxy.mod.js` existe pero el bridge NO es funcional sin el plugin) | sin agente (recuperar = decisión owner) | — |
 
@@ -65,7 +65,7 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 # Verificar stack Docker
 docker ps --filter name=wordpress
 
-# Servicios WordPress (permalinks PLAIN — usar ?rest_route=)
+# Servicios WordPress (permalinks live /%postname%/ — REST vía ?rest_route= por diseño del plugin)
 curl -s "http://localhost:8091/index.php?rest_route=/wp/v2/posts?_fields=title,slug"
 curl -s --cacert ~/dev/wordpress/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" \
   "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"  # probe vía plugin Armada Suite
@@ -83,7 +83,7 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 3. **Cada plugin su agente**: no desarrollar plugins desde aquí — delegar
 4. **Secrets**: App Passwords y keys viven en `~/dev/wordpress/armada-suite/secrets/` (600, gitignored, fuera del ZIP) — jamás en docs, chat o commits
 5. **No confliger** con producción (este es local dev only)
-6. **Permalinks PLAIN**: toda llamada REST vía `index.php?rest_route=` (pretty paths dan 404 vía nginx-TLS)
+6. **Permalinks**: live `/%postname%/` (2026-10-16); REST SIEMPRE vía `index.php?rest_route=` por diseño del plugin (independiente de pretty)
 
 ## Notas Técnicas
 

@@ -29,7 +29,7 @@ permission:
 - `wordpress-local` (WP 7.1.3, PHP 8.3, imagen 6.7-php8.3-apache) — http://localhost:8091 / https://wordpress.kalimete.local
 - `wordpress-db` (MariaDB 10.11, :3307)
 - El plugin vive bind-mount: código en disco = código live
-- Permalinks PLAIN — REST SIEMPRE vía `index.php?rest_route=`
+- Permalinks live `/%postname%/` (2026-10-16) — REST SIEMPRE vía `index.php?rest_route=` por diseño (sin rewrites propios)
 - Contenedor/compose/certs/DB caídos → agente WordPress, no curar aquí
 
 ### Plugin
