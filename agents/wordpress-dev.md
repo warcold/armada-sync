@@ -125,3 +125,10 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 ```
 
 > **Harness**: `~/armada-sync/harness/wordpress-dev.harness.json` (scope + live_check + upstream + docs + changelog de este agente).
+
+## Vivo 2026-10-16 (post-mudanza hub)
+
+- **Estructura hub**: `~/dev/wordpress/` = padre (README-HUB.md, docs/, plugins-disponibles/, scripts/); hijos `armada-suite/` (:8091) y `zionv-crm/` (:8092). `~/dev/zionv-crm/` eliminado.
+- **Compose pinneados**: `name: wordpress` / `name: zionv-crm` — volúmenes `wordpress_*` + `zionv-crm_*` intactos tras mudanza.
+- **Vivo**: 4 containers healthy; smoke-8091 (front/login/REST 200, armada-suite activo) + smoke-8092 (pretty ON, zionv-crm activo, /crm/ 302) 100% verde; regresión Armada 19/19 post-move.
+- **Smokes**: `bash ~/dev/wordpress/scripts/smoke-8091.sh` y `smoke-8092.sh` (backup + smoke por stack, backups en `stack/backups/manual/`).

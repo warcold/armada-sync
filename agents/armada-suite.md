@@ -169,3 +169,9 @@ curl -s --cacert ~/dev/wordpress/armada-suite/certs/ca-bundle.crt -u "admin:<app
 ```
 
 > **Harness**: `~/armada-sync/harness/armada-suite.harness.json` (scope + live_check + upstream + docs + changelog de este agente).
+
+## Vivo 2026-10-16 (post-mudanza)
+
+- **Stack bajó** a `~/dev/wordpress/armada-suite/` (compose `name: wordpress` pinned; vols `wordpress_*` intactos; `wordpress-local` re-verificado en `erpipo-dev-network`).
+- **Regresión 19/19 PASS** post-move (incl. webhooks HMAC 18-19). Smoke 8091: front/login/REST 200, `/%postname%/` + `armada-suite` único activo.
+- **Historial git conservado** en `~/dev/wordpress/armada-suite/.git` (HEAD 5.3.5 `b4c2a89`). Padre hub sin git propio (pendiente decisión owner: repo hub).

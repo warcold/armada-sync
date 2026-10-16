@@ -167,3 +167,9 @@ cd ~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin && git log --on
 ```
 
 > **Harness**: `~/armada-sync/harness/zionv-crm.harness.json` (scope + live_check + upstream + docs + changelog de este agente).
+
+## Vivo 2026-10-16 (post-mudanza)
+
+- **Stack movió** de `~/dev/zionv-crm/` a `~/dev/wordpress/zionv-crm/` (compose `name: zionv-crm` pinned; vols `zionv-crm_*` intactos; `.gitignore` dotfile recuperado).
+- **Subrepo plugin intacto**: `.git` con `origin warcold/zionv-crm`, HEAD 1.56.3, status limpio.
+- **Smoke 8092 100% verde**: front 301, wp-login 302, REST 200, `/crm/dashboard/` 302, pretty ON + plugin activo, 43 tablas, db_version 1.24.0.
