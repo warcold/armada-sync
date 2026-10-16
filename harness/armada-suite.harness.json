@@ -1,6 +1,6 @@
 {
   "harness": "armada-suite",
-  "updated": "2026-10-15",
+  "updated": "2026-10-16",
   "agent_file": "~/armada-sync/agents/armada-suite.md",
   "mode": "subagent",
   "hidden": false,
@@ -96,9 +96,21 @@
   "docs_oficiales": {
     "regla": "ANTES de programar el plugin, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar hooks/filtros WP ni APIs del plugin.",
     "fuentes": [
-      { "nombre": "Plugin Handbook", "url": "https://developer.wordpress.org/plugins/", "contenido_clave": "estándares de plugin WP (Armada Suite)" },
-      { "nombre": "WordPress Developer", "url": "https://developer.wordpress.org/", "contenido_clave": "hooks, REST, options API usados por el plugin" },
-      { "nombre": "WordPress Documentation", "url": "https://wordpress.org/documentation/", "contenido_clave": "guía del stack (referencia del agente WordPress)" }
+      {
+        "nombre": "Plugin Handbook",
+        "url": "https://developer.wordpress.org/plugins/",
+        "contenido_clave": "estándares de plugin WP (Armada Suite)"
+      },
+      {
+        "nombre": "WordPress Developer",
+        "url": "https://developer.wordpress.org/",
+        "contenido_clave": "hooks, REST, options API usados por el plugin"
+      },
+      {
+        "nombre": "WordPress Documentation",
+        "url": "https://wordpress.org/documentation/",
+        "contenido_clave": "guía del stack (referencia del agente WordPress)"
+      }
     ]
   }
 }

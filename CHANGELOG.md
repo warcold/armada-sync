@@ -1,5 +1,18 @@
 ## 2026-10-16
 
+### [15:30] - Reestructuración dev hub: ambos stacks WP bajo ~/dev/wordpress/ con nombres reales de plugins
+- **Tipo**: infraestructura | reorganización | docs
+- **Modificado**:
+  - **Estructura nueva** (decisión owner: "los 2 wordpress dentro del directorio wordpress, con nombres reales"): `~/dev/wordpress/` = padre hub (README-HUB.md, docs/, plugins-disponibles/, scripts/) + hijos `armada-suite/` (stack :8091, Plugin Name "Armada Suite") y `zionv-crm/` (stack :8092, Plugin Name "ZionV CRM"). `~/dev/zionv-crm/` eliminado (dotfile `.gitignore` recuperado).
+  - **Compose pinneados** con `name: wordpress` / `name: zionv-crm` — volúmenes `wordpress_*` + `zionv-crm_*` intactos tras down/mv/up (sin huérfanos, sin pérdida de datos). Dumps pre-move: `armada-suite/backups/manual/wp-wordpress-premove-*.sql` (677K) + `zionv-crm/backups/manual/` (941K).
+  - **Git preservado**: historial Armada 5.3.5 `b4c2a89` en `armada-suite/.git` (mv del tree; padre hub sin git propio, pendiente decisión owner). Subrepo ZionV intacto (`origin warcold/zionv-crm`, HEAD 1.56.3).
+  - **Validación post-move**: 4 containers healthy; regresión Armada **19/19 PASS**; smoke-8091 (front/login/REST 200, `/%postname%/`, armada-suite activo) + smoke-8092 (front 301, wp-login 302, REST 200, `/crm/dashboard/` 302, pretty ON, zionv activo, 43 tablas, db_version 1.24.0) 100% verde; `wordpress-local` re-verificado en `erpipo-dev-network`.
+  - **Higiene docs completa** (9 archivos con .bkup-20261016-hubmove): rutas `~/dev/zionv-crm/` → `~/dev/wordpress/zionv-crm/` y `~/dev/wordpress/{wp-content,export,certs,secrets,docker-compose}` → bajo `armada-suite/` en agents/wordpress-dev.md, agents/armada-suite.md, agents/zionv-crm.md + 3 harness JSON (validados); versión 5.3.2→5.3.5 en estado actual (historial preservado); permalinks PLAIN→`/%postname%/` (live); DEPLOY-GUIA de ambos plugins a rutas nuevas (ZionV bump 1.56.2→1.56.3); template NUEVO-PLUGIN + PROBAR-PLUGIN-EN-8091 al layout hub; smoke-8091.sh (STACK nuevo) + smoke-8092.sh creado (check OR regex reparado) + plugins-disponibles/*.txt actualizados; README-HUB.md nuevo.
+- **Afecta a**: kalimete dev únicamente (puertos/dominios/vhosts/redes sin cambios; ERP y prod intactos)
+- **Causa**: owner: el nombre `wordpress` para UNO de los dos stacks confundía; quiere hub padre con nombres reales de plugins
+- **Estado**: ✅ verificado (smokes + regresión + vols + estructura final limpia)
+- **Notas**: symlink legacy `~/dev/zionv-crm` NO creado (decisión: no necesario). Pendiente decisión owner: crear repo git para el hub padre (hoy sin .git) y si los subagentes deben migrar sus paths hardcodeados restantes en herramientas propias.
+
 ### [00:51] - Armada Suite 5.3.5 + validación key prod: Sanctum válida, canal equivocado (ecomm público exige iak_)
 - **Tipo**: servicio | fix | seguridad
 - **Modificado**:

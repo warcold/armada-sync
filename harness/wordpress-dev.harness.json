@@ -1,6 +1,6 @@
 {
   "harness": "wordpress-dev",
-  "updated": "2026-10-15",
+  "updated": "2026-10-16",
   "agent_file": "~/armada-sync/agents/wordpress-dev.md",
   "mode": "subagent",
   "hidden": false,
