@@ -12,7 +12,7 @@
     "docker exec zionv-local wp plugin list --allow-root  (zionv-crm-plugin active 1.56.3)",
     "docker exec zionv-local wp option get zion_crm_db_version --allow-root  (1.24.0)",
     "docker exec zionv-local wp option get permalink_structure --allow-root  (/%postname%/)",
-    "grep -c __zionCfgUnified ~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/assets/dist/admin/assets/index-*.js  (1 = parche aplicado)",
+    "grep -c __zionCfgUnified ~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/assets/dist/admin/assets/index-*.js  (1 = parche aplicado)",
     "docker exec zionv-db sh -c 'mysql -u root -p\"$MYSQL_ROOT_PASSWORD\" zionv_crm -e \"SHOW TABLES LIKE \\\"%zion_crm_%\\\";\"' | wc -l  (44 con cabecera = 43 tablas)"
   ],
   "upstream": {
@@ -21,20 +21,20 @@
   },
   "docs": [
     "~/armada-sync/agents/zionv-crm.md",
-    "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/README.md",
-    "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/CHANGELOG.md",
-    "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/DEPLOY-GUIA.md",
-    "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/tools/patch-config-route.sh"
+    "~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/README.md",
+    "~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/CHANGELOG.md",
+    "~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/DEPLOY-GUIA.md",
+    "~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/tools/patch-config-route.sh"
   ],
   "rutas_canonicas": {
-    "proyecto": "~/dev/zionv-crm/ (stack: compose + nginx conf + certs + bin; NO es repo git)",
-    "plugin": "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/ (repo git propio → GitHub privado warcold/zionv-crm, rama main)",
-    "export": "~/dev/zionv-crm/export/zionv-crm-1.56.3.zip (ZIP canónico de producción; comando en DEPLOY-GUIA.md)",
-    "tools": "~/dev/zionv-crm/wp-content/plugins/zionv-crm-plugin/tools/patch-config-route.sh (parche idempotente del bundle + .orig, única vía temporal sin source)",
-    "secrets": "~/dev/zionv-crm/secrets/ (App Passwords, dir 700 file 600, gitignored)",
-    "certs": "~/dev/zionv-crm/certs/ca-bundle-full.crt (142 certs: 140 Debian + mkcert warcold + mkcert root — montado en el contenedor)",
-    "wp_cli": "~/dev/zionv-crm/bin/wp-cli.phar (montado ro en /usr/local/bin/wp — persistente)",
-    "zip_origen": "~/dev/zionv-crm/zionv-crm.zip (ZIP original del plugin, 7.1M)"
+    "proyecto": "~/dev/wordpress/zionv-crm/ (stack: compose + nginx conf + certs + bin; NO es repo git)",
+    "plugin": "~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/ (repo git propio → GitHub privado warcold/zionv-crm, rama main)",
+    "export": "~/dev/wordpress/zionv-crm/export/zionv-crm-1.56.3.zip (ZIP canónico de producción; comando en DEPLOY-GUIA.md)",
+    "tools": "~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/tools/patch-config-route.sh (parche idempotente del bundle + .orig, única vía temporal sin source)",
+    "secrets": "~/dev/wordpress/zionv-crm/secrets/ (App Passwords, dir 700 file 600, gitignored)",
+    "certs": "~/dev/wordpress/zionv-crm/certs/ca-bundle-full.crt (142 certs: 140 Debian + mkcert warcold + mkcert root — montado en el contenedor)",
+    "wp_cli": "~/dev/wordpress/zionv-crm/bin/wp-cli.phar (montado ro en /usr/local/bin/wp — persistente)",
+    "zip_origen": "~/dev/wordpress/zionv-crm/zionv-crm.zip (ZIP original del plugin, 7.1M)"
   },
   "github_repo": {
     "url": "https://github.com/warcold/zionv-crm",
@@ -45,7 +45,7 @@
     "import": "2026-10-13, commit 6cda97a 'ZionV CRM 1.53.1 — import inicial del plugin' (ya entró solo con dist/, sin frontend source)"
   },
   "docker": {
-    "compose": "~/dev/zionv-crm/docker-compose.yml (con .bkup-20261013-mejoras)",
+    "compose": "~/dev/wordpress/zionv-crm/docker-compose.yml (con .bkup-20261013-mejoras)",
     "contenedor_wp": "zionv-local (wordpress:6.7-php8.3-apache, puerto 8092:80, healthy)",
     "contenedor_db": "zionv-db (mariadb:10.11, puerto 3308:3306, healthy)",
     "red": "zionv-net (bridge)",
@@ -54,7 +54,7 @@
     "perm": "PRETTY /%postname%/ — OBLIGATORIO para el plugin (rewrite /crm/ y /reservar/)"
   },
   "nginx": {
-    "config": "~/dev/zionv-crm/zionv.kalimete.local.conf",
+    "config": "~/dev/wordpress/zionv-crm/zionv.kalimete.local.conf",
     "deploy": "/etc/nginx/sites-available/zionv.kalimete.local → sites-enabled (nginx -t OK, reload OK)",
     "ssl": "/etc/ssl/local-certs/zionv.kalimete.local.{crt,key} (mkcert, expira 2029-01-13, firmado por CA de ROOT — ver lecciones)"
   },

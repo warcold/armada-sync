@@ -7,8 +7,8 @@
   "scope": "SISTEMA WordPress Dev (kalimete, umbrella): WP core 7.1.3, contenedores wordpress-local :8091 + wordpress-db :3307 (MariaDB 10.11), compose, certs mkcert, nginx-TLS, DB, secrets, deploy del stack. NO desarrolla plugins — cada plugin su agente (armada-suite, zionv-crm).",
   "umbrella": "cada plugin su agente (regla owner 2026-10-15) — armada-suite (ACTIVO en este stack), zionv-crm (stack aparte :8092), históricos sin agente (Elementor/EMCP/MCP Adapter, NO instalados)",
   "plugins_conocidos": [
-    { "plugin": "Armada Suite", "version": "5.3.2", "estado": "ACTIVO (único instalado)", "agente": "armada-suite", "path": "~/dev/wordpress/wp-content/plugins/armada-suite/ (repo compartido; ZIPs en export/)" },
-    { "plugin": "ZionV CRM", "version": "1.56.3", "estado": "NO instalado aquí (stack propio :8092)", "agente": "zionv-crm", "path": "~/dev/zionv-crm/ + GitHub privado warcold/zionv-crm (main)" },
+    { "plugin": "Armada Suite", "version": "5.3.2", "estado": "ACTIVO (único instalado)", "agente": "armada-suite", "path": "~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/ (repo compartido; ZIPs en export/)" },
+    { "plugin": "ZionV CRM", "version": "1.56.3", "estado": "NO instalado aquí (stack propio :8092)", "agente": "zionv-crm", "path": "~/dev/wordpress/zionv-crm/ + GitHub privado warcold/zionv-crm (main)" },
     { "plugin": "Elementor 4.2.4 / EMCP Tools 3.16.1 / MCP Adapter 0.5.0", "version": "—", "estado": "histórico, NO instalado (namespace mcp ausente)", "agente": "sin agente (recuperar = decisión owner)", "path": "—" }
   ],
   "vivo_2026_10_15": "wordpress-local + wordpress-db healthy Up 3d (WP core 7.1.3, PHP 8.3.20); REST wp/v2 200; plugin armada-suite 5.3.2 único en live (agente armada-suite); agente redimensionado a SISTEMA por split de flota (regla owner: cada plugin su agente)",
@@ -25,17 +25,17 @@
   },
   "docs": [
     "~/armada-sync/agents/wordpress-dev.md",
-    "~/dev/wordpress/docker-compose.yml",
+    "~/dev/wordpress/armada-suite/docker-compose.yml",
     "~/dev/wordpress/DEPLOY-PRODUCCION.md"
   ],
   "rutas_canonicas": {
     "proyecto": "~/dev/wordpress/ (repo git compartido stack+plugin; ~/Desktop/dev es solo symlink alias — nunca usar en docs)",
-    "compose": "~/dev/wordpress/docker-compose.yml (+ docker-compose.prod.yml para deploy)",
-    "secrets": "~/dev/wordpress/secrets/ (App Passwords, dir 700 file 600, gitignored)",
-    "certs": "~/dev/wordpress/certs/ca-bundle.crt (mkcert, para curl https)",
+    "compose": "~/dev/wordpress/armada-suite/docker-compose.yml (+ docker-compose.prod.yml para deploy)",
+    "secrets": "~/dev/wordpress/armada-suite/secrets/ (App Passwords, dir 700 file 600, gitignored)",
+    "certs": "~/dev/wordpress/armada-suite/certs/ca-bundle.crt (mkcert, para curl https)",
     "red": "erpipo-dev-network (compartida con ERP para webhooks ERP→WP); WORDPRESS_DB_HOST=wordpress-db:3306 (container_name único)",
-    "plugin_ref": "~/dev/wordpress/wp-content/plugins/armada-suite → agente armada-suite (harness/armada-suite.harness.json)",
-    "artefactos_zip_ref": "~/dev/wordpress/export/ → agente armada-suite"
+    "plugin_ref": "~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite → agente armada-suite (harness/armada-suite.harness.json)",
+    "artefactos_zip_ref": "~/dev/wordpress/armada-suite/export/ → agente armada-suite"
   },
   "auth": "REST = App Passwords (Basic). Activa user admin: mcp-kalimete-2026 (única; alfredo-ecomm REVOCADA 2026-10-15, secrets file borrado). Password de login NO sirve para REST (401). Receta rotación: plaintext es $new[0] (NO $new[1]); escribir a /tmp dentro del contenedor + docker cp.",
   "modulos_historicos": "Elementor 4.2.4 / EMCP Tools v3.16.1 / MCP Adapter v0.5.0 NO instalados en live (namespace mcp ausente). mcp-proxy.mod.js existe como archivo pero el bridge NO es funcional sin el plugin. Reinstalar solo por decisión owner.",
