@@ -1,5 +1,16 @@
 ## 2026-10-16
 
+### [00:51] - Armada Suite 5.3.5 + validación key prod: Sanctum válida, canal equivocado (ecomm público exige iak_)
+- **Tipo**: servicio | fix | seguridad
+- **Modificado**:
+  - **Validación live prod** (key del owner tratada como secreto: test vía curl -K con archivo 600 + `shred -u` posterior, cero rastros, key nunca impresa): la key `4|…` **ES un token Sanctum válido en prod** — `/api/tienda/productos` → 200, `/api/tienda/config` → 200 forma plana, pero `/api/ecomm/tienda/config` → 401 INVALID_API_KEY. Causa en código (`resolveApiKeyPublic()`, TiendaApiController): exige prefijo `iak_` explícito + lookup `InstanceApiKey::activeByHash(sha256)` — Sanctum NUNCA pasa el canal público. En cambio `api-auth` (AuthenticateApiKey) SÍ acepta Sanctum vía fallback `PersonalAccessToken::findToken`. **Veredicto: key correcta, canal equivocado.**
+  - **Fix 5.3.5** (commit `b4c2a89`, repo ~/dev/wordpress local-only): `get_business_config()` acepta forma plana `{tenant_id,name,brand,…}` además de `{data:{…}}` (el probe al guardar ya la aceptaba; el sync la ignoraba → con el token actual el `/tienda/config` 200 plano ahora sincroniza SI el tenant coincide); guard `erpc_tenant_mismatch` 409 (no mergea negocio ajeno; tenant 0 = autodetect); aviso no-bloqueante si la key no es `iak_` ante 401/403. Regresión 19/19 PASS. **ZIP canónico** `export/armada-suite-5.3.5.zip` 2.207.808 B sha256 `b9c67bc8…`. DEPLOY-GUIA: ZIP actual 5.3.5 + rollback N-1 5.3.4. Nota: `!export/DEPLOY-GUIA.md` en .gitignore NO basta (git no re-incluye bajo dir excluido) — sigue requiriendo `git add -f`.
+  - **Docs hub curados**: armada-suite 5.3.5/`b4c2a89`/zips 5.3.3+5.3.4+5.3.5 (agente + harness, JSON validados).
+- **Afecta a**: producción WP (deployar 5.3.5 y reintentar sync), ERP prod (sin cambios — canal público por diseño solo-`iak_`, decisión upstream Juan)
+- **Causa**: owner reporta 401 persistente con key que "es correcta" — validación del canal auth + fix de la inconsistencia probe-vs-sync
+- **Estado**: ✅ verificado (live prod 200/401/404 discriminados, 19/19, ZIP canónico)
+- **Notas**: ⚠️ **ROTAR la key expuesta** — quedó en el historial del chat; es un token de staff con acceso API al panel prod: revocarlo en ERP prod y generar uno nuevo (o mejor: provisionar **instance key `iak_*`** para tenant 10 vía admin ERP Configuración > API > Nueva API Key, o tinker `OwnerService::createApiKey($instance10,…)` — el raw se muestra una sola vez). Best practice: `iak_*` (scope tienda) > Sanctum de usuario (scope staff) como store-key. Qué esperar al reintentar con 5.3.5: ✅ "Configuración obtenida" si el token es del tenant 10; ⚠️ mismatch 409 si es de otro tenant (revela el tenant real); ❌ 401+hint si el token murió. ERP `34de630` sigue esperando merge de Juan (8 commits).
+
 ### [00:27] - Armada Suite 5.3.4: reporte honesto de errores de config ERP (incidente prod 404 enmascarado) + curas de docs hub
 - **Tipo**: servicio | fix | docs
 - **Modificado**:

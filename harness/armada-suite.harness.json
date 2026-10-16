@@ -4,9 +4,10 @@
   "agent_file": "~/armada-sync/agents/armada-suite.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Plugin Armada Suite (kalimete dev) — super-plugin WP 5.3.4: comercio ERP real multitenant vía ERPIPOS + asistente IA server-side + voz + WhatsApp + SiteBackup vendored. Modelo por-sitio (un WP = un tenant): local = tenant 10 MaganTech contra erpipos :8100; producción multi-negocio (magantech, micaserogou tenant 3, futuros). Stack WP (contenedores, compose, certs, secrets, DB, nginx/TLS) = agente WordPress (umbrella).",
+  "scope": "Plugin Armada Suite (kalimete dev) — super-plugin WP 5.3.5: comercio ERP real multitenant vía ERPIPOS + asistente IA server-side + voz + WhatsApp + SiteBackup vendored. Modelo por-sitio (un WP = un tenant): local = tenant 10 MaganTech contra erpipos :8100; producción multi-negocio (magantech, micaserogou tenant 3, futuros). Stack WP (contenedores, compose, certs, secrets, DB, nginx/TLS) = agente WordPress (umbrella).",
   "vivo_2026_10_15": "plugin armada-suite 5.3.2 activo (bind-mount; header verificado; git ~/dev/wordpress HEAD a838486 tree clean); REST erpsuite/v1/ops 15 rutas (OpsEndpoints.php) + erp-webhook (WebhookReceiver.php); regresión 19/19 (última verificación 2026-10-14 post-bump); ZIP canónico export/armada-suite-5.3.2.zip (2.203.552 bytes, sha256 d8952c61…, storage/ incluido, sin secrets); ping-erp 200 ok 73ms (2026-10-15); agente creado por split desde wordpress-dev (regla owner: cada plugin su agente)",
   "vivo_2026_10_16": "plugin armada-suite 5.3.4 activo (bind-mount; git ~/dev/wordpress HEAD 6729d4c tree clean); regresión 19/19; ZIP canónico export/armada-suite-5.3.4.zip (2.207.069 bytes, sha256 c57df620…, storage/ incluido, sin secrets); 5.3.3: fix falso 'Conexión verificada' + guardar-verificar probe + SSOT Negocio; 5.3.4: reporte honesto errores config (prioriza 401/403 sobre 404 de fallback muerto /tenants/{id} — incidente prod owner 2026-10-16); rutas probe prod verificadas 401 (GO público sin esperar merge)",
+  "vivo_2026_10_16_b": "5.3.5 (HEAD b4c2a89): sync acepta forma plana + guard tenant-mismatch 409 + aviso no-iak_; ZIP canónico export/armada-suite-5.3.5.zip (2.207.808 bytes, sha256 b9c67bc8…, sin secrets); incidente prod: key Sanctum válida pero canal equivocado (ecomm público exige iak_ — resolveApiKeyPublic con prefijo obligatorio)",
   "live_check": "docker ps -f name=wordpress  (stack del agente WordPress)",
   "checks": [
     "docker exec wordpress-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php",
@@ -34,8 +35,8 @@
     "stack_ref": "compose/certs/nginx/DB/core WP → agente WordPress (wordpress-dev, umbrella)"
   },
   "plugin": {
-    "version": "5.3.4",
-    "header": "Armada Suite / ERPSUITE_VERSION 5.3.4 / ERPSUITE_OPTION erp_suite_settings / text-domain erp-suite",
+    "version": "5.3.5",
+    "header": "Armada Suite / ERPSUITE_VERSION 5.3.5 / ERPSUITE_OPTION erp_suite_settings / text-domain erp-suite",
     "rest": "erpsuite/v1 — 15 rutas ops (includes/Remote/OpsEndpoints.php) + POST erp-webhook (includes/Remote/WebhookReceiver.php: HMAC body crudo, skew 300s, allowlist 4 eventos, flush_cache) + admin-ajax erpc_get_products_json",
     "modulos_vendored": "includes/Modules/AiBridge (WPVibe v1.20.0) + includes/Modules/SiteBackup (AIOWPM v7.111, self-heal storage/ vía admin_init)",
     "entorno": "includes/Core/Environment.php — LOCAL sellado (http://172.19.0.1:8100/api, tenant 10, key iak_* hardcodeada NO reproducible en docs) / PÚBLICO editable erp_suite_settings.public.{api_url,tenant_id,api_key}; fallback fresh-install prod → public (wp_get_environment_type + host .local)",
@@ -63,7 +64,8 @@
     "zip_5_3_1": "2201803 bytes, sha256 d018a73b… — gap storage/ conocido, NO regenerar (artefacto liberado, decisión owner 2026-10-13)",
     "zip_5_3_2": "2203552 bytes, sha256 d8952c61ccfdd60efbd2d714a8c1007fd41e177422fd3bb392500b91f630f3b3 — storage/ INCLUIDO, lista idéntica al 5.3.0, sin secrets",
     "zip_5_3_3": "2206021 bytes, sha256 6fd5ed2dde847bd05e35d47c09774ffe8edc96bac2d882c2b9f910dce446402e — storage/ incluido, 501 files (+CHANGELOG.md plugin), sin secrets",
-    "zip_5_3_4": "2207069 bytes, sha256 c57df6200cc6671ad626c578041d83cc7f19647fd4aafb26d4f35aa316002da5 — storage/ incluido, sin secrets; CANÓNICO actual (DEPLOY-GUIA actualizado)"
+    "zip_5_3_4": "2207069 bytes, sha256 c57df6200cc6671ad626c578041d83cc7f19647fd4aafb26d4f35aa316002da5 — storage/ incluido, sin secrets; SUPERADO por 5.3.5",
+    "zip_5_3_5": "2207808 bytes, sha256 b9c67bc8f299e4ff6074b43195e2fe8f29abf63f26d5bd41850f2914cd432bfd — storage/ incluido, sin secrets; CANÓNICO actual"
   },
   "legacy_frozen": "Namespace erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, ERPSUITE_*, erp_suite_*/erpc_*, erpsuite/v1, shortcodes erpc_*, text-domain erp-suite — NO renombrar (rompe DB/bookmarks/clientes REST).",
   "integracion_erp_2026_10_13": {

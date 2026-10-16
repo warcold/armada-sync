@@ -1,6 +1,6 @@
 ---
 name: Armada Suite
-description: Subagente para desarrollo y mantenimiento del PLUGIN Armada Suite (super-plugin WP 5.3.4: comercio ERP real multitenant vía ERPIPOS + asistente de ventas IA server-side + voz modo teléfono + WhatsApp + respaldo SiteBackup vendored). Modelo por-sitio multi-negocio: cada WordPress un tenant — local kalimete = tenant 10 MaganTech contra erpipos :8100; producción = múltiples negocios (magantech, micaserogou, futuros), cada uno con su IA, inventario, checkout y usuarios. Usado cuando kalimete delega trabajo sobre el plugin, su integración WP↔ERP o su empaquetado. El stack WP (contenedores, compose, certs, secrets, DB, nginx/TLS) pertenece al agente WordPress (umbrella).
+description: Subagente para desarrollo y mantenimiento del PLUGIN Armada Suite (super-plugin WP 5.3.5: comercio ERP real multitenant vía ERPIPOS + asistente de ventas IA server-side + voz modo teléfono + WhatsApp + respaldo SiteBackup vendored). Modelo por-sitio multi-negocio: cada WordPress un tenant — local kalimete = tenant 10 MaganTech contra erpipos :8100; producción = múltiples negocios (magantech, micaserogou, futuros), cada uno con su IA, inventario, checkout y usuarios. Usado cuando kalimete delega trabajo sobre el plugin, su integración WP↔ERP o su empaquetado. El stack WP (contenedores, compose, certs, secrets, DB, nginx/TLS) pertenece al agente WordPress (umbrella).
 mode: subagent
 hidden: false
 color: "#27ae60"
@@ -17,7 +17,7 @@ permission:
 
 ## Visión General
 
-**Armada Suite** gestiona el plugin WP homónimo (v5.3.4, super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0): asistente de ventas con IA server-side (custom-model→gateway propio), chat + voz modo teléfono + canal WhatsApp (Cloud API, desactivado sin token), comercio ERP real (catálogo, carrito, checkout, pedidos PENDIENTES) y respaldo SiteBackup. Identidad configurable por negocio.
+**Armada Suite** gestiona el plugin WP homónimo (v5.3.5, super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0): asistente de ventas con IA server-side (custom-model→gateway propio), chat + voz modo teléfono + canal WhatsApp (Cloud API, desactivado sin token), comercio ERP real (catálogo, carrito, checkout, pedidos PENDIENTES) y respaldo SiteBackup. Identidad configurable por negocio.
 
 **Multi-negocio (regla del owner 2026-10-15)**: el plugin sirve MÚLTIPLES negocios/tenants vía ERPIPOS en producción — magantech es 1 ejemplo de 1 negocio; micaserogou (tenant 3 en el ERP) y futuros se sirven IGUAL (cada WP un tenant, ver sección Multitenant). Funciona LOCAL (desarrollo kalimete) y PÚBLICO (producción).
 
@@ -33,7 +33,7 @@ permission:
 - Contenedor/compose/certs/DB caídos → agente WordPress, no curar aquí
 
 ### Plugin
-- **Path**: `~/dev/wordpress/wp-content/plugins/armada-suite/` (versionado en el git de `~/dev/wordpress`, repo COMPARTIDO con el stack; HEAD 5.3.4 `6729d4c`). `~/Desktop/dev` es solo symlink alias — nunca usar en docs.
+- **Path**: `~/dev/wordpress/wp-content/plugins/armada-suite/` (versionado en el git de `~/dev/wordpress`, repo COMPARTIDO con el stack; HEAD 5.3.5 `b4c2a89`). `~/Desktop/dev` es solo symlink alias — nunca usar en docs.
 - **⚠️ Ruta canónica de artefactos (ÚNICA)**: ZIPs SOLO en `~/dev/wordpress/export/` (contiene `DEPLOY-GUIA.md` con el comando canónico de empaquetado + zips versionados). NUNCA dentro del directorio del plugin. Verificación obligatoria post-zip: `unzip -l | grep -i storage` (debe listar) + `unzip -l | grep -iE "\.env|secret"` (debe dar vacío). Los `export/` internos de SiteBackup son código y NO se excluyen.
 
 ### Switch Local/Público (regla del owner)
@@ -130,6 +130,7 @@ curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:<app-password>" \
 
 ## Cambios recientes
 
+- **2026-10-16 (release 5.3.5, commit `b4c2a89`)**: sync acepta config en forma plana `{tenant_id,name,brand,…}` además de `{data:{…}}` (el probe al guardar ya la aceptaba; el sync la ignoraba — con token Sanctum válido el `/tienda/config` 200 plano ahora sincroniza si el tenant coincide); guard anti-tenant-equivocado (`erpc_tenant_mismatch` 409, no mergea negocio ajeno; tenant 0 = autodetect); aviso no-bloqueante si la key no es `iak_` ante 401/403. ZIP 2.207.808 bytes, sha256 `b9c67bc8…`. Regresión 19/19.
 - **2026-10-16 (release 5.3.4, commit `6729d4c`)**: reporte honesto de errores de config ERP — `get_business_config` prioriza 401/403 (auth) > 5xx/timeout > 404 e incluye endpoint en el mensaje; antes el 404 del fallback muerto `/tenants/{id}` enmascaraba el 401 real de key inválida (incidente prod del owner). ZIP 2.207.069 bytes, sha256 `c57df620…`. Regresión 19/19.
 - **2026-10-16 (release 5.3.3, commits `a145502`+`17aec0e`)**: fix falso "Conexión verificada" (WP_Error en `get_business_config`, no pisa `erp_config`), guardar-verificar con probe en tab Conexión (pending + `settings_errors`), SSOT Negocio (Catálogo sin contact_email, IA-Conocimiento readonly, fix overwrite agente modo/tools/memoria, whatsapp número|URL), deprecate apariencia/contacto. ZIP 2.206.021 bytes, sha256 `6fd5ed2d…`. Regresión 19/19.
 - **2026-10-15 (flota)**: agente creado — split desde wordpress-dev (regla owner: cada plugin su agente; WordPress = sistema/umbrella). Contenido migrado íntegro.
@@ -149,7 +150,7 @@ curl -s --cacert ~/dev/wordpress/certs/ca-bundle.crt -u "admin:<app-password>" \
 ## Upstream (2026-10-15)
 
 - **Fuente**: desarrollo propio continuo (vendored desde 5.0.0, 2026-10-01: erp-commerce-suite + WPVibe v1.20.0 + AIOWPM v7.111). Sin imagen hub — el stack corre sobre `wordpress:6.7-php8.3-apache` (upstream del agente WordPress).
-- **Vivo 2026-10-16**: plugin 5.3.4 activo (HEAD `6729d4c`, tree clean); regresión 19/19; ZIP 5.3.4 canónico (sha `c57df620…`); fixes conexión ERP + SSOT live; rutas probe prod verificadas 401 (GO público sin esperar merge de Juan).
+- **Vivo 2026-10-16**: plugin 5.3.5 activo (HEAD `b4c2a89`, tree clean); regresión 19/19; ZIP 5.3.5 canónico (sha `b9c67bc8…`); sync acepta forma plana + guard 409 + aviso no-iak_; incidente prod: key Sanctum válida pero canal equivocado (ecomm público exige `iak_*`).
 - **Vivo 2026-10-15**: plugin 5.3.2 activo (HEAD `a838486`, tree clean); regresión 19/19; ZIP 5.3.2 canónico; ping-erp 200 ok (73ms live 2026-10-15); REST 403 anónimo/200 auth.
 - **Check**: regresión 19/19 + ops/status 200/403
 - **Regla**: LIVE manda; propone updates al owner, nunca auto-actualiza producción sin autorización.
