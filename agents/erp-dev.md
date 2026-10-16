@@ -36,7 +36,7 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 - **Rama activa**: `dev/ecomm-erp` (el stack preprod SIRVE esta rama; `main`/`develop` son **read-only**)
 - **Remotos**: SOLO `origin` = `ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git` (upstream de Juan Carlos). **NO existe remote `preprod` en este clon**.
 - **Workflow**: desarrollar/probar local → commits limpios en `dev/ecomm-erp` → push a origin con autorización del owner → Juan Carlos revisa (él integra vía PR: #13 el 2026-10-06 integrando nuestra base 2d0d97b, **#14 el 2026-10-07 integrando nuestra Fase 2/3 a main**).
-- **Estado push (2026-10-13, verificado con fetch)**: HEAD `2306b64` pushed y **idéntico a origin/dev/ecomm-erp** — **100% al día con `origin/main`** (0 commits que nos falten; su refactor `34bd716` + módulo renta `bd1a879` ya mergeados sin conflictos). **7 commits nuestros esperando PR de Juan**: G6 fix `ff64301`, G1 cancel `e495454`+`8ae9bb2`, G2 webhooks CRUD `f961503`, G3 `invoice.issued` `5ace5aa`, G4 retry-failed `601959e`, merge `2306b64`.
+- **Estado push (2026-10-16, verificado con fetch)**: HEAD `34de630` pushed y **idéntico a origin/dev/ecomm-erp** — **100% al día con `origin/main`** (0 commits que nos falten; su refactor `34bd716` + módulo renta `bd1a879` ya mergeados sin conflictos). **8 commits nuestros esperando PR de Juan**: G6 fix `ff64301`, G1 cancel `e495454`+`8ae9bb2`, G2 webhooks CRUD `f961503`, G3 `invoice.issued` `5ace5aa`, G4 retry-failed `601959e`, merge `2306b64`, **identidad ecomm `34de630`** (brand.name garantizado + aliases + warnings IDENTITY_EMPTY + X-ERP-Tenant + X-API-Key — backward compatible, consumido por WP Armada Suite 5.3.3+).
 
 ## Stack (docker-compose.yml, verificado 2026-10-05)
 
@@ -159,7 +159,7 @@ Los 7 candidatos Fase 2 fueron implementados, verificados e2e y **pushed a origi
 
 ## Review de Juan — estado (2026-10-13, verificado con fetch)
 
-Verificado: `origin/dev/ecomm-erp` @`2306b64` = HEAD local (todo pushed); `origin/main` con **0 commits que nos falten** (su PR #14 ya integró nuestra Fase 2/3; su refactor `34bd716` y módulo renta `bd1a879` ya viven en nuestro HEAD). La rama contiene 7 commits nuestros esperando su revisión (G1-G4+G6+merge). Para integrar: revisar → `php artisan migrate` (2 migraciones) → `--queue=default,webhooks` en su worker → G5 a su criterio. Detalle por commit en `docs/RECOMENDACIONES-FASE2-ECOMM.md` y `docs/RECOMENDACIONES-FASE3-AGENTE.md` (viajan con la rama).
+Verificado: `origin/dev/ecomm-erp` @`34de630` = HEAD local (todo pushed); `origin/main` con **0 commits que nos falten** (su PR #14 ya integró nuestra Fase 2/3; su refactor `34bd716` y módulo renta `bd1a879` ya viven en nuestro HEAD). La rama contiene 8 commits nuestros esperando su revisión (G1-G4+G6+merge+identidad ecomm `34de630`). Para integrar: revisar → `php artisan migrate` (2 migraciones) → `--queue=default,webhooks` en su worker → G5 a su criterio. Detalle por commit en `docs/RECOMENDACIONES-FASE2-ECOMM.md` y `docs/RECOMENDACIONES-FASE3-AGENTE.md` (viajan con la rama).
 
 **Pendiente siguiente (no implementado)**: solo **G5** (teléfono/stock-sucursal/detalle, S/M).
 
@@ -171,7 +171,7 @@ Verificado: `origin/dev/ecomm-erp` @`2306b64` = HEAD local (todo pushed); `origi
 ## Upstream (2026-10-13)
 
 - **Fuente**: `soycarlosjerez-hub/sistema-facturacion` (upstream de Juan Carlos) + stack erpipo-* (kalimete :8100).
-- **Vivo 2026-10-13**: 8/8 containers Up 2d (db/redis/mailpit healthy); rama `dev/ecomm-erp` @`2306b64` pushed = HEAD; **al día con origin/main** (fetch verificado, 0 commits faltantes); webhooks activos hacia WP (endpoint id=2); red compartida con WP; tenant 10 MaganTech activo.
+- **Vivo 2026-10-16**: 8/8 containers Up 4d (db/redis/mailpit healthy); rama `dev/ecomm-erp` @`34de630` pushed = HEAD; **al día con origin/main** (fetch verificado, 0 commits faltantes); webhooks activos hacia WP (endpoint id=2); red compartida con WP; tenant 10 MaganTech activo; config ecomm verificado 200 (tenant 3: brand.name + aliases + warnings[] + X-ERP-Tenant, commit `34de630`).
 - **Latencia (2026-10-13)**: `/up` directo :8100 = ~130ms estable; vía HTTPS nginx = 490-1140ms — el ping-erp de WP (~250-300ms) es overhead TLS/nginx **esperado del entorno dev local**, no un bug. **Decisión owner 2026-10-13**: mailpit es **dev-only intencional** (catcher SMTP local para no operar un servidor de correos; en producción el mail es real según main de Juan Carlos) — NO investigar más, NO tocar (ni producción ni preprod). El preprod se alimenta de main de Juan Carlos adaptado a la red local — pruebas lo más cerca posible de producción, sin vínculo con prod.
 - **Check**: `docker ps -f name=erpipo` + `curl -sk https://erp.kalimete.local/login` + `curl -s http://127.0.0.1:8100/up`
 - **Regla**: LIVE manda (doc vs live vs upstream); push a origin solo con autorización del owner.

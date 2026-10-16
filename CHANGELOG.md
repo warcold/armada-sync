@@ -1,3 +1,16 @@
+## 2026-10-16
+
+### [00:27] - Armada Suite 5.3.4: reporte honesto de errores de config ERP (incidente prod 404 enmascarado) + curas de docs hub
+- **Tipo**: servicio | fix | docs
+- **Modificado**:
+  - **Incidente prod owner**: al sincronizar en producción con 5.3.3 recibió "ERP HTTP 404 … (The route api/tenants/10 could not be found.)". Diagnóstico CONFIRMADO en código (`ApiClient.php:843-882`): `get_business_config()` capturaba SOLO el último error del loop (`/ecomm/tienda/config` → `/tienda/config` → `/config` → `/tenants/{id}`) — el 404 del fallback muerto `/tenants/10` (ruta inexistente en todo ERP) tapaba el error REAL de los endpoints principales (401 = key stale prod, documentado 2026-10-13).
+  - **Fix 5.3.4** (commit `6729d4c`, repo ~/dev/wordpress local-only): helpers `config_attempt()` + `config_error_rank()` — prioridad 401/403 (auth) > 5xx/timeout > 404; mensaje "ERP HTTP {code} en {endpoint}: {msg}"; hint "API key inválida, inactiva o sin permisos: verifica la key en el tab Conexión ERP" para 401/403; si todos 404 sugiere módulo ecomm. Regresión 19/19 PASS, lint OK. **ZIP canónico** `export/armada-suite-5.3.4.zip` 2.207.069 B sha256 `c57df620…` (storage presente, sin secrets). DEPLOY-GUIA: ZIP actual 5.3.4 + rollback N-1 5.3.3 (estaba stale 5.3.1) + excepción `!export/DEPLOY-GUIA.md` en .gitignore (adiós `git add -f`).
+  - **Curas docs hub (pendientes completados)**: `agents/erp-dev.md` + `harness/erp-dev.harness.json` — HEAD `2306b64`/7 commits → `34de630`/**8 commits** (nuevo: identidad ecomm) + vivo_2026_10_16; `agents/armada-suite.md` + `harness/armada-suite.harness.json` — 5.3.2/`a838486` → 5.3.4/`6729d4c`, entradas Cambios recientes 5.3.3+5.3.4, zips 5.3.3/5.3.4 con sha, vivo_2026_10_16. JSONs validados.
+- **Afecta a**: producción WP (necesita deploy 5.3.4 para ver el error REAL), preprod (ya sirve fix vía bind mount), docs flota
+- **Causa**: reporte owner del error prod + orden de completar pendientes
+- **Estado**: ✅ verificado (19/19, lint, JSON OK, ZIP canónico verificado)
+- **Notas**: **La causa raíz en prod sigue siendo la API key inválida/stale del tenant** — 5.3.4 solo deja de ocultarla; al deployar y reintentar verá "ERP HTTP 401 en /ecomm/tienda/config: … — API key inválida…". Acción owner/Juan: provisionar key válida para el tenant prod y guardarla en Conexión ERP (el probe la valida antes de grabar). ERP `34de630` sigue esperando merge de Juan (8 commits).
+
 ## 2026-10-15
 
 ### [23:15] - Armada Suite 5.3.3 + ERP ecomm: fix falso "Conexión verificada" + guardar-verificar + SSOT Negocio — release completo y pushed para Juan Carlos
