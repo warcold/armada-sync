@@ -7,11 +7,30 @@
   "scope": "SISTEMA WordPress Dev (kalimete, umbrella): WP core 7.1.3, contenedores wordpress-local :8091 + wordpress-db :3307 (MariaDB 10.11), compose, certs mkcert, nginx-TLS, DB, secrets, deploy del stack. NO desarrolla plugins — cada plugin su agente (armada-suite, zionv-crm).",
   "umbrella": "cada plugin su agente (regla owner 2026-10-15) — armada-suite (ACTIVO en este stack), zionv-crm (stack aparte :8092), históricos sin agente (Elementor/EMCP/MCP Adapter, NO instalados)",
   "plugins_conocidos": [
-    { "plugin": "Armada Suite", "version": "5.3.5", "estado": "ACTIVO (único instalado)", "agente": "armada-suite", "path": "~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/ (repo compartido; ZIPs en export/)" },
-    { "plugin": "ZionV CRM", "version": "1.56.3", "estado": "NO instalado aquí (stack propio :8092)", "agente": "zionv-crm", "path": "~/dev/wordpress/zionv-crm/ + GitHub privado warcold/zionv-crm (main)" },
-    { "plugin": "Elementor 4.2.4 / EMCP Tools 3.16.1 / MCP Adapter 0.5.0", "version": "—", "estado": "histórico, NO instalado (namespace mcp ausente)", "agente": "sin agente (recuperar = decisión owner)", "path": "—" }
+    {
+      "plugin": "Armada Suite",
+      "version": "5.3.5",
+      "estado": "ACTIVO (único instalado)",
+      "agente": "armada-suite",
+      "path": "~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/ (repo compartido; ZIPs en export/)"
+    },
+    {
+      "plugin": "ZionV CRM",
+      "version": "1.56.3",
+      "estado": "NO instalado aquí (stack propio :8092)",
+      "agente": "zionv-crm",
+      "path": "~/dev/wordpress/zionv-crm/ + GitHub privado warcold/zionv-crm (main)"
+    },
+    {
+      "plugin": "Elementor 4.2.4 / EMCP Tools 3.16.1 / MCP Adapter 0.5.0",
+      "version": "—",
+      "estado": "histórico, NO instalado (namespace mcp ausente)",
+      "agente": "sin agente (recuperar = decisión owner)",
+      "path": "—"
+    }
   ],
   "vivo_2026_10_15": "wordpress-local + wordpress-db healthy Up 3d (WP core 7.1.3, PHP 8.3.20); REST wp/v2 200; plugin armada-suite 5.3.2 único en live (agente armada-suite); agente redimensionado a SISTEMA por split de flota (regla owner: cada plugin su agente)",
+  "vivo_2026_10_16": "hub reestructurado: ~/dev/wordpress/ = padre (README-HUB.md, docs/, plugins-disponibles/, scripts/), hijos armada-suite/ (:8091, name: wordpress) y zionv-crm/ (:8092, name: zionv-crm); ~/dev/zionv-crm/ eliminado; 4 containers healthy, vols wordpress_* + zionv-crm_* intactos; smoke-8091 + smoke-8092 100% verde; regresion Armada 19/19 post-move",
   "vivo_2026_10_14": "plugin armada-suite 5.3.2 en live (HEAD a838486); ZIP canónico 5.3.2 verificado; regresión 19/19 post-bump (migrado a harness armada-suite)",
   "live_check": "docker ps -f name=wordpress",
   "checks": [

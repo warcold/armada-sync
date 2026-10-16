@@ -1,11 +1,12 @@
 {
   "harness": "zionv-crm",
-  "updated": "2026-10-15",
+  "updated": "2026-10-16",
   "agent_file": "~/armada-sync/agents/zionv-crm.md",
   "mode": "subagent",
   "hidden": false,
   "scope": "ZionV CRM dev (kalimete) — stack WP 6.7-php8.3-apache + plugin ZionV CRM 1.56.3 (CRM independiente: backend PHP completo + SPA React solo-dist, 34+ REST controllers/123 rutas, Google/MS365/Nextcloud Calendar, HubSpot, IA OpenAI-compat, automatizaciones), completamente aislado de Armada Suite (8091)",
   "vivo_2026_10_15": "zionv-local Up 29h healthy + zionv-db Up 34h healthy; plugin 1.56.3 activo (bind-mount, php -l OK; welcome notice → /crm/configuracion/ verificado con wp eval); DB 1.24.0; 43 tablas zionv_zion_crm_*; permalinks pretty; 302 /crm/dashboard/ sin sesión; bundle parcheado (marker __zionCfgUnified + .orig); config unificada /crm/configuracion/ con sidebar PHP (9 secciones/26 items) + 6 tabs; Estado del sistema 5 tabs; IA Victoria PUBLIC (212ms, Qwen3.6) + ai_prompt e2e OK; GitHub warcold/zionv-crm @5d3efab; ZIP export/zionv-crm-1.56.3.zip (7.3M, sha256 e0b730d8, sin secrets ni .bkup)",
+  "vivo_2026_10_16": "stack movio de ~/dev/zionv-crm/ a ~/dev/wordpress/zionv-crm/ (compose name: zionv-crm pinned, vols zionv-crm_* intactos, .gitignore dotfile recuperado); subrepo plugin intacto (origin warcold/zionv-crm, HEAD 1.56.3, status limpio); smoke 8092 100% verde: front 301, wp-login 302, REST 200, /crm/dashboard/ 302, pretty ON, 43 tablas, db_version 1.24.0",
   "live_check": "docker ps --filter name=zionv",
   "checks": [
     "curl -sk -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/crm/dashboard/  (302 sin sesión = correcto; :8092 plano da 301 host-mismatch, no es canónico)",
