@@ -1,5 +1,19 @@
 ## 2026-10-17
 
+### [16:58] - Validación LIVE producción cliente MaganTech (magantech.com.do): App Password OK, sitio en 5.4.0, sync pendiente
+- **Tipo**: servicio | verificación | seguridad
+- **Modificado**: nada (solo lectura + 1 dry-run auditado en el sitio del cliente)
+  - **Credenciales**: App Password del usuario WP `Victoria` (administrator) en magantech.com.do — **válida** (users/me 200, roles administrator). Circuló por chat → **rotar al terminar el trabajo** (REMOTE-OPS §4).
+  - **Estado del sitio**: HTTP/2 200 TLS OK; WP 7.1.3, PHP 8.5.11; **armada-suite 5.4.0 activo** (el owner ya deployó el ZIP); env=public → erpipos.armada.do; namespaces REST incluyen erpsuite/v1 + wpvibe/v1 + ai1wm/v1.
+  - **Conexión ERP**: POST /ops/ping-erp desde SU hosting → **200 en 634ms**, key fp `b221457f` — red y key sanas.
+  - **Catálogo**: /productos/ renderiza 15 cards (idéntico al control local :8091).
+  - **Hallazgo clave**: brand visible = **"Tienda" (default)** → `erp_config` quedó VACÍO en su sitio (falso éxito de la versión pre-5.4.0 — el bug que corregimos); los colores visibles (#1a73e8/#34a853) vienen del `theme_preset: azul`, no de settings; `payment_methods` local = ["transferencia"] cuando el ERP tenant 10 solo acepta `efectivo` (riesgo real en checkout).
+  - **Dry-run ops/settings** (auditado, sin cambios): preview `pv_p0cAxUlXl9db` con diff de 6 campos listos (brand.name→MaganTech, logo→ERP, colores, tagline, payment→[efectivo]).
+- **Afecta a**: producción WP cliente MaganTech
+- **Causa**: owner entregó credenciales para validar y verificar producción
+- **Estado**: ✅ verificado (auth, plugin, ERP, catálogo) | ⚠️ pendiente 1 acción
+- **Notas**: **Acción restante**: en wp-admin del cliente → Armada Suite → Conexión ERP → **"Obtener configuración"** — la 5.4.0 fetchea config real (llena erp_config), aplica identidad (los 6 campos del dry-run) + snapshot + rollback + bump de caché. Alternativa remota (no recomendada): activar modo trabajo + confirmar preview_id — no llena erp_config. admin-ajax NO acepta App Passwords → el sync no es disparable remotamente.
+
 ### [16:41] - Armada Suite 5.4.0: el sync APLICA los datos del negocio del ERP a la tienda (paridad dev/público) + fix payment_methods falsos
 - **Tipo**: servicio | feature | fix
 - **Modificado**:
