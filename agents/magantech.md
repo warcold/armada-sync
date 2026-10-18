@@ -113,12 +113,14 @@ dev lab :8091 (source — plugins/armada-suite/)
 4. No editar el source del plugin aquí (agente `armada-suite`); no bind-mount en preprod (prueba artefactos).
 5. Dev lab :8091 = solo lectura desde este agente.
 6. Verificar contra el LIVE antes de afirmar; curar este doc + harness + reportar deriva (regla Frescura).
-7. Scripts canónicos del hub (`plugin-preprod.sh`, `smoke-8093.sh`) — no duplicar lógica en el ambiente.
+7. Scripts canónicos del hub (`plugin-preprod.sh`, `smoke-8093.sh`, `smoke-prod.sh` read-only para prod) — no duplicar lógica en el ambiente.
+8. Red compartida con erpipo: servicios por **container name** único (`magantech-mailpit`), nunca alias de servicio (`mailpit` es ambiguo — fuga real 2026-10-18, PROCEDURES §(e.6)).
 
 ## Documentos
 
-- `~/dev/wordpress/websites/magantech.com.do/README.md` — estado del ambiente (stack, sync, inventario prod).
-- `~/dev/wordpress/websites/magantech.com.do/docs/PROCEDURES.md` — operativas (a–h): actualizar plugin, deploy prod, backup, restaurar, sidecar wp-cli, dominio local (f), correo mailpit (g), sincronización prod→local (h).
+- `~/dev/wordpress/websites/magantech.com.do/README.md` — estado del ambiente (stack, sync, inventario prod, marca del sitio).
+- `~/dev/wordpress/websites/magantech.com.do/docs/PROCEDURES.md` — operativas (a–i): actualizar plugin, deploy prod, backup, restaurar, sidecar wp-cli, dominio local (f), correo mailpit (g), sincronización prod→local (h), marca/sync identidad (i).
+- `~/dev/wordpress/websites/magantech.com.do/docs/ESPEJO-20261018.md` — log del espejo prod→local (matriz de paridad, decisiones, pendientes owner).
 - `~/dev/wordpress/docs/CONEXION-METODO.md` — **referencia única** del método de conexión por ambiente (hub).
 - `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/docs/` — `CONTROL-PLANE.md` y `REMOTE-OPS.md` (jaula remota del plugin).
 - `~/armada-sync/MAPA.md` + `~/armada-sync/CHANGELOG.md` — flota e historial.
