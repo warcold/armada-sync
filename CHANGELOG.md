@@ -1,5 +1,19 @@
 ## 2026-10-18
 
+### [18:25] - MaganTech: auditoría best-practices del ambiente — fix DNS mailpit ambiguo (fuga real), guard de entorno en mu-plugin, smoke-prod.sh nuevo, manifest de captura
+- **Tipo**: servicio | config | docs | seguridad
+- **Contexto**: owner — "evaluar el contenido y lo que estamos haciendo con el proyecto, procede con mejoras basándote en mejores prácticas".
+- **Modificado**:
+  - **🐛 Fix DNS mailpit ambiguo (fuga real de correo)**: el alias de servicio `mailpit` existe en AMBOS stacks (magantech y erpipo comparten `erpipo-dev-network`) → desde `magantech-local` resolvía NO-determinísticamente (172.21.0.4 vs 172.22.0.5). Confirmado: 5 mensajes del preprod magantech cayeron en el mailpit de erpipo (incl. tests de fase 3). Fix: mu-plugin v1.1.0 usa el **container name** `magantech-mailpit` (único en el host docker) → verificado (envío llega a la bandeja correcta, 172.21.0.4). Regla documentada en PROCEDURES §(e.6): en redes compartidas, siempre container name.
+  - **Guard de entorno en mu-plugin** (v1.1.0): solo actúa si `wp_get_environment_type() === 'local'` — si el archivo llegara por error a prod, no toca nada (correo de prod intacto). php -l OK + wp_mail OK tras el cambio.
+  - **`scripts/smoke-prod.sh` NUEVO** (read-only, solo GET): front/productos/REST 200 + check de marca visible (detecta "Tienda" = sync pendiente) + `ops/status` autenticado (App Password desde `secrets/`, parse robusto: password con espacios + username = primera palabra). Probado: públicos OK, ops/status 200 (plugin 5.4.0), marca=Tienda detectada correctamente (pendiente owner).
+  - **Manifest de captura**: `backups/prod-content-20261018/MANIFEST.sha256` (sha256sum -c OK) + `README.md` puntero; **log del espejo movido** a `docs/ESPEJO-20261018.md` (estaba en backups/, dir gitignoreado — conocimiento atrapado).
+  - **Docs**: README (sección "Marca del sitio" con el fix 1-clic pendiente + smoke-prod), PROCEDURES §(b) (nota ping-erp es POST-only, GET→404 — verificado en OpsEndpoints.php:53-56; el doc ya estaba correcto), §(e.6) learning DNS, §(g) mu-plugin v1.1.0, §(h) manifest, §(i) NUEVA (marca/sync de identidad: mecanismo, estado, fix), ESPEJO-20261018.md (corrección post-fase-3 + pendiente sync). Backups `.bkup-20261018` en los 4 archivos editados.
+- **Afecta a**: preprod MaganTech (mejora), mailpit erpipo (dejó de recibir correo ajeno), agentes MaganTech/WordPress (docs)
+- **Causa**: owner (auditoría + mejoras best-practices)
+- **Estado**: ✅ verificado (compose config OK, smoke-8093 100% verde, smoke-prod funcional, php -l OK, mailpit recibe en bandeja correcta, manifest verifica)
+- **Notas**: prod NUNCA modificado (solo GET). Pendiente owner: clic «Sincronizar configuración» en prod (marca Tienda→MaganTech; smoke-prod lo verificará). Recomendación no aplicada: git init del dir del sitio (decisión estructural del owner). Los 5 mensajes de prueba que cayeron en el mailpit de erpipo quedan ahí (simulador, efímero — sin acción).
+
 ### [13:05] - MaganTech: espejo 1:1 prod→preprod + correo simulado (mailpit) + acceso LAN a `*.kalimete.local` resuelto
 - **Tipo**: infra | red | servicio | docs
 - **Contexto**: owner — "validar el proyecto online y local; no puedo entrar desde otra máquina; todo debe ser reflejo de su producción, excepto el correo (local = simulador)".
