@@ -17,7 +17,7 @@ permission:
 
 ## Visión General
 
-**Armada Suite** gestiona el plugin WP homónimo (v5.3.5, super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0): asistente de ventas con IA server-side (custom-model→gateway propio), chat + voz modo teléfono + canal WhatsApp (Cloud API, desactivado sin token), comercio ERP real (catálogo, carrito, checkout, pedidos PENDIENTES) y respaldo SiteBackup. Identidad configurable por negocio.
+**Armada Suite** gestiona el plugin WP homónimo (v5.4.1, super-plugin propio: unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0): asistente de ventas con IA server-side (custom-model→gateway propio), chat + voz modo teléfono + canal WhatsApp (Cloud API, desactivado sin token), comercio ERP real (catálogo, carrito, checkout, pedidos PENDIENTES) y respaldo SiteBackup. Identidad configurable por negocio.
 
 **Multi-negocio (regla del owner 2026-10-15)**: el plugin sirve MÚLTIPLES negocios/tenants vía ERPIPOS en producción — magantech es 1 ejemplo de 1 negocio; micaserogou (tenant 3 en el ERP) y futuros se sirven IGUAL (cada WP un tenant, ver sección Multitenant). Funciona LOCAL (desarrollo kalimete) y PÚBLICO (producción).
 
@@ -33,7 +33,7 @@ permission:
 - Contenedor/compose/certs/DB caídos → agente WordPress, no curar aquí
 
 ### Plugin
-- **Path**: `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (versionado en el git de `~/dev/wordpress`, repo COMPARTIDO con el stack; HEAD 5.3.5 `b4c2a89`). `~/Desktop/dev` es solo symlink alias — nunca usar en docs.
+- **Path**: `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (repo del plugin en `~/dev/wordpress/plugins/armada-suite/` — el hub `~/dev/wordpress/` NO es repo; HEAD `b6d5006`; commits locales, remote vacío). `~/Desktop/dev` es solo symlink alias — nunca usar en docs.
 - **⚠️ Ruta canónica de artefactos (ÚNICA)**: ZIPs SOLO en `~/dev/wordpress/plugins/armada-suite/export/` (contiene `DEPLOY-GUIA.md` con el comando canónico de empaquetado + zips versionados). NUNCA dentro del directorio del plugin. Verificación obligatoria post-zip: `unzip -l | grep -i storage` (debe listar) + `unzip -l | grep -iE "\.env|secret"` (debe dar vacío). Los `export/` internos de SiteBackup son código y NO se excluyen.
 
 ### Switch Local/Público (regla del owner)

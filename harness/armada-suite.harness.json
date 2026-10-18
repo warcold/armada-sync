@@ -28,7 +28,7 @@
   ],
   "rutas_canonicas": {
     "plugin": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/ (código vivo, bind-mount al contenedor)",
-    "repo_git": "~/dev/wordpress/ (repo git COMPARTIDO con el stack — el plugin se versiona aquí; extracción a repo propio = decisión futura del owner)",
+    "repo_git": "~/dev/wordpress/plugins/armada-suite/ (repo del plugin — commits locales, remote VACÍO; el hub ~/dev/wordpress/ NO es repo; push = decisión owner)",
     "artefactos_zip": "~/dev/wordpress/plugins/armada-suite/export/ (ÚNICA ruta de ZIPs + DEPLOY-GUIA.md con comando canónico; los export/ internos de SiteBackup son código y NO se excluyen)",
     "tests": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/tests/regression.php (25 tests, 25/25 PASS exigido)",
     "handoff_erp": "~/dev/wordpress/UPDATE-ERP-AMIGO/ (diffs/notas entregados a ERP Dev — Juan Carlos)",
@@ -36,8 +36,8 @@
     "stack_ref": "compose/certs/nginx/DB/core WP → agente WordPress (wordpress-dev, umbrella)"
   },
   "plugin": {
-    "version": "5.3.5",
-    "header": "Armada Suite / ERPSUITE_VERSION 5.3.5 / ERPSUITE_OPTION erp_suite_settings / text-domain erp-suite",
+    "version": "5.4.1",
+    "header": "Armada Suite / ERPSUITE_VERSION 5.4.1 / ERPSUITE_OPTION erp_suite_settings / text-domain erp-suite",
     "rest": "erpsuite/v1 — 15 rutas ops (includes/Remote/OpsEndpoints.php) + POST erp-webhook (includes/Remote/WebhookReceiver.php: HMAC body crudo, skew 300s, allowlist 4 eventos, flush_cache) + admin-ajax erpc_get_products_json",
     "modulos_vendored": "includes/Modules/AiBridge (WPVibe v1.20.0) + includes/Modules/SiteBackup (AIOWPM v7.111, self-heal storage/ vía admin_init)",
     "entorno": "includes/Core/Environment.php — LOCAL sellado (http://172.19.0.1:8100/api, tenant 10, key iak_* hardcodeada NO reproducible en docs) / PÚBLICO editable erp_suite_settings.public.{api_url,tenant_id,api_key}; fallback fresh-install prod → public (wp_get_environment_type + host .local)",
@@ -66,7 +66,9 @@
     "zip_5_3_2": "2203552 bytes, sha256 d8952c61ccfdd60efbd2d714a8c1007fd41e177422fd3bb392500b91f630f3b3 — storage/ INCLUIDO, lista idéntica al 5.3.0, sin secrets",
     "zip_5_3_3": "2206021 bytes, sha256 6fd5ed2dde847bd05e35d47c09774ffe8edc96bac2d882c2b9f910dce446402e — storage/ incluido, 501 files (+CHANGELOG.md plugin), sin secrets",
     "zip_5_3_4": "2207069 bytes, sha256 c57df6200cc6671ad626c578041d83cc7f19647fd4aafb26d4f35aa316002da5 — storage/ incluido, sin secrets; SUPERADO por 5.3.5",
-    "zip_5_3_5": "2207808 bytes, sha256 b9c67bc8f299e4ff6074b43195e2fe8f29abf63f26d5bd41850f2914cd432bfd — storage/ incluido, sin secrets; CANÓNICO actual"
+    "zip_5_3_5": "2207808 bytes, sha256 b9c67bc8f299e4ff6074b43195e2fe8f29abf63f26d5bd41850f2914cd432bfd — storage/ incluido, sin secrets; SUPERADO por 5.4.x",
+    "zip_5_4_0": "2216778 bytes, sha256 24b4255c10a7410f76b8ac00da699f5031ead5fbb2a0de08e721c0835cb0e939 — storage/ incluido, sin secrets",
+    "zip_5_4_1": "2225650 bytes, sha256 4bb2fa2c7adf2ff3aa11eb6b5cb8e289381f168dbf1c4a6d396ca9af13c5af96 — storage/ incluido, sin secrets; CANÓNICO actual"
   },
   "legacy_frozen": "Namespace erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, ERPSUITE_*, erp_suite_*/erpc_*, erpsuite/v1, shortcodes erpc_*, text-domain erp-suite — NO renombrar (rompe DB/bookmarks/clientes REST).",
   "integracion_erp_2026_10_13": {

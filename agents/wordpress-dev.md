@@ -22,7 +22,7 @@ permission:
 ## Infraestructura (validada 2026-10-15)
 
 ### Docker Stack
-- **Path**: `~/dev/wordpress/` (repo git compartido: stack + plugin Armada Suite; `~/Desktop/dev` es solo symlink alias, nunca usar en docs)
+- **Path**: `~/dev/wordpress/` (hub — NO es repo git; el repo del plugin Armada Suite vive en `plugins/armada-suite/`; `~/Desktop/dev` es solo symlink alias, nunca usar en docs)
 - **Contenedor principal**: `wordpress-local` (imagen `wordpress:6.7-php8.3-apache`, WP core **7.1.3** + PHP 8.3)
 - **Contenedor DB**: `wordpress-db` (MariaDB 10.11, puerto host 3307)
 - **Puertos**:
@@ -43,7 +43,7 @@ kalimete (localhost:8091 — dominio LAN retirado 2026-10-18)
 
 | Plugin | Versión | Estado en este stack | Agente | Dónde vive |
 |---|---|---|---|---|
-| **Armada Suite** | 5.4.1 | **ACTIVO** (único instalado) | `armada-suite` (agents/armada-suite.md + harness/armada-suite.harness.json) | `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (repo compartido; ZIPs en `export/`) |
+| **Armada Suite** | 5.4.1 | **ACTIVO** (único instalado) | `armada-suite` (agents/armada-suite.md + harness/armada-suite.harness.json) | `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (repo propio del plugin; ZIPs en `export/`) |
 | **ZionV CRM** | 1.56.3 | NO instalado aquí (stack propio :8092, `~/dev/wordpress/plugins/zionv-crm/`) | `zionv-crm` | GitHub privado `warcold/zionv-crm` (rama main) |
 | Elementor 4.2.4 / EMCP Tools 3.16.1 / MCP Adapter 0.5.0 | — | Histórico, NO instalados (namespace REST `mcp` ausente; `mcp-proxy.mod.js` existe pero el bridge NO es funcional sin el plugin) | sin agente (recuperar = decisión owner) | — |
 
