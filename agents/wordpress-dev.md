@@ -43,12 +43,13 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 
 | Plugin | Versión | Estado en este stack | Agente | Dónde vive |
 |---|---|---|---|---|
-| **Armada Suite** | 5.3.5 | **ACTIVO** (único instalado) | `armada-suite` (agents/armada-suite.md + harness/armada-suite.harness.json) | `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (repo compartido; ZIPs en `export/`) |
+| **Armada Suite** | 5.4.1 | **ACTIVO** (único instalado) | `armada-suite` (agents/armada-suite.md + harness/armada-suite.harness.json) | `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (repo compartido; ZIPs en `export/`) |
 | **ZionV CRM** | 1.56.3 | NO instalado aquí (stack propio :8092, `~/dev/wordpress/plugins/zionv-crm/`) | `zionv-crm` | GitHub privado `warcold/zionv-crm` (rama main) |
 | Elementor 4.2.4 / EMCP Tools 3.16.1 / MCP Adapter 0.5.0 | — | Histórico, NO instalados (namespace REST `mcp` ausente; `mcp-proxy.mod.js` existe pero el bridge NO es funcional sin el plugin) | sin agente (recuperar = decisión owner) | — |
 
-**Regla**: wordpress-dev NUNCA desarrolla ni mantiene código de plugins.
+**Regla**: wordpress-dev NUNCA desarrolla ni mantiene código de plugins ni de websites.
 - Trabajo sobre un plugin → kalimete delega al agente de ese plugin.
+- Trabajo sobre un website cliente → kalimete delega al agente de ese website (regla owner 2026-10-17; primero: `MaganTech`).
 - Plugin nuevo con desarrollo activo → kalimete crea agente propio (.md + harness + symlink) y lo suma a esta tabla.
 - Plugin third-party sin desarrollo → solo fila en esta tabla.
 - Un plugin rompe el stack (WSOD, DB, permisos) → wordpress-dev estabiliza el SISTEMA y delega la cura del plugin a su agente.
@@ -104,11 +105,11 @@ docker exec -it wordpress-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" wordp
 - **WordPress Documentation**: https://wordpress.org/documentation/
 - (Plugin Handbook → primario en el agente del plugin correspondiente)
 
-## Upstream (2026-10-15)
+## Upstream (2026-10-17)
 
 - **Fuente**: wordpress:6.7-php8.3-apache + mariadb:10.11 (kalimete).
-- **Vivo 2026-10-15**: healthy Up 3d; WP 7.1.3; plugin Armada Suite 5.3.2 único en live (agente armada-suite).
-- **Check**: `docker ps -f name=wordpress` + regresión 19/19 (delega al agente armada-suite)
+- **Vivo 2026-10-17**: hub reorg `plugins/`+`websites/`; preprod cliente magantech :8093 + dominio `https://magantech.kalimete.local`; dev lab Armada Suite **5.4.1** (regresión **25/25**); repo plugin HEAD dc46307 (5.4.0/5.4.1 + docs CONTROL-PLANE commiteados).
+- **Check**: `docker ps -f name=wordpress` + regresión 25/25 (delega al agente armada-suite)
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 
 ```json upstream_drk

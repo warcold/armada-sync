@@ -42,14 +42,15 @@
      - baseURL: `https://integrate.api.nvidia.com/v1`
      - apiKey: `nvapi-...` (key compartida desde victoria)
      - Contexto nativo: 1M tokens (vs 262K del Qwen local)
-- WordPress Dev: `~/dev/wordpress/` — HUB WP (reorg owner 2026-10-17): `plugins/` (proyectos de plugins con sus dev labs) + `websites/` (un ambiente por CLIENTE, nombrado por dominio) — agente `wordpress-dev` = SISTEMA/umbrella; cada plugin su agente; cada website su agente (primero: `magantech`)
-  - Dev lab Armada Suite: `http://localhost:8091` (loopback) | LAN/SSL `https://wordpress.kalimete.local` | DB :3307 (wordpress-db, MariaDB 10.11) — compose project `wordpress`, repo git `~/dev/wordpress/plugins/armada-suite` (HEAD b4c2a89; working tree 5.4.0 sin commitear)
-  - Dev lab ZionV CRM: `http://localhost:8092` | DB :3308 — compose project `zionv-crm`, git del plugin en `wp-content/plugins/zionv-crm-plugin/.git` (HEAD 5d3efab, v1.56.3)
-  - Website cliente MaganTech (PREPROD): `http://localhost:8093` | DB :3309 — compose project `magantech`, WP 7.1.3-php8.3 ESPEJO de prod, plugin instalado desde ZIP de release, red `erpipo-dev-network` → ERP local :8100 tenant 10 — env `~/dev/wordpress/websites/magantech.com.do/`, agente `magantech`
+- WordPress Dev: `~/dev/wordpress/` — HUB WP (reorg owner 2026-10-17): `plugins/` (proyectos de plugins con sus dev labs) + `websites/` (un ambiente por CLIENTE, nombrado por dominio) — agente `wordpress-dev` = SISTEMA/umbrella; cada plugin su agente; cada website su agente (primero: `MaganTech`)
+  - Dev lab Armada Suite: `http://localhost:8091` (loopback) | LAN/SSL `https://wordpress.kalimete.local` | DB :3307 (wordpress-db, MariaDB 10.11) — compose project `wordpress`, repo git `~/dev/wordpress/plugins/armada-suite` (HEAD dc46307; 5.4.0/5.4.1 + docs CONTROL-PLANE commiteados; remote vacío)
+  - Dev lab ZionV CRM: `http://localhost:8092` | LAN/SSL `https://zionv.kalimete.local` | DB :3308 — compose project `zionv-crm`, git del plugin en `wp-content/plugins/zionv-crm-plugin/.git` (HEAD 9698224, v1.56.3)
+  - Website cliente MaganTech (PREPROD): `http://localhost:8093` | LAN/SSL `https://magantech.kalimete.local` | DB :3309 — compose project `magantech`, WP 7.1.3-php8.3 ESPEJO de prod, plugin instalado desde ZIP de release, red `erpipo-dev-network` → ERP local :8100 tenant 10 — env `~/dev/wordpress/websites/magantech.com.do/`, agente `MaganTech`
   - Autenticación: WP-Admin `admin` (UI labs); REST = Application Passwords — la password de login NO sirve para REST
   - SSL: mkcert CA instalada en sistema, certificado válido hasta 2028-11-30 | Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf` | Hosts: `10.0.0.106 wordpress.kalimete.local`
+  - Dominios locales por proyecto (política owner 2026-10-17): cada proyecto su `<proyecto>.kalimete.local` (mkcert + nginx-TLS front-door). Verificados 200 (2026-10-17): `wordpress`, `zionv`, `magantech`, `erp`. Futuros heredan vía `docs/NUEVO-WEBSITE-TEMPLATE.md` §8
   - Puertos: nginx-TLS 443 + 8090 → Docker loopback 8091; labs 8092/8093 + DBs 3307/3308/3309 (convención websites: 809X/330X ascendente — próximo 8094/3310, ver `docs/NUEVO-WEBSITE-TEMPLATE.md`)
-  - **Plugin `Armada Suite` v5.4.0 (agente `armada-suite`)** — super-plugin (unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0). Option única `erp_suite_settings`, modo sellado dev/público: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Multitenant por-sitio: local tenant 10 MaganTech; prod multi-negocio (magantech, micaserogou, futuros). Tests regresión 24/24. ZIPs canónicos en `~/dev/wordpress/plugins/armada-suite/export/` (5.4.0 sha256 24b4255c…). 5.4.0: el sync APLICA los datos del negocio del ERP a la tienda (paridad dev/público) + snapshot/rollback.
+  - **Plugin `Armada Suite` v5.4.1 (agente `armada-suite`)** — super-plugin (unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0). Option única `erp_suite_settings`, modo sellado dev/público: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Multitenant por-sitio: local tenant 10 MaganTech; prod multi-negocio (magantech, micaserogou, futuros). Tests regresión 25/25 (5.4.1). ZIPs canónicos en `~/dev/wordpress/plugins/armada-suite/export/` (5.4.1 sha256 4bb2fa2c…; 5.4.0 24b4255c…). 5.4.0: el sync APLICA los datos del negocio del ERP a la tienda (paridad dev/público) + snapshot/rollback. 5.4.1: template del tema activo editable vía ops (work mode, gates fail-closed) + fix rollback v4.3.0 + fix SiteBackup.
   - Producción cliente MaganTech: `https://magantech.com.do/` (cPanel, WP 7.1.3/PHP 8.5.11, armada-suite 5.4.0, tema Hello Elementor) — conexión remota vía `erpsuite/v1/ops` (App Password usuario dedicado Victoria; credencial en `websites/magantech.com.do/secrets/`)
   - ERP local de pruebas: `~/dev/erpipo-preprod/` (erpipo-preprod-nginx :8100) — rama dev/ecomm-erp @2306b64 (Fase 2/3 nuestras mergeadas vía PR #14 de Juan Carlos)
   - Mu-plugins: `disable-mcp-host-guard.php` (MCP host guard off). Elementor/EMCP/MCP Adapter: NO instalados en live (históricos, namespace mcp ausente)
@@ -175,8 +176,9 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | DocuSeal | Proyecto DocuSeal | ✅ |
 | Scriberr | Proyecto Scriberr | ✅ |
 | wordpress-dev | SISTEMA WordPress (umbrella de plugins): stack :8091/:3307, compose, certs, secrets, DB | ✅ |
-| armada-suite | Plugin WP Armada Suite 5.3.2 (multitenant WP↔ERP, magantech/micaserogou/futuros) — NUEVO (2026-10-15) | ✅ |
+| armada-suite | Plugin WP Armada Suite 5.4.1 (multitenant WP↔ERP, magantech/micaserogou/futuros) — NUEVO (2026-10-15) | ✅ |
 | zionv-crm | Plugin ZionV CRM 1.56.3 (stack propio :8092, GitHub warcold/zionv-crm) — NUEVO en registro (2026-10-15) | ✅ |
+| magantech | Website cliente MaganTech (magantech.com.do): preprod :8093 + dominio local; prod cPanel vía erpsuite/v1/ops (local-first) — NUEVO (2026-10-17) | ✅ |
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
 | godot-dev | Juegos Godot 4.x + MCP 386 tools | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |

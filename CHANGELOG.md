@@ -1,5 +1,17 @@
 ## 2026-10-17
 
+### [23:55] - Flota: agente MaganTech (#20, website cliente) + dominios locales por proyecto + curación de deriva
+- **Tipo**: agente | docs | infra | red
+- **Modificado**:
+  - **Agente `MaganTech`** (#20): `agents/magantech.md` + `harness/magantech.harness.json` (symlink `~/.config/opencode/agent/magantech.md` vivo). `opencode agent list` confirma `MaganTech (subagent)` → flota = **1 primary + 20 subagentes**; `permission.task` de kalimete corregida a `"MaganTech"` (name-match exacto; antes `"Magantech"`).
+  - **Dominios locales por proyecto** (política owner 2026-10-17): verificados 200 → `wordpress`, `zionv`, `magantech`, `erp` `.kalimete.local` (mkcert + nginx-TLS front-door). Template `docs/NUEVO-WEBSITE-TEMPLATE.md` **§8 "Dominio local"** añadido (131→171 líneas) para futuros; documentado en MAPA.
+  - **Curación de deriva** (reportada por subagentes; sin falsos positivos): `MAPA.md` (armada-suite 5.3.2→5.4.1, HEAD b4c2a89→dc46307, ZIP 5.4.1 sha `4bb2fa2c…`, regresión 25/25, dominios, filas zionv/magantech); `wordpress-dev.md` + harness (5.3.5→5.4.1, vivo 2026-10-17); `plugins-disponibles/armada-suite.txt` (5.4.1); `kalimete.md` (20 subagentes, vía MCP muerta documentada).
+  - **Commits repos plugins (locales, sin push)**: armada-suite `dc46307` (docs CONTROL-PLANE nuevo + REMOTE-OPS curado; sin remote); zionv `9698224` (`.gitignore *.bkup*`) — main ahead 2, push pendiente autorización owner.
+- **Afecta a**: kalimete (enrutado de flota), hub WP (~/dev/wordpress), website MaganTech, futuros websites
+- **Causa**: owner — "cada proyecto debe tener su agente propio y su dominio local preparado y funcionando; actualiza y documenta todo lo necesario para que los agentes tengan la información correcta"
+- **Estado**: ✅ verificado (agent list 1+20; dominios 4/4 = 200; JSONs válidos; symlink vivo)
+- **Notas**: pendientes siguen — rotar App Password Victoria (prod) + admin preprod; ventana preprod 5.4.0→5.4.1; push zionv (ahead 2). Bridge MCP `wp-magantech` y variante B de escritura de plugins: esperan OK del owner.
+
 ### [21:55] - Método canónico de conexión + tooling preprod + release 5.4.1 (template vía ops + fix rollback v4.3.0)
 - **Tipo**: servicio | feature | fix | docs
 - **Modificado**:
