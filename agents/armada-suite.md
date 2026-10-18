@@ -26,7 +26,7 @@ permission:
 ## Infraestructura (CONSUMIDA, no gestionada)
 
 ### Stack Docker (propiedad del agente WordPress)
-- `wordpress-local` (WP 7.1.3, PHP 8.3, imagen 6.7-php8.3-apache) — http://localhost:8091 / https://wordpress.kalimete.local
+- `wordpress-local` (WP 7.1.3, PHP 8.3, imagen 6.7-php8.3-apache) — http://localhost:8091 (loopback; dominio LAN `wordpress.kalimete.local` retirado 2026-10-18)
 - `wordpress-db` (MariaDB 10.11, :3307)
 - El plugin vive bind-mount: código en disco = código live
 - Permalinks live `/%postname%/` (2026-10-16) — REST SIEMPRE vía `index.php?rest_route=` por diseño (sin rewrites propios)
@@ -91,17 +91,17 @@ Contrato vigente: Local sellado `http://172.19.0.1:8100/api`, tenant 10, Bearer 
 ## Comandos Útiles
 
 ```bash
-# Regresión (19/19 PASS exigido) + lint
+# Regresión (25/25 PASS exigido) + lint
 docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php
 docker exec wordpress-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php
 
 # Estado del OpsMotor (200 auth / 403 anónimo)
-curl -s --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" \
-  "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"
+curl -s -u "admin:<app-password>" \
+  "http://localhost:8091/index.php?rest_route=/erpsuite/v1/ops/status"
 
 # Ping al ERP (usa config sellada Local; rate-limit 30/60s)
-curl -s --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" \
-  -X POST "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/ping-erp"
+curl -s -u "admin:<app-password>" \
+  -X POST "http://localhost:8091/index.php?rest_route=/erpsuite/v1/ops/ping-erp"
 
 # Catálogo vía plugin (nonce erpc_cfg.nonce en páginas con shortcode, p.ej. /productos/)
 # admin-ajax.php?action=erpc_get_products_json
@@ -111,7 +111,7 @@ curl -s --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u "ad
 
 1. **NUNCA modificar directamente** archivos del contenedor (bind-mount)
 2. **Verificar el stack antes de operar** (docker ps); si el stack falla → agente WordPress
-3. **Tras cambios en el plugin**: bump versión (header+define+readme) + entrada en `~/dev/wordpress/CHANGELOG.md` + `tests/regression.php` **19/19 PASS** + re-generar ZIP canónico en `export/` (comando de DEPLOY-GUIA.md, nunca ad-hoc)
+3. **Tras cambios en el plugin**: bump versión (header+define+readme) + entrada en `~/dev/wordpress/CHANGELOG.md` + `tests/regression.php` **25/25 PASS** + re-generar ZIP canónico en `export/` (comando de DEPLOY-GUIA.md, nunca ad-hoc)
 4. **Secrets**: jamás en docs, chat, commits ni ZIP. La key local sellada vive en `Environment.php` — no reproducirla
 5. **No confliger con producción**; switch Local NUNCA apunta a prod
 6. **Namespace legacy congelado** (owner 2026-10-02): slug `erp-suite`, `ERPSUITE_*`, `erp_suite_*`/`erpc_*`, REST `erpsuite/v1`, shortcodes `erpc_*`, text-domain `erp-suite` — NO renombrar

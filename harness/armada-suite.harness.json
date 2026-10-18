@@ -1,6 +1,6 @@
 {
   "harness": "armada-suite",
-  "updated": "2026-10-17",
+  "updated": "2026-10-18",
   "agent_file": "~/armada-sync/agents/armada-suite.md",
   "mode": "subagent",
   "hidden": false,
@@ -12,9 +12,9 @@
   "live_check": "docker ps -f name=wordpress  (stack del agente WordPress)",
   "checks": [
     "docker exec wordpress-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php",
-    "docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php  (24/24 PASS)",
-    "curl -s --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u \"admin:<app-password>\" -o /dev/null -w '%{http_code}' \"https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status\"  (200; anónimo 403 erpsuite_forbidden)",
-    "curl -s --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u \"admin:<app-password>\" -X POST \"https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/ping-erp\"  (200 ok:true)"
+    "docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php  (25/25 PASS)",
+    "curl -s -u \"admin:<app-password>\" -o /dev/null -w '%{http_code}' \"http://localhost:8091/index.php?rest_route=/erpsuite/v1/ops/status\"  (200; anónimo 403 erpsuite_forbidden)",
+    "curl -s -u \"admin:<app-password>\" -X POST \"http://localhost:8091/index.php?rest_route=/erpsuite/v1/ops/ping-erp\"  (200 ok:true)"
   ],
   "upstream": {
     "fuente": "Desarrollo propio continuo (vendored 5.0.0 2026-10-01: erp-commerce-suite + WPVibe v1.20.0 + AIOWPM v7.111). Sin imagen hub — el stack corre sobre wordpress:6.7-php8.3-apache (upstream del agente WordPress).",
@@ -30,7 +30,7 @@
     "plugin": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/ (código vivo, bind-mount al contenedor)",
     "repo_git": "~/dev/wordpress/ (repo git COMPARTIDO con el stack — el plugin se versiona aquí; extracción a repo propio = decisión futura del owner)",
     "artefactos_zip": "~/dev/wordpress/plugins/armada-suite/export/ (ÚNICA ruta de ZIPs + DEPLOY-GUIA.md con comando canónico; los export/ internos de SiteBackup son código y NO se excluyen)",
-    "tests": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/tests/regression.php (19 tests, 19/19 PASS exigido)",
+    "tests": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/tests/regression.php (25 tests, 25/25 PASS exigido)",
     "handoff_erp": "~/dev/wordpress/UPDATE-ERP-AMIGO/ (diffs/notas entregados a ERP Dev — Juan Carlos)",
     "secrets_ref": "~/dev/wordpress/plugins/armada-suite/secrets/ (gestiona el agente WordPress; este agente los usa en checks pero NUNCA los imprime ni incluye en ZIP/docs)",
     "stack_ref": "compose/certs/nginx/DB/core WP → agente WordPress (wordpress-dev, umbrella)"

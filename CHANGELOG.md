@@ -1,3 +1,18 @@
+## 2026-10-18
+
+### [00:40] - Consolidación dominios MaganTech: retiro de `wordpress.kalimete.local` — queda solo `magantech.kalimete.local`
+- **Tipo**: infra | red | docs
+- **Contexto**: owner preguntó si ambos dominios "manejan la misma data" → NO es la misma instalación (dev lab :8091 DB :3307 vs preprod :8093 DB :3309 — dos WP separados), pero SÍ la misma tienda/fuente (ERP tenant 10; :8091 = data histórica del desarrollo, :8093 = espejo de prod). Directiva: dejar solo el dominio del proyecto + limpiar discrepancias.
+- **Modificado**:
+  - **Dominio `wordpress.kalimete.local` RETIRADO** (archivado reversible en `/etc/nginx/attic-20261018/`): vhost (80/443/8090 ssl) fuera de sites-enabled/available (+2 bkups viejos), certs mkcert movidos, línea de `/etc/hosts` eliminada (backup `hosts.bkup-20261018`), `nginx -t` OK + reload. :8090 queda libre (nadie más lo usaba). Comentario del vhost magantech actualizado (sin cambio funcional).
+  - **Dev lab :8091 intacto, solo loopback** (`http://localhost:8091`; wp-config dinámico por HTTP_HOST → sin cambios de DB). Compose del stack (`plugins/armada-suite/docker-compose.yml`): fallback `WP_HOME/WP_SITEURL` → `http://localhost:8091` + eliminada entrada `extra_hosts: wordpress.kalimete.local` (aplica al próximo recreate; contenedores NO tocados; backup `.bkup-20261018`).
+  - **Docs curados**: `MAPA.md` (dev lab + SSL + política dominios → verificados 2026-10-18: zionv, magantech, erp), `wordpress-dev.md` (URLs/probes → localhost:8091), `armada-suite.md` (ídem + regresión 19→25), `harness/armada-suite.harness.json` (checks → localhost:8091), `magantech.md` (nota "dominio único del proyecto").
+  - **Repos plugins (locales, sin push)**: zionv README L5 → `183fe6a` (ahead 3); armada-suite `.env.example` (2 líneas) → delegado a su agente.
+- **Afecta a**: dev lab WordPress, agentes WordPress/Armada Suite/MaganTech, docs de flota
+- **Causa**: owner — "manejan la misma data wordpress.kalimete.local y magantech.kalimete.local? de ser asi solo deja magantech.kalimete.local y limpia la discrepancias tambien actualiza documentos y demas, relacionado al proyecto"
+- **Estado**: ✅ verificado (localhost:8091 200; magantech.kalimete.local 200; dominio retirado irresoluble; :8090 libre)
+- **Notas**: rollback = restaurar archivos de attic + hosts + reload. Residuales NO accionados: comentario histórico `Main.php:474` (inocuo, comentario v3.11.9 — se deja).
+
 ## 2026-10-17
 
 ### [23:55] - Flota: agente MaganTech (#20, website cliente) + dominios locales por proyecto + curación de deriva

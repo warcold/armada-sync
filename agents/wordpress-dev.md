@@ -27,14 +27,14 @@ permission:
 - **Contenedor DB**: `wordpress-db` (MariaDB 10.11, puerto host 3307)
 - **Puertos**:
   - `http://localhost:8091` — WordPress Frontend/REST (loopback)
-  - `https://wordpress.kalimete.local` — LAN SSL (nginx-TLS, certs mkcert en `~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt`)
+  - `wordpress.kalimete.local` — **RETIRADO 2026-10-18** (consolidación dominios MaganTech; el dev lab queda solo por loopback. Certs mkcert en `~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt`)
   - `localhost:3307` — MariaDB
 - **Red**: `erpipo-dev-network` compartida con erpipos (para webhooks ERP→WP); `WORDPRESS_DB_HOST=wordpress-db:3306` (container_name único — el service name `db` colisionaba con el db de erpipo)
 - **Deploy prod del stack**: `docker-compose.prod.yml` + `DEPLOY-PRODUCCION.md` (stale: menciona plugins pre-5.0.0 — curar en próxima pasada)
 
 ### Arquitectura (live 2026-10-15)
 ```
-kalimete (localhost:8091 / wordpress.kalimete.local)
+kalimete (localhost:8091 — dominio LAN retirado 2026-10-18)
     ├── WordPress 7.1.3 (PHP 8.3, imagen 6.7-php8.3-apache)
     └── Plugins → ver tabla "Plugins conocidos" (umbrella)
 ```
@@ -57,7 +57,7 @@ kalimete (localhost:8091 / wordpress.kalimete.local)
 ## Autenticación (curada 2026-10-05)
 - **WP-Admin**: usuario `admin` (login por UI; la password de login NO sirve para REST — da 401)
 - **REST API**: Application Passwords (Basic Auth). Activa (user admin): `mcp-kalimete-2026` — única restante (`alfredo-ecomm` REVOCADA 2026-10-15 al eliminarse el proyecto Alfredo Ecomm; archivo secrets borrado). **NUNCA imprimir ni commitear el valor.**
-- **Verificación REST**: `curl --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"` → 200; anónimo → 403 `erpsuite_forbidden`. (Nota: el probe usa el namespace `erpsuite/v1` del plugin Armada Suite — la credencial es del SISTEMA.)
+- **Verificación REST**: `curl -u "admin:<app-password>" "http://localhost:8091/index.php?rest_route=/erpsuite/v1/ops/status"` → 200; anónimo → 403 `erpsuite_forbidden`. (Nota: el probe usa el namespace `erpsuite/v1` del plugin Armada Suite — la credencial es del SISTEMA.)
 - **Receta de rotación de App Password** (lección 2026-10-05): en este WP, `create_new_application_password()` devuelve `[$plaintext, $item]` — el plaintext es `$new[0]`, NO `$new[1]`. Escribir el plaintext a archivo DENTRO del contenedor (`file_put_contents('/tmp/newpw.txt', $new[0])`) y sacarlo con `docker cp` — nunca por stdout del exec.
 
 ## Comandos Útiles
@@ -68,8 +68,8 @@ docker ps --filter name=wordpress
 
 # Servicios WordPress (permalinks live /%postname%/ — REST vía ?rest_route= por diseño del plugin)
 curl -s "http://localhost:8091/index.php?rest_route=/wp/v2/posts?_fields=title,slug"
-curl -s --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" \
-  "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"  # probe vía plugin Armada Suite
+curl -s -u "admin:<app-password>" \
+  "http://localhost:8091/index.php?rest_route=/erpsuite/v1/ops/status"  # probe vía plugin Armada Suite
 
 # Docker logs / reinicio / DB shell (creds DB en el compose, no en docs)
 docker logs wordpress-local -f

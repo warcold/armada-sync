@@ -44,7 +44,8 @@ Dev lab ~/dev/wordpress/plugins/armada-suite/  :8091 — SOURCE del plugin (aqu�
 - Cert: `/etc/ssl/local-certs/magantech.kalimete.local.{crt,key}` — mkcert **CA root** (`/root/.local/share/mkcert`), expira **2029-01-18**. Regenerar:
   `sudo env CAROOT=/root/.local/share/mkcert ~/.local/bin/mkcert -cert-file /etc/ssl/local-certs/magantech.kalimete.local.crt -key-file /etc/ssl/local-certs/magantech.kalimete.local.key magantech.kalimete.local localhost 127.0.0.1`
 - **Mecanismo (verificado con matriz host/scheme)**: con Host passthrough, WP canonicaliza 301 a `<host>:8093` (sin listener → muerto); con `X-Forwarded-Proto: https` → a `https://<host>:8093` (también muerto). Por eso el vhost es **front-door**: fija `Host: localhost:8093` (el canónico del sitio) y NO envía scheme headers → WP responde 200 idéntico a la entrada http.
-- **Limitación documentada**: los links absolutos que WP emite apuntan a `http://localhost:8093` (igual que el acceso plano). Promoción del dominio (canónico = dominio) = cambiar las constantes `WP_HOME/WP_SITEURL` del compose a `https://magantech.kalimete.local` (patrón wordpress.kalimete.local) — **decisión aparte**, no tomada aún.
+- **Limitación documentada**: los links absolutos que WP emite apuntan a `http://localhost:8093` (igual que el acceso plano). Promoción del dominio (canónico = dominio) = cambiar las constantes `WP_HOME/WP_SITEURL` del compose a `https://magantech.kalimete.local` — **decisión aparte**, no tomada aún.
+- **Dominio único del proyecto (2026-10-18)**: `wordpress.kalimete.local` (dev lab Armada Suite, :8091) fue **retirado** por consolidación — el dev lab quedó solo por loopback `http://localhost:8091`. Este dominio es el único local del proyecto MaganTech.
 
 ## Flujo local-first (regla central, owner 2026-10-17)
 
