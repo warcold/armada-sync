@@ -33,14 +33,14 @@ permission:
 - Contenedor/compose/certs/DB caídos → agente WordPress, no curar aquí
 
 ### Plugin
-- **Path**: `~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/` (versionado en el git de `~/dev/wordpress`, repo COMPARTIDO con el stack; HEAD 5.3.5 `b4c2a89`). `~/Desktop/dev` es solo symlink alias — nunca usar en docs.
-- **⚠️ Ruta canónica de artefactos (ÚNICA)**: ZIPs SOLO en `~/dev/wordpress/armada-suite/export/` (contiene `DEPLOY-GUIA.md` con el comando canónico de empaquetado + zips versionados). NUNCA dentro del directorio del plugin. Verificación obligatoria post-zip: `unzip -l | grep -i storage` (debe listar) + `unzip -l | grep -iE "\.env|secret"` (debe dar vacío). Los `export/` internos de SiteBackup son código y NO se excluyen.
+- **Path**: `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (versionado en el git de `~/dev/wordpress`, repo COMPARTIDO con el stack; HEAD 5.3.5 `b4c2a89`). `~/Desktop/dev` es solo symlink alias — nunca usar en docs.
+- **⚠️ Ruta canónica de artefactos (ÚNICA)**: ZIPs SOLO en `~/dev/wordpress/plugins/armada-suite/export/` (contiene `DEPLOY-GUIA.md` con el comando canónico de empaquetado + zips versionados). NUNCA dentro del directorio del plugin. Verificación obligatoria post-zip: `unzip -l | grep -i storage` (debe listar) + `unzip -l | grep -iE "\.env|secret"` (debe dar vacío). Los `export/` internos de SiteBackup son código y NO se excluyen.
 
 ### Switch Local/Público (regla del owner)
 El admin solo ve el toggle Local↔Público (tab Entorno). **Local** = conexión SELLADA hardcodeada al erpipos preprod de kalimete (`http://172.19.0.1:8100/api`, tenant 10, `includes/Core/Environment.php`) — NO editable NI visible en la UI. **Público** = URL/tenant/key de erpipos PROD editables por el admin (`wp_options.erp_suite_settings.public.*`). Local NUNCA toca producción. Fresh install en producción nace en modo público automático (`wp_get_environment_type()` + host `.local` → dev; cualquier otro → public, `Environment.php:38-52`).
 
 ### Empaquetado
-ZIP de producción SOLO en `~/dev/wordpress/armada-suite/export/armada-suite-<version>.zip` (excluir `.git`, `*.bkup*`, `export/` top-level, `node_modules`, `.env`, `secrets/`). **5.3.2 hecho (2026-10-14)**: 2.203.552 bytes, sha256 `d8952c61ccfdd60efbd2d714a8c1007fd41e177422fd3bb392500b91f630f3b3` — fix empaquetado: restaura `SiteBackup/storage/` (excluido por error en 5.3.1 por un comando ad-hoc; lista de archivos IDÉNTICA al 5.3.0). **Comando canónico versionado en `export/DEPLOY-GUIA.md`** — SIEMPRE usarlo, nunca ad-hoc. Histórico 5.3.1: 2.201.803 bytes, sha256 `d018a73b…` (gap storage/, mitigado por self-heal; NO regenerar — artefacto liberado).
+ZIP de producción SOLO en `~/dev/wordpress/plugins/armada-suite/export/armada-suite-<version>.zip` (excluir `.git`, `*.bkup*`, `export/` top-level, `node_modules`, `.env`, `secrets/`). **5.3.2 hecho (2026-10-14)**: 2.203.552 bytes, sha256 `d8952c61ccfdd60efbd2d714a8c1007fd41e177422fd3bb392500b91f630f3b3` — fix empaquetado: restaura `SiteBackup/storage/` (excluido por error en 5.3.1 por un comando ad-hoc; lista de archivos IDÉNTICA al 5.3.0). **Comando canónico versionado en `export/DEPLOY-GUIA.md`** — SIEMPRE usarlo, nunca ad-hoc. Histórico 5.3.1: 2.201.803 bytes, sha256 `d018a73b…` (gap storage/, mitigado por self-heal; NO regenerar — artefacto liberado).
 
 ## Arquitectura interna
 
@@ -96,11 +96,11 @@ docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/te
 docker exec wordpress-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php
 
 # Estado del OpsMotor (200 auth / 403 anónimo)
-curl -s --cacert ~/dev/wordpress/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" \
+curl -s --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" \
   "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/status"
 
 # Ping al ERP (usa config sellada Local; rate-limit 30/60s)
-curl -s --cacert ~/dev/wordpress/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" \
+curl -s --cacert ~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt -u "admin:<app-password>" \
   -X POST "https://wordpress.kalimete.local/index.php?rest_route=/erpsuite/v1/ops/ping-erp"
 
 # Catálogo vía plugin (nonce erpc_cfg.nonce en páginas con shortcode, p.ej. /productos/)
@@ -172,6 +172,6 @@ curl -s --cacert ~/dev/wordpress/armada-suite/certs/ca-bundle.crt -u "admin:<app
 
 ## Vivo 2026-10-16 (post-mudanza)
 
-- **Stack bajó** a `~/dev/wordpress/armada-suite/` (compose `name: wordpress` pinned; vols `wordpress_*` intactos; `wordpress-local` re-verificado en `erpipo-dev-network`).
+- **Stack bajó** a `~/dev/wordpress/plugins/armada-suite/` (compose `name: wordpress` pinned; vols `wordpress_*` intactos; `wordpress-local` re-verificado en `erpipo-dev-network`).
 - **Regresión 19/19 PASS** post-move (incl. webhooks HMAC 18-19). Smoke 8091: front/login/REST 200, `/%postname%/` + `armada-suite` único activo.
-- **Historial git conservado** en `~/dev/wordpress/armada-suite/.git` (HEAD 5.3.5 `b4c2a89`). Padre hub sin git propio (pendiente decisión owner: repo hub).
+- **Historial git conservado** en `~/dev/wordpress/plugins/armada-suite/.git` (HEAD 5.3.5 `b4c2a89`). Padre hub sin git propio (pendiente decisión owner: repo hub).

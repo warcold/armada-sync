@@ -12,14 +12,14 @@
       "version": "5.3.5",
       "estado": "ACTIVO (único instalado)",
       "agente": "armada-suite",
-      "path": "~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite/ (repo compartido; ZIPs en export/)"
+      "path": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/ (repo compartido; ZIPs en export/)"
     },
     {
       "plugin": "ZionV CRM",
       "version": "1.56.3",
       "estado": "NO instalado aquí (stack propio :8092)",
       "agente": "zionv-crm",
-      "path": "~/dev/wordpress/zionv-crm/ + GitHub privado warcold/zionv-crm (main)"
+      "path": "~/dev/wordpress/plugins/zionv-crm/ + GitHub privado warcold/zionv-crm (main)"
     },
     {
       "plugin": "Elementor 4.2.4 / EMCP Tools 3.16.1 / MCP Adapter 0.5.0",
@@ -44,17 +44,17 @@
   },
   "docs": [
     "~/armada-sync/agents/wordpress-dev.md",
-    "~/dev/wordpress/armada-suite/docker-compose.yml",
+    "~/dev/wordpress/plugins/armada-suite/docker-compose.yml",
     "~/dev/wordpress/DEPLOY-PRODUCCION.md"
   ],
   "rutas_canonicas": {
     "proyecto": "~/dev/wordpress/ (repo git compartido stack+plugin; ~/Desktop/dev es solo symlink alias — nunca usar en docs)",
-    "compose": "~/dev/wordpress/armada-suite/docker-compose.yml (+ docker-compose.prod.yml para deploy)",
-    "secrets": "~/dev/wordpress/armada-suite/secrets/ (App Passwords, dir 700 file 600, gitignored)",
-    "certs": "~/dev/wordpress/armada-suite/certs/ca-bundle.crt (mkcert, para curl https)",
+    "compose": "~/dev/wordpress/plugins/armada-suite/docker-compose.yml (+ docker-compose.prod.yml para deploy)",
+    "secrets": "~/dev/wordpress/plugins/armada-suite/secrets/ (App Passwords, dir 700 file 600, gitignored)",
+    "certs": "~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt (mkcert, para curl https)",
     "red": "erpipo-dev-network (compartida con ERP para webhooks ERP→WP); WORDPRESS_DB_HOST=wordpress-db:3306 (container_name único)",
-    "plugin_ref": "~/dev/wordpress/armada-suite/wp-content/plugins/armada-suite → agente armada-suite (harness/armada-suite.harness.json)",
-    "artefactos_zip_ref": "~/dev/wordpress/armada-suite/export/ → agente armada-suite"
+    "plugin_ref": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite → agente armada-suite (harness/armada-suite.harness.json)",
+    "artefactos_zip_ref": "~/dev/wordpress/plugins/armada-suite/export/ → agente armada-suite"
   },
   "auth": "REST = App Passwords (Basic). Activa user admin: mcp-kalimete-2026 (única; alfredo-ecomm REVOCADA 2026-10-15, secrets file borrado). Password de login NO sirve para REST (401). Receta rotación: plaintext es $new[0] (NO $new[1]); escribir a /tmp dentro del contenedor + docker cp.",
   "modulos_historicos": "Elementor 4.2.4 / EMCP Tools v3.16.1 / MCP Adapter v0.5.0 NO instalados en live (namespace mcp ausente). mcp-proxy.mod.js existe como archivo pero el bridge NO es funcional sin el plugin. Reinstalar solo por decisión owner.",

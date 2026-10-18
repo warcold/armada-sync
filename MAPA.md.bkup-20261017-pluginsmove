@@ -1,0 +1,196 @@
+# 🗺️ MAPA DE AGENTES — Ecosistema Armada
+
+## Topología (2026-09-19, validado — todos los SSH probados en vivo)
+
+```
+                     ┌─────────────────────────────────────────────┐
+                     │            REDES INTERNAS (LAN)              │
+                     │                                            │
+   kalimete ─── LAN ─┼── victoria ─── RDP/SSH tunneled ── Alfredo│
+   (10.0.0.106) SSH │  (10.0.0.5)                             │
+        │       1666│                                        │
+        │           │      jonass local NAS (SSH roto)         │
+        └───────────│─ 10.0.0.20:1222 ───⚠️ FUERA SERVICIO     │
+                     │                                          │
+                     │      vps-preprod (VPS prod)              │
+                     └── 154.53.35.102:1333 ─── IRC, auth.do   │
+                     │      vps-proxy (proxy Squid/SOCKS5)      │
+                     └── 31.220.102.176:1444 ─── ✅ ACTIVO     │
+                     │                                          │
+    Cloudflare: Alfred@armada.do                               │
+    Zones: armada.do | taohemps.com          │
+    Túnel: victoria-armada → victoria.local:8010 (LLM)         │
+                     └───────────────────────────────────────────┘
+```
+
+## Nodos
+
+### 1. kalimete (10.0.0.106) — HUB / Cerebral
+- User: warcold (UID 1000, zsh), SSH 1111
+- Sync hub: `~/armada-sync` (push/pull)
+- Docker: 7 containers (tapmap, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
+- **opencode.jsonc**: 4 providers + MCP `godot` (verificado 2026-10-01; el archivo es la fuente única)
+  1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
+      - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
+      - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)
+      - baseURL: `http://victoria.local:8010/v1` (LAN directo al gateway)
+      - limit: context 220000 / output 32000 (total 252000 < 262144 ✅)
+      - apiKey: `vllm-key-5d43...` (admin alfredo)
+  2. **nvidia** (cloud): DeepSeek V4 Flash/Pro via NVIDIA API Catalog
+     - `deepseek-ai/deepseek-v4-flash-0731` → "DeepSeek V4 Flash" (reasoning: true)
+     - `deepseek-ai/deepseek-v4-pro-0813` → "DeepSeek V4 Pro" (reasoning: true)
+     - baseURL: `https://integrate.api.nvidia.com/v1`
+     - apiKey: `nvapi-...` (key compartida desde victoria)
+     - Contexto nativo: 1M tokens (vs 262K del Qwen local)
+- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1.3 (imagen base 6.7-php8.3-apache) — agente `wordpress-dev` = SISTEMA/umbrella (regla owner 2026-10-15: cada plugin su agente)
+  - URL local: `http://localhost:8091` (loopback) | URL LAN/SSL: `https://wordpress.kalimete.local`
+  - DB: localhost:3307 (wordpress-db container, MariaDB 10.11)
+  - Autenticación: WP-Admin `admin` (UI); REST = Application Passwords (activa: mcp-kalimete-2026; alfredo-ecomm REVOCADA 2026-10-15) — la password de login NO sirve para REST
+  - SSL: mkcert CA instalada en sistema, certificado válido hasta 2028-11-30
+  - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
+  - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
+  - Puertos: nginx-TLS 443 + 8090 (mismo cert, ambas URLs válidas) → Docker loopback 8091 (8090 público ya NO es backend HTTP directo — fix redirects envenenados 2026-09-17)
+  - **Plugin único: `Armada Suite` v5.3.2 (agente `armada-suite`) — super-plugin (unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0, 2026-10-01)**. Option única `erp_suite_settings`, sin roles (manage_options), modo sellado dev/público en Core/Environment: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Multitenant por-sitio (un WP = un tenant): local tenant 10 MaganTech; prod multi-negocio (magantech, micaserogou, futuros). Tests regresión 19/19. ZIPs canónicos en `~/dev/wordpress/export/` (5.3.2 sha256 d8952c61…).
+  - Repo: `~/dev/wordpress` (git local, sin remote — versiona stack+plugin; HEAD a838486). Repos viejos erp-chatbot/erp-ecomm-connector BORRADOS 2026-09-29; github.com/warcold/erp-commerce-suite = histórico pre-5.0.0
+  - ERP local de pruebas: `~/dev/erpipo-preprod/` (erpipo-preprod-nginx :8100) — rama dev/ecomm-erp @2306b64 (Fase 2/3 nuestras mergeadas vía PR #14 de Juan Carlos)
+  - Mu-plugins: `disable-mcp-host-guard.php` (MCP host guard off). Elementor/EMCP/MCP Adapter: NO instalados en live (históricos, namespace mcp ausente)
+  - **Protección contra updates**:
+    - mcp-proxy.mod.js: `~/dev/wordpress/` (fuera del contenedor Docker)
+    - Nginx config: `/etc/nginx/sites-available/` (fuera del contenedor)
+    - Certificados: `/etc/ssl/local-certs/` (fuera del contenedor)
+    - Permisos SSL: `chown root:www-data 640` (persisten)
+    - Permisos WordPress: `chown -R www-data:www-data /var/www/html/wp-content` (persisten)
+    - Mu-plugins: `/var/www/html/wp-content/mu-plugins/` (no se borran con updates)
+- Systemd: ssh, nginx, docker, containerd, cron, sddm, waydroid, kalimete-tunnel, publish-kalimete-subdomains, dnsmasq
+- opencode config: `~/.config/opencode/`
+- opencode.jsonc usa gateway LLM de victoria en LAN: `http://victoria.local:8010/v1` (verificado 2026-09-14)
+
+### 2. victoria (10.0.0.5) — Servidor GPU/LLM
+#### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
+Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escribir/modificar/nomificar NADA en victoria. El usuario modifica archivos en victoria por su cuenta; kalimete SOLO los lee y actualiza la documentación en kalimete.
+- User: warcold (UID 1001, rbash), SSH 1666, llave `~/.ssh/id_ed25519_kalimete`
+- sudoers: solo `sqlite3ro_real` como victoria (NOPASSWD, requiere pty)
+- GPU: NVIDIA GB10 (~48GB VRAM, driver 580.159.03, CUDA 13.0)
+- vLLM: `nvidia/Qwen3.6-35B-A3B-NVFP4` (standalone, :8000, max-model-len 262144)
+- CPU: 20 cores ARM64 (10x Cortex-X925 + 10x Cortex-A725), 121GB RAM, 3.7TB NVMe
+- OS: Ubuntu 24.04.4 LTS, Kernel 6.17.0-1022-nvidia, ARM64
+- Servicios: vLLM :8000, gateway :8010, nginx :443 SSL (mkcert), cloudflared, RDP :3389
+- 6 llaves API en DB: alfredo(admin), victoria(admin), warcold(readonly), juancarlos(coder), mario(falla), friend-key(falla)
+- DB: `/home/victoria/.victoria-llm/llm-gateway.db` (api_keys, usage_log, sqlite_sequence)
+- CA mkcert en kalimete: `~/.local/share/mkcert/rootCA.pem`
+
+### 3. vps-preprod (154.53.35.102) — VPS Production
+- User: root, SSH 1333, llave `~/.ssh/id_ed25519_kalimete`
+- Alias: `ssh vps-preprod`
+- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do
+- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, ragnarok.cp.armada.do, scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied)
+- Proyectos locales: kalimete, victoria, jonas (fuera), Windows (10.0.0.64)
+- UFW: active (solo rangos CF en DOCKER-USER)
+- OpenVPN: active (openvpn@server.service)
+
+### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional — ✅ ACTIVO (verificado 2026-09-19)
+- User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
+- Alias: `ssh vps-proxy` (restaurado 2026-09-19 en `/etc/ssh/ssh_config.d/10-armada-hosts.conf`)
+- Uptime 228 días, load 0.10; Squid funcional (Google vía proxy → 200 en 0.08s)
+- NOTA: la marca "FAILED 2026-03-17" era obsoleta — servidor sano, corrección 2026-09-19
+- User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
+- Alias: `ssh vps-proxy`
+- Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
+- DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF); jovtransport.prx.armada.do → 31.220.102.176 (gris, dedicado jovtransport)
+- **Squid Proxy (HTTP/HTTPS)**:
+  - Puerto: 3128
+  - Autenticación: Basic NCSA (htpasswd)
+  - Usuarios: `admin` (ProxyColadorEUA), `jovtransport` (jovproxyeeuu1)
+  - Scripts: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats), `/usr/local/bin/proxy-monitor.sh` (monitor uso)
+  - Config: `/etc/squid/squid.conf`, usuarios: `/etc/squid/proxy-users.conf`
+  - Rate limiting: SIN límite (filtros de contenido bastan, confirmado 2026-08-30)
+  - Filtros de contenido: `/etc/squid/blocked-domains.txt` (bloquea streaming/consumo: YouTube, Netflix, Twitch, Spotify, TikTok, Instagram, Facebook, juegos, Discord, etc.)
+  - Multi-IP: preparado en squid.conf (tcp_outgoing_address comentado)
+  - Logs: `/var/log/squid/access.log` (tráfico por usuario)
+- **SOCKS5 Proxy**:
+  - Puerto: 1080
+  - Servicio: `socks5-proxy.service` (Python, RFC 1929 username/password auth)
+  - Script: `/usr/local/bin/socks5-proxy.py`
+  - Backend: redirige a Squid HTTP local (:3128)
+  - Usuarios: mismos que Squid (jovtransport/admin)
+  - Logs: `/var/log/socks5-proxy.log`
+- **Seguridad**:
+  - UFW: activo — solo 1444 (SSH), 53 (DNS), 3128 (Squid), 1080 (SOCKS5)
+  - SSH: `PermitRootLogin prohibit-password`, `PasswordAuthentication no` (solo llaves)
+  - fail2ban: activo (jail sshd, port 1444, maxretry 3, bantime 2h)
+  - unattended-upgrades: activo
+- **Usuarios SO**: root, warcold (solo acceso propio; eliminados ircd/justin/kboom/ubuntu 2026-08-30)
+- **Proyectos en /opt**: solo `proxy-configs` (credenciales + guías)
+- **Limpieza 2026-08-30**: eliminados OpenVPN, weechat, inspircd, dante, redsocks, shadowsocks, /opt/google, /opt/inspircd, /opt/proxy-infra
+- Credenciales: `/opt/proxy-configs/proxy-credenciales.txt`
+- Guías cliente: `/opt/proxy-configs/`
+
+### 5. jonass (10.0.0.20) — NAS/Respaldo — FUERA SERVICIO
+- User: jonas, SSH 1222, key rota desde 2026-08-12
+- Roles: NAS, backups (/srv/backups/), DDNS updater
+- Sin cron de sync, sin agentes
+- Verificado 2026-09-19: `No route to host` — no intentar operaciones
+
+### 6. kalimete-preprod (erp.kalimete.local) — Preprod ERP dockerizado — ✅ ACTIVO (2026-09-19)
+- **URL**: `https://erp.kalimete.local` (nginx TLS local + reverse proxy)
+- **Puertos**: :8100 (Nginx proxy), :3310 (DB MySQL), :6390 (Redis), :8102 (phpMyAdmin)
+- **Stack**: php:8.3-fpm + mysql:8.0 + redis:7-alpine + nginx (standalone, sin vínculo a prod)
+- **Dump importado**: `facturacion_db-20260919.sql` (528M, 601 migraciones, batch 145)
+- **Código**: `~/dev/erpipo-preprod/code/sistema-facturacion/`
+- **Repo privado**: `github.com/warcold/erpipo-preprod` (PRIVATE, sin DB ni secrets; remotos: origin=upstream RO, preprod=push)
+- **.env**: preprod.env (APP_URL=https://erp.kalimete.local, APP_DEBUG=false, uid 1000:1000)
+- **SSL**: mkcert (erp.kalimete.local.pem, expira 2028-12-18)
+- **Permisos**: storage/logs/ y storage/framework/ con 775 (warcold:warcold = UID 1000)
+- **Workers**: queue + scheduler en Redis (mirrors dev-stack prod)
+- **Subagente**: erp-dev (gestiona preprod, código, migraciones)
+
+### 7. kalimete — Preprod ERP (erpipo) — ✅ ACTIVO (2026-09-19)
+- URL: `https://erp.kalimete.local` (nginx TLS local + reverse proxy)
+- Puertos: :8100 (DB MySQL), :6390 (Redis), :8101 (app FPM), :8102 (phpMyAdmin)
+- Stack: php:8.3-fpm + mysql:8.0 + redis:7-alpine + nginx (mirrors dev-stack de erpipo)
+- Dump importado: `facturacion_db-20260919.sql` (528M)
+- Subagente: erp-dev (gestiona preprod, código, migraciones)
+
+## Agentes (solo kalimete)
+
+### TAB visibles
+| Agente | Modo | Función |
+|---|---|---|
+| kalimete | primary | CEREBRO CENTRAL, coordina TODO |
+| plan | built-in | Planificar proyectos nuevos |
+| build | built-in | Implementar código en proyectos nuevos |
+
+### Subagentes ocultos (hidden, se delegan via tool task)
+| Agente | Función | Estado |
+|---|---|---|
+| Cloudflare | Cloudflare único: DNS, SSL/WAF, KV/D1, túneles, Workers | ✅ |
+| IRC | Servidor IRC InspIRCd (vps-preprod) | ✅ |
+| Proxy | Servidor proxy internacional (vps-proxy) | ✅ |
+| VPS | Servidor VPS producción (vps-preprod) | ✅ |
+| Victoria Server | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
+| PetSuite | Proyecto PetSuite (pets.armada.do) | ✅ |
+| Taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
+| Ragnarok | Servidor de juego Ragnarok | ✅ |
+| Nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
+| Authentik | SSO Authentik (auth.armada.do) | ✅ |
+| DocuSeal | Proyecto DocuSeal | ✅ |
+| Scriberr | Proyecto Scriberr | ✅ |
+| wordpress-dev | SISTEMA WordPress (umbrella de plugins): stack :8091/:3307, compose, certs, secrets, DB | ✅ |
+| armada-suite | Plugin WP Armada Suite 5.3.2 (multitenant WP↔ERP, magantech/micaserogou/futuros) — NUEVO (2026-10-15) | ✅ |
+| zionv-crm | Plugin ZionV CRM 1.56.3 (stack propio :8092, GitHub warcold/zionv-crm) — NUEVO en registro (2026-10-15) | ✅ |
+| erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
+| godot-dev | Juegos Godot 4.x + MCP 386 tools | ✅ |
+| proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
+| intigriti | Bug bounty Intigriti (~/dev/ethical-hacking, kalimetehunt.sh) — NUEVO (2026-10-08) | ✅ |
+
+### Agentes retirados
+cloudflare → kalimete, ecosistema → kalimete, cf-dns→Cloudflare-dns, cf-security→Cloudflare-security, cf-storage→Cloudflare-storage, cf-tunnels→Cloudflare-tunnels, cf-workers→Cloudflare-workers, jonas-ro, kalimete-ro, kalimete-ro-agent — archivo backup BORRADO 2026-08-14, solo historial git.
+
+## Reglas Anti-Desborde
+- Modelo Qwen3.6 max 262144 tokens. opencode.jsonc usa context:240000 / output:32000 (**272000 total — excede el límite real de 262144**). Ajustar output a ≤22144.
+- NUNCA volcar archivos grandes al chat (find/grep sobre node_modules, logs completos).
+- Usar head, grep -c, wc -l, o escribir a /tmp y leer con offset.
+
+## Mantención del Mapa
+- Cada cambio de agente → actualizar este archivo + repo (agents/ + AGENTS.md).
+- Cada cambio de infraestructura → actualizar MAPA local + CHANGELOG.md + commit+push.

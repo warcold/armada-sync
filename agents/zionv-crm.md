@@ -22,7 +22,7 @@ permission:
 ## Infraestructura
 
 ### Docker Stack
-- **Path**: `~/dev/wordpress/zionv-crm/` (compose + nginx conf + certs + bin; NO es repo git — el git vive dentro del plugin)
+- **Path**: `~/dev/wordpress/plugins/zionv-crm/` (compose + nginx conf + certs + bin; NO es repo git — el git vive dentro del plugin)
 - **Contenedor principal**: `zionv-local` (imagen `wordpress:6.7-php8.3-apache`)
 - **Contenedor DB**: `zionv-db` (MariaDB 10.11, puerto host 3308)
 - **Puertos**:
@@ -38,7 +38,7 @@ kalimete (https://zionv.kalimete.local / localhost:8092)
 ```
 
 ### Plugin ZionV CRM
-- **Path**: `~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/` (repo git propio → **GitHub privado `warcold/zionv-crm`**, rama main)
+- **Path**: `~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/` (repo git propio → **GitHub privado `warcold/zionv-crm`**, rama main)
 - **Version**: 1.56.3 (cod), DB 1.24.0 (24 migraciones auto-ascendentes)
 - **Requisitos**: WordPress 6.4+, PHP 8.1+, **permalinks PRETTY obligatorios** (`/%postname%/`) — la SPA vive en `/crm/` y las reservaciones en `/reservar/` vía rewrite rules; desde 1.54.0 el Activator los auto-activa si el sitio no tiene estructura (bug real 2026-10-13, resuelto)
 - **Backend PHP (source COMPLETO)**: `src/` (~1.5M) — `Plugin.php` (service locator, 34 controllers), `Core/` (AppShell, Rewrite, Assets por manifest Vite, Settings, Roles/Capabilities, Encryption, Logger, AuditLogger, Privacy, MigrationRunner 24 versiones), `Modules/` (25 módulos), `Queue/` (Action Scheduler), `Rest/` (Account, Me). Sanitización por capa de Service (`sanitize_*` + `$wpdb->prepare()` + whitelist `orderby` + `Pagination::args(max 100)`); `permission_callback` en el 100% de rutas (públicas solo con nonce propio + RateLimiter + tokens hex).
@@ -52,7 +52,7 @@ kalimete (https://zionv.kalimete.local / localhost:8092)
   - **HubSpot** (1.55.0: push CRM-to-CRM por hooks — contactos upsert por email, deals upsert por propiedad única `zioncrm_opportunity_id`; unidireccional, no bloqueante)
   - **Asistente IA OpenAI-compatible** (base_url + api_key cifrada + modelo; **configurado con Victoria PUBLIC `https://victoria.armada.do/v1`** — 212ms verificado; sirve OpenAI, vLLM, Ollama, LiteLLM, Groq; proxy server-side `ai/chat`; acción de automatización `ai_prompt` con variables y nota en timeline)
   - **Selector de calendario** (1.55.0: `calendar_provider` all|google|ms365|nextcloud|none — el admin elige con cuál/cuáles sincronizar)
-- **Artefactos**: ZIP de producción en `~/dev/wordpress/zionv-crm/export/` (`zionv-crm-1.56.3.zip`, 7.3M, sha256 `e0b730d8…`, sin secrets ni `.bkup`); procedimiento remoto en `DEPLOY-GUIA.md` del repo (versión actual, 43 tablas, nota del parche, matiz `delete_data_on_uninstall=false` por defecto)
+- **Artefactos**: ZIP de producción en `~/dev/wordpress/plugins/zionv-crm/export/` (`zionv-crm-1.56.3.zip`, 7.3M, sha256 `e0b730d8…`, sin secrets ni `.bkup`); procedimiento remoto en `DEPLOY-GUIA.md` del repo (versión actual, 43 tablas, nota del parche, matiz `delete_data_on_uninstall=false` por defecto)
 
 ### Módulos del plugin (34+ controllers / 123 rutas REST)
 | Módulo | Funcionalidad |
@@ -103,10 +103,10 @@ docker exec zionv-local wp option get permalink_structure --allow-root   # /%pos
 
 # Tablas live (43 esperadas) + parche del bundle + versión del plugin
 docker exec zionv-db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" zionv_crm -e "SHOW TABLES LIKE \"%zion_crm_%\";"' | wc -l
-grep -c "__zionCfgUnified" ~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin/assets/dist/admin/assets/index-*.js
+grep -c "__zionCfgUnified" ~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/assets/dist/admin/assets/index-*.js
 
 # Git del plugin (repo GitHub privado)
-cd ~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin && git log --oneline -5 && git status --short
+cd ~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin && git log --oneline -5 && git status --short
 ```
 
 ## Reglas de Operación
@@ -114,7 +114,7 @@ cd ~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin && git log --on
 1. **NUNCA modificar directamente** archivos del contenedor (mount volúmenes)
 2. **Siempre verificar** estado de contenedores antes de operar
 3. **Tras cambios en el plugin**: bump versión (header + define + readme Stable tag + changelogs) + entrada en CHANGELOG de kalimete + verificar migraciones DB + `php -l` + regenerar ZIP canónico en `export/` (comando de DEPLOY-GUIA.md, verificación: sin secrets ni `.bkup`)
-4. **Secrets**: App Passwords y keys viven en `~/dev/wordpress/zionv-crm/secrets/` (600, gitignored) — jamás en docs, chat o commits
+4. **Secrets**: App Passwords y keys viven en `~/dev/wordpress/plugins/zionv-crm/secrets/` (600, gitignored) — jamás en docs, chat o commits
 5. **No confliger** con producción (este es local dev only)
 6. **No tocar** el stack de Armada Suite (`~/dev/wordpress/`, puerto 8091)
 7. **Namespaces congelados** del plugin: `ZionCrm\` (PSR-4), constantes `ZIONV_CRM_*`/`ZION_CRM_*`, options `zion_crm_*`, tablas `{prefijo}zion_crm_*` (43 live), REST `zion-crm/v1` (+ `zion-crm/public/v1`), text-domains `zionv-crm`/`zion-crm`, rutas `/crm/` y `/reservar/` — NO renombrar
@@ -170,6 +170,6 @@ cd ~/dev/wordpress/zionv-crm/wp-content/plugins/zionv-crm-plugin && git log --on
 
 ## Vivo 2026-10-16 (post-mudanza)
 
-- **Stack movió** de `~/dev/zionv-crm/` a `~/dev/wordpress/zionv-crm/` (compose `name: zionv-crm` pinned; vols `zionv-crm_*` intactos; `.gitignore` dotfile recuperado).
+- **Stack movió** de `~/dev/zionv-crm/` a `~/dev/wordpress/plugins/zionv-crm/` (compose `name: zionv-crm` pinned; vols `zionv-crm_*` intactos; `.gitignore` dotfile recuperado).
 - **Subrepo plugin intacto**: `.git` con `origin warcold/zionv-crm`, HEAD 1.56.3, status limpio.
 - **Smoke 8092 100% verde**: front 301, wp-login 302, REST 200, `/crm/dashboard/` 302, pretty ON + plugin activo, 43 tablas, db_version 1.24.0.
