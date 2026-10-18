@@ -26,6 +26,7 @@ permission:
     "Godot": allow
     "Proxmark": allow
     "Intigriti": allow
+    "Magantech": allow
     "explore": allow
 ---
 
