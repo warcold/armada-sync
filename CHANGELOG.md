@@ -1,5 +1,18 @@
 ## 2026-10-18
 
+### [13:05] - MaganTech: espejo 1:1 prod→preprod + correo simulado (mailpit) + acceso LAN a `*.kalimete.local` resuelto
+- **Tipo**: infra | red | servicio | docs
+- **Contexto**: owner — "validar el proyecto online y local; no puedo entrar desde otra máquina; todo debe ser reflejo de su producción, excepto el correo (local = simulador)".
+- **Modificado**:
+  - **Acceso LAN (causa raíz)**: los clientes de la red recibían `127.0.0.1` porque las entradas de `/etc/hosts` GANAN a `address=` en dnsmasq 2.93. Fix: `/etc/dnsmasq.d/local-dns.conf` → `no-hosts` + wildcard `address=/kalimete.local/10.0.0.106` (+ línea muerta `wordpress` eliminada); `/usr/local/bin/publish-kalimete-subdomains.sh` → mDNS + `magantech zionv erp`. Restart OK (backups `.bkup-20261018`). CA root publicado para clientes: `/home/warcold/dev/apps/kalimete/kalimete-rootCA.pem` (`http://kalimete.local/kalimete-rootCA.pem`, fp `6F:25:…`, root CAROOT `root@victoria`).
+  - **Espejo preprod MaganTech :8093** (agente MaganTech; captura read-only de prod → `backups/prod-content-20261018/`): tema hello-elementor 3.5.1, título/desc, front `/inicio/`, 16 páginas 1:1 (`magantech-inicio` recreada; sobre-nosotros/contacto portadas; ERP por shortcode intacto), meta `elementor_canvas` en las 6 ERP, sin menús WP (= prod). Plugins 5/5 espejo: JetBackup `backup` 3.1.23.6 + mantenimiento-web 0.15 instalados y activos (versiones exactas).
+  - **Correo simulado**: servicio `mailpit` en el compose (`magantech-mailpit`, healthy; UI `127.0.0.1:8026`, SMTP 1025 interno) + mu-plugin `zz-magantech-local-mail.php` (`phpmailer_init` → mailpit; probado `wp_mail` real → mensaje en API). Correo real JAMÁS sale; prod de correo intacto.
+  - **Docs**: `README.md` (sección "Espejo local de producción"), `docs/PROCEDURES.md` (§(f) LAN, §(g) mailpit, §(h) sincronización prod→local), `NOTES.md` (fase 3) — backups `.bkup-20261018`; `agents/magantech.md`, `MAPA.md`, `harness/magantech.harness.json`.
+- **Afecta a**: kalimete (DNS/mDNS/CA LAN), preprod MaganTech, agentes MaganTech, WordPress, Armada Suite (docs)
+- **Causa**: owner (validación online+local; acceso LAN; reflejo de producción; correo simulador)
+- **Estado**: ✅ verificado (dig desde LAN: `*` → 10.0.0.106; front-door 200 magantech/zionv/erp; smoke 100%; títulos/theme idénticos prod↔local; mailpit con mensaje)
+- **Notas**: prod NUNCA modificado (capturas solo GET). Pendiente owner: importar CA en las otras máquinas + rotar App Password Victoria. Rollback = `.bkup-20261018` de cada archivo.
+
 ### [00:40] - Consolidación dominios MaganTech: retiro de `wordpress.kalimete.local` — queda solo `magantech.kalimete.local`
 - **Tipo**: infra | red | docs
 - **Contexto**: owner preguntó si ambos dominios "manejan la misma data" → NO es la misma instalación (dev lab :8091 DB :3307 vs preprod :8093 DB :3309 — dos WP separados), pero SÍ la misma tienda/fuente (ERP tenant 10; :8091 = data histórica del desarrollo, :8093 = espejo de prod). Directiva: dejar solo el dominio del proyecto + limpiar discrepancias.

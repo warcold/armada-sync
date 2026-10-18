@@ -21,6 +21,8 @@ permission:
 
 No desarrolla el plugin Armada Suite (agente `armada-suite`) ni el hub (agente `wordpress-dev`): consume artefactos y opera el sitio.
 
+**Espejo 1:1 de prod (2026-10-18)**: tema/contenido/settings replicados y verificados (matriz en `backups/prod-content-20261018/NOTES.md`); **correo local = simulador mailpit (UI http://127.0.0.1:8026, mu-plugin `zz-magantech-local-mail.php`) — jamás correo real**; acceso LAN desde otras máquinas vía https://magantech.kalimete.local (CA para equipos: http://kalimete.local/kalimete-rootCA.pem).
+
 ## Ambientes y topología
 
 ```
@@ -116,7 +118,7 @@ dev lab :8091 (source — plugins/armada-suite/)
 ## Documentos
 
 - `~/dev/wordpress/websites/magantech.com.do/README.md` — estado del ambiente (stack, sync, inventario prod).
-- `~/dev/wordpress/websites/magantech.com.do/docs/PROCEDURES.md` — operativas (a–e): actualizar plugin, deploy prod, backup, restaurar, sidecar wp-cli.
+- `~/dev/wordpress/websites/magantech.com.do/docs/PROCEDURES.md` — operativas (a–h): actualizar plugin, deploy prod, backup, restaurar, sidecar wp-cli, dominio local (f), correo mailpit (g), sincronización prod→local (h).
 - `~/dev/wordpress/docs/CONEXION-METODO.md` — **referencia única** del método de conexión por ambiente (hub).
 - `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/docs/` — `CONTROL-PLANE.md` y `REMOTE-OPS.md` (jaula remota del plugin).
 - `~/armada-sync/MAPA.md` + `~/armada-sync/CHANGELOG.md` — flota e historial.
@@ -153,4 +155,5 @@ dev lab :8091 (source — plugins/armada-suite/)
 ## Cambios recientes
 
 - **2026-10-17**: agente creado (reorg hub: un ambiente por cliente); preprod :8093 espejo de prod (plugin desde ZIP 5.4.0); sync de identidad tenant 10 aplicado (colores #1a73e8/#34a853); dominio local `magantech.kalimete.local` activo (front-door TLS, decisión conservadora de WP_HOME documentada).
-- Pendiente: actualizar preprod 5.4.0 → 5.4.1 (próxima ventana); rotaciones de credenciales (ver Autenticación).
+- **2026-10-18**: espejo 1:1 de prod aplicado (tema/settings/16 páginas/templates; plugins 5/5 incl. JetBackup 3.1.23.6 + mantenimiento-web 0.15 exactos); correo simulado mailpit activo (mu-plugin + servicio :8026, probado; jamás correo real); LAN resuelto (dnsmasq wildcard + mDNS + CA pública); smoke 100% + paridad cruzada prod↔local verificada.
+- Pendiente: actualizar preprod 5.4.0 → 5.4.1 (próxima ventana); rotaciones de credenciales (ver Autenticación); importar CA root en las otras máquinas de la red (owner).

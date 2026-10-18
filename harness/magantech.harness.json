@@ -1,11 +1,14 @@
 {
   "harness": "magantech",
-  "updated": "2026-10-17",
+  "updated": "2026-10-18",
   "agent_file": "~/armada-sync/agents/magantech.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Cliente MaganTech (magantech.com.do) — website: preprod local :8093 (~/dev/wordpress/websites/magantech.com.do/) + dominio local https://magantech.kalimete.local + producción https://magantech.com.do/ (cPanel externo, sin Cloudflare) vía REST erpsuite/v1/ops + tenant ERP 10. Flujo local-first (artefactos ZIP); prod solo ventana + rollback. Código del plugin → agente Armada Suite; stacks base → agente WordPress.",
-  "vivo_2026_10_17": [
+  "scope": "Cliente MaganTech (magantech.com.do) — website: preprod local :8093 (~/dev/wordpress/websites/magantech.com.do/, ESPEJO 1:1 de prod + correo simulado mailpit) + dominio local https://magantech.kalimete.local + producción https://magantech.com.do/ (cPanel externo, sin Cloudflare) vía REST erpsuite/v1/ops + tenant ERP 10. Flujo local-first (artefactos ZIP); prod solo ventana + rollback. Código del plugin → agente Armada Suite; stacks base → agente WordPress.",
+  "vivo_2026_10_18": [
+    "Espejo 1:1 de prod aplicado (2026-10-18): tema hello-elementor 3.5.1 + título/desc + 16 páginas por slug + meta elementor_canvas ERP + nav erpc; plugins 5/5 (JetBackup backup 3.1.23.6 y mantenimiento-web 0.15 ACTIVOS = versiones exactas). Matriz: backups/prod-content-20261018/NOTES.md.",
+    "Correo simulado (2026-10-18): servicio mailpit en compose (magantech-mailpit, UI 127.0.0.1:8026, SMTP 1025 interno) + mu-plugin zz-magantech-local-mail.php (phpmailer_init); probado wp_mail → mensaje en API. Correo real JAMÁS sale de local; prod intacto.",
+    "LAN (2026-10-18): acceso desde otras máquinas RESUELTO — dnsmasq wildcard *.kalimete.local → 10.0.0.106 (no-hosts; las líneas 127.0.0.1 de /etc/hosts ganaban a address=) + mDNS (magantech/zionv/erp); CA root para clientes: http://kalimete.local/kalimete-rootCA.pem (root@victoria, fp 6F:25…).",
     "Preprod UP: magantech-local (WP 7.1.3-php8.3-apache, espejo exacto de prod) + magantech-db (:3309), compose project magantech, red externa erpipo-dev-network; plugin armada-suite 5.4.0 instalado desde ZIP release ACTIVO; smoke-8093.sh 100% verde; flat :8093 root 200.",
     "Dominio local ACTIVO: https://magantech.kalimete.local → 200 (root/productos/wp-login; REST anon 403 erpsuite_forbidden correcto); cert mkcert CA root expira 2029-01-18; hosts 127.0.0.1; nginx host front-door (Host canónico fijado).",
     "WP_HOME/WP_SITEURL = http://localhost:8093 (constantes compose WORDPRESS_CONFIG_EXTRA) — NO promovido a dominio (decisión conservadora 2026-10-17); promoción = cambio de constantes, decisión aparte.",
@@ -27,6 +30,8 @@
   },
   "live_check": "docker ps -f name=magantech",
   "checks": [
+    "curl -s http://127.0.0.1:8026/api/v1/messages  (mailpit vivo; UI http://127.0.0.1:8026)",
+    "dig @10.0.0.106 magantech.kalimete.local  (desde LAN → 10.0.0.106; wildcard *.kalimete.local)",
     "curl -sk -o /dev/null -w '%{http_code}' https://magantech.kalimete.local/  (200)",
     "curl -s -o /dev/null -w '%{http_code}' http://localhost:8093/  (200 — entrada canónica)",
     "curl -s http://localhost:8093/index.php?rest_route=/erpsuite/v1/ops/status  (403 erpsuite_forbidden anónimo = correcto)",
@@ -57,10 +62,10 @@
     "stack_ref": "compose/certs/red → modelo del agente WordPress; código del plugin → agente Armada Suite"
   },
   "pendientes": [
-    "kalimete: revisar frontmatter del agente (agents/magantech.md) y commitear agente + harness (untracked en armada-sync; el subagente NO commitea)",
+    "Owner: importar CA root en las otras máquinas de la red (http://kalimete.local/kalimete-rootCA.pem → importar como CA raíz; Windows: certutil -addstore -f \"ROOT\" kalimete-rootCA.pem)",
     "Rotar App Password Victoria (prod) + credencial admin preprod (expuestas 2026-10-17)",
     "Actualizar preprod 5.4.0 → 5.4.1 (próxima ventana; plugin-preprod.sh + smoke)",
-    "Reportado fuera de ámbito: plugins-disponibles/armada-suite.txt y MAPA.md stale (b4c2a89/5.4.0 → 3d18446/5.4.1); wordpress-dev.md dice '5.3.5' (stale)"
+    "Opcional: export .wpress manual desde wp-admin prod (§c/§h PROCEDURES) si se quiere snapshot íntegro"
   ],
   "changelog": "~/armada-sync/CHANGELOG.md + docs del website",
   "name": "MaganTech",
