@@ -42,20 +42,19 @@
      - baseURL: `https://integrate.api.nvidia.com/v1`
      - apiKey: `nvapi-...` (key compartida desde victoria)
      - Contexto nativo: 1M tokens (vs 262K del Qwen local)
-- WordPress Dev: `~/dev/wordpress/` — Stack Docker local con WordPress 7.1.3 (imagen base 6.7-php8.3-apache) — agente `wordpress-dev` = SISTEMA/umbrella (regla owner 2026-10-15: cada plugin su agente)
-  - URL local: `http://localhost:8091` (loopback) | URL LAN/SSL: `https://wordpress.kalimete.local`
-  - DB: localhost:3307 (wordpress-db container, MariaDB 10.11)
-  - Autenticación: WP-Admin `admin` (UI); REST = Application Passwords (activa: mcp-kalimete-2026; alfredo-ecomm REVOCADA 2026-10-15) — la password de login NO sirve para REST
-  - SSL: mkcert CA instalada en sistema, certificado válido hasta 2028-11-30
-  - Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf`
-  - Hosts: `10.0.0.106 wordpress.kalimete.local` (accesible desde LAN)
-  - Puertos: nginx-TLS 443 + 8090 (mismo cert, ambas URLs válidas) → Docker loopback 8091 (8090 público ya NO es backend HTTP directo — fix redirects envenenados 2026-09-17)
-  - **Plugin único: `Armada Suite` v5.3.2 (agente `armada-suite`) — super-plugin (unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0, 2026-10-01)**. Option única `erp_suite_settings`, sin roles (manage_options), modo sellado dev/público en Core/Environment: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Multitenant por-sitio (un WP = un tenant): local tenant 10 MaganTech; prod multi-negocio (magantech, micaserogou, futuros). Tests regresión 19/19. ZIPs canónicos en `~/dev/wordpress/export/` (5.3.2 sha256 d8952c61…).
-  - Repo: `~/dev/wordpress` (git local, sin remote — versiona stack+plugin; HEAD a838486). Repos viejos erp-chatbot/erp-ecomm-connector BORRADOS 2026-09-29; github.com/warcold/erp-commerce-suite = histórico pre-5.0.0
+- WordPress Dev: `~/dev/wordpress/` — HUB WP (reorg owner 2026-10-17): `plugins/` (proyectos de plugins con sus dev labs) + `websites/` (un ambiente por CLIENTE, nombrado por dominio) — agente `wordpress-dev` = SISTEMA/umbrella; cada plugin su agente; cada website su agente (primero: `magantech`)
+  - Dev lab Armada Suite: `http://localhost:8091` (loopback) | LAN/SSL `https://wordpress.kalimete.local` | DB :3307 (wordpress-db, MariaDB 10.11) — compose project `wordpress`, repo git `~/dev/wordpress/plugins/armada-suite` (HEAD b4c2a89; working tree 5.4.0 sin commitear)
+  - Dev lab ZionV CRM: `http://localhost:8092` | DB :3308 — compose project `zionv-crm`, git del plugin en `wp-content/plugins/zionv-crm-plugin/.git` (HEAD 5d3efab, v1.56.3)
+  - Website cliente MaganTech (PREPROD): `http://localhost:8093` | DB :3309 — compose project `magantech`, WP 7.1.3-php8.3 ESPEJO de prod, plugin instalado desde ZIP de release, red `erpipo-dev-network` → ERP local :8100 tenant 10 — env `~/dev/wordpress/websites/magantech.com.do/`, agente `magantech`
+  - Autenticación: WP-Admin `admin` (UI labs); REST = Application Passwords — la password de login NO sirve para REST
+  - SSL: mkcert CA instalada en sistema, certificado válido hasta 2028-11-30 | Nginx config: `/etc/nginx/sites-available/wordpress.kalimete.local.conf` | Hosts: `10.0.0.106 wordpress.kalimete.local`
+  - Puertos: nginx-TLS 443 + 8090 → Docker loopback 8091; labs 8092/8093 + DBs 3307/3308/3309 (convención websites: 809X/330X ascendente — próximo 8094/3310, ver `docs/NUEVO-WEBSITE-TEMPLATE.md`)
+  - **Plugin `Armada Suite` v5.4.0 (agente `armada-suite`)** — super-plugin (unifica erp-commerce-suite + WPVibe + AIOWPM vendored desde 5.0.0). Option única `erp_suite_settings`, modo sellado dev/público: dev = ERP `http://172.19.0.1:8100/api` + LLM `http://10.0.0.5:8010/v1` + img `https://erp.kalimete.local`; public = ERP `https://erpipos.armada.do/api` + LLM `https://victoria.armada.do/v1`. Multitenant por-sitio: local tenant 10 MaganTech; prod multi-negocio (magantech, micaserogou, futuros). Tests regresión 24/24. ZIPs canónicos en `~/dev/wordpress/plugins/armada-suite/export/` (5.4.0 sha256 24b4255c…). 5.4.0: el sync APLICA los datos del negocio del ERP a la tienda (paridad dev/público) + snapshot/rollback.
+  - Producción cliente MaganTech: `https://magantech.com.do/` (cPanel, WP 7.1.3/PHP 8.5.11, armada-suite 5.4.0, tema Hello Elementor) — conexión remota vía `erpsuite/v1/ops` (App Password usuario dedicado Victoria; credencial en `websites/magantech.com.do/secrets/`)
   - ERP local de pruebas: `~/dev/erpipo-preprod/` (erpipo-preprod-nginx :8100) — rama dev/ecomm-erp @2306b64 (Fase 2/3 nuestras mergeadas vía PR #14 de Juan Carlos)
   - Mu-plugins: `disable-mcp-host-guard.php` (MCP host guard off). Elementor/EMCP/MCP Adapter: NO instalados en live (históricos, namespace mcp ausente)
   - **Protección contra updates**:
-    - mcp-proxy.mod.js: `~/dev/wordpress/` (fuera del contenedor Docker)
+    - mcp-proxy.mod.js: `~/dev/wordpress/plugins/armada-suite/` (fuera del contenedor Docker)
     - Nginx config: `/etc/nginx/sites-available/` (fuera del contenedor)
     - Certificados: `/etc/ssl/local-certs/` (fuera del contenedor)
     - Permisos SSL: `chown root:www-data 640` (persisten)

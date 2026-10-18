@@ -1,15 +1,18 @@
 {
   "harness": "zionv-crm",
-  "updated": "2026-10-16",
+  "updated": "2026-10-17",
   "agent_file": "~/armada-sync/agents/zionv-crm.md",
   "mode": "subagent",
   "hidden": false,
   "scope": "ZionV CRM dev (kalimete) — stack WP 6.7-php8.3-apache + plugin ZionV CRM 1.56.3 (CRM independiente: backend PHP completo + SPA React solo-dist, 34+ REST controllers/123 rutas, Google/MS365/Nextcloud Calendar, HubSpot, IA OpenAI-compat, automatizaciones), completamente aislado de Armada Suite (8091)",
   "vivo_2026_10_15": "zionv-local Up 29h healthy + zionv-db Up 34h healthy; plugin 1.56.3 activo (bind-mount, php -l OK; welcome notice → /crm/configuracion/ verificado con wp eval); DB 1.24.0; 43 tablas zionv_zion_crm_*; permalinks pretty; 302 /crm/dashboard/ sin sesión; bundle parcheado (marker __zionCfgUnified + .orig); config unificada /crm/configuracion/ con sidebar PHP (9 secciones/26 items) + 6 tabs; Estado del sistema 5 tabs; IA Victoria PUBLIC (212ms, Qwen3.6) + ai_prompt e2e OK; GitHub warcold/zionv-crm @5d3efab; ZIP export/zionv-crm-1.56.3.zip (7.3M, sha256 e0b730d8, sin secrets ni .bkup)",
-  "vivo_2026_10_16": "stack movio de ~/dev/zionv-crm/ a ~/dev/wordpress/plugins/zionv-crm/ (compose name: zionv-crm pinned, vols zionv-crm_* intactos, .gitignore dotfile recuperado); subrepo plugin intacto (origin warcold/zionv-crm, HEAD 1.56.3, status limpio); smoke 8092 100% verde: front 301, wp-login 302, REST 200, /crm/dashboard/ 302, pretty ON, 43 tablas, db_version 1.24.0",
+  "vivo_2026_10_16": "stack movio de ~/dev/zionv-crm/ a ~/dev/wordpress/zionv-crm/ (compose name: zionv-crm pinned, vols zionv-crm_* intactos, .gitignore dotfile recuperado); subrepo plugin intacto (origin warcold/zionv-crm, HEAD 1.56.3, status limpio); smoke 8092 100% verde: front 301, wp-login 302, REST 200, /crm/dashboard/ 302, pretty ON, 43 tablas, db_version 1.24.0",
+  "vivo_2026_10_17": "HUB REORG (owner 2026-10-17): stack movido de ~/dev/wordpress/zionv-crm/ a ~/dev/wordpress/plugins/zionv-crm/ (dump pre-move 967K; down/mv/up limpio; vols zionv-crm_* sin huérfanos; git del plugin HEAD 5d3efab intacto, cero commits; smoke-8092 100% verde tras actualizar su ruta; docs internos README+DEPLOY-GUIA corregidos con .bkup). NOCHE validación: dominio e2e — root 200, /crm/dashboard/ 302 anon, login SPA 200 (zion-crm-root+ZionCrmConfig en HTML), /crm/configuracion/ 200 unificada, wp-json TLS 200; nginx deployed == proyecto (diff vacío); cert mkcert vigente hasta 2029-01-13; /etc/hosts dedup (1 línea zionv); HEAD real a1288fe (release 1.56.3=5d3efab) ahead 1 de origin/main sin push; secrets/ no existe; .gitignore plugin ahora *.bkup*",
   "live_check": "docker ps --filter name=zionv",
   "checks": [
     "curl -sk -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/crm/dashboard/  (302 sin sesión = correcto; :8092 plano da 301 host-mismatch, no es canónico)",
+    "diff /etc/nginx/sites-available/zionv.kalimete.local ~/dev/wordpress/plugins/zionv-crm/zionv.kalimete.local.conf  (idénticos = deploy al día)",
+    "curl -skI https://zionv.kalimete.local  (200; nginx host → 127.0.0.1:8092, cert mkcert expira 2029-01-13)",
     "docker exec zionv-local wp plugin list --allow-root  (zionv-crm-plugin active 1.56.3)",
     "docker exec zionv-local wp option get zion_crm_db_version --allow-root  (1.24.0)",
     "docker exec zionv-local wp option get permalink_structure --allow-root  (/%postname%/)",
@@ -17,7 +20,7 @@
     "docker exec zionv-db sh -c 'mysql -u root -p\"$MYSQL_ROOT_PASSWORD\" zionv_crm -e \"SHOW TABLES LIKE \\\"%zion_crm_%\\\";\"' | wc -l  (44 con cabecera = 43 tablas)"
   ],
   "upstream": {
-    "fuente": "ZionV CRM (kalimete) — stack WP 6.7-php8.3-apache + mariadb:10.11; plugin en GitHub privado warcold/zionv-crm (main @5d3efab, 1.56.3)",
+    "fuente": "ZionV CRM (kalimete) — stack WP 6.7-php8.3-apache + mariadb:10.11; plugin en GitHub privado warcold/zionv-crm (main @a1288fe = docs reorg, ahead 1 de origin/main sin push; release 1.56.3 = 5d3efab)",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
   },
   "docs": [
@@ -32,17 +35,17 @@
     "plugin": "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/ (repo git propio → GitHub privado warcold/zionv-crm, rama main)",
     "export": "~/dev/wordpress/plugins/zionv-crm/export/zionv-crm-1.56.3.zip (ZIP canónico de producción; comando en DEPLOY-GUIA.md)",
     "tools": "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/tools/patch-config-route.sh (parche idempotente del bundle + .orig, única vía temporal sin source)",
-    "secrets": "~/dev/wordpress/plugins/zionv-crm/secrets/ (App Passwords, dir 700 file 600, gitignored)",
+    "secrets": "~/dev/wordpress/plugins/zionv-crm/secrets/ — NO EXISTE (verificado 2026-10-17); convenio si se crea: dir 700/file 600, ya gitignored en stack y plugin; Application Passwords de debug se generan con WP-CLI y se revocan al terminar",
     "certs": "~/dev/wordpress/plugins/zionv-crm/certs/ca-bundle-full.crt (142 certs: 140 Debian + mkcert warcold + mkcert root — montado en el contenedor)",
     "wp_cli": "~/dev/wordpress/plugins/zionv-crm/bin/wp-cli.phar (montado ro en /usr/local/bin/wp — persistente)",
-    "zip_origen": "~/dev/wordpress/plugins/zionv-crm/zionv-crm.zip (ZIP original del plugin, 7.1M)"
+    "zip_origen": "NO ESTÁ EN DISCO (verificado 2026-10-17: el ZIP original de import ya no existe en ~ ni en ~/dev); los ZIPs de release viven en export/"
   },
   "github_repo": {
     "url": "https://github.com/warcold/zionv-crm",
     "visibility": "PRIVATE",
     "branch": "main",
     "contenido": "plugin completo con vendor/ (deploy directo), README.md, CHANGELOG.md, DEPLOY-GUIA.md, tools/patch-config-route.sh, .gitignore (sin node_modules/.env/secrets)",
-    "head": "5d3efab (1.56.3 — welcome notice → Configuración unificada + docs sin discrepancias)",
+    "head": "a1288fe (docs rutas hub post-reorg 2026-10-17; release 1.56.3 = 5d3efab) — local ahead 1 de origin/main, push pendiente autorización owner",
     "import": "2026-10-13, commit 6cda97a 'ZionV CRM 1.53.1 — import inicial del plugin' (ya entró solo con dist/, sin frontend source)"
   },
   "docker": {
