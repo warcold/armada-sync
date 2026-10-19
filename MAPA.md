@@ -181,6 +181,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | magantech | Website cliente MaganTech (magantech.com.do): preprod :8093 + dominio local; prod cPanel vía erpsuite/v1/ops (local-first) — NUEVO (2026-10-17) | ✅ |
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
 | godot-dev | Juegos Godot 4.x + MCP 386 tools | ✅ |
+| game-studio | Fábrica de juegos 3D desde cero (Blender MCP + Godot MCP + victoria; pipeline 7 fases) — NUEVO (2026-10-18) | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
 | intigriti | Bug bounty Intigriti (~/dev/ethical-hacking, kalimetehunt.sh) — NUEVO (2026-10-08) | ✅ |
 

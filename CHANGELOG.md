@@ -1,5 +1,19 @@
 ## 2026-10-18
 
+### [23:47] - Agente Game Studio creado: fábrica de juegos 3D desde cero (Blender MCP + Godot MCP + victoria)
+- **Tipo**: agente | infra
+- **Contexto**: owner — "evaluar el stack necesario para crear juegos 3D tipo Enshrouded con IA (Blender, Godots, MCPs, assets) y crear un agente que genere juegos completos (incl. mapas) automáticamente con los modelos de victoria (DGX GB10)". Workflow validado contra el video "Claude Fable 5 Makes FULL GAME Using Godot MCP and Blender MCP" (transcript analizado, `/tmp/opencode/refvideo.json`).
+- **Modificado**:
+  - **Blender 5.0.1 instalado** (apt Kali, verificado `BPY_OK` headless). Python de Blender = uv cpython-3.14 aislado → `requests` 2.34.2 vía `pip --target ~/.config/blender/5.0/scripts/addons/modules` (PEP668 bloquea pip normal).
+  - **blender-mcp montado y verificado END-TO-END**: repo clon en `~/dev/tools/blender-mcp`; addon `blender_mcp.py` (mcp-for-blender 2.2.0) instalado + habilitado en userpref; cadena `uvx mcp-for-blender` (stdio) → TCP 127.0.0.1:9876 → addon → `get_scene_info` OK (9 tools; `execute_blender_code` la potente). **Hallazgos de pruebas**: (1) el addon rechaza auto-start en `blender --background`; (2) `blender --quiet` bajo xvfb NUNCA abrió :9876 (>3 min); (3) la GUI completa `xvfb-run -a blender` sí (auto-start default=True, segundos). Scripts `start-blender.sh`/`stop-blender.sh` en `~/dev/tools/blender-mcp/` (idempotente por puerto; `pkill -x` — NUNCA `pkill -f blender`: se mata al propio shell).
+  - **opencode.jsonc**: MCP `blender` añadido (`uvx mcp-for-blender` + BLENDER_HOST/PORT; backup `opencode.jsonc.bkup-blender-mcp-20261018`; JSONC validado: mcp = godot, blender). Requiere restart de sesión para cargarse.
+  - **Agente `game-studio`** (`agents/game-studio.md`, symlink `~/.config/opencode/agent/`): fábrica verde 7 fases (GDD → concept art victoria → assets 3D Blender+CC0 → mundo procedural → ensamblado Godot → QA visual screenshots → audio → export). Límite vs agente Godot: existentes = Godot; verde completo = Game Studio. temp 0.6/top_p 0.95 (rol creativo), steps 60. Harness `harness/game-studio.harness.json`.
+  - **Workspace**: `~/dev/godot/studio/` (README; `current` symlink se crea con el primer juego; el MCP godot apunta a UN proyecto — cambiar `-p` al iniciar sesión Game Studio).
+- **Afecta a**: kalimete (stack local + config opencode + agentes); victoria solo como consumidor read-only de skills existentes (art/voice)
+- **Causa**: owner (crear la capacidad de generar juegos completos con IA)
+- **Estado**: ✅ verificado (Blender TCP :9876 live, get_scene_info OK, JSONC OK, harness JSON OK, symlink OK). Pendiente: sesión opencode nueva para cargar MCP blender; update menor godot-mcp 1.12.3→1.12.9 opcional.
+- **Notas**: **Fase 2 (requiere auth owner)**: image→3D local en GB10 victoria (Hunyuan3D 2.1 / TRELLIS vía ComfyUI :8188) — victoria read-only por defecto; reportado, NO implementado. Blender quedó corriendo bajo Xvfb (PID sesión actual) — detener con `stop-blender.sh` si sobra.
+
 ### [23:50] - MaganTech: plugin 5.4.2 desplegado y probado en local (:8091 + :8093) — auto-sync verificado end-to-end; modo del espejo public→dev; prod queda en manos del owner (§(b) manual)
 - **Tipo**: servicio | docs
 - **Contexto**: owner — "Da update del plugin tanto en local como en public para hacer las pruebas".
