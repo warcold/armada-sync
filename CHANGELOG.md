@@ -1,3 +1,11 @@
+### [22:15] - Agente Ecco Suit creado: VPS dedicada 62.171.144.58 (Ecco Qualitá)
+- **Tipo**: agente | infra
+- **Modificado**: agents/ecco-suit.md (nuevo agente "Ecco Suit")
+- **Afecta a**: VPS 62.171.144.58 (Ubuntu 24.04, 4 cores AMD EPYC, 7.8GB RAM, 96GB disk)
+- **Causa**: owner — "crea un agente para eso" (Ecco Suite / Ecco Qualitá, plataforma BSC multiempresa)
+- **Estado**: ✅ VPS verificada LIVE — inventario completo, todo por instalar
+- **Notas**: VPS 100% virgen sin Docker/Node/PostgreSQL/Nginx; SSH con contraseña colador1 sin llave; firewall inactivo; zona horaria Europe/Berlin. Plan de despliegue en el agente: 13 pasos (Docker → DB → app → nginx → TLS → UFW → backups)
+
 ## 2026-10-19
 
 ### [11:40] - Dominio ~/dev/games/ creado: mudanza completa (godot+blender+assets) + agente Blender + 2 MCPs godot + ledger — organización de la fábrica de juegos
