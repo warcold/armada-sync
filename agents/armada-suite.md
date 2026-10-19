@@ -157,7 +157,7 @@ curl -s -u "admin:<app-password>" \
 ## Upstream (2026-10-15)
 
 - **Fuente**: desarrollo propio continuo (vendored desde 5.0.0, 2026-10-01: erp-commerce-suite + WPVibe v1.20.0 + AIOWPM v7.111). Sin imagen hub — el stack corre sobre `wordpress:6.7-php8.3-apache` (upstream del agente WordPress).
-- **Vivo 2026-10-18**: plugin 5.4.2 en dev lab (regresión 25/25, php -l OK); ZIP 5.4.2 canónico (sha `157b1633…`); auto-sync + contrato ecomm listos; causa raíz marca "Tienda" = gap de datos en ERP prod (`business_instances.nombre` vacío tenant 10) — update enviado a Juan Carlos. NO instalado en :8093/prod. Workflow ERP upstream fijado (owner 2026-10-18): `dev/ecomm-erp` = nuestra rama de trabajo, Juan Carlos mergea a main y deploya.
+- **Vivo 2026-10-18**: plugin 5.4.2 en dev lab (commit local `e2c86ed`; regresión 25/25, php -l OK); ZIP 5.4.2 canónico (sha `157b1633…`); auto-sync + contrato ecomm listos; causa raíz marca "Tienda" = gap de datos en ERP prod (`business_instances.nombre` vacío tenant 10) — update enviado a Juan Carlos. NO instalado en :8093/prod. Workflow ERP upstream fijado (owner 2026-10-18): `dev/ecomm-erp` = nuestra rama de trabajo, Juan Carlos mergea a main y deploya.
 - **Vivo 2026-10-16**: plugin 5.3.5 activo (HEAD `b4c2a89`, tree clean); regresión 19/19; ZIP 5.3.5 canónico (sha `b9c67bc8…`); sync acepta forma plana + guard 409 + aviso no-iak_; incidente prod: key Sanctum válida pero canal equivocado (ecomm público exige `iak_*`).
 - **Vivo 2026-10-15**: plugin 5.3.2 activo (HEAD `a838486`, tree clean); regresión 19/19; ZIP 5.3.2 canónico; ping-erp 200 ok (73ms live 2026-10-15); REST 403 anónimo/200 auth.
 - **Check**: regresión 25/25 + ops/status 200/403

@@ -1,5 +1,18 @@
 ## 2026-10-18
 
+### [20:55] - Workflow GitHub del ERP upstream fijado (owner) + agentes/harnesses ERP Dev y Armada Suite validados + release 5.4.2 commiteada
+- **Tipo**: docs | infra
+- **Contexto**: owner — "Tenemos acceso al github donde Juan Carlos tiene el proyecto, manejamos el branch dev/ecomm-erp… ahi hacemos los updates y todo lo que necesitamos para que Armada Suite funcione correctamente, Juan Carlos mas despues desde ese branch el hace el merge a main y pasa a produccion no nosotros, asi que documenta todo esto en el agente del proyecto… en adicional valida que el agente tanto como el harness de este proyecto este correcto".
+- **Modificado**:
+  - **Workflow GitHub definitivo (owner 2026-10-18) documentado en el agente del proyecto ERP**: acceso pleno a `soycarlosjerez-hub/sistema-facturacion`; **`dev/ecomm-erp` = NUESTRA rama de trabajo** (push = flujo normal, autorización permanente del owner) para todo lo que Armada Suite necesita; **Juan Carlos mergea a main y despliega a prod — NUNCA nosotros**; `main`/`develop` read-only. Aplicado en `agents/erp-dev.md` (description, modelo de ownership, workflow, regla 4, sección Producción, Vivo 2026-10-18, regla upstream, pin_note `upstream_drk`) + `harness/erp-dev.harness.json` (scope, ownership, git.regla, head_verificado, vivo_2026_10_18, decision_owner_2026_10_18).
+  - **Live verificado (kalimete)**: clon `~/dev/erpipo-preprod/code/sistema-facturacion` en `dev/ecomm-erp` @`34de630` = `origin/dev/ecomm-erp` (ls-remote); `origin/main` @`bd1a879` — 8 commits nuestros esperando el merge de Juan; 8/8 containers erpipo Up 10h (db/redis/mailpit healthy); `/up` ok (database+redis true); tree local limpio.
+  - **Armada Suite (delegado, agente)**: workflow ERP upstream añadido a `agents/armada-suite.md` (nueva sección "ERP upstream — workflow GitHub (regla owner 2026-10-18)" + cláusula en Vivo) + `harness/armada-suite.harness.json` (scope 5.4.2, upstream.erp_upstream, vivo_2026_10_18, zip_5_4_2 canónico, changelog). **Validación doc-vs-live 9/9**: stack Up, versión 5.4.2 triple fuente (header+define+readme), ZIP sha exacto, DEPLOY-GUIA línea ZIP actual, **regresión 25/25 PASS**, auto-sync presente (hook `:285` + deactivation `:291` + checkbox `:599` + UX `:276` + sanitize `:117`), CONTRATO-ECOMM-CONFIG.md existe, entradas .md correctas, JSON válido. Fixes de docs stale: label checkbox → "Auto-sync diario", línea Check 19/19→25/25, harness version 5.4.1→5.4.2, zip_5_4_1 destronado.
+  - **Release 5.4.2 commiteada local** (kalimete, patrón de release): `e2c86ed` (7 archivos, 314 inserciones — auto-sync + contrato ecomm + UX + bump); claims "sin commitear" actualizadas a `e2c86ed` en .md + harness.
+- **Afecta a**: agentes ERP Dev + Armada Suite (docs/harnesses), repo del plugin (commit local `e2c86ed`)
+- **Causa**: owner (fijar workflow GitHub del ERP + documentar en el agente + validar agente/harness)
+- **Estado**: ✅ verificado (ls-remote, docker ps, /up, regresión 25/25, json.tool OK ×2, sha256 ZIP)
+- **Notas**: :8093 sigue en 5.4.0 (ventana owner para 5.4.2). 8 commits del ERP esperando merge de Juan (incl. `34de630` identidad ecomm). Gap de datos prod (`business_instances.nombre` tenant 10 vacío) sigue en manos de Juan Carlos — update ya enviado.
+
 ### [17:15] - MaganTech: causa raíz marca "Tienda" cerrada (ERP prod sin nombre) + update para Juan Carlos + Armada Suite 5.4.2 (auto-sync)
 - **Tipo**: servicio | docs | infra
 - **Contexto**: owner — "Analiza el ERP Dev para validar porque no envia lo que debe de enviar y asi crear un update para Juan Carlos y este haga lo que debe de hacer para que nuestro plugin Armada Suite funcione correcto".
