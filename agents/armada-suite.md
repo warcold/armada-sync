@@ -33,7 +33,7 @@ permission:
 - Contenedor/compose/certs/DB caídos → agente WordPress, no curar aquí
 
 ### Plugin
-- **Path**: `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (repo del plugin en `~/dev/wordpress/plugins/armada-suite/` — el hub `~/dev/wordpress/` NO es repo; HEAD `b6d5006`; commits locales, remote vacío). `~/Desktop/dev` es solo symlink alias — nunca usar en docs.
+- **Path**: `~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/` (repo del plugin en `~/dev/wordpress/plugins/armada-suite/` — el hub `~/dev/wordpress/` NO es repo; HEAD `e2c86ed` = release 5.4.2; commits locales, remote vacío). `~/Desktop/dev` es solo symlink alias — nunca usar en docs.
 - **⚠️ Ruta canónica de artefactos (ÚNICA)**: ZIPs SOLO en `~/dev/wordpress/plugins/armada-suite/export/` (contiene `DEPLOY-GUIA.md` con el comando canónico de empaquetado + zips versionados). NUNCA dentro del directorio del plugin. Verificación obligatoria post-zip: `unzip -l | grep -i storage` (debe listar) + `unzip -l | grep -iE "\.env|secret"` (debe dar vacío). Los `export/` internos de SiteBackup son código y NO se excluyen.
 
 ### Switch Local/Público (regla del owner)
@@ -68,6 +68,12 @@ Schema `erp_suite_settings['agente']` (modo mixto|erp_solo|local_solo, instrucci
 **Fase 3** (@`34de630` pushed — 8 commits en la rama, esperando PR de Juan): **G6 corregido por nosotros** (`ff64301`: `notas ?? null`, fin `linea_negocio`, tipo enum, `almacen_id` default) live en preprod; **G1-G4 implementados** (cancel order + 11 tests, CRUD webhooks por API, `invoice.issued`, `webhooks:retry-failed`); solo **G5** pendiente (lado ERP). Juan integró Fase 2/3 a main vía PR #14.
 
 Contrato vigente: Local sellado `http://172.19.0.1:8100/api`, tenant 10, Bearer `iak_*` (44 chars), throttles 10/30/60, imágenes URL absoluta, total en `meta.total`.
+
+### ERP upstream — workflow GitHub (regla owner 2026-10-18)
+- **Repo de Juan Carlos**: `github.com/soycarlosjerez-hub/sistema-facturacion` (remote `ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git`) — el ERP erpipo que este plugin consume.
+- **`dev/ecomm-erp` es NUESTRA rama de trabajo**: ahí se hacen los updates que el plugin Armada Suite necesita para funcionar (push = flujo normal, autorización permanente owner 2026-10-18).
+- **Juan Carlos mergea `dev/ecomm-erp` → `main` y despliega a producción — NUNCA nosotros.** El único camino a prod del ERP es el merge de Juan.
+- Contrato de la integración: `docs/CONTRATO-ECOMM-CONFIG.md` (dev lab). Quien trabaja ese repo = agente **ERP Dev** (`agents/erp-dev.md`).
 
 **Latencia (2026-10-13)**: curl crudo WP→ERP 246-301ms idéntico al plugin; `/up` directo 132-162ms; vía HTTPS nginx 490-1140ms — overhead TLS/nginx **esperado del dev local** (decisión owner: no perseguir). Mailpit = dev-only intencional — no investigar, no tocar.
 
@@ -130,7 +136,7 @@ curl -s -u "admin:<app-password>" \
 
 ## Cambios recientes
 
-- **2026-10-18 (release 5.4.2)**: auto-sync programado de identidad ERP (cron `erpsuite_auto_sync_config` daily filtrable `armada_suite_auto_sync_interval`, setting `auto_sync` default ON en form `conexion`, lazy idempotente en `init`, unschedule en deactivate, guards sin-key skip+log, log nº campos módulo `auto_sync`); checkbox "Sincronización automática" en tab Conexión; mensaje UX "el ERP no envió nombre del negocio — captúralo en el ERP" cuando name+brand.name llegan vacíos; doc `docs/CONTRATO-ECOMM-CONFIG.md` (contrato JSON del payload ecomm, precedencia brand.name>name, regla solo-no-vacíos, aliases ERP↔plugin). ZIP 2.240.253 bytes, sha256 `157b1633…`. Regresión 25/25. NO instalado en :8093 ni prod (ventana owner).
+- **2026-10-18 (release 5.4.2)**: auto-sync programado de identidad ERP (cron `erpsuite_auto_sync_config` daily filtrable `armada_suite_auto_sync_interval`, setting `auto_sync` default ON en form `conexion`, lazy idempotente en `init`, unschedule en deactivate, guards sin-key skip+log, log nº campos módulo `auto_sync`); checkbox "Auto-sync diario" en tab Conexión; mensaje UX "el ERP no envió nombre del negocio — captúralo en el ERP" cuando name+brand.name llegan vacíos; doc `docs/CONTRATO-ECOMM-CONFIG.md` (contrato JSON del payload ecomm, precedencia brand.name>name, regla solo-no-vacíos, aliases ERP↔plugin). ZIP 2.240.253 bytes, sha256 `157b1633…`. Regresión 25/25. NO instalado en :8093 ni prod (ventana owner).
 - **2026-10-16 (release 5.3.5, commit `b4c2a89`)**: sync acepta config en forma plana `{tenant_id,name,brand,…}` además de `{data:{…}}` (el probe al guardar ya la aceptaba; el sync la ignoraba — con token Sanctum válido el `/tienda/config` 200 plano ahora sincroniza si el tenant coincide); guard anti-tenant-equivocado (`erpc_tenant_mismatch` 409, no mergea negocio ajeno; tenant 0 = autodetect); aviso no-bloqueante si la key no es `iak_` ante 401/403. ZIP 2.207.808 bytes, sha256 `b9c67bc8…`. Regresión 19/19.
 - **2026-10-16 (release 5.3.4, commit `6729d4c`)**: reporte honesto de errores de config ERP — `get_business_config` prioriza 401/403 (auth) > 5xx/timeout > 404 e incluye endpoint en el mensaje; antes el 404 del fallback muerto `/tenants/{id}` enmascaraba el 401 real de key inválida (incidente prod del owner). ZIP 2.207.069 bytes, sha256 `c57df620…`. Regresión 19/19.
 - **2026-10-16 (release 5.3.3, commits `a145502`+`17aec0e`)**: fix falso "Conexión verificada" (WP_Error en `get_business_config`, no pisa `erp_config`), guardar-verificar con probe en tab Conexión (pending + `settings_errors`), SSOT Negocio (Catálogo sin contact_email, IA-Conocimiento readonly, fix overwrite agente modo/tools/memoria, whatsapp número|URL), deprecate apariencia/contacto. ZIP 2.206.021 bytes, sha256 `6fd5ed2d…`. Regresión 19/19.
@@ -151,10 +157,10 @@ curl -s -u "admin:<app-password>" \
 ## Upstream (2026-10-15)
 
 - **Fuente**: desarrollo propio continuo (vendored desde 5.0.0, 2026-10-01: erp-commerce-suite + WPVibe v1.20.0 + AIOWPM v7.111). Sin imagen hub — el stack corre sobre `wordpress:6.7-php8.3-apache` (upstream del agente WordPress).
-- **Vivo 2026-10-18**: plugin 5.4.2 en dev lab (regresión 25/25, php -l OK); ZIP 5.4.2 canónico (sha `157b1633…`); auto-sync + contrato ecomm listos; causa raíz marca "Tienda" = gap de datos en ERP prod (`business_instances.nombre` vacío tenant 10) — update enviado a Juan Carlos. NO instalado en :8093/prod.
+- **Vivo 2026-10-18**: plugin 5.4.2 en dev lab (regresión 25/25, php -l OK); ZIP 5.4.2 canónico (sha `157b1633…`); auto-sync + contrato ecomm listos; causa raíz marca "Tienda" = gap de datos en ERP prod (`business_instances.nombre` vacío tenant 10) — update enviado a Juan Carlos. NO instalado en :8093/prod. Workflow ERP upstream fijado (owner 2026-10-18): `dev/ecomm-erp` = nuestra rama de trabajo, Juan Carlos mergea a main y deploya.
 - **Vivo 2026-10-16**: plugin 5.3.5 activo (HEAD `b4c2a89`, tree clean); regresión 19/19; ZIP 5.3.5 canónico (sha `b9c67bc8…`); sync acepta forma plana + guard 409 + aviso no-iak_; incidente prod: key Sanctum válida pero canal equivocado (ecomm público exige `iak_*`).
 - **Vivo 2026-10-15**: plugin 5.3.2 activo (HEAD `a838486`, tree clean); regresión 19/19; ZIP 5.3.2 canónico; ping-erp 200 ok (73ms live 2026-10-15); REST 403 anónimo/200 auth.
-- **Check**: regresión 19/19 + ops/status 200/403
+- **Check**: regresión 25/25 + ops/status 200/403
 - **Regla**: LIVE manda; propone updates al owner, nunca auto-actualiza producción sin autorización.
 
 ```json upstream_drk
