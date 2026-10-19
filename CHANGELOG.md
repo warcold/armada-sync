@@ -20,6 +20,20 @@
 
 ## 2026-10-19
 
+### [11:30] - MaganTech prod: 5.4.2 verificado LIVE + sync OK — campos "Sin definir" = ERP prod SIN datos de perfil (no bug); fix rápido B1 (tab Negocio) + definitivo (Juan captura datos)
+- **Tipo**: servicio | docs
+- **Contexto**: owner — "Le di update con el nuevo plugin, verifique la conexion todo bien, le di a sincronizar, dijo que todo bien, pero no vi que los campos se completaran… aun veo Nombre del negocio — Sin definir… y otros campos de Configuración de la tienda sin identificar".
+- **Modificado**:
+  - **Validación remota post-update**: ops/status → **plugin 5.4.2, env public, api_host erpipos.armada.do** ✅; smoke-prod → públicos 200 ✅, marca "Tienda" (esperada); hint post-sync → `brand_name:""`, payment_methods [transferencia], DOP, per_page 15 — **el sync corrió y el ERP prod respondió, pero NO trae identidad** (solo moneda/pagos/paginación). El "✅ Conectado y sincronizado" que vio el owner = correcto (la conexión y el sync funcionan).
+  - **Diagnóstico confirmado — GAP DE DATOS, no bug**: `apply_business_config` solo copia valores no-vacíos; el perfil de tenant 10 en el ERP prod está VACÍO (nombre, logo, eslogan, contacto). La UI lo dice: "Configuración de la tienda" = "Nombre y logo se gestionan aquí porque el ERP aún no los envía" (`LegacyConnectorAdmin.php:482`; efectivo = **ajuste local > ERP**, `:488-492`); los "Sin definir: escríbelo en tab Negocio…" son guía de la UI, no errores.
+  - **Cronología del deploy de Juan**: merge PR #15 = 2026-10-19 01:26 (-0400). Hint `brand_name:""` post-sync → o su deploy del ERP está pendiente, o deployó con `nombre`+`slug`+`empresa_nombre` todos vacíos. Con `34de630` deployado + dato capturado, el sync traería la fuente "ERP".
+  - **Acciones**: (1) **Rápido (owner, 1 min)**: tab Negocio → Identidad del negocio → Nombre del negocio = "MaganTech" → Guardar — el ajuste local GANA al ERP (durable), frontend cambia al instante, kalimete verifica con smoke-prod; (2) **Definitivo (Juan)**: capturar el perfil del negocio en ERP prod (nombre urgente — SQL del update ya enviado; + contacto/logo/eslogan/colores) y verificar su deploy. B2 (ops/settings con modo trabajo) disponible si el owner lo prefiere.
+  - **Docs**: PROCEDURES §(i) estado actualizado (B1 como fix rápido + explicación UI v3.3.5).
+- **Afecta a**: prod magantech.com.do (5.4.2 live), docs MaganTech
+- **Causa**: owner (validar por qué los campos no se completaron tras el sync)
+- **Estado**: ✅ verificado (ops/status 5.4.2, hint post-sync, smoke, código UI :482-524)
+- **Notas**: el plugin funciona correctamente — copia exactamente lo que el ERP tiene. El "update" para Juan Carlos del 2026-10-18 (SQL nombre + verificación) sigue siendo la pieza pendiente del lado ERP; ahora ampliado: el perfil completo (contacto/logo/eslogan) también está vacío en prod. Log de hoy en prod no existe (file/read 404 — el logger no ha escrito en prod aún; file/list requiere `pattern`).
+
 ### [10:55] - ERP: Juan mergeó TODO vía PR #15 (`997a218`) — validación completa (rama sincronizada, preprod sano, ERP prod vivo, WP prod OK); la marca espera 1 sync
 - **Tipo**: infra | servicio | docs
 - **Contexto**: owner — "Evalua todo, Juan Carlos ya hizo merge, valida que todo funcione correctamente en produccion".
