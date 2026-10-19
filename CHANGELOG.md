@@ -1,5 +1,25 @@
 ## 2026-10-19
 
+### [11:40] - Dominio ~/dev/games/ creado: mudanza completa (godot+blender+assets) + agente Blender + 2 MCPs godot + ledger — organización de la fábrica de juegos
+- **Tipo**: infra | docs | agente
+- **Contexto**: owner — "creo que nada mas tenemos ~/dev/godot lo ideal es hacer un directorio general para todo eso de los juegos algo como ~/dev/games/godot o blender o todo lo que necesites para games y dev games ahi dentro... tanto blender, como godot deben de tener sus agentes con su harness y documentacion de como todo funciona y como funcionan estos programas correctamente con mcp".
+- **Modificado**:
+  - **Estructura `~/dev/games/`** (el dir existía vacío desde 10-16 — ahora es la raíz del dominio): `godot/` (mario-bros + armada-starfox + studio/ movidos de ~/dev/godot con `mv` mismo-FS, git de mario-bros intacto) · `blender/` (blender-mcp repo + scripts movidos de ~/dev/tools + `work/` para escenas) · `assets/{concept,models3d,audio}/` (staging de la granja victoria). `studio/_starter/` (proyecto Godot mínimo) + `current -> _starter` (symlink al juego activo).
+  - **opencode.jsonc** (backup `.bkup-20261019-gamesdir`): MCP `godot` → `~/dev/games/godot/mario-bros` (path nuevo) + **MCP `godot-studio` NUEVO** → `~/dev/games/godot/studio/current` (Game Studio ya NO necesita cambio manual de `-p` ni restart de sesión). JSON validado: mcp = godot, godot-studio, blender.
+  - **Agente `Blender` NUEVO** (`agents/blender.md` + symlink + `harness/blender.harness.json`): doc operativa completa — hallazgos Xvfb/--background/--quiet (2026-10-18), tools del server.py 2.2.0 (get_scene_info, execute_blender_code, look, search/import polyhaven+polypizza+sketchfab, get_addon_status), workflows GLB→decimate 10-20K→Godot, rig básico, batch sin MCP, granja victoria (skills art/assets-3d), reglas (pkill -x jamás -f). Integraciones Meshy/Hunyuan del addon = NO usar (API keys externas; el canónico es assets-3d → victoria :18860).
+  - **Agente `Godot` actualizado**: paths al dominio nuevo, sección MCP con los DOS servers (config live reflejada), fila image→3D en la granja (skill assets-3d → GLB → import nativo), referencia al agente Blender, changelog.
+  - **Agente `Game Studio` actualizado**: sección Workspace reescrita (godot-studio dedicado + current/_starter + staging assets/), stack table +fila agente Blender, fase 2 con delegación de retopo/rig a Blender.
+  - **Harnesses**: `blender.harness.json` (nuevo), `godot-dev.harness.json` y `game-studio.harness.json` (paths + vivo_2026_10_19 + checks con 3 MCPs + changelog).
+  - **Drifts curados**: `kalimete.md` línea MCPs decía `armada-godot` (inexistente) → MCPs reales de la config; `kalimete.harness.json` scope idem. `start-blender.sh` LOG path migrado (dev/tools → dev/games). `studio/README.md` + `games/README.md` reescritos. **Ledger `~/dev/games/AGENTS.md`** creado (mapa, agentes, decisiones, comandos, pendientes, reglas).
+  - **Procesos godot-mcp huérfanos** (2, con el path viejo) matados — respawnean solos con la config nueva en la próxima sesión.
+- **LECCIÓN (sync.sh)**: un agente nuevo scp-eado SOLO al repo dura lo que tarde el cron de 5 min — el collect hace "delete zombies" (repo file sin contraparte local → rm). Regla documentada en el ledger: repo file + symlink EN EL MISMO INSTANTE. blender.md cayó en la ventana y hubo que restaurarlo así.
+- **Afecta a**: kalimete (estructura dev, opencode.jsonc, 3 agentes, 3 harnesses, primario kalimete.md, ledger); cero cambios en victoria (solo consumo HTTP)
+- **Causa**: owner (organizar el dominio de juegos con agentes/harness/documentación por programa)
+- **Estado**: ✅ verificado (JSON config OK, agentes parsean en opencode, blender listener :9876 vivo, git mario-bros intacto, md5 repo↔symlink idénticos)
+- **Notas**: la sesión opencode ACTIVA de kalimete (si hay una abierta) necesita restart para cargar las rutas/MCPs nuevos. Primer juego: delegar "Game Studio, crea un juego 3D de <género>" — él repunta `current` al proyecto nuevo.
+
+## 2026-10-19
+
 ### [10:55] - ERP: Juan mergeó TODO vía PR #15 (`997a218`) — validación completa (rama sincronizada, preprod sano, ERP prod vivo, WP prod OK); la marca espera 1 sync
 - **Tipo**: infra | servicio | docs
 - **Contexto**: owner — "Evalua todo, Juan Carlos ya hizo merge, valida que todo funcione correctamente en produccion".
