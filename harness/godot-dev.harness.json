@@ -1,28 +1,28 @@
 {
   "harness": "godot-dev",
-  "updated": "2026-10-07",
+  "updated": "2026-10-19",
   "agent_file": "~/armada-sync/agents/godot-dev.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Godot 4.x + MCP 386 tools (~/dev/godot/ — mario-bros y armada-starfox) + assets desde la granja de victoria (skills art/voice-video)",
+  "scope": "Godot 4.x + MCP 386 tools (~/dev/games/godot/ — mario-bros y armada-starfox; MCP godot → mario-bros, godot-studio → studio/current es del agente Game Studio) + assets desde la granja de victoria (skills art/voice-video/assets-3d)",
   "vivo_2026_10_07": "MCP godot en opencode.jsonc apunta a mario-bros; armada-starfox activo (docs/ propios); E2E granja: imagen art + TTS voz es verificados desde kalimete",
-  "live_check": "ls ~/dev/godot/ && godot-mcp --version",
+  "live_check": "ls ~/dev/games/godot/ && godot-mcp --version",
   "upstream": {
-    "fuente": "Godot 4.x + MCP godot (386 tools) + proyectos ~/dev/godot/",
+    "fuente": "Godot 4.x + MCP godot (386 tools) + proyectos ~/dev/games/godot/",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
   },
   "docs": [
     "~/armada-sync/agents/godot-dev.md",
-    "~/dev/godot/mario-bros/AGENTS.md",
-    "~/dev/godot/armada-starfox/AGENTS.md"
+    "~/dev/games/godot/mario-bros/AGENTS.md",
+    "~/dev/games/godot/armada-starfox/AGENTS.md"
   ],
-  "changelog": "~/armada-sync/CHANGELOG.md",
+  "changelog": "con cada entrada del hub ~/armada-sync/CHANGELOG.md",
   "name": "Godot",
   "docs_oficiales": {
     "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
     "fuentes": [
       {
-        "contenido_clave": "Godot 4.x: escenas, GDScript, shaders, export (proyectos ~/dev/godot/)",
+        "contenido_clave": "Godot 4.x: escenas, GDScript, shaders, export (proyectos ~/dev/games/godot/)",
         "nombre": "Godot Engine docs (4.x)",
         "url": "https://docs.godotengine.org/en/stable/"
       },
@@ -32,5 +32,12 @@
         "url": "https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/"
       }
     ]
-  }
+  },
+  "vivo_2026_10_19": "Dominio ~/dev/games/ (mudanza mismo FS, git mario-bros intacto). DOS MCPs godot: godot (mario-bros) + godot-studio (studio/current). Granja completa: fila image→3D (skill assets-3d — Hunyuan3D victoria :18860, GLB E2E 46s/284K verts descargado en kalimete 2026-10-19). Agente Blender hermano para 3D pesado.",
+  "checks": [
+    "ls ~/dev/games/godot/  (mario-bros, armada-starfox, studio)",
+    "godot-mcp --version  (1.12.3)",
+    "python3 -c \"import json; d=json.load(open('/home/warcold/.config/opencode/opencode.jsonc')); print(list(d['mcp'].keys()))\"  (godot, godot-studio, blender)",
+    "godot --headless --path ~/dev/games/godot/mario-bros --quit-after 3 2>&1 | tail -3  (proyecto abre)"
+  ]
 }

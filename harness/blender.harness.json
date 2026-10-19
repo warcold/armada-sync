@@ -1,0 +1,46 @@
+{
+  "harness": "blender",
+  "updated": "2026-10-19",
+  "agent_file": "~/armada-sync/agents/blender.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Blender 5.0.1 + MCP mcp-for-blender 2.2.0 (TCP :9876 bajo Xvfb): modelado 3D, scripting bpy, import/export GLB, decimate/retopo de assets de juego (Hunyuan3D 200-400K verts → 10-20K), escenas procedurales en ~/dev/games/blender/work/. Pieza 3D del dominio ~/dev/games/ junto a Godot (motor) y Game Studio (fábrica).",
+  "vivo_2026_10_19": "Dominio ~/dev/games/ creado (mudanza desde ~/dev/godot + ~/dev/tools/blender-mcp, mismo FS, git de mario-bros intacto). Addon mcp-for-blender 2.2.0 en ~/.config/blender/5.0/scripts/addons/ habilitado en userpref; requests 2.34.2 vía pip --target (Python de Blender = uv 3.14 AISLADO). Cadena verificada 2026-10-18: uvx mcp-for-blender (stdio) → TCP 127.0.0.1:9876 → addon → get_scene_info OK. Hallazgos CRÍTICOS: addon rechaza --background; --quiet NUNCA abrió puerto; GUI bajo xvfb-run -a blender sí (segundos). Tools del server.py: get_scene_info, execute_blender_code (la potente), look (screenshot), search/import polyhaven+polypizza+sketchfab, get_addon_status, open_viewport. Integraciones Meshy/Hunyuan del addon = NO usar (API keys externas); image→3D canónico = skill assets-3d (victoria :18860, gratis).",
+  "live_check": "ss -tln | grep 9876  (si vacío: ~/dev/games/blender/blender-mcp/start-blender.sh)",
+  "checks": [
+    "ss -tln | grep 9876  (addon Blender escuchando)",
+    "blender --version  (5.0.1)",
+    "ls ~/dev/games/blender/blender-mcp/start-blender.sh  (scripts en la ruta nueva)",
+    "grep -c 'dev/games/blender' ~/dev/games/blender/blender-mcp/start-blender.sh  (LOG path migrado, >=1)"
+  ],
+  "upstream": {
+    "fuente": "github ahujasid/blender-mcp (clon en ~/dev/games/blender/blender-mcp; paquete PyPI mcp-for-blender 2.2.0). Blender: apt Kali 5.0.1.",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/blender.md",
+    "~/dev/games/blender/blender-mcp/README.md (upstream, 35KB)",
+    "~/dev/games/AGENTS.md (ledger del dominio)"
+  ],
+  "docs_oficiales": {
+    "regla": "ANTES de programar bpy/export GLB, consultar estas fuentes; NUNCA inventar APIs de Blender 5.x ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "nombre": "Blender 5.0 Python API (bpy)",
+        "url": "https://docs.blender.org/api/5.0/",
+        "contenido_clave": "bpy ops (import/export gltf, modifiers), data API"
+      },
+      {
+        "nombre": "Blender glTF exporter docs",
+        "url": "https://docs.blender.org/manual/en/5.0/addons/import_export/scene_gltf2.html",
+        "contenido_clave": "flags de export GLB para Godot (export_apply, y-up)"
+      }
+    ]
+  },
+  "changelog": [
+    {
+      "fecha": "2026-10-19",
+      "evento": "Agente Blender creado con harness + dominio ~/dev/games/ (mudanza de ~/dev/tools/blender-mcp → ~/dev/games/blender/blender-mcp, LOG path del start script corregido). Doc operativa completa: hallazgos Xvfb/--background/--quiet, tools del server.py, workflows GLB→decimate→Godot, granja victoria (skills art/assets-3d)."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: Godot
-description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 herramientas). Usado cuando kalimete delega: crear juegos, editar escenas, GDScript, shaders, animación, audio, y generar assets (sprites, texturas, voz) desde la granja de contenido de victoria. Proyectos en ~/dev/godot/ (mario-bros, armada-starfox).
+description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 herramientas). Usado cuando kalimete delega: crear juegos, editar escenas, GDScript, shaders, animación, audio, y generar assets (sprites, texturas, voz, GLB 3D) desde la granja de contenido de victoria. Proyectos en ~/dev/games/godot/ (mario-bros, armada-starfox). Para juegos NUEVOS completos desde cero usar Game Studio; para modelado 3D pesado en Blender usar Blender.
 mode: subagent
 hidden: false
 color: "#478cbf"
@@ -27,14 +27,14 @@ permission:
 | MCP Server | `@yanhuifair/godot-mcp` v1.12.3 |
 | Lenguaje | GDScript (principal), C# (opcional) |
 | Editor | Godot Editor Plugin (TCP/stdio bridge) |
-| Proyectos | `~/dev/godot/mario-bros/` (2D, activo) · `~/dev/godot/armada-starfox/` (3D, activo) |
+| Proyectos | `~/dev/games/godot/mario-bros/` (2D, activo) · `~/dev/games/godot/armada-starfox/` (3D, activo) |
 
 ## Repositorio y Estructura
 
-- **Proyectos**: `~/dev/godot/` — `mario-bros/` (platformer 2D, ledger `AGENTS.md` propio) y `armada-starfox/` (Star Fox-like 3D, historial en `docs/CHANGELOG.md` + `docs/ASSETS.md`).
+- **Proyectos**: `~/dev/games/godot/` — `mario-bros/` (platformer 2D, ledger `AGENTS.md` propio) y `armada-starfox/` (Star Fox-like 3D, historial en `docs/CHANGELOG.md` + `docs/ASSETS.md`).
 - **MCP Server**: `godot-mcp` (instalado globalmente via npm)
 - **Plugin Editor**: `addons/godot-mcp/` (instalado automáticamente por proyecto)
-- **OJO**: el MCP apunta a UN proyecto a la vez vía `-p` en `opencode.jsonc` (hoy `mario-bros` — verificado 2026-10-07). Para trabajar en `armada-starfox`, cambiar el `-p` (y su `cwd`) en `~/.config/opencode/opencode.jsonc`.
+- **OJO — DOS MCPs godot desde 2026-10-19** (dominio `~/dev/games/`): `godot` → `mario-bros` (este agente) y `godot-studio` → `studio/current` (agente Game Studio). Para trabajar en `armada-starfox` por MCP: cambiar el `-p` (y su `cwd`) del MCP `godot` en `~/.config/opencode/opencode.jsonc` y reiniciar sesión — o usar el modo headless + escritura directa (funciona siempre).
 
 ## Comandos Útiles
 
@@ -43,30 +43,35 @@ permission:
 godot-mcp --version
 
 # Verificar servidor con proyecto
-cd ~/dev/godot/mario-bros && godot-mcp -p . 2>&1 | head -3
+cd ~/dev/games/godot/mario-bros && godot-mcp -p . 2>&1 | head -3
 
 # Instalar/actualizar plugin del editor
-cd ~/dev/godot/mario-bros && godot-mcp --enable-plugin -p .
+cd ~/dev/games/godot/mario-bros && godot-mcp --enable-plugin -p .
 
 # Ejecutar Godot en headless (build/export)
 godot --headless --export-debug "Linux/X11" ./export/game.x86_64
 
 # Verificar proyecto Godot
-godot --headless --path ~/dev/godot/mario-bros --editor 2>&1 | head -5
+godot --headless --path ~/dev/games/godot/mario-bros --editor 2>&1 | head -5
 ```
 
 ## Integración con MCP
 
-El MCP server está configurado en `opencode.jsonc`:
+El MCP server está configurado en `opencode.jsonc` (verificado live 2026-10-19):
 
 ```json
 {
   "mcp": {
     "godot": {
       "type": "local",
-      "command": "godot-mcp",
-      "args": ["-p", "/home/warcold/dev/godot/mario-bros"],
-      "cwd": "/home/warcold/dev/godot/mario-bros",
+      "command": ["godot-mcp", "-p", "/home/warcold/dev/games/godot/mario-bros"],
+      "cwd": "/home/warcold/dev/games/godot/mario-bros",
+      "enabled": true
+    },
+    "godot-studio": {
+      "type": "local",
+      "command": ["godot-mcp", "-p", "/home/warcold/dev/games/godot/studio/current"],
+      "cwd": "/home/warcold/dev/games/godot/studio/current",
       "enabled": true
     }
   }
@@ -81,6 +86,7 @@ La granja de contenido vive en **victoria** (10.0.0.5) y la llave `kalimete`
 | Necesitas | Cómo | Detalle |
 |---|---|---|
 | Sprites, texturas, concept art, tilesets | skill **`art`** de kalimete | `z-image-turbo` (rápido, default) · `flux-schnell` (calidad) · `sd15-realistic` (retratos/realista). PNG → copiar a `textures/`/`assets/` del proyecto → Godot reimporta solo |
+| **Assets 3D (GLB con textura)** | skill **`assets-3d`**: concept art de UN objeto → Hunyuan3D :18860 (`image_b64`) → GLB descargado | E2E 2026-10-19 (GLB 3.5MB/46s/284K verts). Godot importa GLB nativo (drag al proyecto). Para 10-20K caras: `face_count` en el request o decimate en Blender (agente `Blender`) |
 | Voz para diálogos/narración | skill **`voice-video`**: `POST :18810/tts {"text","voice":"victoria","language":"es"}` | WAV mono 24kHz 16-bit → Godot lo importa como AudioStreamWAV nativo |
 | Transcribir audio de referencia | `POST :18810/stt` (audio binary) | `{"text": "..."}` |
 | Cutscene con labios (foto+audio→mp4) | Sonic en victoria: tab 🎙️ Estudio Podcast (`victoria.local/liveportrait/`) o pedírselo a `@Victoria Server` | `POST :18850/generate` usa rutas LOCALES de victoria — no hay upload HTTP |
@@ -188,13 +194,13 @@ victoria: delegar a `@Victoria Server` (solo lectura).
 
 ```bash
 # Exportar para Linux
-godot --headless --path ~/dev/godot/mario-bros --export-debug "Linux/X11" ./export/game.x86_64
+godot --headless --path ~/dev/games/godot/mario-bros --export-debug "Linux/X11" ./export/game.x86_64
 
 # Exportar para Windows (cross-compilation requiere wine/mingw)
-godot --headless --path ~/dev/godot/mario-bros --export-release "Windows Desktop" ./export/game.exe
+godot --headless --path ~/dev/games/godot/mario-bros --export-release "Windows Desktop" ./export/game.exe
 
 # Exportar para HTML5/Web
-godot --headless --path ~/dev/godot/mario-bros --export-release "HTML5" ./export/game.html
+godot --headless --path ~/dev/games/godot/mario-bros --export-release "HTML5" ./export/game.html
 ```
 
 ## Notas de Desarrollo
@@ -210,13 +216,14 @@ godot --headless --path ~/dev/godot/mario-bros --export-release "HTML5" ./export
 - Sin plugin, las 220+ herramientas de archivos siguen funcionando
 
 ### Estado de los proyectos (verificado 2026-10-07)
-- `mario-bros/` — platformer 2D jugable (5 fixes críticos + SFX procedurales + multi-nivel). Ledger: `~/dev/godot/mario-bros/AGENTS.md`
+- `mario-bros/` — platformer 2D jugable (5 fixes críticos + SFX procedurales + multi-nivel). Ledger: `~/dev/games/godot/mario-bros/AGENTS.md`
 - `armada-starfox/` — Star Fox-like 3D (Arwing + enemigos Kenney CC0, OST/SFX/voces integrados). Historial: `docs/CHANGELOG.md` + `docs/ASSETS.md` del proyecto
 - El MCP server se puede apuntar a cualquier proyecto Godot con `-p /path/to/project`
 
 ## CHANGELOG
+- **2026-10-19**: Dominio `~/dev/games/` (mudanza de ~/dev/godot → ~/dev/games/godot, mismo FS). **DOS MCPs godot**: `godot` (mario-bros) + `godot-studio` (studio/current para Game Studio) — ya no hay que cambiar `-p` a mano para sesiones de fábrica. Fila image→3D en la granja (skill `assets-3d`, GLB → import nativo). Agente `Blender` hermano para el 3D pesado.
 - **2026-10-07**: Sección "Assets desde Victoria" (skill art + voice-video + Sonic + video-server + VLM). Fix paths: `armada-godot` (inexistente) → `mario-bros` + `armada-starfox` (live). Nota MCP un-proyecto-a-la-vez. E2E verificado: imagen z-image-turbo → Desktop + TTS voz es.
-- **2026-09-30**: Creación del agente. Godot 4.7.2 + @yanhuifair/godot-mcp 1.12.3 configurados. Proyecto de demostración en ~/dev/godot/armada-godot/. MCP integrado en opencode.jsonc.
+- **2026-09-30**: Creación del agente. Godot 4.7.2 + @yanhuifair/godot-mcp 1.12.3 configurados. Proyecto de demostración en ~/dev/games/godot/armada-godot/. MCP integrado en opencode.jsonc.
 
 ## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
 > Regla: ANTES de programar/configurar en Godot, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE (editor/proyecto). NUNCA inventar APIs de nodos ni usar features de Godot 3.x (el stack es 4.x).
@@ -225,9 +232,9 @@ godot --headless --path ~/dev/godot/mario-bros --export-release "HTML5" ./export
 
 ## Upstream (2026-10-01)
 
-- **Fuente**: Godot 4.x + MCP godot (386 tools) + proyectos ~/dev/godot/.
+- **Fuente**: Godot 4.x + MCP godot (386 tools) + proyectos ~/dev/games/godot/.
 - **Vivo**: MCP declarado en opencode.jsonc.
-- **Check**: ls ~/dev/godot/
+- **Check**: ls ~/dev/games/godot/
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 
 

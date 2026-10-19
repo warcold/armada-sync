@@ -125,7 +125,7 @@
       "name": "Godot",
       "id": "godot-dev",
       "file": "godot-dev.md",
-      "scope": "Godot 4.x + MCP 386 tools (~/dev/godot/armada-godot/)",
+      "scope": "Godot 4.x + MCP 386 tools (~/dev/games/godot/)",
       "hidden": false
     },
     {

@@ -39,6 +39,7 @@ permission:
 | image→3D | **Hunyuan3D-2 en victoria :18860** (image_b64 → GLB con textura, ~45-55s) — skill `assets-3d` | ✅ E2E 2026-10-19 |
 | Animación foto→mp4 | lp-animate victoria :18861 (foto_b64 + preset → mp4 ~17s) — cutscenes/intros | ✅ (daemon vivo) |
 | VLM QA | El modelo de victoria ES VLM: adjunta screenshots al chat (Read de imagen) o `image_url` por API | ✅ E2E 2026-10-19 |
+| Agente Blender | 3D pesado: decimate/retopo de GLBs, rigs, escenas .blend (`~/dev/games/blender/work/`) | ✅ 2026-10-19 |
 
 ## Blender MCP — Operación (CRÍTICO, leído de pruebas reales 2026-10-18)
 
@@ -47,21 +48,24 @@ permission:
 - El addon se habilitó una vez en userpref (`default_set=True`) + `requests` vive en `~/.config/blender/5.0/scripts/addons/modules/` (el Python de Blender es el uv 3.14 AISLADO — no ve site-packages del sistema; NO instalar con pip del sistema).
 - **Arranque / parada**:
 ```bash
-~/dev/tools/blender-mcp/start-blender.sh   # idempotente; espera :9876 hasta 20s
+~/dev/games/blender/blender-mcp/start-blender.sh   # idempotente; espera :9876 hasta 20s
 ss -tln | grep 9876                        # verificar listener
-~/dev/tools/blender-mcp/stop-blender.sh    # pkill -x blender + Xvfb (NO usar pkill -f "blender": se mata a sí mismo)
+~/dev/games/blender/blender-mcp/stop-blender.sh    # pkill -x blender + Xvfb (NO usar pkill -f "blender": se mata a sí mismo)
 ```
-- Log: `~/dev/tools/blender-mcp/blender-xvfb.log`
+- Log: `~/dev/games/blender/blender-mcp/blender-xvfb.log`
 - Cadena verificada: `uvx mcp-for-blender` (stdio) → TCP :9876 → addon → `get_scene_info` OK. 9 tools, la potente es `execute_blender_code` (Python bpy en el Blender vivo).
 - **Regla**: si el MCP blender falla, verificar `ss -tln | grep 9876` → si no hay listener, `start-blender.sh`. NUNCA arrancar dos Blenders (el script es idempotente por puerto).
 
-## Workspace y límite de un proyecto
+## Workspace y límite de un proyecto (dominio ~/dev/games/, 2026-10-19)
 
-`godot-mcp` fija UN proyecto vía `-p` en `opencode.jsonc` (hoy: `mario-bros`). Para sesiones Game Studio:
+`godot-mcp` fija UN proyecto vía `-p`. Desde 2026-10-19 hay **DOS MCPs** en `opencode.jsonc`:
 
-1. Kalimete (antes de delegar) o el owner apuntan `godot` MCP a `~/dev/godot/studio/current` (symlink al juego activo) y reinician la sesión.
-2. El workspace real vive en `~/dev/godot/studio/<nombre-juego>/`; `current` → el juego en desarrollo.
-3. Alternativa sin MCP godot (funciona siempre): `godot --headless --path <proyecto> ...` + escritura directa de archivos `.tscn/.gd/.gdshader` (el agente sabe generar textos Godot válidos).
+1. **`godot-studio`** → `~/dev/games/godot/studio/current` — **TUYO por defecto**, ya configurado. `current` es un symlink al juego activo (hoy `_starter`, proyecto mínimo; al crear el primer juego: `ln -sfn <nombre-juego> ~/dev/games/godot/studio/current`).
+2. `godot` → `mario-bros` — del agente Godot (proyectos existentes).
+
+El workspace real vive en `~/dev/games/godot/studio/<nombre-juego>/`. Alternativa sin MCP (funciona siempre): `godot --headless --path <proyecto> ...` + escritura directa de archivos `.tscn/.gd/.gdshader`.
+
+**Staging de la granja**: `~/dev/games/assets/{concept,models3d,audio}/` — ahí caen los PNGs de concept art, los GLB crudos de Hunyuan3D y los WAVs de TTS antes de curarlos al proyecto.
 
 ## Pipeline de 7 fases
 
@@ -69,7 +73,7 @@ ss -tln | grep 9876                        # verificar listener
 |------|-----|------|
 | 0. GDD | Game Design Document: género, mecánicas core, mapa, assets needed | Markdown en `docs/GDD.md` del proyecto |
 | 1. Concept | Concept art de artefactos/entidades clave | skill `art` (victoria) → PNGs en `docs/concept/` |
-| 2. Assets 3D | Modelos (props, personajes, terreno) | **Tres vías, combinar**: (a) Blender MCP `execute_blender_code` procedural/paramétrico; (b) CC0 (Poly Haven/Kenney); (c) **image→3D victoria** (skill `assets-3d`): concept art de UN objeto aislado → Hunyuan3D → GLB → arrastrar a Godot. `face_count` 10-20k para assets de juego |
+| 2. Assets 3D | Modelos (props, personajes, terreno) | **Tres vías, combinar**: (a) Blender MCP `execute_blender_code` procedural/paramétrico; (b) CC0 (Poly Haven/Kenney); (c) **image→3D victoria** (skill `assets-3d`): concept art de UN objeto aislado → Hunyuan3D → GLB → arrastrar a Godot. `face_count` 10-20k para assets de juego; retopo/decimate/rig pesado → agente `Blender` |
 | 3. Mundo | Terreno, bioma, distribución (chunks, LOD, colliders) | GDScript FastNoiseLite + TileMap3D/GridMap o Blender geometry → export GLB |
 | 4. Ensamblado | Escenas Godot: jugador, cámaras, sistemas, HUD | Godot MCP (o escritura directa `.tscn/.gd`) |
 | 5. QA loop | Bugfix visual iterativo | `godot` play + `runtime_screenshot` + leer `user://logs/godot.log` + editor screenshots. **QA con ojos**: adjunta el screenshot al chat (Read de imagen — el modelo VLM de victoria lo VE) o mándalo por `image_url` a `/v1/chat/completions`. Patrón del video: describir el problema en plano → aislar causa |
@@ -98,14 +102,14 @@ La GPU del GB10 la comparten vLLM (inferencia), ComfyUI (arte), Hunyuan3D, Sonic
 
 ```bash
 # Blender MCP health
-ss -tln | grep 9876 || ~/dev/tools/blender-mcp/start-blender.sh
+ss -tln | grep 9876 || ~/dev/games/blender/blender-mcp/start-blender.sh
 
 # Blender headless (scripts batch SIN MCP — siempre funciona)
 blender --background --python script_blender.py --  # args tras --
 
 # Godot headless
-godot --headless --path ~/dev/godot/studio/current --quit-after 60 2>&1 | tail -20
-godot --headless --path ~/dev/godot/studio/current --export-debug "Linux/X11" ./build/juego.x86_64
+godot --headless --path ~/dev/games/godot/studio/current --quit-after 60 2>&1 | tail -20
+godot --headless --path ~/dev/games/godot/studio/current --export-debug "Linux/X11" ./build/juego.x86_64
 
 # Logs de juego (runtime)
 ls ~/.local/share/godot/app_userdata/*/logs/ 2>/dev/null   # godot.log por proyecto
