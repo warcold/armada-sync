@@ -1,3 +1,12 @@
+### [22:45] - EccoSuite DESPLEGADO en producción: https://suit.eccoqualita.com + agente Ecco Suit operativo (21 subagentes)
+- **Tipo**: infra | servicio | agente
+- **Modificado**: VPS 62.171.144.58 (todo el stack) + agents/ecco-suit.md + agents/kalimete.md (allowlist + conteo 21) + MAPA.md (host sección 8 + tabla subagentes) + ~/.ssh/config (alias `ecco`)
+- **Afecta a**: VPS Ecco Qualitá (nueva en flota); kalimete (delegación)
+- **Causa**: owner — "usa el vps como servidor para ellos y dentro via docker dockerizemos servidores pequeños... suit.eccoqualita.com ya apunta al ip"
+- **Estado**: ✅ end-to-end verificado — health `{"status":"ok","app":"up","database":"up"}` por HTTPS; login 200; cert Let's Encrypt (renueva auto)
+- **Despliegue**: Docker 29.9.1 + swap 2G + UFW(22/80/443) + fail2ban + llave SSH kalimete (alias `ssh ecco`, password aún ON por confirmación pendiente). Patrón host multi-servicio: `/opt/eccoqualita/{proxy,eccosuit}`, red compartida `eccoqualita-proxy`, Caddy publica 80/443 (TLS auto), postgres:18 + app Next.js 16.4 SIN puertos públicos. Bootstrap roles (ecco_owner/ecco_app, ALLOW_BOOTSTRAP one-shot) + 22 migraciones (57 tablas) vía contenedor tools (etapa build). Secretos generados EN la VPS (.env/.env.postgres 600).
+- **Notas**: 2 lecciones de rsync documentadas en el agente: excludes SIEMPRE anclados (`/storage` — sin `/` borró src/platform/storage y mató el build) y excluir `/docker-compose.yml` (el sync sobrescribía el compose prod con el del repo). Corrección de la entrada [22:15]: el write del agente falló silenciosamente esa vez (el commit bf19773 solo contenía CHANGELOG); hoy el fichero existe verificado (148 líneas) + symlink opencode. Pendientes: apagar PasswordAuthentication (orden owner), cron respaldos, monitoreo.
+
 ### [22:15] - Agente Ecco Suit creado: VPS dedicada 62.171.144.58 (Ecco Qualitá)
 - **Tipo**: agente | infra
 - **Modificado**: agents/ecco-suit.md (nuevo agente "Ecco Suit")

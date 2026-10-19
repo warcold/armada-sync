@@ -151,6 +151,16 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - Dump importado: `facturacion_db-20260919.sql` (528M)
 - Subagente: erp-dev (gestiona preprod, código, migraciones)
 
+### 8. ecco (62.171.144.58) — VPS Ecco Qualitá (host Docker multi-servicio) — ✅ ACTIVO (desplegado 2026-10-19)
+- **User**: root, SSH 22, llave `~/.ssh/id_ed25519_kalimete` (password `colador1` aún activo — pendiente apagar)
+- **Alias**: `ssh ecco` (en `~/.ssh/config`)
+- **Hardware**: OVH, Ubuntu 24.04.5, 4 cores AMD EPYC, 7.8GB RAM + 2G swap, 96GB disco
+- **Patrón**: host Docker con servicios pequeños contenedorizados tras Caddy común (TLS Let's Encrypt automático, 80/443); red compartida `eccoqualita-proxy` para nuevos vhosts
+- **Servicio 1 — EccoSuite**: `https://suit.eccoqualita.com` (Next.js 16.4 standalone + PostgreSQL 18, sin puertos públicos; contenedores ecco-caddy/ecco-app/ecco-postgres en `/opt/eccoqualita/`)
+- **DNS**: suit.eccoqualita.com → 62.171.144.58 (sin Cloudflare)
+- **Seguridad**: UFW (22/80/443+udp), fail2ban activos
+- **Subagente**: Ecco Suit (despliegue, operación, respaldos, nuevos servicios)
+
 ## Agentes (solo kalimete)
 
 ### TAB visibles
@@ -184,6 +194,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | game-studio | Fábrica de juegos 3D desde cero (Blender MCP + Godot MCP + victoria; pipeline 7 fases) — NUEVO (2026-10-18) | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
 | intigriti | Bug bounty Intigriti (~/dev/ethical-hacking, kalimetehunt.sh) — NUEVO (2026-10-08) | ✅ |
+| ecco-suit | VPS Ecco Qualitá (62.171.144.58, `ssh ecco`): host Docker multi-servicio; hoy EccoSuite en suit.eccoqualita.com — NUEVO (2026-10-19) | ✅ |
 
 ### Agentes retirados
 cloudflare → kalimete, ecosistema → kalimete, cf-dns→Cloudflare-dns, cf-security→Cloudflare-security, cf-storage→Cloudflare-storage, cf-tunnels→Cloudflare-tunnels, cf-workers→Cloudflare-workers, jonas-ro, kalimete-ro, kalimete-ro-agent — archivo backup BORRADO 2026-08-14, solo historial git.
