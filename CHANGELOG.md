@@ -1,3 +1,12 @@
+### [23:45] - EccoSuit CIERRE: primer admin + backups verificados + health monitor + SSH solo-llaves
+- **Tipo**: servicio | seguridad | agente
+- **Modificado**: VPS ecco (ops completo) + agents/ecco-suit.md (ops kit, seguridad, rutina) + ~/dev/eccoqualita/ops/ (kit nuevo: prod-first-admin.ts, prod-verify-admin.ts)
+- **Afecta a**: VPS Ecco Qualitá
+- **Causa**: owner — "procede hasta terminar" (cierre de los pendientes del despliegue)
+- **Estado**: ✅ todo verificado LIVE
+- **Hecho**: (1) Primer admin `admin@eccoqualita.com` (org_admin de la org propietaria) creado con script idempotente que NO pisa contraseñas — credenciales en `/opt/eccoqualita/.first-admin-credentials` (600), verificadas con el call canónico `auth.api.signInEmail` → VERIFIED (el endpoint HTTP /api/auth/sign-in/email responde 404 BY DESIGN: el login real va por Server Actions). (2) Backups cron 04:00 (pg_dump -Fc + tar storage, retención 14d) + **restore-test real: 57 tablas restauradas a BD temporal y eliminada**. (3) Health monitor cada 5 min → /var/log/ecco-health.log. (4) PasswordAuthentication OFF (drop-in 99 + neutralizado 50-cloud-init.conf → .bkup; verificado con `PubkeyAuthentication=no` → Permission denied).
+- **Lecciones**: (a) drop-ins sshd_config.d ganan por ORDEN ALFABÉTICO (first-match-wins) — el `50-cloud-init.conf` de Ubuntu cloud pisaba el hardening; (b) tests de "password bloqueado" con ssh-agent cargado = FALSOS POSITIVOS (la llave autentica y sshpass no se entera) — siempre `-o PubkeyAuthentication=no`; (c) la imagen del contenedor tools es un snapshot — scripts de ops nuevos se montan con `-v` en el `compose run`.
+
 ### [22:45] - EccoSuite DESPLEGADO en producción: https://suit.eccoqualita.com + agente Ecco Suit operativo (21 subagentes)
 - **Tipo**: infra | servicio | agente
 - **Modificado**: VPS 62.171.144.58 (todo el stack) + agents/ecco-suit.md + agents/kalimete.md (allowlist + conteo 21) + MAPA.md (host sección 8 + tabla subagentes) + ~/.ssh/config (alias `ecco`)

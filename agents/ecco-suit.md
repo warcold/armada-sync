@@ -26,8 +26,9 @@ permission:
 
 - **Host**: 62.171.144.58 (OVH, hostname `vmi3680238`)
 - **SSH**: `ssh ecco` (alias en `~/.ssh/config`, llave `id_ed25519_kalimete`, usuario root) ✅ verificado
-- **Password root** `colador1` sigue ACTIVO (pendiente desactivar — confirmación del owner, ver Pendientes)
+- **Password root `colador1`: DESACTIVADO** (2026-10-19, drop-in `99-ecco-hardening.conf` + neutralizado `50-cloud-init.conf` → .bkup). Solo llaves. Plan B si lockout: rescue mode OVH.
 - **DNS**: `suit.eccoqualita.com` → 62.171.144.58 (verificado 2026-10-19)
+- ⚠️ **Al testear password auth**: usar `-o PubkeyAuthentication=no` — si ssh-agent tiene la llave cargada, el login "funciona" por llave y el test miente (lección 2026-10-19).
 
 ## Hardware (verificado 2026-10-19)
 
@@ -115,6 +116,26 @@ rsync -az \
 1. `--exclude storage` (sin `/` inicial) matchea CUALQUIER directorio llamado storage — borró `src/platform/storage/` y el build murió con `Module not found`. Siempre anclar: `/storage`.
 2. Sin `--exclude=/docker-compose.yml` el rsync **sobrescribe el compose de producción** con el del repo (que exige `POSTGRES_ADMIN_PASSWORD` por interpolación y publica puertos). El compose de producción vive SOLO en la VPS; el del repo es dev.
 
+## Ops kit (scripts de operación — NO del repo upstream)
+
+Fuente en kalimete: `~/dev/eccoqualita/ops/` (copias en la VPS: `/opt/eccoqualita/eccosuit/scripts/` + `/usr/local/bin/`).
+
+| Script | Dónde | Qué hace |
+|---|---|---|
+| `prod-first-admin.ts` | ops/ + VPS scripts/ | Crea org propietaria + primer admin (idempotente; **no pisa contraseñas existentes**). Corre en contenedor tools con `-v` mount (la imagen no lo incluye). |
+| `prod-verify-admin.ts` | ops/ + VPS scripts/ | Verifica credenciales con el call canónico `auth.api.signInEmail` (el login real va por Server Actions; `/api/auth/sign-in/email` HTTP responde 404 BY DESIGN). |
+| `ecco-backup.sh` | VPS /usr/local/bin/ | pg_dump -Fc + tar del volumen storage, retención 14d. Cron root 04:00 (`/etc/cron.d/eccoqualita`). Restore-test verificado: 57 tablas. |
+| `ecco-health-check.sh` | VPS /usr/local/bin/ | curl al health público cada 5 min → `/var/log/ecco-health.log` (auto-acotado 5000 líneas). |
+
+**Primer admin (2026-10-19)**: `admin@eccoqualita.com`, org_admin de "Ecco Qualitá" (propietaria de plataforma, módulo strategy). Credenciales en `/opt/eccoqualita/.first-admin-credentials` (600) — el owner las cambia en `/cuenta/contrasena` y borra el fichero. Verificado con signInEmail → VERIFIED.
+
+**Patrón para correr scripts TS de ops** (la imagen `migrate` es un snapshot del build — los scripts nuevos van montados):
+```bash
+docker compose --profile tools run --rm \
+  -v /opt/eccoqualita/eccosuit/scripts/<script>.ts:/app/scripts/<script>.ts:ro \
+  -e VAR=... migrate npx tsx --conditions=react-server scripts/<script>.ts
+```
+
 ## Reglas de operación
 
 1. **NUNCA** `npm run db:seed` ni `db:start` en producción (la app/scripts se niegan con NODE_ENV=production — no forzar).
@@ -132,17 +153,17 @@ rsync -az \
 
 - UFW: active, deny incoming, allow 22/80/443(+443/udp) ✅
 - fail2ban: active (jail sshd por defecto) ✅
-- SSH: llave kalimete instalada ✅; **PasswordAuthentication sigue ON** — pendiente orden del owner para apagarlo
+- SSH: **solo llaves** (PasswordAuthentication no verificado con `PubkeyAuthentication=no` → Permission denied) ✅
 - TLS: Let's Encrypt vía Caddy (renovación automática; vigencia a ~90 días)
 - App↔DB sin TLS (red bridge privada del host) — aceptado; documentado si Ecco Qualitá exige cifrado interno
 
-## Pendientes
+## Rutina / pendientes
 
-- [ ] Desactivar `PasswordAuthentication` en sshd (tras confirmación del owner de que la llave le sirve)
-- [ ] Cron de respaldos (pg_dump + volumen storage) con retención — hoy es manual
-- [ ] Monitoreo mínimo (healthcheck externo hacia /api/health)
-- [ ] Prueba de restauración documentada (docs/migracion-servidores.md §5 la exige)
+- Respaldo: automático diario 04:00 (`/opt/eccoqualita/backups/`, retención 14d). Restore-test OK (57 tablas, 2026-10-19).
+- Salud: `/var/log/ecco-health.log` (cron 5 min) — revisar WARNINGs en visitas de ops.
+- [ ] El owner cambia la contraseña del primer admin y borra `/opt/eccoqualita/.first-admin-credentials`
+- [ ] Prueba de restauración periódica (trimestral sugerida) — procedimiento en el agente (docker cp + pg_restore a BD temporal)
 
 ## Historia
 
-- **2026-10-19**: despliegue completo end-to-end (Docker 29.9.1 + swap 2G + postgres 18 + bootstrap roles + 22 migraciones/57 tablas + app + Caddy TLS + UFW/fail2ban + llave SSH). Health OK en https://suit.eccoqualita.com.
+- **2026-10-19**: despliegue completo end-to-end (Docker 29.9.1 + swap 2G + postgres 18 + bootstrap roles + 22 migraciones/57 tablas + app + Caddy TLS + UFW/fail2ban + llave SSH). Health OK en https://suit.eccoqualita.com. **Cierre same-day**: primer admin creado+verificado (signInEmail), backups cron + restore-test, health monitor, password SSH desactivado (lección: cloud-init drop-in ganaba por orden; lección 2: tests de password con ssh-agent activo dan falsos positivos — usar `PubkeyAuthentication=no`).
