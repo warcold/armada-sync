@@ -1,5 +1,19 @@
 ## 2026-10-18
 
+### [23:50] - MaganTech: plugin 5.4.2 desplegado y probado en local (:8091 + :8093) — auto-sync verificado end-to-end; modo del espejo public→dev; prod queda en manos del owner (§(b) manual)
+- **Tipo**: servicio | docs
+- **Contexto**: owner — "Da update del plugin tanto en local como en public para hacer las pruebas".
+- **Modificado**:
+  - **:8091 dev lab**: 5.4.2 vivo (bind-mount); auto-sync programado Y disparado solo (22:11, aplicó **6 campos** del ERP local; re-run manual idempotente **0 campos** — regla solo-no-vacíos); log `erp-suite-2026-10-19.log` módulo `auto_sync`; regresión 25/25 (misma fecha).
+  - **:8093 preprod**: update §(a) de PROCEDURES (`rm -rf` + unzip ZIP 5.4.2 + reactivo; wp-cli reporta `armada-suite active 5.4.2`); smoke-8093 **100% verde**; cron auto-sync programado (daily, 04:01).
+  - **Modo del espejo public→dev (hallazgo + fix)**: el port de settings del espejo heredó `erpsuite_mode=public` de prod PERO sin `public.api_key`/`api_url` (la key de prod NO se copia — seguridad) → conexión ERP viva MUERTA (renderizaba del `erp_config` cacheado del 10-17; todo sync nuevo skipeaba por guard sin-key — verificado: skip correcto 0.012s). Fix: `ERPSuite_Environment::set_mode('dev')` → perfil LOCAL sellado (ERP `:8100`, tenant 10, key 44 chars). **Auto-sync probado end-to-end**: run manual 0.34s (HTTP real) → `config_fetched_at` 2026-10-17 23:36:22 → **2026-10-19 03:29:07**, `brand.name=MaganTech`, `payment_methods=efectivo`. Reversible con `set_mode('public')`.
+  - **Quirk sidecar (no bug)**: el sidecar wp-cli corre uid=82 (Alpine) y los dirs del sitio son uid=33 (Debian) → `ERPC_Logger` no escribe desde el sidecar (try/catch silencioso); el cron REAL dentro del contenedor sí loguea (probado en :8091).
+  - **Docs**: `docs/ESPEJO-20261018.md` Fase 4 nueva (todo lo anterior), `docs/PROCEDURES.md` §(a) notas del espejo (modo dev + quirk) + §(i) actualizada (auto-sync 5.4.2 + estado prod real: sync corrido 18:30 aplicó 6 campos, marca sigue "Tienda" por gap de datos ERP).
+- **Afecta a**: preprod :8093 (plugin 5.4.2 + modo dev), dev lab :8091 (verificado), docs del proyecto MaganTech
+- **Causa**: owner (update del plugin en local y public para pruebas)
+- **Estado**: ✅ verificado (wp plugin list 5.4.2, smoke 100%, config_fetched_at bump, logs auto_sync, brand MaganTech)
+- **Notas**: **PROD queda pendiente del owner** — flujo §(b) manual documentado: wp-admin → Plugins → Añadir nuevo → Subir plugin → `export/armada-suite-5.4.2.zip` (WP reemplaza y reactiva solo). Tras subirlo kalimete verifica con `smoke-prod.sh` (ops/status debe reportar plugin 5.4.2; la marca seguirá "Tienda" hasta el fix de datos de Juan Carlos — el mensaje UX nuevo "el ERP no envió nombre del negocio" lo dirá explícito). Rollback: subir ZIP 5.4.1.
+
 ### [20:55] - Workflow GitHub del ERP upstream fijado (owner) + agentes/harnesses ERP Dev y Armada Suite validados + release 5.4.2 commiteada
 - **Tipo**: docs | infra
 - **Contexto**: owner — "Tenemos acceso al github donde Juan Carlos tiene el proyecto, manejamos el branch dev/ecomm-erp… ahi hacemos los updates y todo lo que necesitamos para que Armada Suite funcione correctamente, Juan Carlos mas despues desde ese branch el hace el merge a main y pasa a produccion no nosotros, asi que documenta todo esto en el agente del proyecto… en adicional valida que el agente tanto como el harness de este proyecto este correcto".
