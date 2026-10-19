@@ -1,6 +1,20 @@
 ## 2026-10-19
 
-### [12:30] - MaganTech: ZIP 5.4.2 verificado al día (diff 0 vs árbol) + evaluación deploy remoto vía ops API: NO viable para releases (theme-only) — prod sigue en manos del owner (uploader nativo)
+### [10:55] - ERP: Juan mergeó TODO vía PR #15 (`997a218`) — validación completa (rama sincronizada, preprod sano, ERP prod vivo, WP prod OK); la marca espera 1 sync
+- **Tipo**: infra | servicio | docs
+- **Contexto**: owner — "Evalua todo, Juan Carlos ya hizo merge, valida que todo funcione correctamente en produccion".
+- **Modificado**:
+  - **Merge verificado**: PR #15 `997a218` (merge `dev/ecomm-erp` → `main`); los 8 commits nuestros confirmados en `origin/main` con `merge-base --is-ancestor` (ff64301, e495454, 8ae9bb2, f961503, 5ace5aa, 601959e, 2306b64, 34de630 — identidad ecomm incluido); `origin/develop` también avanzó a `997a218`.
+  - **Nuestra rama sincronizada**: `dev/ecomm-erp` fast-forwardeada a `997a218` (= main = develop) y pushed (ls-remote verificado). Tree idéntico → cero cambio funcional en el preprod; `/up` ok tras el sync.
+  - **ERP prod validado**: ping-erp desde WP prod → `ok:true, http 200, 438ms, products:1` — ERP vivo post-deploy, key válida (`b221457f`), catálogo fluye.
+  - **WP prod validado**: smoke-prod — front/productos/REST 200, ops/status 200 (**plugin 5.4.0** — el 5.4.2 sigue sin subirse), marca visible **"Tienda"** + hint `brand_name:""` → **no ha corrido ningún sync después del deploy de Juan** (5.4.0 = sync manual).
+  - **Docs curados**: `agents/erp-dev.md` (Estado push + sección Review de Juan RESUELTA + Vivo 2026-10-19), `harness/erp-dev.harness.json` (head_verificado `997a218` + vivo_2026_10_19), PROCEDURES §(i) estado 2026-10-19 (diagnóstico post-sync: nombre vs slug vs Tienda).
+- **Afecta a**: rama `dev/ecomm-erp` (sync a 997a218), docs ERP Dev + MaganTech
+- **Causa**: owner (validar el merge de Juan en producción)
+- **Estado**: ✅ verificado (ls-remote ×2 refs, merge-base ×8, /up, smoke-prod, ping-erp, hint settings)
+- **Notas**: **La marca solo llega vía 1 sync en WP**: clic «Sincronizar configuración» (5.4.0) o subir 5.4.2 primero (recomendado — arma el auto-sync diario). Diagnóstico post-sync: **"MaganTech"** = Juan también capturó el nombre; **"magan-tech"** (slug) = mergeó código sin capturar el dato (recordarle el SQL); **"Tienda"** = deploy del ERP aún pendiente. G5 sigue siendo el único gap de Fase 3.
+
+### [10:30] - MaganTech: ZIP 5.4.2 verificado al día (diff 0 vs árbol) + evaluación deploy remoto vía ops API: NO viable para releases (theme-only) — prod sigue en manos del owner (uploader nativo)
 - **Tipo**: docs | servicio
 - **Contexto**: owner — "No habido update del plugin armada suite despues de todas estas mejoras?, veo el zip aun la ultima modificacion de ayer temprano, evaluar si estos cambios se estan aplicado al zip, asi poder hacer deploy, aunque creo que tu misma puede hacerlo por via del mcp que tenemos en el proyecto online, tienes acceso...".
 - **Modificado**:
