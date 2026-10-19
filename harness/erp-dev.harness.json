@@ -1,24 +1,26 @@
 {
   "harness": "erp-dev",
-  "updated": "2026-10-13",
+  "updated": "2026-10-18",
   "agent_file": "~/armada-sync/agents/erp-dev.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "ERP erpipo preprod (kalimete :8100) — sandbox local de desarrollo. Upstream de Juan Carlos (soycarlosjerez-hub/sistema-facturacion); enviamos recomendaciones via rama dev/ecomm-erp. Push a origin SOLO con autorizacion del owner.",
-  "ownership": "Repo upstream = Juan Carlos. Copia local = sandbox para validar integraciones (WP/Armada Suite) sin tocar prod. main/develop read-only (politica rama unica, commit dd66417).",
+  "scope": "ERP erpipo preprod (kalimete :8100) — sandbox local de desarrollo. Upstream de Juan Carlos (soycarlosjerez-hub/sistema-facturacion, GitHub): dev/ecomm-erp es NUESTRA rama de trabajo — hacemos los updates directamente ahi (push autorizado owner 2026-10-18) para todo lo que Armada Suite necesita. Juan Carlos mergea a main y despliega a prod — NUNCA nosotros.",
+  "ownership": "Repo upstream = Juan Carlos. Tenemos acceso pleno al GitHub; dev/ecomm-erp = nuestra rama (push = flujo normal, owner 2026-10-18). main/develop read-only (politica rama unica, commit dd66417). Merge a main + deploy a prod = SOLO Juan Carlos.",
   "git": {
     "rama_activa": "dev/ecomm-erp (el stack SIRVE esta rama)",
-    "head_verificado": "34de630 (2026-10-16, fetch verificado) PUSHED e identico a origin/dev/ecomm-erp — 100% al dia con origin/main (0 commits faltantes)",
+    "head_verificado": "34de630 (2026-10-18, ls-remote verificado) PUSHED e identico a origin/dev/ecomm-erp; origin/main @bd1a879 — 8 commits nuestros esperando el merge de Juan",
     "fase_2_pushed": "2026-10-06: 10 commits Fase 2 pushed a origin (4415e27..790cc8a + merge 2c8fca9) — Juan YA integro via PR #14 (2026-10-07)",
     "fase_3_pushed": "2026-10-08: G6 CORREGIDO por nosotros (ff64301: notas ?? null, fin linea_negocio, tipo enum, almacen_id default) + G1 cancel order + 11 tests (e495454+8ae9bb2) + G2 CRUD webhooks API (f961503) + G3 invoice.issued (5ace5aa) + G4 retry-failed (601959e) + merge del main de Juan (2306b64) — 8 commits esperando PR de Juan (+34de630 2026-10-16: identidad ecomm config/tiendaConfig — brand.name garantizado, aliases logo_url/favicon_url/business_name/company_name, warnings IDENTITY_EMPTY, X-ERP-Tenant, X-API-Key; backward compatible, para WP Armada Suite 5.3.3+)",
     "remotes": "SOLO origin = ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git (upstream Juan Carlos). NO existe remote preprod en este clon.",
-    "regla": "push a origin SOLO con autorizacion explicita del owner"
+    "regla": "push a dev/ecomm-erp = flujo normal (autorizacion permanente owner 2026-10-18); main/develop read-only; merge a main + deploy prod = SOLO Juan Carlos"
   },
   "webhooks_activos_2026_10_06": "endpoint WP dado de alta (webhook_endpoints id=2, instance 10 MaganTech, events order.created/stock.updated/price.updated, active); e2e checkout->deliveries sent/200->WP flush_cache verificado; red compartida erpipo-dev-network con stack WP (URL interna http://wordpress-local/wp-json/erpsuite/v1/erp-webhook)",
   "aviso_ajuste_500_RESUELTO_2026_10_13": "G6 corregido por NOSOTROS (ff64301) y LIVE en preprod (bind mount HEAD 2306b64) — POST /api/tienda/inventario/ajuste ya responde; WP puede reintentar el endpoint",
   "vivo_2026_10_06": "8/8 containers Up; dev/ecomm-erp @00a255e PUSHED a origin; migraciones 655 (batch 150); queue worker con --queue=default,webhooks; contrato ecomm Fase 2 verificado e2e; webhooks activos hacia WP",
   "vivo_2026_10_13": "8/8 containers Up 2d (db/redis/mailpit healthy); dev/ecomm-erp @2306b64 = HEAD = origin (fetch OK, 0 commits de main faltantes); tenant 10 MaganTech activo=1 (tabla business_instances, NO tenants); latencia /up directo ~130ms, via HTTPS nginx 490-1140ms (overhead TLS esperado del dev local — owner 2026-10-13: no perseguir); mailpit 7.41% CPU = dev-only intencional (owner 2026-10-13: catcher SMTP local, produccion usa mail real segun main de Juan — NO investigar, NO tocar); key ecomm-test-customer.txt STALE (401 Token invalido — regenerar para proximo e2e)",
   "vivo_2026_10_16": "8/8 containers Up 4d (db/redis/mailpit healthy); dev/ecomm-erp @34de630 = HEAD = origin (push verificado 2026-10-16); config ecomm 200 tenant 3 con brand.name+aliases+warnings[]+X-ERP-Tenant (commit identidad ecomm 34de630); artisan optimize aplicado UID 1000",
+  "vivo_2026_10_18": "8/8 containers Up 10h (db/redis/mailpit healthy); /up ok (database+redis true); dev/ecomm-erp @34de630 = HEAD = origin (ls-remote); origin/main @bd1a879 (8 commits nuestros esperando merge de Juan); tree local limpio",
+  "decision_owner_2026_10_18": "WORKFLOW GITHUB DEFINITIVO: tenemos acceso pleno al repo de Juan Carlos (soycarlosjerez-hub/sistema-facturacion). dev/ecomm-erp = NUESTRA rama de trabajo: ahi hacemos los updates y todo lo que Armada Suite necesita para funcionar correctamente (push = flujo normal, autorizacion permanente). Juan Carlos despues mergea ese branch a main y pasa a produccion — NOSOTROS NUNCA deployamos ERP prod.",
   "live_check": "docker ps -f name=erpipo",
   "checks": [
     "curl -sk -o /dev/null -w '%{http_code}' https://erp.kalimete.local/login",

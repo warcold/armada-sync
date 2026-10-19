@@ -1,6 +1,6 @@
 ---
 name: ERP Dev
-description: Subagente del preprod ERP (erpipo-preprod dockerizado en kalimete). Usado cuando kalimete delega: desarrollo, mantenimiento, migraciones, despliegue del sistema de facturación erpipo. Corre dockerizado en kalimete: https://erp.kalimete.local (stack standalone, sin vínculo a prod). El upstream es de Juan Carlos — enviamos recomendaciones vía branch dev/ecomm-erp.
+description: Subagente del preprod ERP (erpipo-preprod dockerizado en kalimete). Usado cuando kalimete delega: desarrollo, mantenimiento, migraciones, despliegue del sistema de facturación erpipo. Corre dockerizado en kalimete: https://erp.kalimete.local (stack standalone, sin vínculo a prod). Upstream de Juan Carlos (GitHub soycarlosjerez-hub/sistema-facturacion) — hacemos los updates directamente en el branch dev/ecomm-erp; Juan Carlos mergea a main y despliega a producción (nunca nosotros).
 mode: subagent
 hidden: false
 color: "#059669"
@@ -19,7 +19,7 @@ permission:
 
 Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, desvinculado de prod desde 2026-09-19.
 
-**Modelo de ownership (owner, 2026-10-05)**: el upstream es de **Juan Carlos** (`soycarlosjerez-hub/sistema-facturacion`). Esta copia local es nuestra **sandbox de desarrollo**: validamos integraciones aquí (WordPress/Alfredo Ecomm) y enviamos **recomendaciones** vía commits en la rama `dev/ecomm-erp` — Juan Carlos decide si integra. **PROHIBIDO push a origin sin autorización explícita del owner.**
+**Modelo de ownership (owner, 2026-10-05; workflow definitivo 2026-10-18)**: el upstream es de **Juan Carlos** (`soycarlosjerez-hub/sistema-facturacion`, GitHub). **Tenemos acceso al repo**: `dev/ecomm-erp` es **nuestra rama de trabajo** — ahí hacemos los updates y todo lo que el plugin **Armada Suite** necesita para funcionar correctamente (push a ESA rama = flujo normal, autorización permanente del owner 2026-10-18). **Juan Carlos mergea `dev/ecomm-erp` → `main` y pasa a producción — NUNCA nosotros** (ERP prod intocable desde kalimete). `main`/`develop` read-only.
 
 ## Acceso
 
@@ -35,7 +35,7 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 
 - **Rama activa**: `dev/ecomm-erp` (el stack preprod SIRVE esta rama; `main`/`develop` son **read-only**)
 - **Remotos**: SOLO `origin` = `ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git` (upstream de Juan Carlos). **NO existe remote `preprod` en este clon**.
-- **Workflow**: desarrollar/probar local → commits limpios en `dev/ecomm-erp` → push a origin con autorización del owner → Juan Carlos revisa (él integra vía PR: #13 el 2026-10-06 integrando nuestra base 2d0d97b, **#14 el 2026-10-07 integrando nuestra Fase 2/3 a main**).
+- **Workflow (definitivo, owner 2026-10-18)**: desarrollar/probar local → commits limpios en `dev/ecomm-erp` → **push a origin (autorización permanente del owner para esta rama)** → **Juan Carlos mergea a `main` y despliega a producción** (él integra vía PR: #13 el 2026-10-06 integrando nuestra base 2d0d97b, **#14 el 2026-10-07 integrando nuestra Fase 2/3 a main**). El camino a prod del ERP es SOLO el merge de Juan — nosotros jamás deployamos.
 - **Estado push (2026-10-16, verificado con fetch)**: HEAD `34de630` pushed y **idéntico a origin/dev/ecomm-erp** — **100% al día con `origin/main`** (0 commits que nos falten; su refactor `34bd716` + módulo renta `bd1a879` ya mergeados sin conflictos). **8 commits nuestros esperando PR de Juan**: G6 fix `ff64301`, G1 cancel `e495454`+`8ae9bb2`, G2 webhooks CRUD `f961503`, G3 `invoice.issued` `5ace5aa`, G4 retry-failed `601959e`, merge `2306b64`, **identidad ecomm `34de630`** (brand.name garantizado + aliases + warnings IDENTITY_EMPTY + X-ERP-Tenant + X-API-Key — backward compatible, consumido por WP Armada Suite 5.3.3+).
 
 ## Stack (docker-compose.yml, verificado 2026-10-05)
@@ -85,7 +85,7 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 1. **NUNCA** modificar el dump original (`~/dev/erpipo-preprod/db.sql`)
 2. **NUNCA** `migrate:refresh` ni `migrate:fresh` — destruyen todos los datos (ver AGENTS.md del proyecto)
 3. **NUNCA** commitear `.env*`, `*.sql`, `releases/`, `storage/*` (el .gitignore ya los cubre; verificar con `git status`)
-4. **NUNCA** push a `origin` sin autorización explícita del owner (repo de Juan Carlos); `main`/`develop` read-only
+4. Push a `origin` SOLO en `dev/ecomm-erp` (autorización permanente del owner 2026-10-18 — es nuestra rama de trabajo); `main`/`develop` read-only; **merge a main + deploy a prod = SOLO Juan Carlos**
 5. **BACKUP** de configs antes de modificar (`.bkup-YYYYMMDD` — y moverlos fuera del repo tree al terminar)
 6. **Siempre** verificar que el preprod funciona después de cambios (`curl -sk https://erp.kalimete.local/login`)
 7. **Actualizar** docker-compose.yml si se agregan servicios o puertos
@@ -133,7 +133,7 @@ docker exec erpipo-preprod-app php artisan migrate:status
 
 - Sin acceso al servidor externo: alias SSH retirado, sin registro en MAPA ni en este agente.
 - El preprod es standalone: su DB (`facturacion_db`) vive solo en el volumen de kalimete.
-- No tocar ni referenciar infraestructura de terceros. Los cambios viajan por Git (`dev/ecomm-erp`) como recomendaciones a Juan Carlos.
+- No tocar ni referenciar infraestructura de terceros. Los cambios viajan por Git: **nosotros actualizamos `dev/ecomm-erp` (push directo)**; **Juan Carlos mergea a `main` y despliega a producción — nosotros NUNCA deployamos ERP prod** (owner 2026-10-18).
 
 ## Fase 2 — IMPLEMENTADA y pushed (2026-10-06)
 
@@ -171,10 +171,11 @@ Verificado: `origin/dev/ecomm-erp` @`34de630` = HEAD local (todo pushed); `origi
 ## Upstream (2026-10-13)
 
 - **Fuente**: `soycarlosjerez-hub/sistema-facturacion` (upstream de Juan Carlos) + stack erpipo-* (kalimete :8100).
+- **Vivo 2026-10-18**: 8/8 containers Up 10h (db/redis/mailpit healthy); `/up` ok (database+redis true); `dev/ecomm-erp` @`34de630` = HEAD = origin (ls-remote verificado); `origin/main` @`bd1a879` — 8 commits nuestros esperando el merge de Juan; tree local limpio. **Workflow GitHub definitivo (owner 2026-10-18)**: acceso pleno al repo, updates directos en `dev/ecomm-erp` para todo lo que Armada Suite necesita, Juan mergea a main → prod (nunca nosotros).
 - **Vivo 2026-10-16**: 8/8 containers Up 4d (db/redis/mailpit healthy); rama `dev/ecomm-erp` @`34de630` pushed = HEAD; **al día con origin/main** (fetch verificado, 0 commits faltantes); webhooks activos hacia WP (endpoint id=2); red compartida con WP; tenant 10 MaganTech activo; config ecomm verificado 200 (tenant 3: brand.name + aliases + warnings[] + X-ERP-Tenant, commit `34de630`).
 - **Latencia (2026-10-13)**: `/up` directo :8100 = ~130ms estable; vía HTTPS nginx = 490-1140ms — el ping-erp de WP (~250-300ms) es overhead TLS/nginx **esperado del entorno dev local**, no un bug. **Decisión owner 2026-10-13**: mailpit es **dev-only intencional** (catcher SMTP local para no operar un servidor de correos; en producción el mail es real según main de Juan Carlos) — NO investigar más, NO tocar (ni producción ni preprod). El preprod se alimenta de main de Juan Carlos adaptado a la red local — pruebas lo más cerca posible de producción, sin vínculo con prod.
 - **Check**: `docker ps -f name=erpipo` + `curl -sk https://erp.kalimete.local/login` + `curl -s http://127.0.0.1:8100/up`
-- **Regla**: LIVE manda (doc vs live vs upstream); push a origin solo con autorización del owner.
+- **Regla**: LIVE manda (doc vs live vs upstream); push a `dev/ecomm-erp` = flujo normal (autorización permanente del owner 2026-10-18); `main`/`develop` read-only; merge→main + deploy prod = SOLO Juan Carlos.
 
 
 ```json upstream_drk
@@ -185,7 +186,7 @@ Verificado: `origin/dev/ecomm-erp` @`34de630` = HEAD local (todo pushed); `origi
   "source": "releases/latest (upstream Juan Carlos)",
   "href": "github.com/soycarlosjerez-hub/sistema-facturacion",
   "href_docs": "",
-  "pin_note": "push a origin SOLO con autorizacion del owner",
+  "pin_note": "dev/ecomm-erp = nuestra rama de trabajo (push autorizado owner 2026-10-18); merge a main + prod = SOLO Juan Carlos",
   "groom_clean": true
 }
 ```
