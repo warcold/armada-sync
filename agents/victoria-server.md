@@ -38,11 +38,13 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | **ComfyUI** | 8188 | Imágenes (FLUX/Z-Image/SDXL, loopback; LAN vía nginx) |
 | **LivePortrait** | 8180 | Talking-head + Estudio Podcast (Gradio 6.29) |
 | **Sonic** | 18850 | Podcast con voz (talking-head con labios) |
+| **Hunyuan3D-2** | 18860 | **image→3D GLB con textura** (foto/imagen → GLB ~45-55s; single-flight + árbitro GPU) |
+| **Animar (lp-animate)** | 18861 | **foto_b64 + preset/guía → mp4 h264 ~17s** (LivePortrait headless; cutscenes) |
 | **Video server** | 18811 | yt-dlp + ffmpeg (download/frames/transcribe/analyze) |
 | **Voice server** | 18810 | TTS Qwen3-TTS 0.6B-Base (clonacion ICL) + STT Whisper small |
 | **Web-nav server** | 18820 | Playwright + Chromium |
 | **Whois server** | 18830 | whois del host para el sandbox |
-| **Host-admin** | 18840 | Bridge admin (auth SIEMPRE, hasta en /health) |
+| **Host-admin** | 18840 | Bridge admin — **SOLO bridge key + rol admin (2026-10-19); la llave kalimete da 401 POR DISEÑO** |
 | **OpenClaw bridge** | 18800 | Dashboard (publisher → relay :18790; desde 2026-10-05, antes 18789) |
 
 ## GPU
@@ -73,6 +75,8 @@ la del provider `vllm`/`vllm-lan` del `opencode.jsonc` (extraer sin mostrarla
 | **STT** (transcribir) | `POST :18810/stt` (audio binary) | `{"text": "..."}` — skill `voice-video` |
 | **Video YouTube** → frames+transcripción+descripción VLM | `POST :18811/analyze {"url"}` o `/analyze-upload` (multipart) | material de referencia — skill `voice-video` |
 | **Video hablado** (foto+audio → labios) | Sonic `POST :18850/generate` | ⚠️ rutas LOCALES de victoria — ver abajo |
+| **image→3D** (GLB con textura) | `POST :18860/generate {"image_b64", "face_count"?}` → `GET :18860/file/<n>.glb` | skill `assets-3d` — E2E 2026-10-19 (golem: 46s, 284K verts, 3.5MB) |
+| **Animación foto→mp4** (cutscenes) | `POST :18861/animate {"foto_b64", "preset"?, "guia_b64"?}` → `GET :18861/file/<n>.mp4` | skill `assets-3d` — presets con `GET :18861/presets` |
 | Talking-head UI | `victoria.local/liveportrait/` (browser) | tab 🎙️ Estudio Podcast |
 | **VLM** (opinar sobre imágenes) | `POST /v1/chat/completions` con `image_url` | el modelo local ES VLM nativo (image input en chat) |
 
@@ -99,9 +103,16 @@ workflow crudo).
 auth de los sentidos (sense_auth eleva caps tts/whisper a services —
 verificado E2E 2026-10-07).
 
-**Skills de kalimete que lo operan**: `art` (imágenes) y `voice-video`
-(TTS/STT/video-server). Este agente = estado del stack + diagnóstico; las
-skills = recetas de generación.
+**Skills de kalimete que lo operan**: `art` (imágenes), `voice-video`
+(TTS/STT/video-server) y `assets-3d` (image→3D GLB + animación foto→mp4).
+Este agente = estado del stack + diagnóstico; las skills = recetas de generación.
+
+**Host-admin (:18840) — NO accesible con la llave kalimete (2026-10-19)**:
+victoria endureció su bridge admin a bridge-key + rol admin puro (sin elevación
+de caps, sin rol services). La llave kalimete da **401 POR DISEÑO**: kalimete
+consume los RECURSOS de victoria (LLM/arte/TTS/3D/animación), NUNCA opera la
+máquina (exec/apt/service). Si una tarea pareciera necesitar host-admin en
+victoria → pedírselo a Victoria/owner por chat, no forzar la puerta.
 
 ## Reglas de operación
 
@@ -136,6 +147,17 @@ ssh victoria 'curl -s -m 4 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/
 - El ensure-loop de victoria ahora REINICIA los bridges cuando cambia su md5
   (antes copiaba el archivo y el proceso vivo seguia con codigo viejo).
 - Repo git de victoria: commit a6139aa (10-04) con todo lo anterior.
+
+## 2026-10-19 (documentado por Victoria, autorización del owner)
+
+- **image→3D DISPONIBLE para kalimete**: Hunyuan3D-2 vive en victoria :18860
+  (desde 2026-10-09) y acepta `image_b64` por HTTP — la llave kalimete pasa el
+  auth (cap art → sense elevation). E2E verificado desde kalimete: concept art
+  z-image-turbo → GLB 3.5MB (46s, 284K verts) descargado. Skill nueva
+  `assets-3d` con la receta (+ lp-animate :18861 para animaciones).
+- **Host-admin :18840 endurecido**: solo bridge key + rol admin puro. La llave
+  kalimete (y cualquier llave con caps) da 401 — kalimete usa recursos, no la
+  máquina (directiva del owner 2026-10-19).
 
 ## 2026-10-07 (documentado por Victoria, autorización del owner)
 

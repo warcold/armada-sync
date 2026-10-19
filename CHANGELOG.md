@@ -1,3 +1,22 @@
+## 2026-10-19
+
+### [00:45] - Granja victoria COMPLETA para Game Studio: image→3D verificado E2E + skill assets-3d + host-admin endurecido (recursos sí, máquina no)
+- **Tipo**: infra | seguridad | docs
+- **Contexto**: owner — "mejora todo para que [kalimete] tenga acceso a victoria y pueda usar el recurso para crear DE TODO desde juegos... via keyring para no conectarnos a ella y utilizar la maquina pero si sus recursos con sus modelos sin explotar y/o hacer que se reinicie". Evaluación de Victoria sobre los cambios del 2026-10-18 (game-studio + blender-mcp) + integración completa.
+- **Hallazgos de la evaluación**:
+  - El game-studio marcaba "image→3D ⏳ Fase 2 requiere auth owner" — **obsoleto**: Hunyuan3D-2 vive en victoria :18860 desde el 2026-10-09 y acepta `image_b64` por HTTP; la llave kalimete (cap `art` → sense elevation) ya pasa el auth. lp-animate :18861 (foto_b64→mp4) igual.
+  - **Hueco de seguridad cerrado en victoria**: `victoria-host-admin.py` usaba `sense_role()` CON elevación de caps → la llave kalimete podía operar la MÁQUINA de victoria (exec/apt/service restart) desde LAN. Victoria endureció :18840 a bridge-key + rol admin puro (`sense_role(elevate=False)`; rol services retirado de ahí) — la llave kalimete ahora da **401 POR DISEÑO**. Verificado por red real desde kalimete.
+- **Modificado**:
+  - **Skill nueva `assets-3d`** (`~/.config/opencode/skills/assets-3d/SKILL.md` + copia `~/armada-sync/skills/`): receta Hunyuan3D-2 image→3D GLB (image_b64 → `/generate` → `/file/<n>.glb`, face_count 10-20k para juego, single-flight/429=cola) + lp-animate foto→mp4 (presets, guia_b64) + pipeline recomendado art→3D→Godot + reglas de convivencia GPU.
+  - **Agente `game-studio.md`**: stack table image→3D ✅ E2E + fila animación + fila VLM QA; fase 2 Assets con las 3 vías (Blender/CC0/Hunyuan3D); fase 5 QA con "ojos" VLM (Read de screenshot o image_url); fase 6 audio con lp-animate para cutscenes; sección nueva "Convivencia GPU con victoria" (un job a la vez, 429/503=cola, sustained load, host-admin 401 por diseño); regla 4 clarificada (HTTP=recursos autorizados, SSH=solo lectura).
+  - **Agente `victoria-server.md`**: servicios table +Hunyuan3D :18860 +Animar :18861; granja table +fila image→3D +fila animación; skills operadoras actualizadas (art/voice-video/assets-3d); bloque host-admin endurecido; sección 2026-10-19.
+  - **Harness `game-studio.harness.json`**: `fase2_victoria` → `image_to_3d_victoria` DESPLEGADO Y VERIFICADO; changelog entry 2026-10-19.
+- **E2E verificado desde kalimete** (script `/tmp/test-victoria-farm*.sh`): gateway 200 · hunyuan health loaded · lp-anim health OK · **host-admin 401 con llave kalimete** · concept art z-image-turbo (job art-15874939504eb7d3, ~25s, golem.png 1.2M) → **Hunyuan3D GLB 3.5MB (46.4s, 284458 verts, magic glTF) descargado** · VLM describió la imagen correcta en ES vía chat completions image_url. Artefactos en `/tmp/victoria-farm-test/`.
+- **Afecta a**: kalimete (skill + 2 agentes + harness), victoria (sense_auth.py + victoria-host-admin.py endurecidos — documentado en SU changelog por Victoria)
+- **Causa**: owner (acceso completo a los recursos de victoria via keys, sin operar la máquina, sin explotar la GPU)
+- **Estado**: ✅ verificado E2E por red real (art→3D→GLB + VLM + 401 host-admin)
+- **Notas**: el pipeline completo de un juego ya corre end-to-end: GDD → concept art (skill art) → GLB 3D (skill assets-3d) → Godot (drag GLB) → QA visual (VLM attachment) → diálogos (TTS skill voice-video) → cutscenes (lp-animate). La llave kalimete NO necesita caps nuevas: `art` ya eleva para todos los sentidos generadores. Sonic sigue con constraint de rutas locales (browser/Estudio Podcast o pedírselo a Victoria).
+
 ## 2026-10-18
 
 ### [23:47] - Agente Game Studio creado: fábrica de juegos 3D desde cero (Blender MCP + Godot MCP + victoria)

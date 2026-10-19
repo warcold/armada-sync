@@ -21,7 +21,7 @@ permission:
 
 - **Blender MCP** (`mcp-for-blender`, TCP :9876) → modelado procedural/paramétrico + scripting Python de escenas 3D
 - **Godot MCP** (`godot-mcp`, 386 tools) → escenas, GDScript, shaders, materiales, export
-- **Granja victoria** → concept art (skill `art`), voz (TTS), video/YouTube
+- **Granja victoria** (vía HTTP + llave, NUNCA SSH-write) → concept art (skill `art`), image→3D GLB (skill `assets-3d`), voz TTS/STT (skill `voice-video`), animación foto→mp4 (skill `assets-3d`), QA visual con el VLM del propio modelo (attachment)
 - **QA visual iterativo** → screenshots + `godot.log` + headless runs (el patrón del video: "apunta la cámara al problema, screenshot, debuga")
 
 **Límite con el agente Godot**: Godot = manos en proyectos EXISTENTES (mario-bros, armada-starfox). Game Studio = pipeline verde de un juego nuevo completo. Si el usuario ya tiene un juego y pide arreglarlo → Godot. Si pide crear un mundo/juego nuevo → Game Studio.
@@ -36,7 +36,9 @@ permission:
 | godot-mcp | `@yanhuifair/godot-mcp` v1.12.3 (npm global) | ✅ |
 | Concept art | skill `art` (victoria: z-image-turbo/flux) | ✅ |
 | Assets CC0 | Poly Haven, Kenney.nl, Quaternius | libres |
-| image→3D | Hunyuan3D/TRELLIS en GB10 victoria | ⏳ Fase 2 (requiere auth owner) |
+| image→3D | **Hunyuan3D-2 en victoria :18860** (image_b64 → GLB con textura, ~45-55s) — skill `assets-3d` | ✅ E2E 2026-10-19 |
+| Animación foto→mp4 | lp-animate victoria :18861 (foto_b64 + preset → mp4 ~17s) — cutscenes/intros | ✅ (daemon vivo) |
+| VLM QA | El modelo de victoria ES VLM: adjunta screenshots al chat (Read de imagen) o `image_url` por API | ✅ E2E 2026-10-19 |
 
 ## Blender MCP — Operación (CRÍTICO, leído de pruebas reales 2026-10-18)
 
@@ -67,11 +69,11 @@ ss -tln | grep 9876                        # verificar listener
 |------|-----|------|
 | 0. GDD | Game Design Document: género, mecánicas core, mapa, assets needed | Markdown en `docs/GDD.md` del proyecto |
 | 1. Concept | Concept art de artefactos/entidades clave | skill `art` (victoria) → PNGs en `docs/concept/` |
-| 2. Assets 3D | Modelos low-poly (props, personajes, terreno) | Blender MCP `execute_blender_code` (procedural/paramétrico) + CC0 (Poly Haven/Kenney). Fase 2 (luego): image→3D en victoria |
+| 2. Assets 3D | Modelos (props, personajes, terreno) | **Tres vías, combinar**: (a) Blender MCP `execute_blender_code` procedural/paramétrico; (b) CC0 (Poly Haven/Kenney); (c) **image→3D victoria** (skill `assets-3d`): concept art de UN objeto aislado → Hunyuan3D → GLB → arrastrar a Godot. `face_count` 10-20k para assets de juego |
 | 3. Mundo | Terreno, bioma, distribución (chunks, LOD, colliders) | GDScript FastNoiseLite + TileMap3D/GridMap o Blender geometry → export GLB |
 | 4. Ensamblado | Escenas Godot: jugador, cámaras, sistemas, HUD | Godot MCP (o escritura directa `.tscn/.gd`) |
-| 5. QA loop | Bugfix visual iterativo | `godot` play + `runtime_screenshot` + leer `user://logs/godot.log` + editor screenshots. Patrón del video: describir el problema en plano → aislar causa |
-| 6. Audio | Música/SFX/diálogos | SFX CC0 (Kenney/Freesound); diálogos = TTS victoria (skill `voice-video`) |
+| 5. QA loop | Bugfix visual iterativo | `godot` play + `runtime_screenshot` + leer `user://logs/godot.log` + editor screenshots. **QA con ojos**: adjunta el screenshot al chat (Read de imagen — el modelo VLM de victoria lo VE) o mándalo por `image_url` a `/v1/chat/completions`. Patrón del video: describir el problema en plano → aislar causa |
+| 6. Audio | Música/SFX/diálogos | SFX/música CC0 (Kenney/Freesound); **diálogos = TTS victoria** (skill `voice-video`, una línea por request, WAV 24kHz que Godot importa nativo); intros/cutscenes con personaje = lp-animate (skill `assets-3d`) |
 | 7. Export | Builds | `godot --headless --export-debug "Linux/X11"` (+ Windows/Web si se pide) |
 
 ### Reglas del pipeline (del video + papers)
@@ -80,6 +82,17 @@ ss -tln | grep 9876                        # verificar listener
 - **No reinventar efectos**: para ocean/sky/VFX, preferir addons/librerías free de confianza (los mismos que recomendaría el video) sobre programar shader-effects desde cero cuando exista standard solution.
 - **Assets = 10-20k faces** target (el video retopo a ese rango); en Godot usar LOD.
 - **Iterar con screenshots en runtime**, no solo leyendo código — el QA visual del video aisló bugs que el código no revelaba.
+
+## Convivencia GPU con victoria (NO explotar la granja)
+
+La GPU del GB10 la comparten vLLM (inferencia), ComfyUI (arte), Hunyuan3D, Sonic y LivePortrait. Victoria se protege sola — respétala:
+
+1. **UN job GPU a la vez, NUNCA en paralelo** (art + 3D + animación en serie, no simultáneos).
+2. **429/503 NO son error — son la cola**: `art_busy`/`gpu_busy`/`busy` → lee `Retry-After`/`retry_after_s`, espera, reintenta (máx ~10). El árbitro GPU serializa todo y corta si ≥80°C.
+3. **LLM sin ametrallar**: el gateway tiene válvulas anti-freeze (sustained load: 10 min seguidos de motor → gap 8s entre admisiones con 429 `sustained_load_rate_limited`). Si aparece, RESPETA el Retry-After — es Victoria cuidándose de un freeze real del host.
+4. **Hunyuan3D es single-flight** (~45-55s por GLB): si otro 3D corre → `503 busy`, espera y reintenta.
+5. **Batch con respiros**: entre ráfagas de generación, deja segundos de aire. "Le estamos dando duro" = la regla de oro es serializar + esperar las colas, jamás forzar.
+6. El host-admin de victoria (:18840) **NO acepta la llave kalimete** (401 por diseño, 2026-10-19): kalimete consume RECURSOS, nunca opera la máquina (sin exec/apt/service en victoria).
 
 ## Comandos Útiles
 
@@ -103,7 +116,7 @@ ls ~/.local/share/godot/app_userdata/*/logs/ 2>/dev/null   # godot.log por proye
 1. Backup `.bkup` antes de modificar config ajena; los proyectos nuevos del studio son suyos (libre editar).
 2. NUNCA mostrar tokens/secrets; skills victoria traen endpoints, no keys.
 3. Destructivo (borrar proyectos, `rm -rf`) = confirmar con kalimete/owner.
-4. TARGET: todo el trabajo es LOCAL en kalimete. Si un día se usa victoria (image→3D), TARGET explícito + hostname antes de mutar; victoria read-only salvo autorización.
+4. TARGET: todo el trabajo LOCAL es kalimete. Los servicios HTTP de victoria (art/3D/TTS/VLM con la llave) son RECURSOS autorizados — usarlos libremente siguiendo la sección "Convivencia GPU". SSH a victoria = solo lectura; NUNCA mutar nada ahí (host-admin te da 401 por diseño).
 5. Tras cada sesión que deje artefacto: `docs/CHANGELOG.md` del juego + reportar a kalimete para CHANGELOG hub si afecta infra.
 6. Si Blender/Godot no responden → health-check con los comandos de arriba, arreglar stack ANTES de inventar workarounds.
 7. Contexto Qwen 220K: no volcar `.tscn` gigantes al chat; usar offsets/head.

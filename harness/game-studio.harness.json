@@ -1,6 +1,6 @@
 {
   "harness": "game-studio",
-  "updated": "2026-10-18",
+  "updated": "2026-10-19",
   "agent_file": "~/armada-sync/agents/game-studio.md",
   "mode": "subagent",
   "hidden": false,
@@ -15,7 +15,7 @@
   ],
   "upstream": {
     "fuente": "blender-mcp: github ahujasid/blender-mcp (clon en ~/dev/tools/blender-mcp; paquete PyPI mcp-for-blender 2.2.0). godot-mcp: npm @yanhuifair/godot-mcp v1.12.3 (latest 1.12.9, update menor pendiente). Blender: Debian/Kali apt blender 5.0.1. Godot: 4.7.2 binario oficial.",
-    "fase2_victoria": "image→3D local en GB10 (Hunyuan3D 2.1 / TRELLIS vía ComfyUI :8188 o API server propio) — PLAN, NO implementado; requiere autorización explícita del owner (victoria read-only por defecto).",
+    "image_to_3d_victoria": "DESPLEGADO Y VERIFICADO (2026-10-19): Hunyuan3D-2 vive en victoria :18860 desde 2026-10-09 y acepta image_b64 por HTTP — la llave kalimete (cap art → sense elevation) pasa el auth. E2E desde kalimete: concept art z-image-turbo → GLB 3.5MB (46s, 284K verts, face_count 20k) descargado y magic glTF OK. Receta en skill assets-3d. lp-animate :18861 (foto_b64→mp4) también abierto para cutscenes. Host-admin :18840 = 401 con llave kalimete POR DISEÑO (kalimete usa recursos, no la máquina).",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
   },
   "docs": [
@@ -24,6 +24,10 @@
     "/tmp/opencode/refvideo.json (transcripción + frames del video de referencia)"
   ],
   "changelog": [
+    {
+      "fecha": "2026-10-19",
+      "evento": "Granja victoria COMPLETA para el pipeline: image→3D verificado E2E desde kalimete (Hunyuan3D-2 :18860 image_b64 → GLB 3.5MB/46s descargado) + skill nueva assets-3d (3D GLB + lp-animate :18861 foto→mp4) + QA visual con VLM verificado (chat completions image_url) + sección Convivencia GPU (anti-exploit) + host-admin :18840 endurecido en victoria (401 con llave kalimete por diseño — recursos sí, máquina no)."
+    },
     {
       "fecha": "2026-10-18",
       "evento": "Agente Game Studio creado (nace como orquestador de pipeline verde de juegos 3D). Stack Blender 5.0.1 + mcp-for-blender verificado end-to-end (TCP :9876). MCP blender en opencode.jsonc. Workspace ~/dev/godot/studio/ (pendiente primer juego)."
