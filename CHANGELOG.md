@@ -1,5 +1,17 @@
 ## 2026-10-19
 
+### [12:30] - MaganTech: ZIP 5.4.2 verificado al día (diff 0 vs árbol) + evaluación deploy remoto vía ops API: NO viable para releases (theme-only) — prod sigue en manos del owner (uploader nativo)
+- **Tipo**: docs | servicio
+- **Contexto**: owner — "No habido update del plugin armada suite despues de todas estas mejoras?, veo el zip aun la ultima modificacion de ayer temprano, evaluar si estos cambios se estan aplicado al zip, asi poder hacer deploy, aunque creo que tu misma puede hacerlo por via del mcp que tenemos en el proyecto online, tienes acceso...".
+- **Modificado**:
+  - **ZIP 5.4.2 verificado AL DÍA con evidencia**: `diff -r` del contenido del ZIP vs árbol actual del plugin = **0 diferencias** (503 archivos); auto-sync presente (19 refs `erpsuite_auto_sync` en el armada-suite.php del ZIP); CONTRATO-ECOMM-CONFIG.md incluido; sha256 `157b1633…` idéntico al documentado. El mtime Oct-18 17:13 es la CREACIÓN del ZIP (post-código completo); el commit `e2c86ed` posterior commiteó los mismos bytes. **Conclusión: no hay nada que regenerar.**
+  - **Deploy remoto evaluado contra el código — NO viable para releases de plugin**: ops `file/write` es single-file y **solo de TEMA** (draft/activo; `OpsMotor.php:350+`: anti-drift `expected_source_hash`, flujo dry-run→preview→confirm, tope `LIVE_MAX_BYTES`, rate 10/min, bloqueado en ai_mode=safe); `/ops/rollback` deshace edits del audit (no gestiona versiones del plugin); no existe endpoint de instalación ni self-update. El "MCP de WordPress" está muerto por diseño (decisión owner 2026-10-17, `CONEXION-METODO.md` — emcp-tools no instalado). El acceso real (ops REST + App Password) sirve para diagnóstico/settings/ediciones de tema — no para deployar ~500 archivos.
+  - **Docs**: PROCEDURES §(a) receta de verificación de frescura de ZIP (unzip a /tmp + diff -r) + §(b) nota "vía remota NO disponible para releases" (con candidata futura 5.4.3: endpoint ops/upgrade con ZIP firmado, si el owner la quiere).
+- **Afecta a**: docs del proyecto MaganTech (PROCEDURES)
+- **Causa**: owner (verificar ZIP + evaluar vía de deploy remoto)
+- **Estado**: ✅ verificado (diff 0, sha, marcadores en el ZIP)
+- **Notas**: **Prod 5.4.0 sigue esperando el upload del owner** (~1 min, §(b)): wp-admin → Plugins → Añadir nuevo → Subir plugin → `export/armada-suite-5.4.2.zip` → Reemplazar la versión actual. Kalimete verifica al instante post-upload (smoke-prod + ops/status plugin 5.4.2). La marca seguirá "Tienda" hasta el fix de datos de Juan Carlos — el mensaje UX 5.4.2 lo reporta explícito al sincronizar.
+
 ### [00:45] - Granja victoria COMPLETA para Game Studio: image→3D verificado E2E + skill assets-3d + host-admin endurecido (recursos sí, máquina no)
 - **Tipo**: infra | seguridad | docs
 - **Contexto**: owner — "mejora todo para que [kalimete] tenga acceso a victoria y pueda usar el recurso para crear DE TODO desde juegos... via keyring para no conectarnos a ella y utilizar la maquina pero si sus recursos con sus modelos sin explotar y/o hacer que se reinicie". Evaluación de Victoria sobre los cambios del 2026-10-18 (game-studio + blender-mcp) + integración completa.
