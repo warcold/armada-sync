@@ -1,5 +1,13 @@
 ## 2026-10-19
 
+### [23:36] - Diagnóstico chatbot MaganTech: el error del owner vive en PROD + config remota `ia` denegada por diseño (evaluación Victoria completada)
+- **Tipo**: servicio | docs
+- **Modificado**: agents/magantech.md (drift 5.4.0→5.4.2 en prod + cambios recientes + pendientes actualizados)
+- **Afecta**: prod magantech.com.do (chatbot activo sin config LLM) + roadmap del plugin (Armada Suite)
+- **Causa**: owner reportó seguir viendo "Configura el endpoint LLM en Ajustes → Asistente IA..." y pidió evaluar configurar los parámetros con las herramientas que ofrece Victoria Server
+- **Estado**: ✅ diagnóstico cerrado (output literal de prod capturado); ⚠️ fix de prod pendiente (ventana + key)
+- **Notas**: Veredicto: prod corre plugin 5.4.2 (ZIP del 10-18) SIN el fix del mensaje (vive solo en source+preprod) y SIN config LLM → produce el texto viejo exacto; preprod :8093 OK (LLM real, ambas entradas). BLOQUEO: `Remote/Guard.php::blocked_subkeys()` deniega SIEMPRE `ia.api_url/api_key/model` vía ops → la directiva "configurar con las herramientas" requiere cambio de código Armada Suite (api_url/model editables con dry-run+confirm; api_key write-only que jamás se lea de vuelta). Victoria (solo-lectura): gateway sano LAN (0.03s) + público (3.4s); model canónico `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` (pinear explícito — el gateway normaliza el id en la respuesta); key `kalimete` activa pero COMPARTIDA (2 slots concurrentes — riesgo 503 mutuo chatbot↔kalimete) → recomendada key dedicada `magantech` (rol services) que solo el owner crea en panel LAN victoria.local/admin; tool_call del gateway verificado funcional (visión MCP viable; faltan manifest de tools + auth por negocio + gates de escritura). Deriva detectada en Environment.php get_llm_model() (default sin -A3B ni -normal) — fix Armada Suite. Fix HOY de prod (manual, sin deploy): wp-admin prod → Ajustes → Asistente IA (URL https://victoria.armada.do/v1 + key + model -normal) — el código viejo con ia completa en DB funciona.
+
 ### [21:14] - IA nativa Victoria por defecto en armada-suite + chatbot MaganTech preprod funcional (template multi-tenant)
 - **Tipo**: servicio | config
 - **Modificado**: plugin armada-suite (source dev-lab + copia preprod MaganTech, 4 archivos: Bootstrap.php, ChatEngine.php, LegacyChatbotAdmin.php, AdminMenu.php — con .bkup) + docker-compose.yml preprod MaganTech (env vars ERPCBOT_LLM_URL/KEY) + CHANGELOG del plugin (entrada 5.4.3)
