@@ -1,5 +1,13 @@
 ## 2026-10-20
 
+### [19:25] - kalimete-ptt v4: transcripción a tecla APARTE (F9) + Ctrl_R solo Victoria + fixes de la prueba física (Yes/markdown)
+- **Tipo**: servicio | infra
+- **Modificado**: ~/.local/bin/kalimete-ptt (v4; .bak.20261020-modos conserva v2/v3); servicio reiniciado
+- **Afecta a**: kalimete (PTT local) — flujo de voz kalimete↔victoria
+- **Causa**: owner probó v3 físicamente y "se rompe". Diagnóstico en logs (19:07-19:09): (1) respondió "Yes." y el _YES_RE solo aceptaba español → confirmación nunca matcheaba → loop de re-preguntas; (2) Whisper autodetecta idioma (server ignora el hint) y con audio dudoso alucinó francés/ruso ("C'est...", "И вам отраз кривит"); (3) Victoria respondió el estado CON MARKDOWN (asteriscos leídos por TTS). Diseño v4 del owner: quitar transcripción del flujo de Victoria → tecla APARTE (PTT_TRANS_KEY, default F9, verificada en capabilities del teclado físico) para dictado directo sin LLM; Ctrl_R queda SOLO para hablar con Victoria con acceso completo (el dictado a ventana se pide hablando: "escribe X en la ventana" → type_text con confirmación)
+- **Estado**: ✅ servicio active (running), F9 presente en AT Translated Set 2 keyboard · ✅ _YES_RE/_NO_RE multi-idioma (yes/yeah/oui/da/nyet/non...) · ✅ VICTORIA_SYSTEM anti-markdown reforzado (respuesta directa a sintetizador) · ✅ transcribe_mode/coach/exit REMOVIDOS · ✅ tests E2E gateway real 5/5: multi-idioma OK, tools = machine_status+run_command+type_text, "dame estado"→hablado natural sin markdown, "escribe en la ventana"→type_text→"Yes."→pega+Enter→"Listo, ya mandé el mensaje a opencode", _dictate pega directo sin LLM
+- **Notas**: _listen ahora escucha DOS keycodes (PTT + TRANS) con _active = None|"ptt"|"trans"; _stop_rec(dest) enruta a _transcribe (Victoria) o _dictate (pegar directo); _stt_text factorizado. ydotoold virtual device (event15) sigue excluido por has_phys — crítico: escucharlo crearía eco del Ctrl+Shift+V del paste. F9 puede requerir FnLock en modo función. Pendiente owner: prueba física (Ctrl_R=Victoria, F9=dictado directo).
+
 ### [18:10] - kalimete-ptt v3: simplificación del owner — Victoria router natural (removido tap=estado y keywords), FIX crash UnboundLocalError
 - **Tipo**: servicio | infra
 - **Modificado**: ~/.local/bin/kalimete-ptt (v3; .bak.20261020-modos conserva la v2); servicio reiniciado
