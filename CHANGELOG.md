@@ -1,5 +1,14 @@
 ## 2026-10-20
 
+### [14:50] - EccoSuit: superadmin definitivo v.tapia@eccoqualita.com + placeholder eliminado
+- **Tipo**: servicio | seguridad
+- **Modificado**: BD ecco_suite (users) + agents/ecco-suit.md + ~/dev/eccoqualita/ops/prod-remove-user.ts (nuevo)
+- **Afecta a**: VPS Ecco Qualitá
+- **Causa**: owner — "el usuario y correo que utilizaremos para el superadmin es v.tapia@eccoqualita.com y la clave Cambiar.123"
+- **Estado**: ✅ login verificado con signInEmail → VERIFIED; health OK
+- **Hecho**: creado v.tapia@eccoqualita.com ("V. Tapia", platform admin + org_admin de la org propietaria) con la clave del owner; eliminado el placeholder admin@eccoqualita.com (sessions/accounts/memberships por FK cascade; guard de último-admin en el script nuevo); borrado /opt/eccoqualita/.first-admin-credentials.
+- **Notas**: política de contraseñas del sistema = 12–128 chars; aplica al CAMBIAR contraseña, no al sign-in (verificado empíricamente: la clave de 11 chars entra). Schema tiene must_change_password (cambio forzado) — no activado para no frenar el acceso.
+
 ### [02:20] - Auditoría del agente Victoria Server tras el provisioning delegado: fixes de contradicción + deriva en magantech.md/armada-suite.md
 - **Tipo**: docs (auditoría pedida por el owner: "¿actualizaste Victoria Server con todas las nuevas instrucciones, accesos y límites?")
 - **Modificado**: agents/victoria-server.md (4 fixes), agents/magantech.md (1 fix de deriva), agents/armada-suite.md (estándar nuevo), CHANGELOG.md

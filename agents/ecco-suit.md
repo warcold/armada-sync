@@ -162,9 +162,9 @@ docker compose --profile tools run --rm \
 
 - Respaldo: automático diario 04:00 (`/opt/eccoqualita/backups/`, retención 14d). Restore-test OK (57 tablas, 2026-10-19).
 - Salud: `/var/log/ecco-health.log` (cron 5 min) — revisar WARNINGs en visitas de ops.
-- [ ] El owner cambia la contraseña del primer admin y borra `/opt/eccoqualita/.first-admin-credentials`
 - [ ] Prueba de restauración periódica (trimestral sugerida) — procedimiento en el agente (docker cp + pg_restore a BD temporal)
 
 ## Historia
 
+- **2026-10-20**: superadmin definitivo `v.tapia@eccoqualita.com` (orden del owner, clave elegida por él) — verificado signInEmail; placeholder `admin@eccoqualita.com` eliminado (cascade) + fichero de credenciales borrado. Nuevo script ops `prod-remove-user.ts` (guard último-admin).
 - **2026-10-19**: despliegue completo end-to-end (Docker 29.9.1 + swap 2G + postgres 18 + bootstrap roles + 22 migraciones/57 tablas + app + Caddy TLS + UFW/fail2ban + llave SSH). Health OK en https://suit.eccoqualita.com. **Cierre same-day**: primer admin creado+verificado (signInEmail), backups cron + restore-test, health monitor, password SSH desactivado (lección: cloud-init drop-in ganaba por orden; lección 2: tests de password con ssh-agent activo dan falsos positivos — usar `PubkeyAuthentication=no`).
