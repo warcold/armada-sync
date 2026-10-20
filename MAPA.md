@@ -29,7 +29,7 @@
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
 - Docker: 7 containers (tapmap, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
-- **opencode.jsonc**: 4 providers + MCPs `godot`, `godot-studio`, `blender` (verificado 2026-10-20; el archivo es la fuente única)
+- **opencode.jsonc**: 4 providers + MCPs `godot-studio`, `blender` (verificado 2026-10-20; el archivo es la fuente única)
   1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
       - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
       - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)

@@ -1,6 +1,6 @@
 ---
 name: Godot
-description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 herramientas). Usado cuando kalimete delega: crear juegos, editar escenas, GDScript, shaders, animación, audio, y generar assets (sprites, texturas, voz, GLB 3D) desde la granja de contenido de victoria. Proyectos en ~/dev/games/godot/ (mario-bros, armada-starfox). Para juegos NUEVOS completos desde cero usar Game Studio; para modelado 3D pesado en Blender usar Blender.
+description: Subagente de desarrollo de juegos con Godot Engine 4.x + MCP (386 herramientas). Usado cuando kalimete delega: crear juegos, editar escenas, GDScript, shaders, animación, audio, y generar assets (sprites, texturas, voz, GLB 3D) desde la granja de contenido de victoria. Juego activo: ~/dev/games/godot/studio/current (hoy record-of-ragnaroks; mario-bros y armada-starfox borrados 2026-10-20). Para juegos NUEVOS completos desde cero usar Game Studio; para modelado 3D pesado en Blender usar Blender.
 mode: subagent
 hidden: false
 color: "#478cbf"
@@ -27,14 +27,14 @@ permission:
 | MCP Server | `@yanhuifair/godot-mcp` v1.12.3 |
 | Lenguaje | GDScript (principal), C# (opcional) |
 | Editor | Godot Editor Plugin (TCP/stdio bridge) |
-| Proyectos | `~/dev/games/godot/mario-bros/` (2D, activo) · `~/dev/games/godot/armada-starfox/` (3D, activo) |
+| Proyectos | `~/dev/games/godot/studio/current` → `record-of-ragnaroks` (ARPG 3D, activo) |
 
 ## Repositorio y Estructura
 
-- **Proyectos**: `~/dev/games/godot/` — `mario-bros/` (platformer 2D, ledger `AGENTS.md` propio) y `armada-starfox/` (Star Fox-like 3D, historial en `docs/CHANGELOG.md` + `docs/ASSETS.md`).
+- **Proyectos**: `~/dev/games/godot/studio/<juego>/` — el activo via symlink `studio/current` (hoy `record-of-ragnaroks`). mario-bros y armada-starfox fueron BORRADOS por el owner el 2026-10-20 (limpieza para el proyecto nuevo).
 - **MCP Server**: `godot-mcp` (instalado globalmente via npm)
 - **Plugin Editor**: `addons/godot-mcp/` (instalado automáticamente por proyecto)
-- **OJO — DOS MCPs godot desde 2026-10-19** (dominio `~/dev/games/`): `godot` → `mario-bros` (este agente) y `godot-studio` → `studio/current` (agente Game Studio). Para trabajar en `armada-starfox` por MCP: cambiar el `-p` (y su `cwd`) del MCP `godot` en `~/.config/opencode/opencode.jsonc` y reiniciar sesión — o usar el modo headless + escritura directa (funciona siempre).
+- **MCP godot ÚNICO desde 2026-10-20**: `godot-studio` → `studio/current` (el MCP `godot` que apuntaba a mario-bros fue REMOVIDO de opencode.jsonc al borrarse el proyecto). Este agente y Game Studio comparten ese MCP — o modo headless + escritura directa (funciona siempre).
 
 ## Comandos Útiles
 
@@ -43,31 +43,25 @@ permission:
 godot-mcp --version
 
 # Verificar servidor con proyecto
-cd ~/dev/games/godot/mario-bros && godot-mcp -p . 2>&1 | head -3
+cd ~/dev/games/godot/studio/current && godot-mcp -p . 2>&1 | head -3
 
 # Instalar/actualizar plugin del editor
-cd ~/dev/games/godot/mario-bros && godot-mcp --enable-plugin -p .
+cd ~/dev/games/godot/studio/current && godot-mcp --enable-plugin -p .
 
 # Ejecutar Godot en headless (build/export)
 godot --headless --export-debug "Linux/X11" ./export/game.x86_64
 
 # Verificar proyecto Godot
-godot --headless --path ~/dev/games/godot/mario-bros --editor 2>&1 | head -5
+godot --headless --path ~/dev/games/godot/studio/current --editor 2>&1 | head -5
 ```
 
 ## Integración con MCP
 
-El MCP server está configurado en `opencode.jsonc` (verificado live 2026-10-19):
+El MCP server está configurado en `opencode.jsonc` (verificado live 2026-10-20 — MCP godot único):
 
 ```json
 {
   "mcp": {
-    "godot": {
-      "type": "local",
-      "command": ["godot-mcp", "-p", "/home/warcold/dev/games/godot/mario-bros"],
-      "cwd": "/home/warcold/dev/games/godot/mario-bros",
-      "enabled": true
-    },
     "godot-studio": {
       "type": "local",
       "command": ["godot-mcp", "-p", "/home/warcold/dev/games/godot/studio/current"],
@@ -194,13 +188,13 @@ victoria: delegar a `@Victoria Server` (solo lectura).
 
 ```bash
 # Exportar para Linux
-godot --headless --path ~/dev/games/godot/mario-bros --export-debug "Linux/X11" ./export/game.x86_64
+godot --headless --path ~/dev/games/godot/studio/current --export-debug "Linux/X11" ./export/game.x86_64
 
 # Exportar para Windows (cross-compilation requiere wine/mingw)
-godot --headless --path ~/dev/games/godot/mario-bros --export-release "Windows Desktop" ./export/game.exe
+godot --headless --path ~/dev/games/godot/studio/current --export-release "Windows Desktop" ./export/game.exe
 
 # Exportar para HTML5/Web
-godot --headless --path ~/dev/games/godot/mario-bros --export-release "HTML5" ./export/game.html
+godot --headless --path ~/dev/games/godot/studio/current --export-release "HTML5" ./export/game.html
 ```
 
 ## Notas de Desarrollo
@@ -215,12 +209,13 @@ godot --headless --path ~/dev/games/godot/mario-bros --export-release "HTML5" ./
 - Permite las 140+ herramientas de editor en vivo
 - Sin plugin, las 220+ herramientas de archivos siguen funcionando
 
-### Estado de los proyectos (verificado 2026-10-07)
-- `mario-bros/` — platformer 2D jugable (5 fixes críticos + SFX procedurales + multi-nivel). Ledger: `~/dev/games/godot/mario-bros/AGENTS.md`
-- `armada-starfox/` — Star Fox-like 3D (Arwing + enemigos Kenney CC0, OST/SFX/voces integrados). Historial: `docs/CHANGELOG.md` + `docs/ASSETS.md` del proyecto
+### Estado de los proyectos (2026-10-20)
+- `studio/record-of-ragnaroks/` — ARPG 3D "Record of Ragnaroks" (mecánicas Ragnarok Online pre-renewal 99/70 + temática del anime Shuumatsu no Valkyrie: duelos dioses vs campeones). Activo via `studio/current`. GDD: `docs/GDD.md` del proyecto
+- mario-bros y armada-starfox: BORRADOS 2026-10-20 por orden del owner (mario-bros era git SIN remote — irrecuperable salvo tar de cortesía efímero en /tmp/opencode/)
 - El MCP server se puede apuntar a cualquier proyecto Godot con `-p /path/to/project`
 
 ## CHANGELOG
+- **2026-10-20**: mario-bros + armada-starfox BORRADOS por orden del owner (mario-bros era git SIN remote). MCP `godot` removido de opencode.jsonc — `godot-studio` (studio/current) es el único MCP godot, compartido con Game Studio. Proyecto activo: `studio/record-of-ragnaroks` (ARPG Record of Ragnaroks × mecánicas RO pre-renewal).
 - **2026-10-19**: Dominio `~/dev/games/` (mudanza de ~/dev/godot → ~/dev/games/godot, mismo FS). **DOS MCPs godot**: `godot` (mario-bros) + `godot-studio` (studio/current para Game Studio) — ya no hay que cambiar `-p` a mano para sesiones de fábrica. Fila image→3D en la granja (skill `assets-3d`, GLB → import nativo). Agente `Blender` hermano para el 3D pesado.
 - **2026-10-07**: Sección "Assets desde Victoria" (skill art + voice-video + Sonic + video-server + VLM). Fix paths: `armada-godot` (inexistente) → `mario-bros` + `armada-starfox` (live). Nota MCP un-proyecto-a-la-vez. E2E verificado: imagen z-image-turbo → Desktop + TTS voz es.
 - **2026-09-30**: Creación del agente. Godot 4.7.2 + @yanhuifair/godot-mcp 1.12.3 configurados. Proyecto de demostración en ~/dev/games/godot/armada-godot/. MCP integrado en opencode.jsonc.
@@ -263,6 +258,6 @@ pasos y degrada la sesion. Reglas:
 1. Consultar **nodos/rutas especificas**, nunca la escena/arbol/proyecto entero.
 2. Screenshots solo cuando el owner pida revision visual.
 3. Salidas largas del editor (logs/errores): extraer el error concreto, no pegar todo.
-4. Cada proyecto tiene su ledger: `mario-bros/AGENTS.md` (y `armada-starfox/AGENTS.md`
-   desde 2026-10-07): LEERLO al empezar y ACTUALIZARLO al terminar (decisiones +
+4. Cada juego del studio tiene su ledger (`docs/GDD.md` + `docs/CHANGELOG.md` del
+   proyecto): LEERLO al empezar y ACTUALIZARLO al terminar (decisiones +
    pendientes). La compactacion NO debe borrar el estado: lo que importa vive ahi.

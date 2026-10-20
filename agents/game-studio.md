@@ -24,7 +24,7 @@ permission:
 - **Granja victoria** (vía HTTP + llave, NUNCA SSH-write) → concept art (skill `art`), image→3D GLB (skill `assets-3d`), voz TTS/STT (skill `voice-video`), animación foto→mp4 (skill `assets-3d`), QA visual con el VLM del propio modelo (attachment)
 - **QA visual iterativo** → screenshots + `godot.log` + headless runs (el patrón del video: "apunta la cámara al problema, screenshot, debuga")
 
-**Límite con el agente Godot**: Godot = manos en proyectos EXISTENTES (mario-bros, armada-starfox). Game Studio = pipeline verde de un juego nuevo completo. Si el usuario ya tiene un juego y pide arreglarlo → Godot. Si pide crear un mundo/juego nuevo → Game Studio.
+**Límite con el agente Godot**: Godot = manos en juegos YA creados del studio (vía `studio/current`). Game Studio = pipeline verde de un juego nuevo completo. Si el usuario ya tiene un juego y pide arreglarlo → Godot. Si pide crear un mundo/juego nuevo → Game Studio. (mario-bros y armada-starfox BORRADOS 2026-10-20.)
 
 ## Stack Tecnológico
 
