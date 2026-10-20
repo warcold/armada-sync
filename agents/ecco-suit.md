@@ -124,10 +124,11 @@ Fuente en kalimete: `~/dev/eccoqualita/ops/` (copias en la VPS: `/opt/eccoqualit
 |---|---|---|
 | `prod-first-admin.ts` | ops/ + VPS scripts/ | Crea org propietaria + primer admin (idempotente; **no pisa contraseñas existentes**). Corre en contenedor tools con `-v` mount (la imagen no lo incluye). |
 | `prod-verify-admin.ts` | ops/ + VPS scripts/ | Verifica credenciales con el call canónico `auth.api.signInEmail` (el login real va por Server Actions; `/api/auth/sign-in/email` HTTP responde 404 BY DESIGN). |
+| `prod-remove-user.ts` | ops/ + VPS scripts/ | Elimina usuario (sessions/accounts/memberships van por FK cascade). Guard: se niega a borrar al último platform admin. |
 | `ecco-backup.sh` | VPS /usr/local/bin/ | pg_dump -Fc + tar del volumen storage, retención 14d. Cron root 04:00 (`/etc/cron.d/eccoqualita`). Restore-test verificado: 57 tablas. |
 | `ecco-health-check.sh` | VPS /usr/local/bin/ | curl al health público cada 5 min → `/var/log/ecco-health.log` (auto-acotado 5000 líneas). |
 
-**Primer admin (2026-10-19)**: `admin@eccoqualita.com`, org_admin de "Ecco Qualitá" (propietaria de plataforma, módulo strategy). Credenciales en `/opt/eccoqualita/.first-admin-credentials` (600) — el owner las cambia en `/cuenta/contrasena` y borra el fichero. Verificado con signInEmail → VERIFIED.
+**Superadmin (2026-10-20, orden del owner)**: `v.tapia@eccoqualita.com` ("V. Tapia") — platform admin + org_admin de la org propietaria. Clave elegida por el owner (temporal, entregada por él). Login verificado con signInEmail → VERIFIED. El placeholder `admin@eccoqualita.com` fue ELIMINADO (cascade) y el fichero `.first-admin-credentials` borrado. **Política de contraseñas del sistema: 12–128 chars** — aplica al CAMBIAR contraseña (`/cuenta/contrasena`); el sign-in no revalida longitud (verificado empíricamente). El schema tiene `must_change_password` (cambio forzado) — NO activado para no frenar el acceso del owner.
 
 **Patrón para correr scripts TS de ops** (la imagen `migrate` es un snapshot del build — los scripts nuevos van montados):
 ```bash
