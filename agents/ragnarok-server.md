@@ -15,6 +15,18 @@ permission:
 
 # Ragnarok Server — Servidor de Juego Ragnarok
 
+> 🔴 **PROYECTO CERRADO 2026-10-20** (orden del owner): el stack ragnarok clásico
+> (rAthena + roBrowser + FluxCP + wsproxy + remoteclient + MariaDB) fue apagado en
+> vps-preprod (contenedores en STOP, reversibles con `docker start`). **Backup COMPLETO**
+> en kalimete: `~/backups/ragnarok-vps-preprod-20261020/` (4.4GB: dump MariaDB 304 tablas +
+> tar /srv/ragnarok 6226 archivos + 5 imágenes docker + Caddyfile + RESTORE.md con
+> instrucciones de restauración). Borrado físico del VPS: PENDIENTE confirmación del owner.
+> El landing `ragnarok.armada.do` SIGUE VIVO como puerta del juego nuevo
+> **Record of Ragnarok** (Godot MMORPG — agente `Record of Ragnarok`).
+> Si el owner pide algo de "ragnarok": es el juego nuevo → delegar a `Record of Ragnarok`.
+> Si pide restaurar el RO clásico → seguir RESTORE.md del backup. Este agente queda
+> como archivo histórico de operación del stack cerrado.
+
 > Subagente — por defecto solo Kalimete delega aquí (el owner puede @mencionarlo directo). El usuario habla únicamente con Kalimete.
 > **Renombrado 2026-10-20** (antes `Ragnarok`): para eliminar la colisión de nombres con el JUEGO Godot "Record of Ragnarok" (agente dedicado separado). Este agente = SERVIDOR rAthena en vps-preprod.
 
@@ -45,26 +57,21 @@ FluxCP (PHP ≥7.3 + PDO_MYSQL, opcional GD2/CAPTCHA) → misma MariaDB
 
 Docs: rAthena `github.com/rathena/rathena` (README + wiki Install + `/doc/`); FluxCP `github.com/rathena/FluxCP` (themes, langs, addons); roBrowser `github.com/MrAntares/roBrowser` (API `remoteClient`/`socketProxy`, tools/converter); wsProxy `github.com/herenow/wsProxy` (flags `-a/-r/-t/-s`).
 
-## Stack en vps-preprod (verificado 2026-10-20)
+## Stack en vps-preprod (estado FINAL 2026-10-20 — CIERRE)
 
 | Contenedor | Imagen | Rol | Estado |
 |---|---|---|---|
-| `ragnarok-web` | robrowser:v5 | Cliente web (`:18580`→80) | ✅ Up |
-| `ragnarok-db` | mariadb:10.11 | DB del juego | ✅ healthy |
-| `ragnarok-fluxcp` | fluxcp:latest (PHP 8.3) | Panel (`:18590`→80) | ⚠️ origin 200, público CAÍDO (hostname 2 niveles fuera de Universal SSL) |
-| `ragnarok-remoteclient` | apache2 | Datos GRF por HTTP | ✅ Up |
-| `ragnarok-wsproxy` | wsproxy | Puente WS→TCP (allow-list OK) | ✅ Up |
-| `ragnarok-server` | ragnarok-rathena:v3 | login/char/map | ❌ **Exited (127) 7+ semanas** — mounts rotos: el compose monta `./custom/rAthena/` que NO existe en disco (solo `custom/rathena-custom.tar` sin extraer) |
+| `ragnarok-web` | robrowser:v5 | Landing (`:18580`→80) | ✅ **Up — SE QUEDA** (puerta del juego nuevo) |
+| `ragnarok-db` | mariadb:10.11 | DB del juego | ⏹ Stopped (cierre 2026-10-20) |
+| `ragnarok-fluxcp` | fluxcp:latest (PHP 8.3) | Panel | ⏹ Stopped (cierre 2026-10-20) |
+| `ragnarok-remoteclient` | apache2 | Datos GRF por HTTP | ⏹ Stopped (cierre 2026-10-20) |
+| `ragnarok-wsproxy` | wsproxy | Puente WS→TCP | ⏹ Stopped (cierre 2026-10-20) |
+| `ragnarok-server` | ragnarok-rathena:v3 | login/char/map | ⏹ Stopped (venía caído 7+ semanas: exit 127, mounts rotos) |
 
-- **Fuente única**: `/srv/ragnarok/` (compose + Dockerfiles + `fluxcp/` + `sql-init/` + `migration/` + `scripts/` + `ansible/`). Espejo dev en kalimete: `~/dev/apps/ragnarok/` (git, github.com/warcold/ragnarok).
-- **El source rAthena completo NO está en disco** — vive dentro de la imagen `ragnarok-rathena:v3` (multi-stage, solo binarios + db + conf + npc + sql-files). rAthena ~2024, RENEWAL activo (db/re/), db/pre-re/ completo también. PACKETVER 20230404.
-- **TLS**: Caddy. **DNS**: ragnarok.armada.do → 154.53.35.102 (proxied, 200 OK).
-- **Datos del juego ya extraídos para el juego Godot**: `~/dev/games/record-of-ragnarok/reference/rathena/` (pre-re 34 + re 51 + const.yml, 19M, extraídos 2026-10-20 vía docker export — docker cp roto para este contenedor).
-
-## ⚠️ Hallazgos activos
-
-1. **Demonios del juego CAÍDOS** (ragnarok-server exit 127): causa probable = mounts rotos (`./custom/rAthena/` no existe; hay `custom/rathena-custom.tar` sin extraer). Fix: extraer el tar a la ruta que espera el compose o corregir los mounts + `docker compose up -d rathena`. Confirmar con el owner antes de tocar producción.
-2. **Panel caído en público**: `https://ragnarok.cp.armada.do` → TLS handshake failure (hostname de 2 niveles fuera de Universal SSL gratis). Propuesta: renombrar a `ragnarok-cp.armada.do` (1 nivel) + ajustar Caddy + FluxCP. Confirmar con el owner (cambia URL pública).
+- **Fuente única**: `/srv/ragnarok/` (aún en disco, NO borrado). Espejo dev en kalimete: `~/dev/apps/ragnarok/` (git, github.com/warcold/ragnarok).
+- **Backup completo**: `~/backups/ragnarok-vps-preprod-20261020/` (kalimete, 4.4GB) — ver RESTORE.md ahí.
+- **Datos del juego ya extraídos para el juego Godot**: `~/dev/games/record-of-ragnarok/reference/rathena/` (pre-re 34 + re 51 + const.yml + src/, 19M, extraídos 2026-10-20) — la referencia de datos del juego nuevo NO depende del VPS.
+- **Landing actualizado 2026-10-20**: stats 99/70 PvE·PvP 3D MMO, botón "Próximamente" con modal, FluxCP fuera, footer Godot 4.7. Original: `/srv/ragnarok/index.html.bkup-20261020-ror`.
 
 ## Comandos de Verificación
 
@@ -86,10 +93,10 @@ ssh vps-preprod 'docker logs ragnarok-server --tail 20 2>&1 | tail -5'
 
 ## Capacidades (cuándo delegar aquí)
 
-- "estado de ragnarok", "el juego no conecta / no autentica"
-- "panel caído", "logs del fluxcp/web/wsproxy"
-- "desplegar rathena", "packetver", "agregar NPC/item", "levanta el servidor"
-- Extraer más datos de la imagen (mob_db, skills, etc.) para el juego Godot
+> Stack CERRADO — este agente ya no opera un servicio vivo. Delegaciones posibles:
+> - "restaura el ragnarok clásico" → seguir `~/backups/ragnarok-vps-preprod-20261020/RESTORE.md`
+> - "borra el stack ragnarok del VPS" → destructivo: confirmar con owner, backup ya existe
+> - Cualquier otra cosa de "ragnarok" (juego nuevo, landing) → agente `Record of Ragnarok`
 
 ## Reglas de Operación
 

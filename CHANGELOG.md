@@ -1,5 +1,13 @@
 ## 2026-10-20
 
+### [17:00] - Ragnarok clásico CERRADO (backup completo) + Record of Ragnarok pivot a MMORPG multiplayer
+- **Tipo**: infra | servicio | docs
+- **Modificado**: vps-preprod contenedores ragnarok (db/fluxcp/remoteclient/wsproxy/server → STOP; ragnarok-web landing se queda); ~/backups/ragnarok-vps-preprod-20261020/ NUEVO (4.4GB); /srv/ragnarok/index.html (landing → contenido juego nuevo; .bkup-20261020-ror en VPS); ~/dev/games/record-of-ragnarok (GDD v1.0 MMORPG + AGENTS.md + docs/CHANGELOG.md); armada-sync: agents/ragnarok-server.md + harness/ragnarok-server.harness.json (estado CERRADO) + MAPA.md
+- **Afecta a**: vps-preprod (stack ragnarok apagado), juego nuevo Record of Ragnarok (scope MMORPG), landing ragnarok.armada.do
+- **Causa**: orden del owner — el juego nuevo es un MMORPG moderno (Godot 4.7.2 headless server + Postgres, multiplayer día 1, zonas PvE/PvP, chars globales); rAthena queda SOLO como referencia de datos (YAMLs ya extraídos en reference/rathena/ del proyecto); el stack rAthena+roBrowser es legacy y venía caído 7+ semanas (exit 127, mounts rotos)
+- **Estado**: ✅ backup verificado (dump MariaDB 304 tablas íntegro + tar /srv 6226 archivos gzip OK + 5 imágenes docker + Caddyfile + RESTORE.md) · ✅ contenedores juego en stop, landing Up HTTP 200 · ✅ landing actualizado (stats 99/70 PvE·PvP 3D MMO, botón Próximamente con modal, FluxCP fuera, footer Godot 4.7) · ✅ docs sincronizadas
+- **Notas**: borrado FÍSICO del VPS (/srv/ragnarok, imágenes, volúmenes) PENDIENTE confirmación del owner — backup ya existe. ragnarok.cp.armada.do caído (FluxCP apagado, esperado). DNS ragnarok.cp.armada.do queda apuntando a nada hasta el borrado. El agente ragnarok-server queda como archivo histórico (restauración vía RESTORE.md).
+
 ### [16:40] - kalimete-ptt REPARADO: servicio en loop de reinicios (6067+) por módulos Python huérfanos tras upgrade 3.13→3.14
 - **Tipo**: servicio | infra
 - **Modificado**: pip --user de kalimete (instalados `evdev` 2.0.0 + `pyudev` 0.24.5 con --break-system-packages); servicio systemd --user kalimete-ptt.service reiniciado

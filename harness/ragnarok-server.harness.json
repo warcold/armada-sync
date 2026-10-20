@@ -1,18 +1,20 @@
 {
   "harness": "ragnarok-server",
-  "updated": "2026-10-01",
-  "agent_file": "~/armada-sync/agents/ragnarok.md",
+  "updated": "2026-10-20",
+  "agent_file": "~/armada-sync/agents/ragnarok-server.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Ragnarok rAthena+FluxCP+roBrowser (/srv/ragnarok)",
-  "vivo_2026_10_01": "fluxcp/mariadb/robrowser/remoteclient Up 4w; demonios juego CAIDOS (CHANGELOG 10-01)",
-  "live_check": "docker ps -f name=ragnarok en vps-preprod",
+  "scope": "Ragnarok rAthena+FluxCP+roBrowser (/srv/ragnarok) — CERRADO 2026-10-20",
+  "estado": "CERRADO: contenedores del juego en STOP (reversible); landing ragnarok-web Up (puerta del juego nuevo Record of Ragnarok); backup completo en ~/backups/ragnarok-vps-preprod-20261020/ (4.4GB); borrado fisico del VPS PENDIENTE confirmacion owner",
+  "vivo_2026_10_20": "ragnarok-web Up (landing); ragnarok-db/fluxcp/remoteclient/wsproxy/server Stopped (cierre ordenado por owner)",
+  "live_check": "docker ps -f name=ragnarok en vps-preprod (solo ragnarok-web debe estar Up)",
+  "restore": "~/backups/ragnarok-vps-preprod-20261020/RESTORE.md",
   "upstream": {
-    "fuente": "Ragnarok rAthena+FluxCP+roBrowser (/srv/ragnarok)",
+    "fuente": "Ragnarok rAthena+FluxCP+roBrowser (/srv/ragnarok) — stack cerrado",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
   },
   "docs": [
-    "~/armada-sync/agents/ragnarok.md"
+    "~/armada-sync/agents/ragnarok-server.md"
   ],
   "changelog": "~/armada-sync/CHANGELOG.md",
   "name": "Ragnarok Server",

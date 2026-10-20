@@ -84,8 +84,8 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### 3. vps-preprod (154.53.35.102) — VPS Production
 - User: root, SSH 1333, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-preprod`
-- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do
-- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, ragnarok.cp.armada.do, scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied)
+- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do (landing juego nuevo RoR), scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do
+- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, ragnarok.cp.armada.do (caído: FluxCP apagado), scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied)
 - Proyectos locales: kalimete, victoria, jonas (fuera), Windows (10.0.0.64)
 - UFW: active (solo rangos CF en DOCKER-USER)
 - OpenVPN: active (openvpn@server.service)
@@ -182,7 +182,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | Victoria Server | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
 | PetSuite | Proyecto PetSuite (pets.armada.do) | ✅ |
 | Taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
-| ragnarok-server | SERVIDOR rAthena (vps-preprod, ragnarok.armada.do) — renombrado desde `Ragnarok` (2026-10-20, anti-colisión con el juego); NO es el juego Godot | ✅ |
+| ragnarok-server | SERVIDOR rAthena (vps-preprod) — 🔴 **CERRADO 2026-10-20** (contenedores stop, backup completo en kalimete `~/backups/ragnarok-vps-preprod-20261020/` 4.4GB; landing ragnarok-web vivo como puerta del juego nuevo; borrado físico VPS pendiente owner) | ⏹ |
 | Nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
 | Authentik | SSO Authentik (auth.armada.do) | ✅ |
 | DocuSeal | Proyecto DocuSeal | ✅ |
@@ -193,7 +193,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | magantech | Website cliente MaganTech (magantech.com.do): preprod :8093 + dominio local; prod cPanel vía erpsuite/v1/ops (local-first) — NUEVO (2026-10-17) | ✅ |
 | micaserogou | Website cliente Micaserogou (micaserogou.com): preprod :8094 + dominio local; prod cPanel hosting externo (deploy pendiente) — NUEVO (2026-10-20) | ✅ |
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
-| record-of-ragnarok | JUEGO Godot activo: ARPG Record of Ragnarok (mecánicas RO pre-renewal 99/70 × temática anime × estética Enshrouded) — agente dedicado + MCP godot-ror, proyecto ~/dev/games/record-of-ragnarok/ — NUEVO (2026-10-20) | ✅ |
+| record-of-ragnarok | JUEGO Godot activo: **MMORPG** Record of Ragnarok (multiplayer día 1: zonas PvE/PvP, chars globales Postgres, Godot headless server; mecánicas RO pre-renewal 99/70 × temática anime × estética Enshrouded; landing = ragnarok.armada.do) — agente dedicado + MCP godot-ror, proyecto ~/dev/games/record-of-ragnarok/ — NUEVO (2026-10-20) | ✅ |
 | game-studio | Fábrica de juegos 3D desde cero (Blender MCP + Godot MCP + victoria; pipeline 7 fases) — NUEVO (2026-10-18) | ✅ |
 | blender | Blender 5.0.1 + MCP TCP :9876 (decimate/retopo GLBs, escenas procedurales; dominio ~/dev/games/) — NUEVO en registro (2026-10-20) | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
