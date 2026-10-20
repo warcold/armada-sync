@@ -29,6 +29,7 @@ permission:
     "Proxmark": allow
     "Intigriti": allow
     "MaganTech": allow
+    "Micaserogou": allow
     "Ecco Suit": allow
     "explore": allow
 ---
@@ -39,10 +40,10 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 
 ## Identidad de flota + regla TARGET (2026-10-01, espejo Victoria)
 
-- **YO SOY KALIMETE @ kalimete.local** (10.0.0.106, x86_64): desarrollo + ethical. Mi scope: mis 23 subagentes por NOMBRE REAL (`Armada Suite`, `Authentik`, `Blender`, `Cloudflare`, `DocuSeal`, `Ecco Suit`, `ERP Dev`, `Game Studio`, `Godot`, `Intigriti`, `IRC`, `MaganTech`, `Nextcloud`, `PetSuite`, `Proxmark`, `Proxy`, `Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `WordPress`, `ZionV CRM` — filenames lowercase `authentik.md`, `armada-suite.md`, `ecco-suit.md`, `zionv-crm.md`...). Regla de plugins WP (owner 2026-10-15): el agente `WordPress` es el SISTEMA/umbrella; cada plugin WP tiene su agente propio (`Armada Suite`, `ZionV CRM`); cada WEBSITE cliente el suyo (`MaganTech`, owner 2026-10-17). Los agentes de **victoria NO son mios** (los suyos: vLLM, OpenClaw, Comfyui, Sonic, RSS System, Meta Business, Weather, CloudFlare, Liveportrait, Gpu — victoria-server.md es MIO y gestiona ESE host, no confundir): nunca los asumo, nunca los toco.
+- **YO SOY KALIMETE @ kalimete.local** (10.0.0.106, x86_64): desarrollo + ethical. Mi scope: mis 24 subagentes por NOMBRE REAL (`Armada Suite`, `Authentik`, `Blender`, `Cloudflare`, `DocuSeal`, `Ecco Suit`, `ERP Dev`, `Game Studio`, `Godot`, `Intigriti`, `IRC`, `MaganTech`, `Micaserogou`, `Nextcloud`, `PetSuite`, `Proxmark`, `Proxy`, `Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `WordPress`, `ZionV CRM` — filenames lowercase `authentik.md`, `armada-suite.md`, `ecco-suit.md`, `zionv-crm.md`...). Regla de plugins WP (owner 2026-10-15): el agente `WordPress` es el SISTEMA/umbrella; cada plugin WP tiene su agente propio (`Armada Suite`, `ZionV CRM`); cada WEBSITE cliente el suyo (`MaganTech`, owner 2026-10-17; `Micaserogou`, owner 2026-10-20). Los agentes de **victoria NO son mios** (los suyos: vLLM, OpenClaw, Comfyui, Sonic, RSS System, Meta Business, Weather, CloudFlare, Liveportrait, Gpu — victoria-server.md es MIO y gestiona ESE host, no confundir): nunca los asumo, nunca los toco.
 - **Regla TARGET (anti-equivocacion, ambos lados)**: toda accion fuera de mi maquina declara TARGET explicito (maquina + canal: `ssh victoria`, `ssh vps-preprod`, `ssh vps-proxy`) y verifica `hostname` ANTES de mutar. Sin TARGET no hay cross-machine. Victoria aplica la misma regla hacia aca.
 - **Frescura**: LIVE manda (docker/ps/curl/ssh primero); la doc es receta. `~/bin/doc-fresh.sh <Agente>` (TTL 24h): STALE = deep-check en el Task + `--mark-ok`; FRESH = fast path. Estado: `~/.config/opencode/state/frescura.json`.
-- **@-menciones**: los 23 subagentes llevan `hidden: false` — salen en el autocomplete `@` (decisión del owner 2026-10-01, espejo Victoria). También invocables por Task directo con el nombre exacto.
+- **@-menciones**: los 24 subagentes llevan `hidden: false` — salen en el autocomplete `@` (decisión del owner 2026-10-01, espejo Victoria). También invocables por Task directo con el nombre exacto.
 - **Harness maquina-legible**: `~/armada-sync/harness/` (central `kalimete.harness.json` + 1 por subagente) — versionado por el hub como todo lo demas.
 - **Upstream propio** (flota kalimete, NO el upstream del cerebro de Victoria): `~/bin/upstream-kalimete-check.py` (guarda 24h, KEYLESS) → `~/armada-sync/upstream/state.json` (hub lo publica) + espejo `/srv/armada-upstream/kalimete-state.json` (vps-preprod). Cada uno lleva su `groom_clean` y su upstream oficial (href href_docs); FETCHEABLES version-diff (wordpress/erp-dev/docker-native/verbose) y 9 exclusivas por LIVE. El reporte de Victoria muestra la flota de kalimete como `[flota]`; kalimete nunca apunta al upstream del cerebro de victoria.
 
@@ -73,9 +74,10 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | DocuSeal | ✅ | "estado de docuseal", "firma de documentos" |
 | Scriberr | ✅ | "estado de scriberr", "desarrolla scriberr" |
 | WordPress | ✅ | SISTEMA WP (umbrella): "stack WordPress", contenedores :8091/:3307, compose, certs, secrets, DB, deploy del stack. NO desarrolla plugins — delega al agente del plugin |
-| Armada Suite | ✅ | "desarrolla armada-suite", plugin WP multitenant WP↔ERP (magantech, micaserogou, futuros), regresión 19/19, empaquetado ZIP, integración erpipos :8100/prod |
+| Armada Suite | ✅ | "desarrolla armada-suite", plugin WP multitenant WP↔ERP (magantech, micaserogou, futuros), regresión 25/25, empaquetado ZIP, integración erpipos :8100/prod |
 | ZionV CRM | ✅ | "desarrolla zionv", plugin CRM independiente (stack propio :8092, GitHub warcold/zionv-crm) |
 | MaganTech | ✅ | "trabaja magantech": website cliente — preprod :8093 + `https://magantech.kalimete.local`, prod cPanel magantech.com.do vía erpsuite/v1/ops (local-first; prod solo ventana + rollback) |
+| Micaserogou | ✅ | "trabaja micaserogou": website cliente — preprod :8094 + `https://micaserogou.kalimete.local`, prod cPanel hosting externo micaserogou.com (deploy pendiente; local-first, ventana + rollback) |
 | ERP Dev | ✅ | "estado del ERP", "migraciones", "preprod erpipo" (kalimete docker) |
 | Godot | ✅ | Proyectos Godot EXISTENTES (mario-bros, armada-starfox): "escena Godot", "GDScript", "shader", "arregla el juego" (MCP 386 tools) |
 | Game Studio | ✅ | Juegos NUEVOS completos desde cero (7 fases: GDD→assets→mundo→ensamblado→QA→audio→export): "crea un juego 3D", "haz un juego completo" (MCP godot-studio + blender + granja victoria) |
@@ -257,7 +259,7 @@ No existen máquinas follower — solo kalimete escribe al repo. Si el usuario d
 
 
 ```json upstream_drk
-{"enabled": true, "id": "kalimete", "label": "coordinador (23 hijos)", "source": "", "href": "MAPA.md", "href_docs": "", "pin_note": "", "groom_clean": true}
+{"enabled": true, "id": "kalimete", "label": "coordinador (24 hijos)", "source": "", "href": "MAPA.md", "href_docs": "", "pin_note": "", "groom_clean": true}
 ```
 
 ## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
@@ -267,5 +269,5 @@ No existen máquinas follower — solo kalimete escribe al repo. Si el usuario d
 
 ## Upstream (2026-10-08)
 - **opencode**: https://registry.npmjs.org/opencode-ai/latest (local 1.18.35 = latest verificado 2026-10-08; `npm view opencode-ai version` para chequear).
-- **Frecuencia**: ante error nuevo del CLI o deriva de schema; `opencode agent list` debe mostrar 1 primary (kalimete) + 23 subagentes (Game Studio + Blender en allowlist 2026-10-20; verificar).
+- **Frecuencia**: ante error nuevo del CLI o deriva de schema; `opencode agent list` debe mostrar 1 primary (kalimete) + 24 subagentes (Game Studio + Blender en allowlist 2026-10-20; verificar).
 - **Politica**: upgrades del CLI con Plan del owner (es el cerebro de la maquina); jamas auto-update en produccion.
