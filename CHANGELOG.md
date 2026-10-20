@@ -1,3 +1,13 @@
+## 2026-10-20
+
+### [00:53] - Gaming: permisos Game Studio+Blender en kalimete + reference rAthena + plan juego Ragnarok×Enshrouded
+- **Tipo**: agente | config | docs
+- **Modificado**: agents/kalimete.md (allowlist 21→23, tabla, conteos), MAPA.md (MCPs + fila blender), ~/dev/games/AGENTS.md (ledger), ~/dev/games/reference/rathena/ (NUEVO, 17M)
+- **Afecta a**: kalimete (delegación gaming), dominio ~/dev/games/
+- **Causa**: owner pidió evaluar MCPs godot + agentes gaming + organizar ~/dev/games + arrancar juego nuevo (mecánicas Ragnarok, gráficos Enshrouded, 1 mapa, 99/70 sin advanced)
+- **Estado**: ✅ permisos+docs aplicados; ⚠️ juego en plan (nombre + pre-re por confirmar); mario-bros cleanup pendiente confirmación
+- **Notas**: GAP crítico: Game Studio y Blender existían (repo+symlink+harness) pero NO en permission.task → kalimete no podía delegarles. MCPs godot: 2 instancias correctas por diseño. rAthena: source vive SOLO en la imagen Docker del server (multi-stage, sin src/) — DBs extraídas (pre-re 34 + re 51 + const.yml), fórmulas battle/status/pc.cpp desde upstream. Server ragnarok: demonios siguen caídos (exit 127, mounts rotos custom/rAthena).
+
 ## 2026-10-19
 
 ### [23:36] - Diagnóstico chatbot MaganTech: el error del owner vive en PROD + config remota `ia` denegada por diseño (evaluación Victoria completada)
