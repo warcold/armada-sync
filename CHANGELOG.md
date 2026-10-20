@@ -1,3 +1,13 @@
+## 2026-10-19
+
+### [21:14] - IA nativa Victoria por defecto en armada-suite + chatbot MaganTech preprod funcional (template multi-tenant)
+- **Tipo**: servicio | config
+- **Modificado**: plugin armada-suite (source dev-lab + copia preprod MaganTech, 4 archivos: Bootstrap.php, ChatEngine.php, LegacyChatbotAdmin.php, AdminMenu.php — con .bkup) + docker-compose.yml preprod MaganTech (env vars ERPCBOT_LLM_URL/KEY) + CHANGELOG del plugin (entrada 5.4.3)
+- **Afecta a**: MaganTech preprod :8093 (chatbot operativo) + TODOS los negocios futuros del plugin (patrón template)
+- **Causa**: owner 2026-10-19 — "todos los negocios que hagamos va a tener AI pero nuestra AI por defecto (no debemos mostrar parámetros... es nativo del plugin), pero también la habilidad de conectar sus modelos (compatibilidad OpenAI)... puede ser múltiples negocios; MaganTech queda funcional como modelo de ejemplo"
+- **Estado**: ✅ end-to-end verificado — chatbot preprod responde con LLM real de Victoria (POST erpsuite_chat → success; antes: erpcbot_no_config); contenedores healthy; source↔preprod sincronizados (cmp byte-idéntico)
+- **Notas**: Arquitectura: IA nativa = gateway Victoria (invisible, defaults en erpcbot_defaults: URL pública victoria.armada.do/v1 + model -normal sin reasoning; key JAMÁS en código — se provisiona por ambiente: preprod compose env LAN 10.0.0.5:8010, prod wp-config/env). Cadena resolve_ia: custom-DB > env > nativo. UI: placeholders "Dejar vacío = asistente nativo activo", URL de Victoria jamás visible. Follow-ups: (1) key dedicada por negocio en gateway Victoria (metering por tenant — requiere owner, Victoria solo-lectura); (2) provisioning key en prod cPanel; (3) agente Armada Suite: bump 5.4.3 + regresión + ZIP canónico (sin ZIP nuevo el próximo deploy pisa estos cambios); (4) smoke-8093.sh completo pendiente.
+
 ### [23:45] - EccoSuit CIERRE: primer admin + backups verificados + health monitor + SSH solo-llaves
 - **Tipo**: servicio | seguridad | agente
 - **Modificado**: VPS ecco (ops completo) + agents/ecco-suit.md (ops kit, seguridad, rutina) + ~/dev/eccoqualita/ops/ (kit nuevo: prod-first-admin.ts, prod-verify-admin.ts)
