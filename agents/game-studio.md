@@ -58,10 +58,9 @@ ss -tln | grep 9876                        # verificar listener
 
 ## Workspace y límite de un proyecto (dominio ~/dev/games/, 2026-10-19)
 
-`godot-mcp` fija UN proyecto vía `-p`. Desde 2026-10-19 hay **DOS MCPs** en `opencode.jsonc`:
+`godot-mcp` fija UN proyecto vía `-p`. Desde 2026-10-20 hay **UN solo MCP godot** en `opencode.jsonc`:
 
-1. **`godot-studio`** → `~/dev/games/godot/studio/current` — **TUYO por defecto**, ya configurado. `current` es un symlink al juego activo (hoy `_starter`, proyecto mínimo; al crear el primer juego: `ln -sfn <nombre-juego> ~/dev/games/godot/studio/current`).
-2. `godot` → `mario-bros` — del agente Godot (proyectos existentes).
+1. **`godot-studio`** → `~/dev/games/godot/studio/current` — **el MCP godot único** (el MCP `godot` que apuntaba a `mario-bros` fue removido al borrarse el proyecto). `current` es un symlink al juego activo (hoy `record-of-ragnaroks`; para cambiar de juego: `ln -sfn <nombre-juego> ~/dev/games/godot/studio/current`).
 
 El workspace real vive en `~/dev/games/godot/studio/<nombre-juego>/`. Alternativa sin MCP (funciona siempre): `godot --headless --path <proyecto> ...` + escritura directa de archivos `.tscn/.gd/.gdshader`.
 

@@ -1,17 +1,17 @@
 {
   "harness": "game-studio",
-  "updated": "2026-10-19",
+  "updated": "2026-10-20",
   "agent_file": "~/armada-sync/agents/game-studio.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Fábrica de juegos 3D completos desde cero (tipo Enshrouded/survival) en kalimete: GDD → concept art (victoria) → assets 3D (Blender MCP + CC0) → mundo procedural → ensamblado Godot MCP → QA visual iterativo (screenshots + godot.log) → audio (TTS/SFX) → export. Límite vs agente Godot: Godot = proyectos existentes (mario-bros, armada-starfox); Game Studio = pipeline verde. Workflow inspirado en video validado 'Claude Fable 5 Makes FULL GAME Using Godot MCP and Blender MCP' (analizado 2026-10-18: gameplay primero, QA visual iterativo, no reinventar efectos, assets 10-20k faces).",
+  "scope": "Fábrica de juegos 3D completos desde cero (tipo Enshrouded/survival) en kalimete: GDD → concept art (victoria) → assets 3D (Blender MCP + CC0) → mundo procedural → ensamblado Godot MCP → QA visual iterativo (screenshots + godot.log) → audio (TTS/SFX) → export. Límite vs agente Godot: Godot = juegos ya creados del studio (via current); Game Studio = pipeline verde. Workflow inspirado en video validado 'Claude Fable 5 Makes FULL GAME Using Godot MCP and Blender MCP' (analizado 2026-10-18: gameplay primero, QA visual iterativo, no reinventar efectos, assets 10-20k faces).",
   "vivo_2026_10_18": "Stack montado y verificado end-to-end el mismo día: (1) Blender 5.0.1 apt + addon mcp-for-blender v2.2.0 en ~/.config/blender/5.0/scripts/addons/blender_mcp.py, habilitado en userpref (default_set=True); requests 2.34.2 instalado vía pip --target ~/.config/blender/5.0/scripts/addons/modules (Python de Blender = uv cpython-3.14 AISLADO, no ve system site-packages; PEP668 bloquea pip normal). (2) Servidor TCP 127.0.0.1:9876 verificado: uvx mcp-for-blender (stdio) → TCP → addon → get_scene_info respondió 'Scene | Cube, Light, Camera' (9 tools; execute_blender_code es la potente). (3) HALLAZGOS: addon rechaza auto-start en blender --background (bpy.app.background → None); variante 'blender --quiet' bajo xvfb NUNCA abrió :9876 (>3min); la GUI completa 'xvfb-run -a blender' sí levanta auto-start en segundos. start-blender.sh corregido sin --quiet. (4) MCP blender añadido a opencode.jsonc (backup opencode.jsonc.bkup-blender-mcp-20261018): uvx mcp-for-blender + BLENDER_HOST=localhost BLENDER_PORT=9876; JSONC validado (mcp keys: godot, blender). NOTA: cambiar -p de godot-mcp al iniciar sesión Game Studio (hoy apunta mario-bros; workspace studio/current es el target).",
   "live_check": "ss -tln | grep 9876  (si vacío: ~/dev/games/blender/blender-mcp/start-blender.sh)",
   "checks": [
     "ss -tln | grep 9876  (addon Blender escuchando)",
     "blender --version  (5.0.1)",
     "godot --version  (4.7.2)",
-    "python3 -c \"import json; d=json.load(open('/home/warcold/.config/opencode/opencode.jsonc')); print(list(d['mcp'].keys()))\"  (godot, godot-studio, blender)"
+    "python3 -c \"import json; s=open('/home/warcold/.config/opencode/opencode.jsonc').read(); print('godot-studio' in s and 'mario-bros' not in s)\"  (True)"
   ],
   "upstream": {
     "fuente": "blender-mcp: github ahujasid/blender-mcp (clon en ~/dev/games/blender/blender-mcp; paquete PyPI mcp-for-blender 2.2.0). godot-mcp: npm @yanhuifair/godot-mcp v1.12.3 (latest 1.12.9, update menor pendiente). Blender: Debian/Kali apt blender 5.0.1. Godot: 4.7.2 binario oficial.",
@@ -24,6 +24,10 @@
     "/tmp/opencode/refvideo.json (transcripción + frames del video de referencia)"
   ],
   "changelog": [
+    {
+      "fecha": "2026-10-20",
+      "evento": "mario-bros + armada-starfox BORRADOS (owner). MCP godot removido; godot-studio único. Primer juego del studio: record-of-ragnaroks (ARPG Record of Ragnarok × mecánicas RO pre-renewal) — Fase 0 (scaffold+GDD) por kalimete; pipeline fases 1-7 para Game Studio."
+    },
     {
       "fecha": "2026-10-19",
       "evento": "Dominio ~/dev/games/ (mudanza completa) + MCP godot-studio dedicado (studio/current, sin cambio manual de -p) + agente Blender hermano + staging ~/dev/games/assets/ + ledger ~/dev/games/AGENTS.md."
