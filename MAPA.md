@@ -29,7 +29,7 @@
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
 - Docker: 7 containers (tapmap, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
-- **opencode.jsonc**: 4 providers + MCP `godot` (verificado 2026-10-01; el archivo es la fuente única)
+- **opencode.jsonc**: 4 providers + MCPs `godot`, `godot-studio`, `blender` (verificado 2026-10-20; el archivo es la fuente única)
   1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
       - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
       - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)
@@ -192,6 +192,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
 | godot-dev | Juegos Godot 4.x + MCP 386 tools | ✅ |
 | game-studio | Fábrica de juegos 3D desde cero (Blender MCP + Godot MCP + victoria; pipeline 7 fases) — NUEVO (2026-10-18) | ✅ |
+| blender | Blender 5.0.1 + MCP TCP :9876 (decimate/retopo GLBs, escenas procedurales; dominio ~/dev/games/) — NUEVO en registro (2026-10-20) | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
 | intigriti | Bug bounty Intigriti (~/dev/ethical-hacking, kalimetehunt.sh) — NUEVO (2026-10-08) | ✅ |
 | ecco-suit | VPS Ecco Qualitá (62.171.144.58, `ssh ecco`): host Docker multi-servicio; hoy EccoSuite en suit.eccoqualita.com — NUEVO (2026-10-19) | ✅ |
