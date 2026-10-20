@@ -1,5 +1,13 @@
 ## 2026-10-20
 
+### [02:20] - Auditoría del agente Victoria Server tras el provisioning delegado: fixes de contradicción + deriva en magantech.md/armada-suite.md
+- **Tipo**: docs (auditoría pedida por el owner: "¿actualizaste Victoria Server con todas las nuevas instrucciones, accesos y límites?")
+- **Modificado**: agents/victoria-server.md (4 fixes), agents/magantech.md (1 fix de deriva), agents/armada-suite.md (estándar nuevo), CHANGELOG.md
+- **Afecta a**: delegación del principal kalimete → Victoria Server; flujo de llaves de negocio de armada-suite
+- **Hallazgos**: (1) VERIFICADO OK: el symlink `~/.config/opencode/agent/victoria-server.md` → armada-sync es LIVE (las ediciones 01:45 cargan; `opencode agent list` muestra `Victoria Server (subagent)`); sin secretos en el repo (grep limpio, sync GitHub ya propagó). (2) HUECO 1 — contradicción: las reglas "victoria = SOLO LECTURA, NUNCA ESCRIBIR" no tenían la excepción del provisioning → un agente podía leerlo como prohibido. (3) HUECO 2 — frontmatter description no mencionaba provisioning → el principal no sabía delegar tareas de llaves. (4) DERIVA — magantech.md aún decía "key dedicada magantech — owner la crea en panel" cuando `armada-magantech` YA existe (provisionada 01:45). (5) HUECO 3 — armada-suite.md no documentaba el estándar 1-llave-por-negocio.
+- **Estado**: ✅ 4 fixes en victoria-server.md (description + regla CRÍTICA con excepción + tabla servicios + reglas de operación #1) · ✅ magantech.md pendiente corregido (la key existe, ruta del plaintext) · ✅ armada-suite.md §Integración con Victoria con el estándar completo · micaserogou.md sin cambios justificados (su chatbot no existe aún; el estándar vive en armada-suite.md)
+- **Notas**: backups .bkup-20261020-provision-audit ×3. La única escritura permitida en victoria es `POST /v1/provision-key` (API, no SSH); filesystem/config de victoria sigue intocable para kalimete.
+
 ### [01:45] - Provisioning delegado en victoria: kalimete crea llaves de negocio armada-suite via POST /v1/provision-key (cap provision)
 - **Tipo**: seguridad | servicio | docs (cambio en VICTORIA, documentado aquí por procedencia cross-machine — autorización del owner)
 - **Modificado**: (victoria) llm-gateway.py + sense_auth.py + admin_template.html + DB (tabla provision_log, cap en llave kalimete); (kalimete, docs) agents/victoria-server.md, harness/victoria-server.harness.json, CHANGELOG.md
