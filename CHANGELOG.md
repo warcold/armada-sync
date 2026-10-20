@@ -1,5 +1,22 @@
 ## 2026-10-20
 
+### [01:45] - Provisioning delegado en victoria: kalimete crea llaves de negocio armada-suite via POST /v1/provision-key (cap provision)
+- **Tipo**: seguridad | servicio | docs (cambio en VICTORIA, documentado aquí por procedencia cross-machine — autorización del owner)
+- **Modificado**: (victoria) llm-gateway.py + sense_auth.py + admin_template.html + DB (tabla provision_log, cap en llave kalimete); (kalimete, docs) agents/victoria-server.md, harness/victoria-server.harness.json, CHANGELOG.md
+- **Afecta a**: armada-suite (chatbots IA de magantech.com.do, micaserogou.com y próximos negocios), script `armada-llm-provision` (por construir)
+- **Causa**: owner pidió evaluar cómo kalimete crearía llaves de servicio LLM para los proyectos web con su propia llave (sesión ses_ea97154aeffeAWE9n5gdAqrm8V). La propuesta original (key admin provisioner) NO funcionaba: POST /admin/keys exige sesión de panel (ADMIN_PASS), no acepta llaves API. Solución de menor privilegio: endpoint scoped + cap `provision` en la llave kalimete.
+- **Estado**: ✅ E2E completo: 403 sin cap · 201 con cap (rol services + caps [llm] + prefijo armada- forzados) · llave nueva chatea 200 OK · llave nueva NO provisiona (cero escalada) · readonly 403 · provision_log con IP 10.0.0.106 · **primera llave de negocio `armada-magantech` provisionada DESDE kalimete** (plaintext 600 en victoria: `~/.victoria-custom/secrets/armada-magantech.key`)
+- **Notas**: el endpoint FIJA rol services + caps ["llm"] + prefijo `armada-<slug>` (el cliente solo elige slug/owner/budget/expiry); máx 10 creaciones/hora por provisionadora (429 provision_rate_limited); auditoría `provision_log`; documentado en `/v1/config-guide` → `provision_api` (auto-descriptivo). Pendientes: script `armada-llm-provision` sobre este endpoint; pegar `armada-magantech` en wp-admin prod (Asistente IA); rotar `servicios-alfredo-pro-llc` (expuesta en chat) cuando el tráfico migre. Detalle técnico: CHANGELOG-vllm.md de victoria 2026-10-20 01:45 EDT.
+
+
+### [01:41] - Gaming: mario-bros + armada-starfox BORRADOS + proyecto nuevo "Record of Ragnaroks" (Fase 0)
+- **Tipo**: agente | config | docs
+- **Modificado**: ~/dev/games/godot/ (mario-bros 3.9M/517 archivos y armada-starfox 39M/391 archivos BORRADOS por orden del owner), opencode.jsonc (MCP `godot` removido — apuntaba a mario-bros; queda `godot-studio` como único MCP godot), agents/godot-dev.md + game-studio.md + kalimete.md (refs a juegos borrados), harness godot-dev + game-studio, MAPA.md, ~/dev/games/AGENTS.md + READMEs, NUEVO studio/record-of-ragnaroks/ (scaffold + GDD Fase 0)
+- **Afecta a**: dominio ~/dev/games/ completo + agentes Godot/Game Studio
+- **Causa**: owner — "Borra tanto mario-bross y todo lo relacionado al juego, tambien armada-starfox, vamos a manejar este nuevo proyecto arpg, Record of Ragnaroks como la serie animada... peleas de dioses"
+- **Estado**: ✅ todo aplicado; tar de cortesía efímero en /tmp/opencode/juegos-viejos-20261020.tar.gz (37M, se pierde al reiniciar — mario-bros era git SIN remote)
+- **Notas**: Record of Ragnaroks = ARPG Godot 4.7.2: mecánicas RO pre-renewal 99/70 sin advanced (port de rAthena desde reference/rathena/) × temática anime Shuumatsu no Valkyrie (torneo dioses vs campeones; boss fights elementales; valkyrie Völundr) × estética Enshrouded vía granja. MVP: 1 mapa Valhalla + 8-10 mobs stats reales + progresión 99/70 + DUELO 1 vs THOR. Siguiente: delegar fases 0.5-7 a Game Studio (sesión nueva).
+
 ### [01:11] - Alta website micaserogou.com: preprod verificado + agente Micaserogou + documentación de flota (24 subagentes)
 - **Tipo**: agente | config | docs | servicio
 - **Modificado**: agents/micaserogou.md (NUEVO), harness/micaserogou.harness.json (NUEVO), ~/.config/opencode/agent/micaserogou.md (symlink), agents/kalimete.md (allowlist 23→24, tabla, conteos), MAPA.md (topología + tabla de agentes), README-HUB.md (inventario, dominios, agentes, acciones), websites/micaserogou.com/docs/README.md (secreto redactado), CHANGELOG.md

@@ -57,11 +57,11 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - `victoria-llm-gateway` (systemd): FastAPI en :8010
 - Auth por bearer token `vllm-key-<64hex>`
 - DB SQLite: `/home/victoria/.victoria-llm/llm-gateway.db`
-- Llaves (nombres+roles, nunca secrets): alfredo/victoria (admin), juancarlos/justin-t/jordan-diaz/michael-prestol/kalimete (coder; kalimete +llm/art/tts/whisper), servicios-alfredo-pro-llc/kalimete-ptt (services), victoria-openclaw-sandbox (art), warcold/erp-bot (readonly). Límites: prompt 220K, output 32K, rate 120/min.
+- Llaves (nombres+roles, nunca secrets): alfredo/victoria (admin), juancarlos/justin-t/jordan-diaz/michael-prestol/kalimete (coder; kalimete +llm/art/tts/whisper/provision), servicios-alfredo-pro-llc/kalimete-ptt (services), victoria-openclaw-sandbox (art), warcold/erp-bot (readonly). Límites: prompt 220K, output 32K, rate 120/min.
 
 ## Generar contenido desde kalimete (imágenes, video, voz — 2026-10-07)
 
-La llave `kalimete` (coder + caps `["llm","art","tts","whisper"]`) abre TODA la
+La llave `kalimete` (coder + caps `["llm","art","tts","whisper","provision"]`) abre TODA la
 granja de contenido de victoria desde LAN — sin pedir nada extra. La llave es
 la del provider `vllm`/`vllm-lan` del `opencode.jsonc` (extraer sin mostrarla
 — ver skill `art`). **BASE**: LAN `http://10.0.0.5:8010` (o
@@ -79,6 +79,7 @@ la del provider `vllm`/`vllm-lan` del `opencode.jsonc` (extraer sin mostrarla
 | **Animación foto→mp4** (cutscenes) | `POST :18861/animate {"foto_b64", "preset"?, "guia_b64"?}` → `GET :18861/file/<n>.mp4` | skill `assets-3d` — presets con `GET :18861/presets` |
 | Talking-head UI | `victoria.local/liveportrait/` (browser) | tab 🎙️ Estudio Podcast |
 | **VLM** (opinar sobre imágenes) | `POST /v1/chat/completions` con `image_url` | el modelo local ES VLM nativo (image input en chat) |
+| **Provisionar llave de negocio** (armada-suite: chatbots/plugins web) | `POST /v1/provision-key {"name":"<slug>"}` | 201 → plaintext UNA vez. Rol services + caps [llm] + prefijo `armada-` FIJOS (cero escalada); máx 10/hora → 429 `provision_rate_limited`; auditoría `provision_log` en victoria. Detalle: `/v1/config-guide` → `provision_api` |
 
 **Templates de imagen** (verificados E2E 2026-10-07): `z-image-turbo` (rápido
 8 steps, DEFAULT, 1024², rango 640-1344) · `flux-schnell` (calidad FLUX 4
@@ -139,7 +140,7 @@ ssh victoria 'curl -s -m 4 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/
 
 - Cap de voz: `xtts` RENOMBRADA a `tts` en TODO el sistema (gateway, sense_auth,
   panel, DB, landing). La llave kalimete quedo `["llm","art","tts","whisper"]`.
-- `ALL_CAPABILITIES` (las 7 caps) vive SOLO en `sense_auth.py` — el gateway la
+- `ALL_CAPABILITIES` (las 8 caps — `provision` añadida 2026-10-20) vive SOLO en `sense_auth.py` — el gateway la
   importa (fuente unica; antes duplicada = deriva garantizada).
 - Los 4 bridges UNIX socket del sandbox (tts/video/whois/admin) estan
   ENDURECIDOS: thread por conexion + timeouts. Si un wrapper del sandbox
@@ -147,6 +148,18 @@ ssh victoria 'curl -s -m 4 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/
 - El ensure-loop de victoria ahora REINICIA los bridges cuando cambia su md5
   (antes copiaba el archivo y el proceso vivo seguia con codigo viejo).
 - Repo git de victoria: commit a6139aa (10-04) con todo lo anterior.
+
+## 2026-10-20 (documentado por Victoria, autorización del owner)
+
+- **Provisioning delegado**: la llave `kalimete` ahora tiene la cap `provision`
+  → `POST /v1/provision-key` del gateway crea llaves de NEGOCIO para
+  armada-suite (1 llave por negocio: metering/revocación/slots aislados). El
+  servidor FIJA rol services + caps [llm] + prefijo `armada-<slug>` — la llave
+  creada no provisiona ni usa sentidos (cero escalada). Máx 10/hora por
+  provisionadora; auditoría en `provision_log`. El script
+  `armada-llm-provision` usa este endpoint (NO `/admin/keys` — ese exige
+  sesión de panel con ADMIN_PASS y NO acepta llaves API). Primera llave creada
+  desde kalimete: `armada-magantech` (E2E 201 desde 10.0.0.106 + chat 200 OK).
 
 ## 2026-10-19 (documentado por Victoria, autorización del owner)
 
