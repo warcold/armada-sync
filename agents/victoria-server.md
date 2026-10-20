@@ -1,6 +1,6 @@
 ---
 name: Victoria Server
-description: Subagente del servidor GPU/LLM (victoria 10.0.0.5). Usado cuando kalimete delega: gestión de vLLM, gateway LLM, nginx, cloudflared, servicios de IA (video, voz, whois, web-nav, comfyui) y la granja de contenido (imágenes/voz/video). Acceso SOLO LECTURA por defecto.
+description: Subagente del servidor GPU/LLM (victoria 10.0.0.5). Usado cuando kalimete delega: gestión de vLLM, gateway LLM, nginx, cloudflared, servicios de IA (video, voz, whois, web-nav, comfyui), la granja de contenido (imágenes/voz/video/3D) y el provisioning de llaves de negocio armada-* (POST /v1/provision-key, cap provision). Acceso SOLO LECTURA por SSH; la única escritura permitida es el endpoint de provisioning.
 mode: subagent
 hidden: false
 color: "#a855f7"
@@ -24,15 +24,16 @@ Gestión del servidor GPU/LLM (`victoria`, 10.0.0.5). Este subagente gestiona el
 - **SSH**: puerto 1666, warcold (rbash), llave `~/.ssh/id_ed25519_kalimete`
 - **Alias**: `ssh victoria`
 
-#### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
+#### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR (una excepción: provisioning)
 Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escribir/modificar NADA en victoria. El usuario modifica archivos en victoria por su cuenta; kalimete SOLO los lee y actualiza la documentación en kalimete.
+**Única excepción (2026-10-20)**: `POST /v1/provision-key` del gateway — crea llaves de negocio `armada-*` (rol services + caps [llm] forzados por el servidor). Es una escritura por API, NO por SSH: el filesystem/config de victoria sigue intocable.
 
 ## Servicios
 
 | Servicio | Puerto | Descripción |
 |---|---|---|
 | **vLLM** | 8000 | Qwen3.6-35B en Docker `nemoclaw-vllm` (GB10, contexto 256K nativo) |
-| **LLM Gateway** | 8010 | Auth + metering + proxy (prompt 220K, output 32K) + **art API** (imágenes) |
+| **LLM Gateway** | 8010 | Auth + metering + proxy (prompt 220K, output 32K) + **art API** (imágenes) + **provisioning** (`POST /v1/provision-key`, cap `provision`) |
 | **nginx** | 443 | TLS → gateway + UIs LAN (victoria.local) |
 | **cloudflared** | tunnel | victoria.armada.do → 127.0.0.1:8010 (2026.9.3) |
 | **ComfyUI** | 8188 | Imágenes (FLUX/Z-Image/SDXL, loopback; LAN vía nginx) |
@@ -117,7 +118,7 @@ victoria → pedírselo a Victoria/owner por chat, no forzar la puerta.
 
 ## Reglas de operación
 
-1. **NUNCA** escribir/modificar NADA en victoria (solo lectura)
+1. **NUNCA** escribir/modificar NADA en victoria por SSH (solo lectura). Única escritura permitida: `POST /v1/provision-key` (llaves de negocio `armada-*` — ver tabla de la granja)
 2. **Solo lectura**: cat, ls, ps, curl, ss, nvidia-smi, sqlite3ro_real, systemctl is-*, timedatectl, df, uptime
 3. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio documentado
 4. **Consultar DB** de forma segura (verificado 2026-10-01): `ssh victoria sudo -n -u victoria /usr/local/libexec/sqlite3ro_real SELECT name,role FROM api_keys;`

@@ -127,6 +127,7 @@ curl -s -u "admin:<app-password>" \
 ## Integración con Victoria (vLLM)
 
 - **Chatbot (Armada Suite)**: custom-model→gateway propio contra el LLM de victoria (LAN `http://10.0.0.5:8010/v1` o túnel `https://victoria.armada.do/v1`; key en wp_options, no en docs). Modelo `nvidia/Qwen3.6-35B-A3B-NVFP4`.
+- **Llaves de negocio — estándar 1-por-negocio (2026-10-20)**: cada negocio del plugin lleva SU propia llave `armada-<slug>` (rol services, caps [llm], metering/revocación/slots aislados). Se crean con `POST /v1/provision-key {"name":"<slug>"}` del gateway de victoria con la llave `kalimete` (cap `provision`; máx 10/hora; NO usar `/admin/keys` — exige sesión de panel). Receta auto-descriptiva: `GET /v1/config-guide` → `provision_api`. Primera: `armada-magantech`.
 
 ## Notas Técnicas
 
