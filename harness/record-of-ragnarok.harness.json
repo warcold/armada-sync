@@ -1,0 +1,47 @@
+{
+  "harness": "record-of-ragnarok",
+  "updated": "2026-10-20",
+  "agent_file": "~/armada-sync/agents/record-of-ragnarok.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Juego Godot 'Record of Ragnarok' (ARPG: mecánicas RO pre-renewal 99/70 sin advanced × temática anime Shuumatsu no Valkyrie × estética Enshrouded). Proyecto self-contained ~/dev/games/record-of-ragnarok/ (GDD + reference/rathena 19M + git propio). Crea Y mantiene el juego: fases 0.5-7 del pipeline del GDD. NO es el servidor rAthena (ese es el agente Ragnarok Server).",
+  "vivo_2026_10_20": "Fase 0 completa (scaffold + GDD por kalimete; nombre corregido a 'Record of Ragnarok' sin 's' — título oficial del anime verificado Wikipedia/Viz). reference/rathena dentro del proyecto (pre-re 34 YAMLs + re 51 + const.yml + src battle/status/pc.cpp de upstream). MCP godot-ror pineado al proyecto (patrón godot-<slug> por juego). Agente dedicado creado por arquitectura per-proyecto del owner — reemplaza a Game Studio/Godot para este juego.",
+  "live_check": "godot --headless --path ~/dev/games/record-of-ragnarok --quit-after 3 2>&1 | tail -3",
+  "checks": [
+    "ls ~/dev/games/record-of-ragnarok/  (AGENTS.md, project.godot, docs, reference, data, tools, autoload, scenes, assets)",
+    "godot --headless --path ~/dev/games/record-of-ragnarok --quit-after 3 2>&1 | tail -3  (proyecto abre)",
+    "python3 -c \"import json; s=open('/home/warcold/.config/opencode/opencode.jsonc').read(); print('godot-ror' in s and 'record-of-ragnarok' in s)\"  (True)",
+    "ss -tln | grep 9876  (blender MCP vivo; si vacío: ~/dev/games/blender/blender-mcp/start-blender.sh)"
+  ],
+  "upstream": {
+    "fuente": "Godot 4.7.2 (github godotengine/godot) + godot-mcp @yanhuifair 1.12.3 (1.12.9 pendiente owner) + mcp-for-blender 2.2.0 + rathena master (fórmulas, ya en reference/rathena/src/)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/record-of-ragnarok.md",
+    "~/dev/games/record-of-ragnarok/AGENTS.md",
+    "~/dev/games/record-of-ragnarok/docs/GDD.md"
+  ],
+  "changelog": [
+    {
+      "fecha": "2026-10-20",
+      "evento": "Agente creado (arquitectura per-proyecto del owner: cada juego = agente + harness + MCP + carpeta self-contained). Fase 0 del juego ya completa; el pipeline 0.5-7 es su responsabilidad."
+    }
+  ],
+  "name": "Record of Ragnarok",
+  "docs_oficiales": {
+    "regla": "ANTES de programar, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar APIs de nodos ni features de Godot 3.x.",
+    "fuentes": [
+      {
+        "contenido_clave": "escenas, GDScript, shaders, animación, audio, export (Godot 4.x)",
+        "nombre": "Godot Engine docs",
+        "url": "https://docs.godotengine.org/en/stable/"
+      },
+      {
+        "contenido_clave": "mecánicas RO — fórmulas ya en reference/rathena/src/",
+        "nombre": "rAthena wiki",
+        "url": "https://github.com/rathena/rathena/wiki"
+      }
+    ]
+  }
+}
