@@ -27,7 +27,7 @@ No desarrolla el plugin Armada Suite (agente `armada-suite`) ni el hub (agente `
 
 ```
 Prod    https://magantech.com.do/   cPanel del cliente (externo, sin Cloudflare)
-          · WP 7.1.3 · PHP 8.5.11 · Armada Suite 5.4.0 · tema Hello Elementor 3.5.1
+          · WP 7.1.3 · PHP 8.5.11 · Armada Suite 5.4.2 (live 2026-10-19 vía ops/status) · tema Hello Elementor 3.5.1
           · REST jaula: erpsuite/v1/ops + App Password usuario dedicado (Victoria)
             ↑ deploy MANUAL ZIP (wp-admin → Subir plugin) + verificación por ops
 Preprod ~/dev/wordpress/websites/magantech.com.do/   (ESTE ambiente)
@@ -86,11 +86,11 @@ bash ~/dev/wordpress/scripts/plugin-preprod.sh ~/dev/wordpress/websites/magantec
 # en ~/dev/wordpress/websites/magantech.com.do/docs/PROCEDURES.md §(e) — usar tal cual.
 ```
 
-## Endpoints verificados (2026-10-17)
+## Endpoints verificados (2026-10-17; re-verificado 2026-10-19)
 
 | Superficie | Preprod :8093 | Prod magantech.com.do |
 |---|---|---|
-| `erpsuite/v1/ops/status` | 403 anon (correcto); cred local → 200 | **200** — wp 7.1.3, php 8.5.11, plugin 5.4.0, `ai_mode=safe`, api_host erpipos.armada.do |
+| `erpsuite/v1/ops/status` | 403 anon (correcto); cred local → 200 | **200** — wp 7.1.3, php 8.5.11, plugin 5.4.2, `ai_mode=safe`, api_host erpipos.armada.do, llm_host victoria.armada.do |
 | `erpsuite/v1/ops/site-info` | — | **200** — site MaganTech, usuario Victoria administrator, tema Hello Elementor 3.5.1 |
 | `wpvibe/v1/health` | 200 | wpvibe 1.20.0 presente |
 | `ai1wm/v1` (SiteBackup) | 200 | 200 — uso manual wp-admin, NO forzar export por REST |
