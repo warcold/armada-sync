@@ -21,7 +21,7 @@ permission:
 `micaserogou.com` es un **website cliente** (segundo cliente del hub WordPress, tras MaganTech). Producción vive en **cPanel externo** (sin Cloudflare); preprod local es un **espejo operativo** del sitio para probar el MISMO artefacto ZIP antes de tocar producción (local-first).
 
 - **Preprod**: `http://localhost:8094` + `https://micaserogou.kalimete.local`, stack Docker dedicado, tenant ERP **3**.
-- **Producción**: `https://micaserogou.com/` — WP 7.1.3, cPanel; hoy **sin plugin Armada Suite** (verificado 2026-10-20).
+- **Producción**: `https://micaserogou.com/` — WP 7.1.3, cPanel; plugin Armada Suite **5.4.2 ACTIVO** (verificado 2026-10-20 15:41: `wp-content/plugins/armada-suite/armada-suite.php` → 200, homepage encola chatbot.js/logger.js/connector.js `?ver=5.4.2`, REST `?rest_route=/erpsuite/v1/ops/status` → 403 `erpsuite_forbidden`). **DERIVA**: el contenido del sitio sigue siendo el WP default ("Cats And Dogs", blog, permalinks planos, `/wp-json/` 404) — alguien subió/activó el plugin después de la última verificación del doc pero el sitio real (15 páginas, tema, menús, settings ERP) NUNCA fue desplegado. **Quién lo subió = desconocido — preguntar al owner.**
 - **Plugin**: Armada Suite **5.4.2**, instalado en preprod desde ZIP de release (nunca source bind-mounteado).
 - **ERP**: preprod contra `http://erpipo-preprod-nginx/api`, tenant 3, modo `public`; webhook id 4 apuntando al preprod.
 
@@ -39,7 +39,7 @@ permission:
 | Redes | `micaserogou_micaserogou-net` + externa `erpipo-dev-network` (solo el contenedor WP) |
 | Volúmenes | `micaserogou_wp_data`, `micaserogou_db_data` |
 | Binds | `wp-content/{uploads,plugins,themes,mu-plugins}`, `certs/ca-bundle.crt` |
-| WP_HOME / SITEURL | `http://localhost:8094` (constantes de compose; NO promovido al dominio local) |
+| WP_HOME / SITEURL | `https://micaserogou.kalimete.local` (constantes de compose; **promovidas 2026-10-20** desde `http://localhost:8094`; + snippet `X-Forwarded-Proto`→`$_SERVER['HTTPS']='on'` en `WORDPRESS_CONFIG_EXTRA`) |
 | WP_ENVIRONMENT_TYPE | `local` |
 
 Los puertos del hub son **8094/3311** (ascendente; `3310` está ocupado por otro proceso). Próximo website: **8095/3312**.
@@ -64,13 +64,15 @@ echo "pages=".wp_count_posts("page")->publish.PHP_EOL;
 ```
 
 - Correo local: mu-plugin `zz-micaserogou-local-mail.php` v1.0.0 (`phpmailer_init` + from local); Mailpit captura todo. **El correo real jamás sale de local.**
-- Smoke: `bash scripts/smoke-8094.sh` → **7/7** (front, wp-login, REST `/wp/v2`, permalink, Mailpit UI, DB ping, mu-plugin).
-- Limitación conocida: WP_HOME sigue en `http://localhost:8094`, así que los enlaces absolutos emitidos por WP apuntan ahí aunque entres por el dominio local.
+- Smoke: `bash scripts/smoke-8094.sh` → **7/7** (front, wp-login, REST `/wp/v2`, permalink, Mailpit UI, DB ping, mu-plugin). Desde 2026-10-20 el smoke entra por `https://micaserogou.kalimete.local` (acceso canónico del preprod); por `localhost:8094` directo WP canonicaliza 301 y el check de permalink fallaría.
+- ~~Limitación conocida: WP_HOME en `http://localhost:8094`~~ **RESUELTA 2026-10-20**: WP_HOME/WP_SITEURL promovidos al dominio local (backup `docker-compose.yml.bkup-20261020`); el HTML emite URLs `https://micaserogou.kalimete.local/...`, sin mixed content y accesible desde otras máquinas de la LAN.
 
 ## Dominio local y TLS
 
 - URL: `https://micaserogou.kalimete.local/` → **200**.
-- Nginx: `/etc/nginx/sites-available/micaserogou.kalimete.local.conf` (80→443, HSTS; `proxy_pass http://192.168.16.2:80`, `Host $host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`).
+- Nginx: vhost LIVE = `/etc/nginx/sites-enabled/micaserogou.kalimete.local.conf` (**archivo real, no symlink**; sites-available sincronizado con el mismo contenido). 80→443, HSTS; `proxy_pass http://127.0.0.1:8094`, `Host $host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto $scheme` (patrón proxy estándar desde 2026-10-20).
+  - **Deriva encontrada y curada (2026-10-20)**: sites-enabled era un FRONT-DOOR workaround del estado viejo (forzaba `Host "localhost:8094"`, sin scheme headers → WP canonicalizaba subpáginas a `http://localhost/`); sites-available estaba stale (`proxy_pass 192.168.16.2`, IP inexistente). Ambos sincronizados; front-door preservado en `sites-enabled/...conf.bkup-20261020-frontdoor`.
+  - **Anomalía benigna**: el include wildcard de nginx carga también los `.bkup-*` de sites-enabled → warnings "conflicting server name" en `nginx -t`/reload (el `.conf` ordena primero y gana; duplicados ignorados).
 - Cert: `/etc/ssl/local-certs/micaserogou.kalimete.local.{crt,key}` — mkcert CA root (`OU=root@kalimete`), SAN `micaserogou.kalimete.local`, `localhost`, `127.0.0.1`; expira **2029-01-20 05:28:52 GMT**.
 - Hosts: `127.0.0.1 micaserogou.kalimete.local` + dnsmasq wildcard `*.kalimete.local → 10.0.0.106` para el resto de la LAN.
 - `ops/status` anónimo responde **403** (`erpsuite_forbidden`) = correcto.
@@ -79,13 +81,13 @@ echo "pages=".wp_count_posts("page")->publish.PHP_EOL;
 
 - Preprod: `api_url=http://erpipo-preprod-nginx/api`, `tenant_id=3`, modo `public`.
 - API keys observadas en ERP preprod (sin imprimir valores): id 7 tenant 3 `micaserogou-website-preprod` (**solo pruebas**); id 6 tenant 3 `micaserogou-website` (propósito sin confirmar — aclarar antes de usarla); id 2 tenant 10 `magantechwebsite`; id 1 tenant 1 `web-site`.
-- Webhook preprod: **id 4**, tenant 3, activo → `http://micaserogou-local/wp-json/erpsuite/v1/erp-webhook`; eventos `order.created`, `stock.updated`, `price.updated`; secret compartido con id 2 (nunca imprimir). Backup previo: `/tmp/opencode/webhook-backup/wh4-before.tsv`.
+- Webhook preprod: **id 4**, tenant 3, activo → `http://micaserogou-local/wp-json/erpsuite/v1/erp-webhook`; eventos `order.created`, `stock.updated`, `price.updated`; secret compartido con id 2 (nunca imprimir). Backup previo: `/tmp/opencode/webhook-backup/wh4-before.tsv`. **Re-verificado 2026-10-20 tras la promoción de WP_HOME**: row intacto en `facturacion_db.webhook_endpoints` (URL interna docker, no afectada por WP_HOME); endpoint responde 400 a POST unsigned (vivo).
 - Producción: `api_url=https://erpipos.armada.do/api`, tenant 3; **api_key productiva pendiente** (la emite Juan Carlos). El webhook productivo también está pendiente.
-- Nota: consultas a `business_instances`/`webhooks` con columnas supuestas devolvieron vacío; el esquema real queda pendiente si se necesita metadata.
+- Esquema ERP real (resuelto 2026-10-20): DB `facturacion_db` (antes supuesta `erpipo`), tabla `webhook_endpoints` (id, business_instance_id, url, secret, events, active); también existen `integration_webhook_*` y `whatsapp_webhook_events`.
 
 ## Producción (estado 2026-10-20)
 
-- `https://micaserogou.com/` responde **200** (HTTP/2); WP **7.1.3**; **sin plugin Armada Suite**.
+- `https://micaserogou.com/` responde **200** (HTTP/2); WP **7.1.3**; plugin Armada Suite **5.4.2 ACTIVO** (verificado 2026-10-20 15:41 vía scripts encolados + REST `?rest_route=` 403 `erpsuite_forbidden`), PERO el contenido sigue default ("Cats And Dogs", permalinks planos, `/wp-json/` 404) — **deploy incompleto**; quién lo subió = desconocido (preguntar al owner).
 - cPanel: A → `50.31.174.166`; permalinks actuales **planos**; admin actual no debe usarse para la integración.
 - `PROD-DEPLOY-CHECKLIST.md` tiene 7 prerrequisitos, **todos pendientes**:
   1. API key ERP productiva tenant 3 (la emite Juan Carlos).
@@ -128,6 +130,13 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
 ```
 
+## Gotchas del ambiente (2026-10-20)
+
+- **`$$` en compose**: `WORDPRESS_CONFIG_EXTRA` pasa por variable interpolation de docker compose — `$_SERVER` sin escape se vuelve vacío (fatal PHP `Cannot use isset() on the result of an expression`, crash-loop del healthcheck). Siempre `$$_SERVER` en el YAML.
+- **Constantes WP pisan `get_option`**: con `WP_HOME`/`WP_SITEURL` definidas, `get_option('home'/'siteurl')` devuelve la constante, no el valor DB — para actualizar esos rows usar SQL directo (strings planos, seguros).
+- **Acceso canónico**: entrar por `localhost:8094` directo hace que WP canonicalice 301 (subpáginas a `http://localhost/` sin puerto); el acceso correcto del preprod es `https://micaserogou.kalimete.local`.
+- **`http://erpipo-preprod-nginx/api` aparece en el HTML de la homepage** (api_url interna expuesta en frontend) — comportamiento del plugin Armada Suite; reportar al agente `Armada Suite`, no lo arregla este agente.
+
 ## Reglas
 
 1. **LIVE manda**: verificar antes de afirmar; lo no verificado se marca pendiente, nunca se inventa.
@@ -153,7 +162,7 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
 ## Upstream
 
 - **Fuente**: prod = cPanel del cliente (externo, sin Cloudflare); preprod = `wordpress:7.1.3-php8.3-apache` + `mariadb:10.11` (kalimete); plugin = ZIP de release de `armada-suite`.
-- **Vivo 2026-10-20**: preprod healthy (3 contenedores) + dominio local 200 + smoke 7/7 + plugin 5.4.2 + tenant 3 + webhook id 4.
+- **Vivo 2026-10-20 (tarde)**: preprod healthy (3 contenedores) + dominio local canónico (front y subpáginas 200, sin mixed content) + smoke 7/7 + plugin 5.4.2 + tenant 3 + webhook id 4 intacto. Prod: plugin activo pero sitio default (deploy incompleto).
 - **Check**: `docker ps --filter name=micaserogou` + `smoke-8094.sh` + `ops/status` anónimo 403 + `https://micaserogou.com/` 200.
 - **Regla**: LIVE manda; propone updates al owner, nunca auto-actualiza prod sin autorización.
 
@@ -165,13 +174,14 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
   "source": "cPanel del cliente (hosting externo)",
   "href": "https://micaserogou.com/",
   "href_docs": "https://wordpress.org/documentation/",
-  "pin_note": "WP 7.1.3 verificado 2026-10-20; plugin aún NO instalado en prod",
+  "pin_note": "WP 7.1.3; plugin Armada Suite 5.4.2 ACTIVO en prod (verificado 2026-10-20 15:41) pero sitio aún default — deploy incompleto",
   "groom_clean": true
 }
 ```
 
 ## Cambios recientes
 
+- **2026-10-20 (tarde)**: fix de visibilidad del preprod. WP_HOME/WP_SITEURL promovidos a `https://micaserogou.kalimete.local` (+ snippet `X-Forwarded-Proto`→HTTPS con escape `$$`); vhost nginx front-door reemplazado por proxy estándar (Host real + scheme headers) y sincronizado sites-enabled==sites-available; search-replace DB `http://localhost:8094` → dominio (2 posts default + options siteurl/home; dump en `backups/`); smoke reescrito al dominio canónico → **7/7**; subpáginas todas 200; webhook id 4 re-verificado intacto. **Deriva prod documentada**: plugin 5.4.2 ACTIVO en prod (15:41) con contenido default — deploy incompleto, uploader desconocido.
 - **2026-10-20**: website aprovisionado (hub WP, segundo cliente). Stack `micaserogou` (:8094/:3311/:8027) healthy; WP 7.1.3/PHP 8.3.35; admin preprod; mu-plugin de correo local; permalinks; dominio local `https://micaserogou.kalimete.local` con cert mkcert (exp. 2029-01-20); smoke 7/7.
 - **2026-10-20**: ERP tenant 3 conectado en preprod (key de pruebas + `api_url` local, modo public); webhook id 4 activo; Armada Suite **5.4.2** instalada desde ZIP y e2e verificado (home con hero, `/productos/` 38 productos, webhook unsigned 400, sin debug.log).
 - **2026-10-20**: `PROD-DEPLOY-CHECKLIST.md` completo. Prod verificado 200 y **sin plugin**; los 7 prerrequisitos siguen pendientes.
