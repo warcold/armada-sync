@@ -1,5 +1,13 @@
 ## 2026-10-20
 
+### [19:37] - micaserogou: ventana prod fase 1 — homepage = landing del proyecto (adiós "Cats And Dogs")
+- **Tipo**: servicio
+- **Modificado**: WP prod micaserogou.com vía REST (App Password usuario victoria): blogname "Cats And Dogs"→"Mi Casa Rogou" (campo REST `title`), show_on_front posts→page, page_on_front 0→7 (inicio)
+- **Afecta a**: producción micaserogou.com
+- **Causa**: owner pidió que prod cargue igual que preprod; la homepage mostraba el blog default del hosting
+- **Estado**: ✅ aplicado y verificado (HTTP 200, body class page-id-7 erpc-store, 160 refs erpc, nombre en RSS links) · ⏳ pendientes: permalinks /%postname%/ (1 clic owner — permalink_structure fuera del schema REST, se ignora en silencio), key ERP productiva tenant 3 (Juan Carlos), entrada key+tenant_id=3 en wp-admin, llave LLM armada-micaserogou, secret webhooks
+- **Notas**: hallazgos de la ventana: REST settings usa `title` no `blogname` y devuelve 200 ante unknowns (éxito falso); ops/settings deny-by-default para public.* (por diseño, apply exige ai_mode=work); api_url fallback ya = erpipos.armada.do/api (preload redundante); JetBackup 3.1.23.6 activo en prod (antes no documentado); rollback documentado en la sesión del agente Micaserogou. Evaluación completa del stack hoy: WordPress (reporte vacío, completado por kalimete vía REST), Armada Suite (root-cause: copy demo PC-store hardcodeado + erp_config vacío por cron muerto), ERP Dev (tenant 3 sano: 85 productos, 8 categorías, webhook vivo, stack 8/8)
+
 ### [19:25] - kalimete-ptt v4: transcripción a tecla APARTE (F9) + Ctrl_R solo Victoria + fixes de la prueba física (Yes/markdown)
 - **Tipo**: servicio | infra
 - **Modificado**: ~/.local/bin/kalimete-ptt (v4; .bak.20261020-modos conserva v2/v3); servicio reiniciado
