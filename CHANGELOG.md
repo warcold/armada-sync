@@ -1,5 +1,13 @@
 ## 2026-10-20
 
+### [01:11] - Alta website micaserogou.com: preprod verificado + agente Micaserogou + documentación de flota (24 subagentes)
+- **Tipo**: agente | config | docs | servicio
+- **Modificado**: agents/micaserogou.md (NUEVO), harness/micaserogou.harness.json (NUEVO), ~/.config/opencode/agent/micaserogou.md (symlink), agents/kalimete.md (allowlist 23→24, tabla, conteos), MAPA.md (topología + tabla de agentes), README-HUB.md (inventario, dominios, agentes, acciones), websites/micaserogou.com/docs/README.md (secreto redactado), CHANGELOG.md
+- **Afecta a**: kalimete (24 subagentes) + preprod micaserogou :8094 + docs de flota
+- **Causa**: owner pidió dar de alta micaserogou.com como segundo website cliente multi-tenant, siguiendo el patrón MaganTech
+- **Estado**: ✅ preprod + agente + docs verificados; ⚠️ prod pendiente (7 prerrequisitos del checklist)
+- **Notas**: Preprod 3 contenedores healthy (`micaserogou-local` :8094, `micaserogou-db` :3311 porque 3310 estaba ocupado, `micaserogou-mailpit` :8027), WP 7.1.3/PHP 8.3.35/MariaDB 10.11, armada-suite 5.4.2 (ZIP sha256 157b1633…), tenant ERP 3 (key preprod id7 + webhook id4 sin secret), smoke 7/7, `https://micaserogou.kalimete.local` 200 con cert SAN exp. 2029-01-20. Prod `https://micaserogou.com/` 200 pero SIN plugin (cPanel externo; checklist: api_key productiva tenant 3, usuario WP dedicado + App Password, permalinks, HTTPS/REST, backup y webhook prod). Seguridad: password DB en claro redactado de `docs/README.md` (solo queda en `docker-compose.yml`, runtime). 5.4.3 IA nativa en working tree sin bump/ZIP — no desplegar. 15 páginas vs 14 del checklist (verificar antes de prod). Conteos: 25 agents .md (24 subagentes), 25 harness; `opencode agent list` muestra `Micaserogou (subagent)`.
+
 ### [00:53] - Gaming: permisos Game Studio+Blender en kalimete + reference rAthena + plan juego Ragnarok×Enshrouded
 - **Tipo**: agente | config | docs
 - **Modificado**: agents/kalimete.md (allowlist 21→23, tabla, conteos), MAPA.md (MCPs + fila blender), ~/dev/games/AGENTS.md (ledger), ~/dev/games/reference/rathena/ (NUEVO, 17M)
