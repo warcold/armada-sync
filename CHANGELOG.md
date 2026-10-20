@@ -1,5 +1,13 @@
 ## 2026-10-20
 
+### [16:40] - kalimete-ptt REPARADO: servicio en loop de reinicios (6067+) por módulos Python huérfanos tras upgrade 3.13→3.14
+- **Tipo**: servicio | infra
+- **Modificado**: pip --user de kalimete (instalados `evdev` 2.0.0 + `pyudev` 0.24.5 con --break-system-packages); servicio systemd --user kalimete-ptt.service reiniciado
+- **Afecta a**: kalimete (PTT local) — pipeline de voz kalimete↔victoria completo
+- **Causa**: Python del sistema pasó de 3.13 a 3.14 (evidencia: `~/.local/bin/__pycache__/kalimete-pttcpython-313.pyc` viejo vs wheels cp314 hoy); los módulos pip quedaron huérfanos. Doble fallo encadenado: (1) `import evdev` en main() → exit 1 → systemd reiniciaba en loop infinito (NRestarts=6067); (2) tras instalar evdev, `import pyudev` fallaba en `_hotplug()` — que es el ÚNICO bloqueo del main (los threads _listen son daemon=True) → main retornaba → proceso moría "limpio" (exit 0) en 880ms → servicio "inactive (dead)" sin reinicio
+- **Estado**: ✅ servicio active (running), NRestarts=0, estable, escuchando /dev/input/event0 + hotplug activo · ✅ STT :18810/stt HTTP 200 (WAV crudo en body, 0.3s) · ✅ LLM :8010 HTTP 200 (respuesta del modelo OK) · ✅ TTS :18810/tts HTTP 200 (WAV 24kHz 1.8s, 84KB) — key services PTT_VOICE_KEY válida en los 3
+- **Notas**: el server STT de Victoria espera el audio WAV CRUDO en el body (Content-Type: audio/wav), NO multipart — un curl -F produce 500 (ffmpeg detecta image2/rawvideo en el .raw guardado). Formato correcto = el del script real (`requests.post(data=audio_bytes)`). El wrapper kalimete-ptt-wrapper.sh propaga TODAS las vars del env por `set -a; source` (las asignaciones explícitas en /usr/bin/env son redundales). Pendiente del owner: probar PTT físico (Ctrl_R) de punta a punta.
+
 ### [14:02] - Micaserogou: WP_HOME promovido a dominio local + fix vhost nginx front-door + deriva prod (plugin activo sin deploy)
 - **Tipo**: servicio | config | docs
 - **Modificado**: ~/dev/wordpress/websites/micaserogou.com/docker-compose.yml (WP_HOME/WP_SITEURL → https://micaserogou.kalimete.local + snippet X-Forwarded-Proto→HTTPS con escape `$$`; .bkup-20261020); /etc/nginx/sites-enabled/micaserogou.kalimete.local.conf (front-door → proxy estándar; .bkup-20261020-frontdoor) + sites-available sincronizado; scripts/smoke-8094.sh (BASE → dominio canónico; .bkup-20261020); DB micaserogou (search-replace http://localhost:8094: 2 posts default + options siteurl/home → 0/0/0; dump backups/db-posts-options-before-searchreplace-20261020.sql); agents/micaserogou.md + harness/micaserogou.harness.json (.bkup-20261020-wphome)
