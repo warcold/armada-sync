@@ -15,14 +15,16 @@ permission:
 
 # Ragnarok Server — Servidor de Juego Ragnarok
 
-> 🔴 **PROYECTO CERRADO 2026-10-20** (orden del owner): el stack ragnarok clásico
-> (rAthena + roBrowser + FluxCP + wsproxy + remoteclient + MariaDB) fue apagado en
-> vps-preprod (contenedores en STOP, reversibles con `docker start`). **Backup COMPLETO**
-> en kalimete: `~/backups/ragnarok-vps-preprod-20261020/` (4.4GB: dump MariaDB 304 tablas +
-> tar /srv/ragnarok 6226 archivos + 5 imágenes docker + Caddyfile + RESTORE.md con
-> instrucciones de restauración). Borrado físico del VPS: PENDIENTE confirmación del owner.
-> El landing `ragnarok.armada.do` SIGUE VIVO como puerta del juego nuevo
-> **Record of Ragnarok** (Godot MMORPG — agente `Record of Ragnarok`).
+> 🔴 **PROYECTO CERRADO y BORRADO FÍSICAMENTE 2026-10-20** (orden del owner): el stack
+> ragnarok clásico (rAthena + roBrowser + FluxCP + wsproxy + remoteclient + MariaDB) fue
+> apagado y ELIMINADO de vps-preprod: 6 containers + 2 volúmenes + 4 imágenes + red +
+> `/srv/ragnarok` completos (~7GB liberados). **Backup COMPLETO** permanece en kalimete:
+> `~/backups/ragnarok-vps-preprod-20261020/` (4.4GB: dump MariaDB 304 tablas + tar
+> /srv/ragnarok 6226 archivos + 5 imágenes docker + Caddyfile + RESTORE.md con instrucciones
+> de restauración). DNS ragnarok.cp.armada.do eliminado de Cloudflare.
+> El landing `ragnarok.armada.do` SIGUE VIVO reciclado como puerta del juego nuevo
+> **Record of Ragnarok** (container `ror-landing` en /srv/ror-landing, red ror-net,
+> imagen robrowser:v5 reciclada — agente `Record of Ragnarok`).
 > Si el owner pide algo de "ragnarok": es el juego nuevo → delegar a `Record of Ragnarok`.
 > Si pide restaurar el RO clásico → seguir RESTORE.md del backup. Este agente queda
 > como archivo histórico de operación del stack cerrado.

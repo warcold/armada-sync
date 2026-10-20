@@ -85,7 +85,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - User: root, SSH 1333, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-preprod`
 - Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do (landing juego nuevo RoR), scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do
-- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, ragnarok.cp.armada.do (caído: FluxCP apagado), scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied)
+- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied) — ragnarok.cp.armada.do BORRADO de CF 2026-10-20
 - Proyectos locales: kalimete, victoria, jonas (fuera), Windows (10.0.0.64)
 - UFW: active (solo rangos CF en DOCKER-USER)
 - OpenVPN: active (openvpn@server.service)
@@ -182,7 +182,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | Victoria Server | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
 | PetSuite | Proyecto PetSuite (pets.armada.do) | ✅ |
 | Taohemps | Proyecto Taohemps (taohemps.com) | ✅ |
-| ragnarok-server | SERVIDOR rAthena (vps-preprod) — 🔴 **CERRADO 2026-10-20** (contenedores stop, backup completo en kalimete `~/backups/ragnarok-vps-preprod-20261020/` 4.4GB; landing ragnarok-web vivo como puerta del juego nuevo; borrado físico VPS pendiente owner) | ⏹ |
+| ragnarok-server | SERVIDOR rAthena (vps-preprod) — 🔴 **CERRADO y BORRADO 2026-10-20** (containers+volúmenes+imágenes+/srv/ragnarok eliminados, ~7GB liberados; backup completo en kalimete `~/backups/ragnarok-vps-preprod-20261020/` 4.4GB; landing reciclado → container `ror-landing` en /srv/ror-landing) | ⏹ |
 | Nextcloud | Proyecto Nextcloud + whiteboard | ✅ |
 | Authentik | SSO Authentik (auth.armada.do) | ✅ |
 | DocuSeal | Proyecto DocuSeal | ✅ |

@@ -1,5 +1,13 @@
 ## 2026-10-20
 
+### [19:45] - Ragnarok: borrado FÍSICO completo en vps-preprod + landing reciclado + Fase 0.5 data port del juego
+- **Tipo**: infra | servicio | docs
+- **Modificado**: vps-preprod (6 containers rm, 2 volúmenes rm, 4 imágenes rmi, red ragnarok_ragnarok rm, /srv/ragnarok rm -rf — ~7GB liberados, disco 52G→45G); NUEVO /srv/ror-landing/ (index.html + nginx.conf + docker-compose.yml) con container `ror-landing` (imagen robrowser:v5 reciclada, red ror-net); caddy conectado a ror-net; /opt/nextcloud-stack/Caddyfile (ragnarok.armada.do → reverse_proxy ror-landing:80, handles wsproxy/remoteclient fuera, bloque cp eliminado; .bkup-20261020-ror); Cloudflare DNS ragnarok.cp.armada.do BORRADO (subagente Cloudflare, record 9fef6e42...); ~/dev/games/record-of-ragnarok (Fase 0.5: tools/convert_rathena.py + 11 JSONs en data/, 31/31 tests); armada-sync: agents/record-of-ragnarok.md CREADO (el symlink estaba roto — el agente dedicado nunca existió como .md), agents/ragnarok-server.md + MAPA + INVENTARIO cloudflare actualizados
+- **Afecta a**: vps-preprod (stack ragnarok eliminado), landing ragnarok.armada.do (nueva infra), juego Record of Ragnarok (data port listo), flota (agente Record of Ragnarok ahora existe de verdad)
+- **Causa**: orden del owner — limpiar todo lo que no se necesita del VPS y reciclar lo que sí; proceder con los siguientes pasos del juego (Fase 0.5)
+- **Estado**: ✅ landing HTTP 200 vía ror-landing (proxy por nombre, patrón docuseal) · ✅ resto de dominios del VPS intactos (auth/nextcloud 302, docuseal/pets/scriberr 200) · ✅ data port 31/31 tests (Poring 1002, attr_fix Water→Fire 150, job_exp 99 niveles) · ✅ DNS cp eliminado y verificado
+- **Notas**: el agente Record of Ragnarok no cargaba como task type (symlink roto → archivo .md inexistente); recreado el .md — la tool task lo reconocerá en la próxima sesión de opencode (cachea agentes al arranque). La Fase 0.5 la ejecutó kalimete directamente por esa razón. Token cloudflare spring-dream-d681 dio error 9109 (restricción IP) — el subagente usó el token DNS opencode-dns-cleanup; pendiente owner actualizar IPs permitidas del token de cuenta si quiere usarlo desde kalimete.
+
 ### [17:35] - kalimete-ptt v2: rediseño UX del owner — tap=estado/menú, modos TRANSCRIBE/VIBE por voz, vibecoding con tools + confirmación explícita
 - **Tipo**: servicio | infra
 - **Modificado**: ~/.local/bin/kalimete-ptt (rewrite del flujo de interacción; .bak.20261020-modos); servicio reiniciado
