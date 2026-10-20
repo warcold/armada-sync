@@ -1,5 +1,13 @@
 ## 2026-10-20
 
+### [15:05] - Gaming: arquitectura per-proyecto + nombre corregido "Record of Ragnarok" + flota gaming reorganizada
+- **Tipo**: agente | config | docs
+- **Modificado**: NUEVO agents/record-of-ragnarok.md + harness + symlink (agente DEDICADO del juego); agents/ragnarok.md → ragnarok-server.md (rename anti-colisión + symlink + harness); agents/godot-dev.md RETIRADO (+symlink+harness+bkups); agents/kalimete.md (allowlist -Godot +Record of Ragnarok, Ragnarok→Ragnarok Server; tabla; MCPs); MAPA.md (MCP godot-ror, fila record-of-ragnarok, fila ragnarok-server); agents/game-studio.md (arquitectura per-proyecto); harness/blender.harness.json (scope); opencode.jsonc (MCP godot-studio → godot-ror → ~/dev/games/record-of-ragnarok); ~/dev/games/ restructurado (juego top-level self-contained con reference/ 19M adentro; disueltos godot/studio/, _starter, current); juego: nombre corregido + AGENTS.md + docs/CHANGELOG.md propios (commit ff028b0)
+- **Afecta a**: flota gaming completa (kalimete, Record of Ragnarok, Ragnarok Server, Game Studio, Blender) + dominio ~/dev/games/
+- **Causa**: owner — aclarar si el agente Ragnarok maneja el juego (NO: es el SERVIDOR rAthena de vps-preprod), limpiar discrepancias, arquitectura per-proyecto (cada juego = agente+harness+MCP+carpeta self-contained), corregir nombre del anime (verificado: "Record of Ragnarok" SIN "s" — Wikipedia/Viz Media)
+- **Estado**: ✅ todo aplicado; sesiones nuevas cargan la flota nueva (24 subagentes)
+- **Notas**: Patrón per-proyecto: juego top-level ~/dev/games/<slug>/ + agente dedicado + harness + MCP godot-<slug>. Game Studio queda como fábrica de juegos nuevos; agente Godot retirado (redundante); Ragnarok Server renombrado para eliminar la colisión con el juego.
+
 ### [14:50] - EccoSuit: superadmin definitivo v.tapia@eccoqualita.com + placeholder eliminado
 - **Tipo**: servicio | seguridad
 - **Modificado**: BD ecco_suite (users) + agents/ecco-suit.md + ~/dev/eccoqualita/ops/prod-remove-user.ts (nuevo)

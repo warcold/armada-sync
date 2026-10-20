@@ -24,7 +24,7 @@ permission:
 - **Granja victoria** (vía HTTP + llave, NUNCA SSH-write) → concept art (skill `art`), image→3D GLB (skill `assets-3d`), voz TTS/STT (skill `voice-video`), animación foto→mp4 (skill `assets-3d`), QA visual con el VLM del propio modelo (attachment)
 - **QA visual iterativo** → screenshots + `godot.log` + headless runs (el patrón del video: "apunta la cámara al problema, screenshot, debuga")
 
-**Límite con el agente Godot**: Godot = manos en juegos YA creados del studio (vía `studio/current`). Game Studio = pipeline verde de un juego nuevo completo. Si el usuario ya tiene un juego y pide arreglarlo → Godot. Si pide crear un mundo/juego nuevo → Game Studio. (mario-bros y armada-starfox BORRADOS 2026-10-20.)
+**Límite con los agentes de juego**: cada juego tiene su AGENTE DEDICADO (hoy `Record of Ragnarok` para ~/dev/games/record-of-ragnarok/) que lo crea Y lo mantiene. Game Studio = fábrica de juegos NUEVOS: corre el pipeline verde y al asentarse el juego, este pasa a su agente dedicado. (Agente genérico `Godot` RETIRADO 2026-10-20; mario-bros y armada-starfox BORRADOS.)
 
 ## Stack Tecnológico
 
@@ -58,9 +58,7 @@ ss -tln | grep 9876                        # verificar listener
 
 ## Workspace y límite de un proyecto (dominio ~/dev/games/, 2026-10-19)
 
-`godot-mcp` fija UN proyecto vía `-p`. Desde 2026-10-20 hay **UN solo MCP godot** en `opencode.jsonc`:
-
-1. **`godot-studio`** → `~/dev/games/godot/studio/current` — **el MCP godot único** (el MCP `godot` que apuntaba a `mario-bros` fue removido al borrarse el proyecto). `current` es un symlink al juego activo (hoy `record-of-ragnaroks`; para cambiar de juego: `ln -sfn <nombre-juego> ~/dev/games/godot/studio/current`).
+`godot-mcp` fija UN proyecto vía `-p`. **Arquitectura per-proyecto (owner, 2026-10-20)**: cada juego vive TOP-LEVEL en `~/dev/games/<slug>/` (self-contained: GDD + reference + git propio) con su AGENTE dedicado y su MCP `godot-<slug>` en `opencode.jsonc`. Hoy: `godot-ror` → `~/dev/games/record-of-ragnarok/` (agente `Record of Ragnarok`). Al crear un juego nuevo: scaffold en `~/dev/games/<slug>/` + kalimete crea el agente dedicado + el MCP `godot-<slug>`.
 
 El workspace real vive en `~/dev/games/godot/studio/<nombre-juego>/`. Alternativa sin MCP (funciona siempre): `godot --headless --path <proyecto> ...` + escritura directa de archivos `.tscn/.gd/.gdshader`.
 
@@ -107,8 +105,8 @@ ss -tln | grep 9876 || ~/dev/games/blender/blender-mcp/start-blender.sh
 blender --background --python script_blender.py --  # args tras --
 
 # Godot headless
-godot --headless --path ~/dev/games/godot/studio/current --quit-after 60 2>&1 | tail -20
-godot --headless --path ~/dev/games/godot/studio/current --export-debug "Linux/X11" ./build/juego.x86_64
+godot --headless --path ~/dev/games/<slug> --quit-after 60 2>&1 | tail -20
+godot --headless --path ~/dev/games/<slug> --export-debug "Linux/X11" ./build/juego.x86_64
 
 # Logs de juego (runtime)
 ls ~/.local/share/godot/app_userdata/*/logs/ 2>/dev/null   # godot.log por proyecto

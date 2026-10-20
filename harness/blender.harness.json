@@ -4,7 +4,7 @@
   "agent_file": "~/armada-sync/agents/blender.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Blender 5.0.1 + MCP mcp-for-blender 2.2.0 (TCP :9876 bajo Xvfb): modelado 3D, scripting bpy, import/export GLB, decimate/retopo de assets de juego (Hunyuan3D 200-400K verts → 10-20K), escenas procedurales en ~/dev/games/blender/work/. Pieza 3D del dominio ~/dev/games/ junto a Godot (motor) y Game Studio (fábrica).",
+  "scope": "Blender 5.0.1 + MCP mcp-for-blender 2.2.0 (TCP :9876 bajo Xvfb): modelado 3D, scripting bpy, import/export GLB, decimate/retopo de assets de juego (Hunyuan3D 200-400K verts → 10-20K), escenas procedurales en ~/dev/games/blender/work/. Pieza 3D del dominio ~/dev/games/ junto a los agentes de juego dedicados (hoy Record of Ragnarok) y Game Studio (fábrica).",
   "vivo_2026_10_19": "Dominio ~/dev/games/ creado (mudanza desde ~/dev/godot + ~/dev/tools/blender-mcp, mismo FS, git de mario-bros intacto). Addon mcp-for-blender 2.2.0 en ~/.config/blender/5.0/scripts/addons/ habilitado en userpref; requests 2.34.2 vía pip --target (Python de Blender = uv 3.14 AISLADO). Cadena verificada 2026-10-18: uvx mcp-for-blender (stdio) → TCP 127.0.0.1:9876 → addon → get_scene_info OK. Hallazgos CRÍTICOS: addon rechaza --background; --quiet NUNCA abrió puerto; GUI bajo xvfb-run -a blender sí (segundos). Tools del server.py: get_scene_info, execute_blender_code (la potente), look (screenshot), search/import polyhaven+polypizza+sketchfab, get_addon_status, open_viewport. Integraciones Meshy/Hunyuan del addon = NO usar (API keys externas); image→3D canónico = skill assets-3d (victoria :18860, gratis).",
   "live_check": "ss -tln | grep 9876  (si vacío: ~/dev/games/blender/blender-mcp/start-blender.sh)",
   "checks": [
