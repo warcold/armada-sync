@@ -1,5 +1,15 @@
 ## 2026-10-21
 
+### [17:10] - micaserogou: preprod alineado 100% a restaurante + ZIP de release + checklist de deploy (producción sin tocar)
+- **Tipo**: servicio | docs | release
+- **Modificado**: ~/dev/wordpress/websites/micaserogou.com/ (preprod local :8094 / https://micaserogou.kalimete.local) — DB adaptada (12 actualizaciones: blogdescription, erp_suite_settings brand="Mi Casa Rogou"/tagline/business_type="restaurante", páginas legales e-commerce→restaurante, Sobre Nosotros, post Hello world→menú del día, comentario genérico→Carolina M., Sample Page→Reservas), flush de transientes _transient_erpsuite* (brand name renderizado corregido de "Michelle Casero y Gourmet" a "Mi Casa Rogou", 0 residuos); export/armada-suite-micaserogou-restaurant-20261021.zip (23,9 MB: tema twentytwentyfive, plugins armada-suite 5.5.1+akismet+hello, mu-plugins, dump DB fresco 184 KB, backups/); docs/PROD-DEPLOY-CHECKLIST.md (nuevo, 7 prerrequisitos, orden de deploy, rollback con armada-suite-5.4.1.zip vía erpsuite/v1/ops, advertencia NUNCA tocar prod sin ventana autorizada)
+- **Afecta a**: preprod micaserogou.kalimete.local (100% restaurante, smoke 7/7 OK, cero "Hello world"/"Sample Page"/texto tecnología); producción micaserogou.com SIN CAMBIOS (sigue mixto tecnología+restaurante, REST API 404, solo lectura verificada 200)
+- **Causa**: usuario pidió evaluar y alinear ambos templates a tipo restaurante, usando inventario ERP tenant 3 para textos del landing
+- **Estado**: ✅ preprod alineado y verificado · ✅ ZIP de release generado · ✅ checklist de deploy documentado · ⏳ producción pendiente de ventana autorizada del usuario (API key ERP productiva tenant 3 de Juan Carlos, usuario WP administrator + App Password, permalinks /%postname%/, home/siteurl=https://micaserogou.com, snapshot cPanel)
+- **Notas**: Backups previos en backups/ (DB, plugin, tema, mu-plugins, armada-suite). Cero secrets impresos; key ERP en secrets/erp-tenant3-preprod.key (chmod 600, no leída). Directorio de micaserogou no es git repo; este CHANGELOG es el registro del cambio.
+
+## 2026-10-21
+
 ### [17:00] - CORRECCIÓN: vps-proxy NO fue reinstalada (fue reboot por kernel upgrade) + evaluación consolidación
 - **Tipo**: docs
 - **Modificado**: agents/proxy.md, agents/kalimete.md, MAPA.md (+ copia local), harness/proxy.harness.json, harness/kalimete.harness.json — se retira la marca errónea "RECONSTRUIDA 2026-10-19" de la entrada [16:40]
