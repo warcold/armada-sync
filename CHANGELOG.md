@@ -1,5 +1,15 @@
 ## 2026-10-21
 
+### [17:00] - CORRECCIÓN: vps-proxy NO fue reinstalada (fue reboot por kernel upgrade) + evaluación consolidación
+- **Tipo**: docs
+- **Modificado**: agents/proxy.md, agents/kalimete.md, MAPA.md (+ copia local), harness/proxy.harness.json, harness/kalimete.harness.json — se retira la marca errónea "RECONSTRUIDA 2026-10-19" de la entrada [16:40]
+- **Afecta a**: documentación de la flota
+- **Causa**: verificación profunda con evidencia (wtmp con boots de 2025, apt history.log.11.gz de Nov-2025, certs LE de julio intactos, kernel 6.8.0-147 instalado por unattended-upgrades el 8-oct): la caja es la MISMA instalación desde siempre; el 19-oct fue su primer reboot en 260 días (desde Feb-2026) para activar el kernel nuevo. El 21-oct 16:31→16:40 hubo shutdown+boot limpio adicional (causa por confirmar con owner — ¿panel Contabo?)
+- **Estado**: ✅ docs corregidas con la historia real
+- **Notas**: Evaluación de consolidación proxy→vps-preprod entregada al owner (ambas cajas: mismo proveedor Contabo, mismo DC Carlstadt NJ; vps-proxy 93% ociosa con 1 cliente activo jovtransport ~6k req/día; vps-preprod con 5.5GB RAM libres y fail2ban ya activo; "subir recursos" NO sería necesario). Decisión pendiente del owner: mantener / consolidar / right-size.
+
+## 2026-10-21
+
 ### [16:40] - IRC TLS renovado (opción C replicada) + docs corregidas: vps-proxy reconstruida
 - **Tipo**: servicio | infra | docs
 - **Modificado**: vps-preprod (certbot 2.9.0, cert el.colador.de.alfredo.pro emitido 2026-10-21 expira 2027-01-19, hooks pre/post/deploy en /etc/letsencrypt/renewal-hooks/, certbot.timer enabled); docs: agents/irc.md (sección Renovación TLS), agents/proxy.md (reconstrucción 2026-10-19), agents/kalimete.md (tabla red), MAPA.md (nodos 3-4) + copia local ecosistema-map, harness/irc.harness.json + proxy.harness.json + kalimete.harness.json
