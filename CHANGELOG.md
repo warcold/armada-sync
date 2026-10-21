@@ -15,6 +15,16 @@
 
 ## 2026-10-21
 
+### [18:00] - DEPLOY A PRODUCCIÓN micaserogou.com: sitio restaurante en vivo (plugin 5.5.1 + pack restaurant + paleta cálida + legales restaurante)
+- **Tipo**: servicio | release | deploy
+- **Modificado**: PRODUCCIÓN https://micaserogou.com — (1) plugin armada-suite 5.4.2→5.5.1 subido y activado por el owner vía wp-admin (ZIP plugin-only 2,5 MB de export/); (2) settings vía ops API (dry_run→confirm, backup bk_20261021213725_vrb60w): template_pack=restaurant, brand.name="Mi Casa Rogou", headline/tagline restaurante, color_primary=#d64545, color_secondary=#f59f00; (3) legales vía ops/content/edit (9 ediciones: terminos, envios→"Delivery y Entregas", devoluciones→"Devoluciones y Reclamos", privacidad, cookies, faq, contacto + 2 titles) con copy restaurante del preprod; (4) permalinks /%postname%/ activados por el owner (REST /wp-json/ ahora 200); (5) App Password del usuario Victoria guardada en secrets/prod-app-password.txt (chmod 600, nunca en chat/logs)
+- **Afecta a**: producción micaserogou.com (antes: sitio mixto tecnología+restaurante con plugin 5.4.2)
+- **Causa**: owner autorizó la ventana de deploy ("Procede") tras instalar el plugin y activar el modo trabajo (kill-switch solo-humano) + permalinks
+- **Estado**: ✅ 12 páginas verificadas 200 con 0 texto de tecnología · ✅ hero "Comida casera y gourmet, hecha al momento" + tag "Delivery a todo el país" · ✅ colores cálidos renderizados (#d64545/#f59f00, cero #1a73e8) · ✅ /sobre-nosotros/ renderiza el about.php del pack ("Mi Casa Rogou — sazón de casa, hecha al momento") · ✅ /productos/ con productos reales del ERP (POLLO FRITO, POLLO AL HORNO) · ✅ chatbot presente · ✅ jaula REST intacta (anónimo 403) · ⚠️ RESIDUO CONOCIDO: 2x "Michelle Casero y Gourmet" por página (alt del logo + erpc-brand-name del footer) — causa raíz: get_brand_name() (Main.php:286) prioriza erp_config.name (marca registrada en el ERP tenant 3) sobre brand.name; el Guard bloquea tenant.erp_config para ops (solo humano). Fix pendiente: parche 5.5.2 del plugin (brand.name explícito gana — agente Armada Suite) o cambiar la marca del tenant 3 en el ERP (Juan Carlos) → re-sync
+- **Notas**: Rollback disponible: plugin 5.4.1.zip en export/ + ops/rollback 1-click (backup automático por edición). Work mode del motor quedó activo (expira solo) — owner puede volver a "safe" en ERP Suite > Proyectos. Próximo: parche 5.5.2 (Armada Suite) para el residuo de marca + sincronizar el pack restaurant a la fuente canónica del plugin.
+
+## 2026-10-21
+
 ### [16:45] - micaserogou: paleta restaurante cálida aplicada (rojo tomate + ámbar) — cero azul tech en el local
 - **Tipo**: servicio | release
 - **Modificado**: erp_suite_settings.tenant.brand.color_primary #1a73e8→#d64545 (rojo tomate) y color_secondary #34a853→#f59f00 (ámbar dorado) en preprod micaserogou.kalimete.local; ZIP export/armada-suite-micaserogou-restaurant-20261021.zip regenerado (23,9 MB, dump con colores, about.php del pack dentro); backup previo uploads/erp-settings-bkup-20261021-colors.txt (settings completos con el azul viejo)
