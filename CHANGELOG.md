@@ -1,3 +1,13 @@
+## 2026-10-21
+
+### [15:55] - IRC El Corito EN SERVICIO: firewall vps-preprod abre puertos 6667/6697/7209
+- **Tipo**: infra | servicio
+- **Modificado**: iptables INPUT en vps-preprod (3 reglas ACCEPT insertadas posiciones 5/6/7) + `/etc/iptables/rules.v4` persistido vía `netfilter-persistent save` (ya instalado, enabled al boot)
+- **Afecta a**: vps-preprod (servicio IRC El Corito, InspIRCd v4.7.0)
+- **Causa**: política DROP en INPUT sin reglas IRC → todo tráfico silent-drop, clientes en timeout, 0 conexiones (diagnóstico agente IRC, ejecución autorizada por owner)
+- **Estado**: ✅ Firewall abierto y persistido · ✅ Verificado desde kalimete: nc OK en 6667/6697/7209 · ✅ InspIRCd activo sin reinicios · 🔴 PENDIENTE cert TLS el.colador.de.alfredo.pro expirado 2026-10-02 (handshake 6697 sirve cert vencido; sin cliente ACME en el VPS, HTTP-01 bloqueado por firewall+Caddy nextcloud, zona alfredo.pro fuera de la cuenta CF — requiere decisión owner) · ⏸️ crontab renovación pendiente del cert
+- **Notas**: Backups: `/root/iptables.bkup-20261021-154345` + `/etc/iptables/rules.v4.bkup-20261021-154345` (rollback: `iptables-restore < /root/iptables.bkup-20261021-154345`). Enlace S2S a irc.elcorito.org inestable (~2h, posible lado remoto — solo observado). deploy-ssl.sh resultó ser hook de ejemplo de InspIRCd con rutas placeholder, NO flujo real de renovación. Plaintext 6667 ya operativo para clientes.
+
 ## 2026-10-20
 
 ### [22:30] - Record of Ragnarok: Fase 0.5b Postgres persistence completada
