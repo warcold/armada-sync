@@ -143,7 +143,20 @@ cat /home/justin_t/inspircd/run/inspircd.pid
 - Servicio systemd creado con User=justin_t, Group=justin_t
 - Config original copiada desde /home/justin/inspircd/ en vps-proxy
 - Enlace irc.elcorito.org: 15.204.218.254:7022
-- Certificado SSL: el.colador.de.alfredo.pro (expira 2026-10-02)
+- Certificado SSL: el.colador.de.alfredo.pro — RENOVADO 2026-10-21 (expira 2027-01-19), ver sección Renovación TLS
+
+## Renovación TLS (2026-10-21) — flujo certbot standalone en vps-preprod
+
+- **Problema original**: firewall INPUT (política DROP) bloqueaba 6667/6697/7209 → 0 conexiones; cert expirado 2026-10-02.
+- **Firewall**: 3 reglas ACCEPT (6667/6697/7209) en INPUT pos. 5/6/7, persistidas en `/etc/iptables/rules.v4` (netfilter-persistent). Backups: `/root/iptables.bkup-20261021-154345` + `rules.v4.bkup-20261021-154345`.
+- **Cert nuevo**: emitido 2026-10-21, expira 2027-01-19, serial 05D42A47… — InspIRCd lo sirve en 6697/7209 (verificado externo desde kalimete).
+- **Flujo de renovación automática** (replica el original de la vieja vps-proxy, adaptado a este VPS):
+  - `certbot 2.9.0` + `certbot.timer` (systemd, enabled, 2x/día).
+  - Challenge HTTP-01 standalone en puerto **8088** (el 80 lo ocupa Caddy de nextcloud; firewall solo deja CF en 80/443).
+  - Hooks: `renewal-hooks/pre/irc-standalone.sh` (REDIRECT nat 80→8088 + ACCEPT INPUT 8088, transitorios), `post/irc-standalone.sh` (limpia siempre), `deploy/irc-deploy.sh` (copia fullchain/privkey/chain/cert a `run/certs/` owner justin_t 640/600 + `kill -USR1` al InspIRCd → reload TLS).
+  - Hooks también grabados en el renewal conf (pre_hook/post_hook) — idempotentes, inofensivos.
+  - **NO ejecutar `netfilter-persistent save`** con reglas transitorias activas.
+- **Nota**: la vieja vps-proxy (reconstruida 2026-10-19) conserva renewal confs de certbot para este dominio + colador.union-chat.online — ambos apuntan a otras IPs, no renovables desde allí.
 
 ## Estado de Conexión
 

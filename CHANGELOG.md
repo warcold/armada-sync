@@ -1,5 +1,15 @@
 ## 2026-10-21
 
+### [16:40] - IRC TLS renovado (opción C replicada) + docs corregidas: vps-proxy reconstruida
+- **Tipo**: servicio | infra | docs
+- **Modificado**: vps-preprod (certbot 2.9.0, cert el.colador.de.alfredo.pro emitido 2026-10-21 expira 2027-01-19, hooks pre/post/deploy en /etc/letsencrypt/renewal-hooks/, certbot.timer enabled); docs: agents/irc.md (sección Renovación TLS), agents/proxy.md (reconstrucción 2026-10-19), agents/kalimete.md (tabla red), MAPA.md (nodos 3-4) + copia local ecosistema-map, harness/irc.harness.json + proxy.harness.json + kalimete.harness.json
+- **Afecta a**: vps-preprod (IRC El Corito TLS), vps-proxy (doc actualizada), kalimete (docs)
+- **Causa**: owner ordenó opción C (replicar flujo de renovación original de certbot standalone) + corregir discrepancias: la vps-proxy vieja ya no existe (reconstruida 2026-10-19) y el proxy NO vive en vps-preprod
+- **Estado**: ✅ Cert nuevo servido por InspIRCd en 6697 (verificado externo desde kalimete, serial 05D42A47…) · ✅ Auto-renovación completa: certbot.timer → pre hook (REDIRECT 80→8088) → challenge → post hook (limpieza) → deploy hook (copia + USR1) · ✅ 0 reglas transitorias residuales · ✅ Docs corregidas con estado live verificado
+- **Notas**: Causa raíz del fallo inicial de emisión: los hooks de directorio solo corren en RENOVACIONES, no en emisión inicial → se pasan por CLI en certonly (quedaron grabados en el renewal conf). Método probado empíricamente antes de emitir (HTTP 200 por la ruta REDIRECT 80→8088). La nueva vps-proxy conserva renewal confs de 2 certs expirados cuyos dominios apuntan a otras IPs (el.colador → vps-preprod, ya resuelto; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner). Discrepancia flaggeada al owner: el proxy corre en la nueva vps-proxy (31.220.102.176, reconstruida), NO en vps-preprod — si quiere moverlo, tarea aparte. Backups: certs.bkup-20261021-155925 (vps-preprod) + 7 .bkup-20261021-irc en repo.
+
+## 2026-10-21
+
 ### [15:55] - IRC El Corito EN SERVICIO: firewall vps-preprod abre puertos 6667/6697/7209
 - **Tipo**: infra | servicio
 - **Modificado**: iptables INPUT en vps-preprod (3 reglas ACCEPT insertadas posiciones 5/6/7) + `/etc/iptables/rules.v4` persistido vía `netfilter-persistent save` (ya instalado, enabled al boot)

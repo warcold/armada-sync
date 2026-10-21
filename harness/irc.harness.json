@@ -1,12 +1,12 @@
 {
   "harness": "irc",
-  "updated": "2026-10-01",
+  "updated": "2026-10-21",
   "agent_file": "~/armada-sync/agents/irc.md",
   "mode": "subagent",
   "hidden": false,
   "scope": "InspIRCd El Corito (chatlatinos.org) en vps-preprod",
-  "vivo_2026_10_01": "PENDIENTE: no sale en docker ps 2026-10-01, verificar si es proceso nativo",
-  "live_check": "ssh vps-preprod ps aux",
+  "vivo_2026_10_21": "proceso NATIVO (no docker) usuario justin_t --nofork --nopid, PID via pgrep; puertos 6667/6697/7209/7022; firewall INPUT abierto 2026-10-21 (ACCEPT 6667/6697/7209 pos 5/6/7, persistido); TLS renovado 2026-10-21 (certbot standalone 8088 + REDIRECT, expira 2027-01-19, auto-renovacion certbot.timer); verificado externo desde kalimete",
+  "live_check": "ssh vps-preprod 'pgrep -u justin_t inspircd && ss -tlnp | grep -E \":6667|:6697\"'",
   "upstream": {
     "fuente": "InspIRCd El Corito (chatlatinos.org) en vps-preprod",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"

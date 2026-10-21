@@ -81,22 +81,22 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - DB: `/home/victoria/.victoria-llm/llm-gateway.db` (api_keys, usage_log, sqlite_sequence)
 - CA mkcert en kalimete: `~/.local/share/mkcert/rootCA.pem`
 
-### 3. vps-preprod (154.53.35.102) — VPS Production
+### 3. vps-preprod (154.53.35.102) — VPS Production (multi-app clientes)
 - User: root, SSH 1333, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-preprod`
-- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do (landing juego nuevo RoR), scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do
+- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do (landing juego nuevo RoR), scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do, IRC El Corito (6667/6697/7209, InspIRCd nativo justin_t)
+- TLS IRC: certbot standalone (challenge 8088 + REDIRECT transitorio) — renovado 2026-10-21, expira 2027-01-19, auto-renovación certbot.timer (detalle en agents/irc.md)
 - DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied) — ragnarok.cp.armada.do BORRADO de CF 2026-10-20
 - Proyectos locales: kalimete, victoria, jonas (fuera), Windows (10.0.0.64)
-- UFW: active (solo rangos CF en DOCKER-USER)
+- UFW: active (solo rangos CF en DOCKER-USER); iptables INPUT: IRC 6667/6697/7209 ACCEPT (2026-10-21) + CF 80/443 + SSH 1333, política DROP
 - OpenVPN: active (openvpn@server.service)
 
-### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional — ✅ ACTIVO (verificado 2026-09-19)
+### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional — ✅ ACTIVO (RECONSTRUIDA 2026-10-19, verificado 2026-10-21)
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-proxy` (restaurado 2026-09-19 en `/etc/ssh/ssh_config.d/10-armada-hosts.conf`)
-- Uptime 228 días, load 0.10; Squid funcional (Google vía proxy → 200 en 0.08s)
-- NOTA: la marca "FAILED 2026-03-17" era obsoleta — servidor sano, corrección 2026-09-19
-- User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
-- Alias: `ssh vps-proxy`
+- ⚠️ RECONSTRUIDA/REINSTALADA 2026-10-19 (uptime reiniciado; la marca "uptime 228d" de docs previas ya NO aplica). Configs restauradas desde backup (usuarios, 111 filtros, fail2ban, filedescriptors 65536, cache deny all, UFW) — verificado live 2026-10-21.
+- certbot 2.9.0 con /etc/letsencrypt heredado: 2 certs expirados de dominios que ya NO apuntan a esta caja (el.colador.de.alfredo.pro → vps-preprod/IRC, renovado allí 2026-10-21; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner).
+- Sin Docker. Sin crontab.
 - Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
 - DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF); jovtransport.prx.armada.do → 31.220.102.176 (gris, dedicado jovtransport)
 - **Squid Proxy (HTTP/HTTPS)**:
