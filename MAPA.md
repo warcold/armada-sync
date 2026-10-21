@@ -94,6 +94,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional — ✅ ACTIVO (verificado 2026-10-21)
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-proxy` (restaurado 2026-09-19 en `/etc/ssh/ssh_config.d/10-armada-hosts.conf`)
+- ⚠️ **Consolidación a vps-preprod PENDIENTE — NO ejecutada** (auditoría 2026-10-21 noche: preprod sin proxy alguno; uso real 13,112 req/24h, jovtransport activo — NO borrar esta caja hasta migrar; plan en CHANGELOG [19:45])
 - ⚠️ Reboot 2026-10-19 = primer reboot en 260 días (kernel 6.8.0-147 por unattended-upgrades). **NO fue reinstalada** — misma instalación (wtmp/apt logs/certs intactos). La marca "uptime 228d" ya NO aplica. Shutdown+boot limpio también el 2026-10-21 16:31→16:40 (causa por confirmar).
 - Configs intactas: usuarios (admin, jovtransport), 111 filtros, fail2ban, filedescriptors 65536, cache deny all, UFW (1444/53/3128/1080) — verificado live 2026-10-21.
 - certbot 2.9.0 con /etc/letsencrypt: 2 certs expirados de dominios que ya NO apuntan a esta caja (el.colador.de.alfredo.pro → vps-preprod/IRC, renovado allí 2026-10-21; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner).

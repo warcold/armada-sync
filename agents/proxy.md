@@ -22,6 +22,13 @@ permission:
   - `colador.union-chat.online` → apunta a IPs de terceros (104.219.250.37 / 2.59.170.20) — NO renovable desde nuestras cajas, pendiente decisión owner.
 - Sin Docker. Sin crontab.
 
+## ⚠️ Consolidación a vps-preprod — NO EJECUTADA (auditoría 2026-10-21 noche)
+
+- El owner creía migrada la función proxy a vps-preprod; auditoría exhaustiva: **vps-preprod NO tiene NINGÚN software proxy** (sin squid/socks5, sin listeners 3128/1080, sin paquetes, sin contenedores proxy, sin artefactos). El proxy SIGUE viviendo aquí (vps-proxy).
+- Uso real verificado 2026-10-21: **13,112 req/24h**, cliente activo `jovtransport` (IP 181.36.176.87, 12,361 req) — filtros funcionando (Spotify/Teams → 403 DENIED).
+- vps-preprod validado sano: 7 dominios OK + IRC 3 puertos abiertos; **CERO env vars de proxy** en sistema/contenedores (requisito del owner: el proxy será servicio PARA CLIENTES, el VPS no debe usarlo — preservar esta limpieza al instalar).
+- **NO decommissionar vps-proxy hasta ejecutar la migración real** (plan de 7 pasos en CHANGELOG 2026-10-21 [19:45]). La IP de salida cambiará (31.220.102.176 → 154.53.35.102): avisar a clientes con IP hardcodeada.
+
 # Proxy — Servidor Proxy Internacional (vps-proxy)
 
 ## Visión
