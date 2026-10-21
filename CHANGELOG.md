@@ -15,6 +15,16 @@
 
 ## 2026-10-21
 
+### [16:45] - micaserogou: paleta restaurante cálida aplicada (rojo tomate + ámbar) — cero azul tech en el local
+- **Tipo**: servicio | release
+- **Modificado**: erp_suite_settings.tenant.brand.color_primary #1a73e8→#d64545 (rojo tomate) y color_secondary #34a853→#f59f00 (ámbar dorado) en preprod micaserogou.kalimete.local; ZIP export/armada-suite-micaserogou-restaurant-20261021.zip regenerado (23,9 MB, dump con colores, about.php del pack dentro); backup previo uploads/erp-settings-bkup-20261021-colors.txt (settings completos con el azul viejo)
+- **Afecta a**: preprod micaserogou.kalimete.local — producción SIN CAMBIOS
+- **Causa**: owner confirmó el template local correcto en contenido y pidió mejores colores para diferenciarlo del default tech. Mecánica settings-based (Main.php get_theme_colors(): pickers custom ganan al preset; dark/light se derivan solos con erpc_hex_adjust) — cero código tocado
+- **Estado**: ✅ CSS inline renderizado en home/sobre-nosotros/productos/contacto: --erpc-primary:#d64545, --erpc-primary-dark:#af3939, --erpc-primary-light:#fae9e9, --erpc-secondary:#f59f00 · ✅ grep "1a73e8" = 0 · ✅ smoke 7/7 · ✅ ZIP regenerado · ⏳ deploy a producción pendiente de ventana autorizada
+- **Notas**: Explicación de las discrepancias local vs prod confirmada al owner: producción corre armada-suite 5.4.2 (el pack restaurant llegó en 5.5.x) → renderiza defaults de tecnología mezclados con los productos reales del ERP tenant 3; el deploy nunca se ejecutó (pendiente ventana + prerrequisitos del docs/PROD-DEPLOY-CHECKLIST.md). Falsa alarma 503: el subagente vio un 503 transitorio de micaserogou.com durante su sesión; verificado desde kalimete 3/3 intentos → 200 (blip del hosting, no caída persistente).
+
+## 2026-10-21
+
 ### [16:10] - micaserogou: pack restaurant COMPLETO (about.php nuevo) + legales reescritas — cero tecnología en todo el sitio local
 - **Tipo**: servicio | release
 - **Modificado**: ~/dev/wordpress/websites/micaserogou.com/wp-content/plugins/armada-suite/templates/packs/restaurant/partials/about.php (NUEVO, 5.1 KB — misión/visión/valores/equipo restaurante, mismas clases que el default, hero con get_hero_image()); post_content de 7 páginas reescrito con copy restaurante correcto (IDs 12 contacto "Atención al cliente", 13 términos, 16 envíos→"Delivery y Entregas", 17 devoluciones→reclamos 2h/reposición, 14 privacidad, 15 cookies, 18 FAQ completa con reservas/eventos); revisiones WP purgadas (3, residuos "pedidor"/"perfiln"/"deliverys" solo vivían ahí); ZIP export/armada-suite-micaserogou-restaurant-20261021.zip regenerado (23,9 MB, 1623 archivos, about.php del pack verificado dentro, dump DB limpio 172K)
