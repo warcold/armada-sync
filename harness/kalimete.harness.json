@@ -13,7 +13,7 @@
     "host": "kalimete",
     "ip": "10.0.0.106",
     "rol": "desarrollo + ethical",
-    "scope_agentes": "25 subagentes con NOMBRES REALES (Armada Suite, Authentik, Cloudflare, DocuSeal, ERP Dev, Game Studio, Godot, Intigriti, IRC, Kalimete Dashboard, Nextcloud, PetSuite, Proxmark, Proxy, Ragnarok, Ragnarok Server, Record of Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, WordPress, ZionV CRM) — visibles en @ (hidden:false)"
+    "scope_agentes": "26 subagentes con NOMBRES REALES (Armada Suite, Authentik, Cloudflare, DocuSeal, ERP Dev, Game Studio, Intigriti, IRC, Kalimete Dashboard, Kalimete PTT, Nextcloud, PetSuite, Proxmark, Proxy, Ragnarok Server, Record of Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, WordPress, ZionV CRM) — visibles en @ (hidden:false)"
   },
   "hermanos": {
     "victoria": {
@@ -154,6 +154,13 @@
       "id": "kalimete-dashboard",
       "file": "kalimete-dashboard.md",
       "scope": "Dashboard dev kalimete (api.py :8081 + index.html SPA, monitorea proyectos locales en ~/dev/apps/)",
+      "hidden": false
+    },
+    {
+      "name": "Kalimete PTT",
+      "id": "kalimete-ptt",
+      "file": "kalimete-ptt.md",
+      "scope": "Voz push-to-talk (Ctrl_R conversación con Victoria + F9 dictado; cliente kalimete, servidor victoria :18810 solo lectura)",
       "hidden": false
     },
     {
