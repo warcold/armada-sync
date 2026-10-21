@@ -1,5 +1,15 @@
 ## 2026-10-20
 
+### [21:45] - Record of Ragnarok: JUGABLE MULTIPLAYER (fases 0.5c + 1-2 completas)
+- **Tipo**: docs | servicio
+- **Modificado**: ~/dev/games/record-of-ragnarok (commits 45dbc19, c511b44, 286d666, e32dd22): fórmulas RO pre-renewal GDScript (32/32 tests), server headless ENet :7777 autoritativo (login/chars persistentes JSON, 21 mobs con AI y stats reales del mob_db, combate server-side, EXP/level up, zonas PvE/PvP con arena central validada por server, chat, regen, respawn, anti-teleport), cliente completo (login → char crear/select → mundo 3D Valhalla programático con HUD RO-style, damage numbers, stats window, bots --auto para tests)
+- **Afecta a**: juego Record of Ragnarok — MULTIPLAYER JUGABLE de punta a punta en LAN
+- **Causa**: orden del owner "procede hasta dejar el juego jugable multiplayer"
+- **Estado**: ✅ smoke test 2 clientes ONLINE=2 (ambos se ven) · ✅ combate real verificado (Poring 11 dmg con fórmulas RO) · ✅ EXP persistida en chars JSON · ✅ screenshot render verificado · ✅ tests fórmulas 32/32
+- **Notas**: la tool task no reconoció al agente Record of Ragnarok (cache de sesión) — kalimete ejecutó directo con el blueprint. Pendientes próximos: Postgres + deploy Docker (0.5b), inventario/loot/party (fase 3), skills/job change/boss Thor (fase 4), assets 3D granja (fase 5), builds + landing descarga (fase 6).
+
+## 2026-10-20
+
 ### [19:37] - micaserogou: ventana prod fase 1 — homepage = landing del proyecto (adiós "Cats And Dogs")
 - **Tipo**: servicio
 - **Modificado**: WP prod micaserogou.com vía REST (App Password usuario victoria): blogname "Cats And Dogs"→"Mi Casa Rogou" (campo REST `title`), show_on_front posts→page, page_on_front 0→7 (inicio)
