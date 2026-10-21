@@ -13,7 +13,7 @@
     "host": "kalimete",
     "ip": "10.0.0.106",
     "rol": "desarrollo + ethical",
-    "scope_agentes": "19 subagentes con NOMBRES REALES (Armada Suite, Authentik, Cloudflare, DocuSeal, ERP Dev, Godot, Intigriti, IRC, Nextcloud, PetSuite, Proxmark, Proxy, Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, WordPress, ZionV CRM) — visibles en @ (hidden:false)"
+    "scope_agentes": "25 subagentes con NOMBRES REALES (Armada Suite, Authentik, Cloudflare, DocuSeal, ERP Dev, Game Studio, Godot, Intigriti, IRC, Kalimete Dashboard, Nextcloud, PetSuite, Proxmark, Proxy, Ragnarok, Ragnarok Server, Record of Ragnarok, Scriberr, Taohemps, Victoria Server, VPS, WordPress, ZionV CRM) — visibles en @ (hidden:false)"
   },
   "hermanos": {
     "victoria": {
@@ -147,6 +147,13 @@
       "id": "intigriti",
       "file": "intigriti.md",
       "scope": "Bug bounty Intigriti (~/dev/ethical-hacking) — CoC+T&C estrictos, no-destructivo",
+      "hidden": false
+    },
+    {
+      "name": "Kalimete Dashboard",
+      "id": "kalimete-dashboard",
+      "file": "kalimete-dashboard.md",
+      "scope": "Dashboard dev kalimete (api.py :8081 + index.html SPA, monitorea proyectos locales en ~/dev/apps/)",
       "hidden": false
     },
     {

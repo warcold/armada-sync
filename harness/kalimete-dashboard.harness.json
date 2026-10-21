@@ -1,0 +1,37 @@
+{
+  "harness": "kalimete-dashboard",
+  "updated": "2026-10-20",
+  "agent": {
+    "name": "Kalimete Dashboard",
+    "id": "kalimete-dashboard",
+    "file": "kalimete-dashboard.md",
+    "mode": "subagent",
+    "color": "#6c63ff",
+    "hidden": false
+  },
+  "scope": {
+    "project": "kalimete (dashboard dev)",
+    "path": "~/dev/apps/kalimete/",
+    "description": "Dashboard de desarrollo kalimete — panel HTTP (api.py :8081 + index.html SPA) que monitorea todos los proyectos locales en ~/dev/apps/, verifica puertos y muestra git logs"
+  },
+  "live_check": {
+    "command": "curl -s http://localhost:8081/api/health || echo 'not running'",
+    "ports": ["8081"],
+    "process": "python3 api.py",
+    "description": "Verificar que el API server corre en :8081 y responde /api/health con {\"status\":\"ok\"}"
+  },
+  "endpoints": {
+    "/api/projects": "Array de proyectos con status, changelog, tags, URLs",
+    "/api/health": "{\"status\": \"ok\"}"
+  },
+  "upstream": {
+    "source": "git github.com/warcold/kalimete (privado, main)",
+    "description": "7 commits, jul-sep 2026, baja actividad",
+    "check": "cd ~/dev/apps/kalimete && git log --oneline -5"
+  },
+  "docs": {
+    "api": "https://docs.python.org/3/library/http.server.html",
+    "frontend": "https://developer.mozilla.org/en-US/docs/Web/HTML"
+  },
+  "groom_clean": true
+}
