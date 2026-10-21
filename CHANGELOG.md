@@ -1,5 +1,15 @@
 ## 2026-10-20
 
+### [22:30] - Record of Ragnarok: Fase 0.5b Postgres persistence completada
+- **Tipo**: infra | servicio | docs
+- **Modificado**: ~/dev/games/record-of-ragnarok (net.gd reescrito con HTTP persistence), nuevo servicio persistence (FastAPI + asyncpg en :8082), docker-compose.postgres.yml, sql/init/01_schema.sql (11 tablas), tools/migrate_to_postgres.py, .env.postgres; armada-sync CHANGELOG
+- **Afecta a**: juego Record of Ragnarok (persistencia Postgres), vps-preprod (contenedor ror-postgres pgvector:pg17 en :5433)
+- **Causa**: orden del owner — migración JSON→Postgres para persistencia robusta multiplayer, base para Fases 3-6
+- **Estado**: ✅ Schema 11 tablas aplicado · ✅ Migración 2 cuentas + 2 chars verificada · ✅ Persistence Service HTTP (FastAPI + asyncpg) en :8082 · ✅ net.gd reescrito con HTTPClient → Postgres · ✅ Smoke test 2 clientes ONLINE=2 · ✅ Combate verificado (Poring 11 dmg, fórmulas RO) · ✅ Persistencia EXP en Postgres (Alice base_exp=6)
+- **Notas**: net.gd reescrito completo (HTTPClient → Persistence Service HTTP → Postgres pgvector:pg17). Falsa alarma "GameData not found" en --check-only (autoloads no cargan en modo check-only). Próximo: Fase 3 (Inventario, Loot, Party).
+
+## 2026-10-20
+
 ### [23:10] - Kalimete PTT: agente + harness + home de proyecto (voz push-to-talk)
 - **Tipo**: agente | docs
 - **Modificado**: agents/kalimete-ptt.md (nuevo) + harness/kalimete-ptt.harness.json (nuevo) + agents/kalimete.md (25→26 subagentes, allow task, tabla delegación) + harness/kalimete.harness.json (flota 26 + entrada subagente) + ~/dev/apps/kalimete-ptt/ (home nuevo: CHANGELOG.md + STATE.md, git init)
