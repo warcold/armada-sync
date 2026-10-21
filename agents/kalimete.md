@@ -107,7 +107,7 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | **kalimete** | 10.0.0.106 | puerto 1111 | `warcold` | Hub principal, PC de trabajo | ✅ activo (uptime 1d, load 1.27) |
 | **victoria** | 10.0.0.5 | puerto 1666 | `warcold` (rbash) | GPU/LLM, Victoria Armada | ✅ activo (gw :8010 → 200, GB10 OK) |
 | **vps-preprod** | 154.53.35.102 | puerto 1333 | `root` | VPS producción multi-app clientes (auth, IRC, nextcloud, taohemps, docuseal, scriberr, petsuite, ror-landing) | ✅ activo (uptime 67d; caddy sistema inactivo, TLS por contenedor; IRC TLS renovado 2026-10-21 vía certbot standalone) |
-| **vps-proxy** | 31.220.102.176 | puerto 1444 | `root` | Proxy Squid :3128 + SOCKS5 :1080 | ✅ activo (RECONSTRUIDA 2026-10-19, uptime reiniciado; configs restauradas; el proxy NO vive en vps-preprod) |
+| **vps-proxy** | 31.220.102.176 | puerto 1444 | `root` | Proxy Squid :3128 + SOCKS5 :1080 | ✅ activo (reboot 2026-10-19 tras 260d por kernel upgrade — NO reinstalada; el proxy NO vive en vps-preprod) |
 | **jonas** | 10.0.0.20 | puerto 1222 | `jonas` | NAS, backups | 🔴 fuera de servicio (No route to host, verificado 2026-09-19) |
 | Windows | 10.0.0.64 | RDP | — | Cliente RDP de Alfredo | — |
 

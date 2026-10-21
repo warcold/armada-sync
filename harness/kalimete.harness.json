@@ -76,7 +76,7 @@
       "name": "Proxy",
       "id": "proxy",
       "file": "proxy.md",
-      "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080) — reconstruida 2026-10-19, configs restauradas",
+      "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080) — misma instalación, reboot 2026-10-19 (kernel upgrade)",
       "hidden": false
     },
     {

@@ -91,11 +91,12 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - UFW: active (solo rangos CF en DOCKER-USER); iptables INPUT: IRC 6667/6697/7209 ACCEPT (2026-10-21) + CF 80/443 + SSH 1333, política DROP
 - OpenVPN: active (openvpn@server.service)
 
-### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional — ✅ ACTIVO (RECONSTRUIDA 2026-10-19, verificado 2026-10-21)
+### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional — ✅ ACTIVO (verificado 2026-10-21)
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-proxy` (restaurado 2026-09-19 en `/etc/ssh/ssh_config.d/10-armada-hosts.conf`)
-- ⚠️ RECONSTRUIDA/REINSTALADA 2026-10-19 (uptime reiniciado; la marca "uptime 228d" de docs previas ya NO aplica). Configs restauradas desde backup (usuarios, 111 filtros, fail2ban, filedescriptors 65536, cache deny all, UFW) — verificado live 2026-10-21.
-- certbot 2.9.0 con /etc/letsencrypt heredado: 2 certs expirados de dominios que ya NO apuntan a esta caja (el.colador.de.alfredo.pro → vps-preprod/IRC, renovado allí 2026-10-21; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner).
+- ⚠️ Reboot 2026-10-19 = primer reboot en 260 días (kernel 6.8.0-147 por unattended-upgrades). **NO fue reinstalada** — misma instalación (wtmp/apt logs/certs intactos). La marca "uptime 228d" ya NO aplica. Shutdown+boot limpio también el 2026-10-21 16:31→16:40 (causa por confirmar).
+- Configs intactas: usuarios (admin, jovtransport), 111 filtros, fail2ban, filedescriptors 65536, cache deny all, UFW (1444/53/3128/1080) — verificado live 2026-10-21.
+- certbot 2.9.0 con /etc/letsencrypt: 2 certs expirados de dominios que ya NO apuntan a esta caja (el.colador.de.alfredo.pro → vps-preprod/IRC, renovado allí 2026-10-21; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner).
 - Sin Docker. Sin crontab.
 - Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
 - DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF); jovtransport.prx.armada.do → 31.220.102.176 (gris, dedicado jovtransport)

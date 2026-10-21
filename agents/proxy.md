@@ -12,11 +12,12 @@ permission:
 ---
 > **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-## ⚠️ Reconstrucción del servidor (2026-10-19)
+## ⚠️ Reboot 2026-10-19 — NO fue reinstalación (corrección 2026-10-21)
 
-- La caja fue **reconstruida/reinstalada el 2026-10-19** (uptime reiniciado — la marca "uptime 228d" de docs anteriores ya NO aplica). Verificado live 2026-10-21.
-- **Configs restauradas desde backup** (fechas Aug 31): usuarios (`proxy-users.conf`), filtros (`blocked-domains.txt`, 111 dominios), fail2ban activo, `max_filedescriptors 65536` + `cache deny all`, UFW (1444/53/3128/1080). Todo verificado live 2026-10-21.
-- **certbot 2.9.0** con `/etc/letsencrypt` heredado: 2 certs EXPIRADOS cuyos dominios ya NO apuntan a esta caja:
+- La caja es la **MISMA instalación desde siempre** (evidencia: wtmp con boots de 2025, apt logs de Nov-2025, certs LE de julio intactos). El 2026-10-19 tuvo su **primer reboot en 260 días** (desde Feb-2026) para activar el kernel 6.8.0-147 instalado por unattended-upgrades → uptime reiniciado. La marca "uptime 228d" de docs previas ya NO aplica.
+- 2026-10-21 16:31→16:40: shutdown limpio + boot (systemd poweroff — probablemente desde panel Contabo; causa por confirmar con owner).
+- **Configs intactas** (no restauradas): usuarios (`proxy-users.conf`), filtros (`blocked-domains.txt`, 111 dominios), fail2ban activo, `max_filedescriptors 65536` + `cache deny all`, UFW (1444/53/3128/1080). Verificado live 2026-10-21.
+- **certbot 2.9.0** con `/etc/letsencrypt`: 2 certs EXPIRADOS cuyos dominios ya NO apuntan a esta caja:
   - `el.colador.de.alfredo.pro` → apunta a vps-preprod (IRC); renovado allí 2026-10-21 (ver `agents/irc.md`).
   - `colador.union-chat.online` → apunta a IPs de terceros (104.219.250.37 / 2.59.170.20) — NO renovable desde nuestras cajas, pendiente decisión owner.
 - Sin Docker. Sin crontab.
@@ -132,7 +133,7 @@ Cuando se agreguen más IPs al servidor, descomentar en `/etc/squid/squid.conf`:
 ## Upstream (2026-10-01)
 
 - **Fuente**: vps-proxy 31.220.102.176 (Squid :3128 + SOCKS5 :1080).
-- **Vivo**: reconstruida 2026-10-19 (uptime reiniciado); configs restauradas y verificadas live 2026-10-21.
+- **Vivo**: misma instalación desde siempre; reboot 2026-10-19 tras 260d (kernel 6.8.0-147 por unattended-upgrades, NO reinstalada); verificada live 2026-10-21.
 - **Check**: ssh vps-proxy systemctl is-active squid
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 

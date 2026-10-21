@@ -4,8 +4,8 @@
   "agent_file": "~/armada-sync/agents/proxy.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080) — caja reconstruida 2026-10-19, configs restauradas",
-  "vivo_2026_10_21": "reconstruida 2026-10-19 (uptime reiniciado); Squid activo, configs restauradas (usuarios/filtros/fail2ban/filedescriptors/ufw), certbot 2.9.0 con 2 certs expirados ajenos (dominios ya no apuntan ahí); sin docker, sin crontab",
+  "scope": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080) — misma instalación, reboot 2026-10-19 tras 260d (kernel upgrade)",
+  "vivo_2026_10_21": "misma instalación desde siempre (wtmp/apt logs intactos); reboot 2026-10-19 = primer reboot en 260 días (kernel 6.8.0-147 por unattended-upgrades); Squid activo (jovtransport ~6k req/día), fail2ban 0 bans, certbot 2.9.0 con 2 certs expirados ajenos (dominios ya no apuntan ahí); sin docker, sin crontab",
   "live_check": "ssh vps-proxy systemctl is-active squid",
   "upstream": {
     "fuente": "Proxy vps-proxy (Squid:3128 + SOCKS5:1080)",
