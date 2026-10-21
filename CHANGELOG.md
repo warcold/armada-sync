@@ -1,5 +1,15 @@
 ## 2026-10-20
 
+### [23:10] - Kalimete PTT: agente + harness + home de proyecto (voz push-to-talk)
+- **Tipo**: agente | docs
+- **Modificado**: agents/kalimete-ptt.md (nuevo) + harness/kalimete-ptt.harness.json (nuevo) + agents/kalimete.md (25→26 subagentes, allow task, tabla delegación) + harness/kalimete.harness.json (flota 26 + entrada subagente) + ~/dev/apps/kalimete-ptt/ (home nuevo: CHANGELOG.md + STATE.md, git init)
+- **Afecta a**: kalimete (cliente PTT ~/.local/bin/kalimete-ptt, systemd --user) + victoria :18810 (solo lectura)
+- **Causa**: owner pidió changelog + regla de contexto siempre actualizado + análisis del flujo de voz (bugs: transcripción en árabe/ruso/francés por language=None hardcodeado en el servidor + cliente que no envía PTT_LANGUAGE; autorización "no me entiende" por _YES_RE estricta que rechaza "Sí, procede.")
+- **Estado**: ✅ agente+harness+home creados y commiteados · ⏳ fixes de código pendientes de OK del owner (doble lado: victoria requiere autorización de escritura)
+- **Notas**: restaurado agents/kalimete-dashboard.md (el cron sync 22:50 lo borró como zombie — se había commiteado sin symlink en ~/.config/opencode/agent/; ahora con symlink). Lección: TODO agente nuevo del repo lleva su symlink inmediato.
+
+## 2026-10-20
+
 ### [22:10] - micaserogou: key ERP prod GUARDADA Y FUNCIONANDO + preprod 5.5.0 con template restaurante (Fase D completa)
 - **Tipo**: servicio | config
 - **Modificado**: PROD micaserogou.com (key ERP productiva tenant 3 guardada por el owner vía form wp-admin — ping-erp 200 OK, key_fp 8c280a49, catálogo prod sirviendo productos reales del ERP: "1 PIEZA DE POLLO FRITO" $75 con imágenes erpipos.armada.do/storage/productos/); PREPROD micaserogou.kalimete.local (plugin armada-suite 5.4.2→5.5.0 instalado desde ZIP con hash verificado be52ac…, backup armada-suite.bkup-5.4.2/, setting tenant.template_pack=restaurant, sync manual erpsuite_auto_sync_run() → erp_config LLENO con marca real "Michelle Casero y Gourmet" + config_fetched_at fresco)
