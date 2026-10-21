@@ -1,5 +1,20 @@
 ## 2026-10-21
 
+### [19:45] - AUDITORÍA migración proxy→vps-preprod: NO EJECUTADA — vps-proxy sigue siendo el único proxy (NO borrar todavía)
+- **Tipo**: infra | docs
+- **Modificado**: agents/proxy.md (sección consolidación), harness/proxy.harness.json (vivo + scope), MAPA.md (nota consolidación pendiente en nodo 4), CHANGELOG.md
+- **Afecta a**: decisión de decommission de vps-proxy (Contabo)
+- **Causa**: owner creía la migración hecha ("migramos todo de vps-proxy a vps-preprod, agregando un servicio de proxy para clientes en preprod"); la auditoría live exhaustiva demuestra que NO existe proxy alguno en vps-preprod
+- **Estado**: ✅ Auditado con evidencia live 2026-10-21 19:20-19:40
+- **Notas**:
+  - **vps-preprod SIN proxy** (evidencia): 0 paquetes squid/dante/tinyproxy/3proxy/gost/v2ray (dpkg), 0 unidades systemd proxy, 0 listeners 3128/1080 (ss), 0 imágenes docker proxy, 0 scripts /usr/local/bin, 0 artefactos /opt//srv//root, 0 entradas apt history. El "Up 5 hours" de los 24 contenedores = `apt upgrade` del stack docker-ce/containerd/docker-compose ejecutado por usuario **justin_t** 14:35-14:37 (NO fue migración).
+  - **vps-preprod servicios TODOS funcionales**: auth 302 (login OK), nextcloud 302 (login OK), docuseal/pets/scriberr/ragnarok/whiteboard 200; IRC 6667/6697/7209 OPEN.
+  - **vps-preprod SIN contaminación proxy** (requisito del owner: el proxy será servicio PARA CLIENTES, el VPS no debe usarlo): 0 vars http_proxy/https_proxy en /etc/environment, /etc/profile.d, docker daemon (sin daemon.json ni Environment), env root, 24 contenedores inspeccionados, apt, git, systemd global, wget/curl rc, snap.
+  - **vps-proxy FUNCIONAL Y EN USO**: 13,112 req/24h — cliente activo `jovtransport` desde 181.36.176.87 (12,361 req, conectado AHORA: mtalk.google.com tunnel OK, spotify/teams DENIED 403 por filtros); squid 200 en 0.26s, socks5 200 en 0.35s; fail2ban 0 bans; UFW 1444/53/3128/1080; recursos 93% ociosos (disco 9.8G/145G, RAM 510Mi/7.8Gi).
+  - **VEREDICTO**: NO borrar vps-proxy — cortaría el servicio al cliente activo. Migración real PENDIENTE con plan: (1) instalar squid+socks5-proxy.py en vps-preprod como servicio AISLADO (sin env vars del sistema), (2) migrar squid.conf (adaptar visible_hostname) + proxy-users.conf + blocked-domains.txt (111 dominios) + systemd units + fail2ban jail, (3) abrir firewall 3128/1080 en iptables INPUT + persistir, (4) repuntar DNS proxy.us-east.armada.do + jovtransport.prx.armada.do → 154.53.35.102 (gris, NUNCA proxied), (5) validar curl vía proxy + filtros, (6) ventana de corte con jovtransport (IP de salida cambia 31.220.102.176→154.53.35.102), (7) decommission Contabo. Ejecución requiere OK del owner (delegable a subagente Proxy).
+
+## 2026-10-21
+
 ### [17:10] - micaserogou: preprod alineado 100% a restaurante + ZIP de release + checklist de deploy (producción sin tocar)
 - **Tipo**: servicio | docs | release
 - **Modificado**: ~/dev/wordpress/websites/micaserogou.com/ (preprod local :8094 / https://micaserogou.kalimete.local) — DB adaptada (12 actualizaciones: blogdescription, erp_suite_settings brand="Mi Casa Rogou"/tagline/business_type="restaurante", páginas legales e-commerce→restaurante, Sobre Nosotros, post Hello world→menú del día, comentario genérico→Carolina M., Sample Page→Reservas), flush de transientes _transient_erpsuite* (brand name renderizado corregido de "Michelle Casero y Gourmet" a "Mi Casa Rogou", 0 residuos); export/armada-suite-micaserogou-restaurant-20261021.zip (23,9 MB: tema twentytwentyfive, plugins armada-suite 5.5.1+akismet+hello, mu-plugins, dump DB fresco 184 KB, backups/); docs/PROD-DEPLOY-CHECKLIST.md (nuevo, 7 prerrequisitos, orden de deploy, rollback con armada-suite-5.4.1.zip vía erpsuite/v1/ops, advertencia NUNCA tocar prod sin ventana autorizada)
