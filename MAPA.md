@@ -1,6 +1,6 @@
 # 🗺️ MAPA DE AGENTES — Ecosistema Armada
 
-## Topología (2026-09-19, validado — todos los SSH probados en vivo)
+## Topología (2026-10-22, validado — SSH probados en vivo; vps-proxy verificado MUERTO)
 
 ```
                      ┌─────────────────────────────────────────────┐
@@ -14,8 +14,9 @@
                      │                                          │
                      │      vps-preprod (VPS prod)              │
                      └── 154.53.35.102:1333 ─── IRC, auth.do   │
-                     │      vps-proxy (proxy Squid/SOCKS5)      │
-                     └── 31.220.102.176:1444 ─── ✅ ACTIVO     │
+                     │      vps-proxy — 🔴 DESACTIVADO 2026-10-22 │
+                     └── 31.220.102.176:1444 (muerto; proxy → │
+                     │    vps-preprod /opt/proxy-stack)        │
                      │                                          │
     Cloudflare: Alfred@armada.do                               │
     Zones: armada.do | taohemps.com          │

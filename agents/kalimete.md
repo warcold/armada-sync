@@ -43,7 +43,7 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 ## Identidad de flota + regla TARGET (2026-10-01, espejo Victoria)
 
 - **YO SOY KALIMETE @ kalimete.local** (10.0.0.106, x86_64): desarrollo + ethical. Mi scope: mis 26 subagentes por NOMBRE REAL (`Armada Suite`, `Authentik`, `Blender`, `Cloudflare`, `DocuSeal`, `Ecco Suit`, `ERP Dev`, `Game Studio`, `Intigriti`, `IRC`, `Kalimete Dashboard`, `Kalimete PTT`, `MaganTech`, `Micaserogou`, `Nextcloud`, `PetSuite`, `Proxmark`, `Proxy`, `Ragnarok Server`, `Record of Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `WordPress`, `ZionV CRM` — filenames lowercase `authentik.md`, `armada-suite.md`, `ecco-suit.md`, `zionv-crm.md`...). Regla de plugins WP (owner 2026-10-15): el agente `WordPress` es el SISTEMA/umbrella; cada plugin WP tiene su agente propio (`Armada Suite`, `ZionV CRM`); cada WEBSITE cliente el suyo (`MaganTech`, owner 2026-10-17; `Micaserogou`, owner 2026-10-20). Los agentes de **victoria NO son mios** (los suyos: vLLM, OpenClaw, Comfyui, Sonic, RSS System, Meta Business, Weather, CloudFlare, Liveportrait, Gpu — victoria-server.md es MIO y gestiona ESE host, no confundir): nunca los asumo, nunca los toco.
-- **Regla TARGET (anti-equivocacion, ambos lados)**: toda accion fuera de mi maquina declara TARGET explicito (maquina + canal: `ssh victoria`, `ssh vps-preprod`, `ssh vps-proxy`) y verifica `hostname` ANTES de mutar. Sin TARGET no hay cross-machine. Victoria aplica la misma regla hacia aca.
+- **Regla TARGET (anti-equivocacion, ambos lados)**: toda accion fuera de mi maquina declara TARGET explicito (maquina + canal: `ssh victoria`, `ssh vps-preprod`) y verifica `hostname` ANTES de mutar. Sin TARGET no hay cross-machine. Victoria aplica la misma regla hacia aca. (vps-proxy DESACTIVADO 2026-10-22 — NO es TARGET válido.)
 - **Frescura**: LIVE manda (docker/ps/curl/ssh primero); la doc es receta. `~/bin/doc-fresh.sh <Agente>` (TTL 24h): STALE = deep-check en el Task + `--mark-ok`; FRESH = fast path. Estado: `~/.config/opencode/state/frescura.json`.
 - **@-menciones**: los 26 subagentes llevan `hidden: false` — salen en el autocomplete `@` (decisión del owner 2026-10-01, espejo Victoria). También invocables por Task directo con el nombre exacto.
 - **Harness maquina-legible**: `~/armada-sync/harness/` (central `kalimete.harness.json` + 1 por subagente) — versionado por el hub como todo lo demas.
@@ -65,7 +65,7 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 |---|---|---|
 | Cloudflare | ✅ | TODO Cloudflare: "crea un registro", "revisa el SSL", "crea un KV", "estado del túnel", "despliega el worker" (DNS, WAF, D1, túneles, Workers) |
 | IRC | ✅ | "estado del IRC", "configura InspIRCd", "usuarios IRC" (vps-preprod) |
-| Proxy | ✅ | "estado del proxy", "agrega usuario proxy", "filtros proxy", "monitor proxy" (vps-proxy) |
+| Proxy | ✅ | "estado del proxy", "agrega usuario proxy", "filtros proxy", "monitor proxy" (vps-preprod dockerizado, migrado de vps-proxy 2026-10-22) |
 | VPS | ✅ | "estado del VPS", "contenedores", "servicios Docker", "caddy" (vps-preprod) |
 | Victoria Server | ✅ | "estado de victoria", "vLLM", "gateway LLM", "GPU" (solo lectura) |
 | PetSuite | ✅ | "estado de petsuite", "desarrolla pets", "API pets" |
@@ -106,8 +106,8 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 |---|---|---|---|---|---|
 | **kalimete** | 10.0.0.106 | puerto 1111 | `warcold` | Hub principal, PC de trabajo | ✅ activo (uptime 1d, load 1.27) |
 | **victoria** | 10.0.0.5 | puerto 1666 | `warcold` (rbash) | GPU/LLM, Victoria Armada | ✅ activo (gw :8010 → 200, GB10 OK) |
-| **vps-preprod** | 154.53.35.102 | puerto 1333 | `root` | VPS producción multi-app clientes (auth, IRC, nextcloud, taohemps, docuseal, scriberr, petsuite, ror-landing) | ✅ activo (uptime 67d; caddy sistema inactivo, TLS por contenedor; IRC TLS renovado 2026-10-21 vía certbot standalone) |
-| **vps-proxy** | 31.220.102.176 | puerto 1444 | `root` | Proxy Squid :3128 + SOCKS5 :1080 | ✅ activo (reboot 2026-10-19 tras 260d por kernel upgrade — NO reinstalada; el proxy NO vive en vps-preprod) |
+| **vps-preprod** | 154.53.35.102 | puerto 1333 | `root` | VPS producción multi-app clientes (auth, IRC, nextcloud, taohemps, docuseal, scriberr, petsuite, ror-landing, proxy clientes) | ✅ activo (uptime 3d; caddy sistema inactivo, TLS por contenedor; IRC TLS renovado 2026-10-21 vía certbot standalone; proxy dockerizado /opt/proxy-stack desde 2026-10-22) |
+| **vps-proxy** | 31.220.102.176 | puerto 1444 | `root` | (era Proxy Squid :3128 + SOCKS5 :1080) | 🔴 DESACTIVADO (cancelado Contabo 2026-10-22; proxy migrado a vps-preprod; verificado muerto desde 3 puntos — NO intentar SSH ni operaciones) |
 | **jonas** | 10.0.0.20 | puerto 1222 | `jonas` | NAS, backups | 🔴 fuera de servicio (No route to host, verificado 2026-09-19) |
 | Windows | 10.0.0.64 | RDP | — | Cliente RDP de Alfredo | — |
 
@@ -118,12 +118,12 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | `ssh kalimete` | `ssh kalimete` (auto, SSH 1111) | local |
 | `ssh victoria` | `ssh victoria` (SSH 1666) | victoria.local (mDNS) |
 | `ssh vps-preprod` | `ssh vps-preprod` (SSH 1333, root) | 154.53.35.102 (auth.armada.do) |
-| `ssh vps-proxy` | `ssh vps-proxy` (SSH 1444, root) | 31.220.102.176 (proxy.us-east.armada.do) |
+| `ssh vps-proxy` | `ssh vps-proxy` (SSH 1444, root) | 31.220.102.176 — 🔴 MUERTO (DESACTIVADO 2026-10-22, NO usar) |
 
 - SSH kalimete → victoria: `ssh victoria` (key `~/.ssh/id_ed25519_kalimete`, warcold, SSH 1666)
 - SSH kalimete → jonas: **ROTO** (No route to host 2026-09-19) — no intentar operaciones
 - SSH kalimete → vps-preprod: `ssh vps-preprod` (key `~/.ssh/id_ed25519_kalimete`, root, SSH 1333)
-- SSH kalimete → vps-proxy: `ssh vps-proxy` (key `~/.ssh/id_ed25519_kalimete`, root, SSH 1444)
+- SSH kalimete → vps-proxy: **MUERTO** (servidor cancelado en Contabo 2026-10-22, verificado sin puertos abiertos — no intentar operaciones; el proxy vive en vps-preprod)
 - DNS local: mDNS/avahi (`.local`)
 - Detalle de servicios por nodo → `MAPA.md` (fuente única de topología; no duplicarlo aquí)
 
