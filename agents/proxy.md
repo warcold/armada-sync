@@ -1,6 +1,6 @@
 ---
 name: Proxy
-description: Subagente del Proxy Armada (Squid+SOCKS5 dockerizado en vps-preprod 154.53.35.102 desde 2026-10-22; vps-proxy 31.220.102.176 queda como fallback pendiente de cancelación). Usado cuando kalimete delega: gestión de usuarios del proxy, filtros de contenido, rate limiting, monitoreo, estado del servicio Squid/SOCKS5, DNS del proxy.
+description: Subagente del Proxy Armada (Squid+SOCKS5 dockerizado en vps-preprod 154.53.35.102 desde 2026-10-22). Usado cuando kalimete delega: gestión de usuarios del proxy, filtros de contenido, rate limiting, monitoreo, estado del servicio Squid/SOCKS5, DNS del proxy.
 mode: subagent
 hidden: false
 color: "#6366f1"
@@ -12,10 +12,10 @@ permission:
 ---
 > **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-## ✅ MIGRACIÓN A vps-preprod COMPLETADA (2026-10-22)
+## ✅ MIGRACIÓN A vps-preprod COMPLETADA (2026-10-22) — vps-proxy DESACTIVADO
 
 - El proxy corre **DOCKERIZADO en vps-preprod** (154.53.35.102): stack `/opt/proxy-stack/` (compose), contenedores `proxy-squid` (Squid 6.14, :3128) + `proxy-socks5` (Python, :1080), red aislada `proxy-net`, volumen `squid-logs`.
-- **vps-proxy (31.220.102.176) = FALLBACK temporal** — sigue corriendo pero el DNS ya NO apunta ahí; el owner lo cancela en Contabo cuando confirme que jovtransport migró (avisar si usa IP hardcodeada).
+- **vps-proxy (31.220.102.176) = DESACTIVADO** — servidor cancelado/desactivado en Contabo; NO operativo. DNS ya NO apunta ahí.
 - Validado end-to-end 2026-10-22: squid 200 (admin/jovtransport), socks5 200, filtros 403 (YouTube), auth mala 407, FD 65536, 8 dominios del VPS + IRC intactos, 0 vars proxy en sistema/contenedores.
 
 ## ⚠️ REGLA CRÍTICA — El proxy es servicio PARA CLIENTES, el VPS NO lo usa
@@ -36,7 +36,6 @@ Proxy compartido internacional para clientes, amigos y familia. Migrado de vps-p
 - **Stack**: `/opt/proxy-stack/` (docker-compose.yml, squid/, socks5/)
 - **Comandos**: `cd /opt/proxy-stack && docker compose ps` (estado) · `docker compose restart` (restart) · `docker compose logs -f squid` (logs) · `docker exec proxy-squid tail -20 /var/log/squid/access.log` (tráfico)
 - **Recrear tras editar configs**: `docker compose up -d --force-recreate` (squid.conf/users/filtros van montados :ro)
-- **Fallback**: vps-proxy 31.220.102.176 (SSH 1444) sigue corriendo hasta cancelación — NO usar para cambios, solo lectura histórica
 
 ## Servicios
 
@@ -121,7 +120,7 @@ Proxy compartido internacional para clientes, amigos y familia. Migrado de vps-p
 
 ## Upstream (2026-10-22)
 
-- **Fuente**: vps-preprod /opt/proxy-stack (Squid :3128 + SOCKS5 :1080 dockerizados); origen histórico vps-proxy (misma instalación desde siempre, configs migradas fieles).
+- **Fuente**: vps-preprod /opt/proxy-stack (Squid :3128 + SOCKS5 :1080 dockerizados); origen histórico vps-proxy (misma instalación desde siempre, configs migradas fieles, **servidor desactivado 2026-10-22**).
 - **Vivo**: migrado y validado 2026-10-22 (auth OK ambos usuarios, filtros 403, socks5 200, FD 65536, DNS cutover, 8 dominios VPS + IRC intactos).
 - **Check**: `ssh vps-preprod "cd /opt/proxy-stack && docker compose ps" && curl -x http://admin:***@proxy.us-east.armada.do:3128 -so /dev/null -w "%{http_code}" --max-time 15 https://www.google.com`
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
