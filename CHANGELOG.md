@@ -32,6 +32,14 @@
 - **Estado**: ✅ 21/21: login gap 40px (era 763px), newsletter oculto, footer 707→635px, scroll vertical 145px @1440 (era 869px)
 - **Notas**: (1) Plugin fuerza `.erpc-page { min-height:100vh; display:flex }` (connector.css:1776) y `.erpc-auth-page { min-height:80vh }` (connector.css:2135) → anulados con `min-height:auto` en login. (2) Footer compactado: oculta newsletter bar + columnas "Ayuda" y "Legal". (3) Gap card→footer = 40px (padding-bottom auth-page), scroll vertical 145px @1440 (era 869px).
 
+### [06:15] - Micaserogou login mobile: sin scroll + gap simétrico 24px + nav "Menú" + footer solo marca
+- **Tipo**: frontend | ux | mobile
+- **Modificado**: micaserogou preprod: mu-plugin `erpc-micaserogou-visual.php` v1.4.0 (media query `@media (max-width: 767px)` para login móvil — footer solo marca (oculta menú, ayuda, legal, newsletter, bottom), padding footer 8px, card padding 12px, auth-page padding 24px, oculta mobile-search, trustbar/topbar/alfredo-bar compactos); `erpc-restaurante-fixes.php` gettext filter `'Tienda' => 'Menú'` para forzar "Menú" en nav
+- **Afecta a**: preprod micaserogou login (móvil ≤767px); tablet 768px y desktop intactos
+- **Causa**: owner pidió login móvil sin scroll, gap simétrico 24px arriba/abajo, nav "Menú" no "Tienda"
+- **Estado**: ✅ 21/21: móvil 375px scroll_v ≤100px (era 763px gap), gap simétrico 24px, card 311px, footer 292px (solo marca), nav "Menú"; tablet 768px/desktop 1440px intactos (gap 30px, card 440px, footer completo)
+- **Notas**: (1) Media query `@media (max-width: 767px)` para no afectar tablet 768px. (2) Footer móvil: oculta columnas 2-4 (menú, ayuda, legal), newsletter, bottom; deja solo logo + nombre marca. (3) Card padding 12px, auth-page padding 24px, footer padding 8px. (4) Oculta mobile-search, compacta trustbar/topbar/alfredo-bar. (5) Gettext filter `'Tienda' => 'Menú'` corrige la traducción del plugin que convertía "Menú" a "Tienda".
+
 ## 2026-10-22
 
 ### [07:30] - MIGRACIÓN COMPLETA proxy vps-proxy → vps-preprod DOCKERIZADO + DNS cutover — vps-proxy listo para cancelación
