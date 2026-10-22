@@ -75,6 +75,14 @@
 - **Estado**: ✅ Logrotate fail2ban instalado (diario, 28 rot, compress, reload); health check proxy activo (cron 5 min, systemd-cat); docker builder prune mensual (1ro de mes 03:00, log dedicado); certs todos vigentes (dic-2026/ene-2027); Nextcloud 33.0.3 sano; Authentik 4/4 healthy + celery OK; IRC/taohemps certs auto-renuevan ene-2027.
 - **Notas**: El proxy es **solo servicio para clientes** (aislado: 0 vars proxy en sistema/25 contenedores, red `proxy-net` dedicada, DNAT preserva IPs reales). Los demás servicios (nextcloud, authentik, IRC, taohemps, pets, scriberr, ror-landing, staging) NO usan el proxy. vps-proxy fallback intacto (0 tráfico residual). Próximo ciclo: backups (crítico), cancelación vps-proxy, telecomm, jonas.
 
+### [16:50] - Proxy: fail2ban jail squid DESHABILITADA — baneaba al cliente legítimo (jovtransport)
+- **Tipo**: seguridad | proxy
+- **Modificado**: vps-preprod `/etc/fail2ban/jail.d/squid.local` (backup `.bkup-20261022`): sección `[squid]` `enabled = true` → `enabled = false` + comentario explicativo. Jails `sshd` intactas; fail2ban completo sigue activo. Docs: `agents/proxy.md` (tabla servicios + sección fail2ban), `harness/proxy.harness.json`.
+- **Afecta a**: vps-preprod (fail2ban), cliente jovtransport (181.36.176.87) — recupera navegación completa
+- **Causa**: orden del owner — la jail squid interpretaba los 407 NORMALES de las apps Windows del cliente (CONNECT sin auth pre-emptiva: Skype/login.live, MS telemetry, updater EdrawSoft, update.googleapis; ráfagas de 8 en <1s) como brute-force → baneo all-ports (`iptables-allports chain=FORWARD`) → el cliente perdía la navegación COMPLETA. Baneado 2x el mismo día (14:29 y 15:00); también baneó a kalimete (69.143.73.120) a las 07:45 durante la validación de la migración (el `ignoreip` de la jail squid pisaba al `ignoreip` DEFAULT)
+- **Estado**: ✅ Verificado: unban 181.36.176.87 OK + chain `f2b-squid` fuera de FORWARD + 0 refs nftables + jail sshd intacta + probe HTTP 407 (Squid vivo pidiendo auth) + SOCKS5 abierto + túneles `TCP_TUNNEL/200` fluyendo (jovtransport + admin)
+- **Notas**: El proxy conserva auth NCSA obligatoria + filtros de contenido; fail2ban sigue protegiendo SSH (:1333). Precedente: vps-proxy corrió 228 días con fail2ban solo sshd sin problemas — la postura actual replica esa estabilidad. Si el owner quisiera anti-bruteforce del proxy en el futuro: reactivar con `maxretry` alto (20+) o `ignoreip` de IPs cliente (frágil por IP dinámica). Dato menor: unban manual previo de 181.36.176.87 a las 14:57 (alguien lo desbaneó a mano antes de la intervención). El PC del cliente reconectará solo cuando sus apps reintenten (backoff post-ban).
+
 ## 2026-10-22
 
 ### [01:30] - micaserogou: validación integral 16 páginas — titles, copy restaurante, imágenes de heroes

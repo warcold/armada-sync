@@ -43,7 +43,7 @@ Proxy compartido internacional para clientes, amigos y familia. Migrado de vps-p
 |---|---|---|
 | **Squid 6.14** (contenedor `proxy-squid`) | 3128 | Proxy HTTP/HTTPS con autenticación NCSA (htpasswd) |
 | **SOCKS5** (contenedor `proxy-socks5`) | 1080 | Proxy SOCKS5 RFC 1929, backend Squid (env SQUID_HOST=squid) |
-| **fail2ban** (host) | — | jails sshd + **squid** (407 auth mala: 5 fallos/10min → ban 2h, chain FORWARD, 2026-10-22) |
+| **fail2ban** (host) | — | jail sshd (squid DESHABILITADA 2026-10-22, baneaba al cliente legit; ver sección fail2ban) |
 
 ## Usuarios del proxy
 
@@ -94,13 +94,13 @@ Proxy compartido internacional para clientes, amigos y familia. Migrado de vps-p
 - Socks5: `docker logs proxy-socks5 --tail 50`
 - **Rotación de access.log** (2026-10-22): `logfile_rotate 10` en squid.conf + cron root del VPS `0 4 * * 0 docker exec proxy-squid /usr/sbin/squid -k rotate` (domingos 04:00, 10 generaciones ≈ 10 semanas). Cambios de config en caliente: `docker exec proxy-squid /usr/sbin/squid -k reconfigure` (sin downtime).
 
-## fail2ban jail squid (2026-10-22)
+## fail2ban jail squid — DESHABILITADA (2026-10-22 16:50)
 
-- Filter `/etc/fail2ban/filter.d/squid.conf`: `failregex = ^\s*\d+\s+<HOST>\s+TCP_DENIED/407\s` + `datepattern = {^LN-BEG}EPOCH` (el timestamp epoch se consume ANTES del failregex — por eso el regex empieza en el campo elapsed). Solo 407 (auth mala); los 403 son el filtro de contenido, NO brute force.
-- Jail `/etc/fail2ban/jail.d/squid.local`: **`backend = auto` OBLIGATORIO** (el default systemd de Ubuntu 24.04 ignora logpath y monitorea el journal — sin esto el jail no cuenta nada), logpath = volumen docker, `ignoreip = 127.0.0.1/8 172.20.0.0/16` (evita self-lockout del host), maxretry 5 / findtime 10m / bantime 2h.
-- **`action = iptables-allports[... chain=FORWARD]`**: la coma en `port=3128,1080` ROMPE el parser de acciones ("unexpected option syntax") — por eso allports. chain=FORWARD (no INPUT ni DOCKER-USER): el tráfico a puertos docker publicados va por FORWARD tras el DNAT, y FORWARD sobrevive los flushes de DOCKER-USER de apply.sh.
-- IPs reales de clientes preservadas en el log (el DNAT mantiene la source; solo el tráfico del host aparece como 172.20.0.1).
-- Validado end-to-end 2026-10-22: filtro 13/13 líneas 407, ban real verificado (REJECT en f2b-squid hook FORWARD pos.1), unban OK.
+- **Estado actual: `enabled = false`** en `/etc/fail2ban/jail.d/squid.local` (backup `.bkup-20261022`). Solo la jail `sshd` sigue activa protegiendo SSH (:1333); fail2ban completo sigue operativo.
+- **Motivo**: la jail interpretaba los 407 NORMALES de las apps Windows del cliente legítimo (jovtransport, 181.36.176.87 — CONNECT sin auth pre-emptiva: Skype/login.live, MS telemetry, updater EdrawSoft, update.googleapis; ráfagas de 8 en <1s) como brute-force → baneo all-ports (`iptables-allports chain=FORWARD`) → el cliente perdía la navegación COMPLETA. Baneado 2x el mismo día (14:29 y 15:00); también baneó a kalimete (69.143.73.120) a las 07:45 durante la validación de la migración (el `ignoreip` de la jail squid pisaba al `ignoreip` DEFAULT).
+- **Cómo reactivar** (solo si el owner lo pide): `enabled = true` en `/etc/fail2ban/jail.d/squid.local` + `fail2ban-client reload` — recomendado únicamente con `maxretry` alto (20+) o `ignoreip` de IPs cliente (frágil por IP dinámica). El filter y la config técnica quedan intactos en el archivo.
+- **Config técnica original** (documentada por si se reactiva): filter `/etc/fail2ban/filter.d/squid.conf` `failregex = ^\s*\d+\s+<HOST>\s+TCP_DENIED/407\s` + `datepattern = {^LN-BEG}EPOCH` (el timestamp epoch se consume ANTES del failregex); **`backend = auto` OBLIGATORIO** (el default systemd de Ubuntu 24.04 ignora logpath); **`action = iptables-allports[... chain=FORWARD]`** (la coma en `port=3128,1080` rompe el parser de acciones; el tráfico a puertos docker publicados va por FORWARD tras el DNAT); `ignoreip = 127.0.0.1/8 172.20.0.0/16`; maxretry 5 / findtime 10m / bantime 2h; IPs reales de clientes preservadas en el log (el DNAT mantiene la source).
+- Precedente: vps-proxy corrió 228 días con fail2ban protegiendo solo sshd, sin problemas. La postura actual (auth NCSA obligatoria + jail sshd) replica esa estabilidad.
 
 ## Reglas de operación
 
