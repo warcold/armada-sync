@@ -1,5 +1,15 @@
 ## 2026-10-21
 
+### [20:55] - micaserogou: chatbot E2E funcionando en preprod con la key armada-micaserogou (gateway victoria)
+- **Tipo**: servicio
+- **Modificado**: preprod micaserogou.kalimete.local — erp_suite_settings.ia configurado: api_url=http://10.0.0.5:8010/v1 (IP directa — el contenedor no resuelve victoria.local por mDNS), api_key=armada-micaserogou (secrets/, 600), model=nvidia/Qwen3.6-35B-A3B-NVFP4-normal (default del plugin, sin reasoning)
+- **Afecta a**: chatbot del preprod (prod pendiente: owner pega la key en wp-admin → Ajustes → Asistente IA — ia.* bloqueado para ops por el Guard, solo humano)
+- **Causa**: owner reportó "El asistente IA no está disponible" en prod — ia.api_key vacía (la URL victoria.armada.do/v1 y el modelo ya son defaults del plugin 5.5.5; solo faltaba la key). Key provisionada por el agente Victoria Server (POST /v1/provision-key, rol services, caps [llm], E2E 200 contra la URL exacta del bot)
+- **Estado**: ✅ preprod E2E verificado: conversar("hola, tienen arroz?") → "Tenemos arroz Grande a RD$200 y Pequeño a RD$100, pero lamentablemente ambos están agotados en este momento." (4,1s, precios reales del ERP, respuesta corta hasta el punto) + botón "Ver en tienda →" con filtro ?buscar=arroz (navegación al menú filtrado OK) · ⏳ prod: owner pega la key de secrets/armada-micaserogou.key en wp-admin → ERP Suite → Ajustes → Asistente IA (campo API key; URL y modelo ya defaults)
+- **Notas**: La key sirve igual para prod (gateway acepta cualquier origen). En prod NO hace falta tocar api_url/model (defaults correctos: https://victoria.armada.do/v1 + -normal). Hallazgo del agente Victoria: key preexistente "erp-bot" (readonly) es residuo — owner puede revocarla desde el panel /admin si quiere.
+
+## 2026-10-21
+
 ### [20:46] - victoria: llave de negocio armada-micaserogou provisionada para el chatbot de micaserogou.com (E2E 200 via tunel)
 - **Tipo**: infra | servicio
 - **Modificado**: (victoria, SOLO via API de provisioning) DB gateway: api_keys +`armada-micaserogou` (rol services, caps [llm], rate 120/min, 2 slots, max_tokens 32K, sin budget/expiry) + provision_log id 3; (kalimete, docs) agents/victoria-server.md (linea de llaves curada + seccion 2026-10-21), harness/victoria-server.harness.json, CHANGELOG.md; (kalimete, secrets) `websites/micaserogou.com/secrets/armada-micaserogou.key` + `.meta.json` (600)
