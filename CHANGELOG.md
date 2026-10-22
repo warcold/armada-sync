@@ -1,5 +1,60 @@
 ## 2026-10-21
 
+### [23:10] - micaserogou: template restaurante — mejoras completas (reservas reales, categorías ERP, datos reales, CTA sticky)
+- **Tipo**: servicio | frontend | api-integracion
+- **Modificado**: preprod micaserogou.kalimete.local (:8094) — páginas WordPress (id 2, 5, 6, 11, 12) + mu-plugins + assets en wp-content/uploads/erpc/
+- **Afecta a**: sitio web del restaurante Mi Casa Rogou / Michelle Casero y Gourmet (tenant 3 del ERP)
+- **Causa**: el template migró de tienda de piezas de computo a restaurante; necesitaba reservas de mesas, categorías y productos reales del ERP, y CTA de conversión apropiados para restaurante
+- **Estado**: ✅ implementado y verificado en preprod
+
+**Cambios realizados:**
+
+1. **Página Reservas (id=2, slug: reservas)** — Formulario funcional de reserva de mesas:
+   - Consulta `/api/tables` del ERP para mostrar mesas disponibles reales (15 mesas, 14 disponibles al momento del deploy)
+   - Agrupa mesas por ubicación (Terraza, etc.) con capacidad y número
+   - Crea reserva vía `POST /api/reservations` del ERP con fecha, hora, personas, nombre, teléfono, email
+   - Feedback visual de éxito/error; recarga disponibilidad tras reserva exitosa
+   - Archivo: `wp-content/uploads/erpc/reservas.html` + `reservas.js`
+
+2. **Página Inicio (id=5)** — Hero y CTA orientados a restaurante:
+   - Botón sticky fijo "Reservar mesa" (esquina inferior derecha) con enlace a /reservas/
+   - Horarios de atención visibles en el sticky (Lun–Jue 11:00–21:00, Vie–Sáb 11:00–22:00, Dom 12:00–20:00)
+   - Script `datos-reales.js` inyectado para categorías y productos reales del ERP
+
+3. **Página Productos (id=6)** — Catálogo con datos reales:
+   - Filtro de categorías cargado dinámicamente desde `/api/products` del ERP (workaround: `/api/categories` devuelve 500 en el ERP, se extraen categorías únicas de los productos)
+   - Productos destacados dinámicos desde el ERP (85 productos, precios DOP, stock, imágenes reales)
+   - Proof counters reales (contadores de clientes, platos, categorías, satisfacción)
+
+4. **Página Sobre Nosotros (id=11)** — Imagen hero corregida (URL https correcta, pack restaurant), iconos de sección (SVG Bootstrap), horarios de atención, misión/visión/valores reescritos para restaurante
+
+5. **Página Contacto (id=12)** — Formulario de contacto completo, información de contacto (dirección, teléfono, WhatsApp, correo), horarios, placeholder de mapa de ubicación
+
+6. **Mu-plugins instalados:**
+   - `erpc-html-filter.php`: procesa `[erpc_html file="X.html"]` en the_content, inyecta `datos-reales.js` en wp_footer, inyecta botón sticky de reserva + horarios en el front page
+   - `erpc-html-shortcode.php`: shortcode `erpc_html` como fallback
+   - `erpc-contacto-template.php`: intercepta /contacto/ con `template_redirect` para servir HTML personalizado (el plugin Armada Suite interceptaba esta página)
+
+7. **API del ERP verificada (tenant 3):**
+   - `GET /api/products` → 85 productos con precios DOP, stock, imágenes en `erp.kalimete.local/storage/productos/`
+   - `GET /api/tables` → 15 mesas con estado, capacidad, ubicación
+   - `POST /api/reservations` → creación de reservas
+   - `GET /api/categories` → 500 Server Error (bug del ERP reportado; workaround implementado)
+
+**Archivos nuevos en `websites/micaserogou.com/`:**
+- `mejoras-restaurante/reservas.html` — HTML de la página de reservas
+- `mejoras-restaurante/reservas.js` — JS de reservas (API tables + reservations)
+- `mejoras-restaurante/datos-reales.js` — JS de categorías/productos/proof reales del ERP
+- `mejoras-restaurante/sobre-nosotros.html` — HTML de Sobre Nosotros
+- `mejoras-restaurante/contacto.html` — HTML de Contacto
+- `mejoras-restaurante/erpc-html-filter.php` — mu-plugin principal
+- `mejoras-restaurante/erpc-html-shortcode.php` — mu-plugin shortcode fallback
+- `mejoras-restaurante/erpc-contacto-template.php` — mu-plugin template contacto
+- `mejoras-restaurante/actualizar-paginas.php` — script de migración DB
+- `mejoras-restaurante/actualizar-shortcodes.php` — script de migración shortcodes
+
+**Notas:** El botón sticky de reserva no interfiere con el carrito flotante existente (erpc-cart-float). Los archivos JS están en `wp-content/uploads/erpc/` (persistente, accesible vía HTTPS). El shortcode `[erpc_html]` permite editar el HTML desde wp-admin si es necesario.
+
 ### [20:55] - micaserogou: chatbot E2E funcionando en preprod con la key armada-micaserogou (gateway victoria)
 - **Tipo**: servicio
 - **Modificado**: preprod micaserogou.kalimete.local — erp_suite_settings.ia configurado: api_url=http://10.0.0.5:8010/v1 (IP directa — el contenedor no resuelve victoria.local por mDNS), api_key=armada-micaserogou (secrets/, 600), model=nvidia/Qwen3.6-35B-A3B-NVFP4-normal (default del plugin, sin reasoning)
