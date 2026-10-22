@@ -94,7 +94,10 @@
     "login": "LAYOUT FLEX: card centrada verticalmente entre header y footer, footer al fondo del viewport, 0 scroll en 375/768/1440×1080; footer minimal (nombre+copyright); sin mobile-search; header compacto ≤899px",
     "login_mobile": "sin scroll (scroll_v ≤100px), gap simétrico 24px, card 311px, footer 292px (solo marca), nav 'Menú'; media query max-width:767px; oculta mobile-search, compacta trustbar/topbar/alfredo-bar; gettext 'Tienda'→'Menú'",
     "header": "Unificado 82px en todo el sitio: tagline 1 línea (max-width:none !important; el pack lo partía a 2 líneas con max-width:200px solo al imprimir frame); oculto ≤900px",
-    "paginas_huerfanas": "reservas (ID 2) y producto-detalle (ID 52) renderizaban con el TEMA sin nav; erpc-site-pages-frame.php las cubre con el frame del plugin (header+footer partials), patrón de contacto"
+    "paginas_huerfanas": "reservas (ID 2) y producto-detalle (ID 52) renderizaban con el TEMA sin nav; erpc-site-pages-frame.php las cubre con el frame del plugin (header+footer partials), patrón de contacto",
+    "tipografia": "Unificada: H1 héroe clamp(2.25rem,4.5vw,3.2rem)/800 en 5 cabeceras+ficha; subtítulos clamp(1.05-1.2rem)/400; kickers 0.8rem/#ffd8a6; H2 sección 1.8rem/800; tagline 0.7rem todas; page titles 1.75rem/800; body/brand/logo/nav ya eran consistentes",
+    "reservas": "Formulario FUNCIONA (bug crítico corregido: reservas.js nunca cargaba); mesas del ERP via proxy (SALON PRINCIPAL/SECUNDARIO); botón se habilita al elegir mesa",
+    "produccion": "Artefacto site-level listo: export/micaserogou-site-level-20261022.zip (1,4MB, 23 archivos, agnóstico: proxy lee erp_suite_settings, sin keys hardcodeadas, sin dominios preprod); checklist actualizado con pasos 4b/4c (subir ZIP + crear páginas reservas/producto-detalle)"
   },
   "pitfalls_2026_10_22": [
     "Playwright roto en kalimete ('Connection.init: Connection closed while reading from the driver') → usar scripts/shot-cdp.py (CDP websocket, chromium con --remote-allow-origins=*)",
@@ -114,7 +117,12 @@
     "Header distinto en login: el pack inyecta <style> inline (.erpc-tagline{max-width:200px}) SOLO al imprimir el frame; /login/ (template auth) no lo imprime → tagline 1 línea vs 2 → topbar 80 vs 100px. Fix global: max-width:none !important",
     "Páginas con slug fuera del mapa $pages del router del plugin (reservas, producto-detalle) renderizan con el TEMA sin topbar/nav/footer → cubrirlas con mu-plugin hijack a template_redirect prio 1 (frame del plugin + HTML del sitio)",
     "Login centrado sin scroll: body flex column min-height:100svh + .erpc-page flex:1 + .erpc-auth-page flex:1 justify-content:center; anular min-height:100vh/80vh del plugin con min-height:0",
-    "mobile-search se cuela en login a >767px (media query móvil no lo cubre) → ocultarlo a TODOS los anchos en login"
+    "mobile-search se cuela en login a >767px (media query móvil no lo cubre) → ocultarlo a TODOS los anchos en login",
+    "Tipografía: el pack inyecta estilos inline solo al imprimir frame → tamaños distintos entre páginas con frame y sin frame (login/faq/terminos) → unificar con !important site-level",
+    "JS de página custom (reservas.js) debe inyectarse explícitamente (wp_footer condicional por slug) — el HTML no lo incluye",
+    "Keys en client-side JS: el proxy REST autentica server-side → las Authorization headers del navegador son inútiles y exponen credenciales → eliminarlas",
+    "reservas.js traía </script> residual (copy-paste) → SyntaxError silencioso → node --check a TODO JS extraído",
+    "Para producción: TODO lo que apunte a erp.kalimete.local o tenga keys iak_ es dependencia de entorno → derivar de erp_suite_settings (get_api_url/get_api_key) o home_url()"
   ],
   "guias": [
     "docs/GUIA-TEMPLATES-RESTAURANTE.md (en el repo del sitio) — sistema visual, patrones, pitfalls y checklist; reutilizable para MaganTech y futuros negocios",
