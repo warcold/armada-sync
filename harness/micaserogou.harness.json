@@ -91,8 +91,10 @@
     "deuda": "API key ERP en texto plano en wp-content/mu-plugins/erpc-html-filter.php:92 → mover a secrets/ (pendiente de autorización)",
     "fix_login": "Newsletter bar ocultada en login (body.page-id-9 .erpc-newsletter-bar { display: none }) — solo formulario de acceso visible",
     "productos": "8 productos sin botón 'cargar más' (comportamiento correcto); para 'más vendidos/destacados' → marcar featured/best_seller en ERP tenant 3",
-    "login": "gap card→footer 40px (era 763px); newsletter oculto; footer compacto 635px (era 707px, oculta newsletter + 2 columnas); scroll vertical 145px @1440 (era 869px); anula min-height:100vh/80vh del plugin con min-height:auto",
-    "login_mobile": "sin scroll (scroll_v ≤100px), gap simétrico 24px, card 311px, footer 292px (solo marca), nav 'Menú'; media query max-width:767px; oculta mobile-search, compacta trustbar/topbar/alfredo-bar; gettext 'Tienda'→'Menú'"
+    "login": "LAYOUT FLEX: card centrada verticalmente entre header y footer, footer al fondo del viewport, 0 scroll en 375/768/1440×1080; footer minimal (nombre+copyright); sin mobile-search; header compacto ≤899px",
+    "login_mobile": "sin scroll (scroll_v ≤100px), gap simétrico 24px, card 311px, footer 292px (solo marca), nav 'Menú'; media query max-width:767px; oculta mobile-search, compacta trustbar/topbar/alfredo-bar; gettext 'Tienda'→'Menú'",
+    "header": "Unificado 82px en todo el sitio: tagline 1 línea (max-width:none !important; el pack lo partía a 2 líneas con max-width:200px solo al imprimir frame); oculto ≤900px",
+    "paginas_huerfanas": "reservas (ID 2) y producto-detalle (ID 52) renderizaban con el TEMA sin nav; erpc-site-pages-frame.php las cubre con el frame del plugin (header+footer partials), patrón de contacto"
   },
   "pitfalls_2026_10_22": [
     "Playwright roto en kalimete ('Connection.init: Connection closed while reading from the driver') → usar scripts/shot-cdp.py (CDP websocket, chromium con --remote-allow-origins=*)",
@@ -108,7 +110,11 @@
     "Footer compacto en login: oculta .erpc-footer-newsletter y columnas 3-4 del grid con selectores nth-child",
     "Login mobile: plugin fuerza topbar/trustbar/mobile-search altos → compactar con CSS !important en @media (max-width: 767px)",
     "Nav 'Tienda' vs 'Menú': plugin usa 'Menú' pero traducción .mo lo cambia a 'Tienda' → forzar con gettext filter 'Tienda' => 'Menú'",
-    "Media query 767px (no 768px) para preservar tablet 768px intacta"
+    "Media query 767px (no 768px) para preservar tablet 768px intacta",
+    "Header distinto en login: el pack inyecta <style> inline (.erpc-tagline{max-width:200px}) SOLO al imprimir el frame; /login/ (template auth) no lo imprime → tagline 1 línea vs 2 → topbar 80 vs 100px. Fix global: max-width:none !important",
+    "Páginas con slug fuera del mapa $pages del router del plugin (reservas, producto-detalle) renderizan con el TEMA sin topbar/nav/footer → cubrirlas con mu-plugin hijack a template_redirect prio 1 (frame del plugin + HTML del sitio)",
+    "Login centrado sin scroll: body flex column min-height:100svh + .erpc-page flex:1 + .erpc-auth-page flex:1 justify-content:center; anular min-height:100vh/80vh del plugin con min-height:0",
+    "mobile-search se cuela en login a >767px (media query móvil no lo cubre) → ocultarlo a TODOS los anchos en login"
   ],
   "guias": [
     "docs/GUIA-TEMPLATES-RESTAURANTE.md (en el repo del sitio) — sistema visual, patrones, pitfalls y checklist; reutilizable para MaganTech y futuros negocios",
