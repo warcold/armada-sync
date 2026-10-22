@@ -1,5 +1,20 @@
 ## 2026-10-21
 
+### [00:35] - micaserogou: página de detalle de producto (punto 4) + proxy ERP en WordPress
+- **Tipo**: servicio | frontend | api-integracion
+- **Modificado**: preprod micaserogou.kalimete.local — página WP id 52 (slug: producto-detalle) + mu-plugin erpc-html-filter.php (proxy REST + interceptor de clics) + uploads/erpc/producto-detalle.html
+- **Afecta a**: sitio restaurante — catálogo ahora enlaza a detalle individual por producto
+- **Causa**: punto 4 del owner — página de detalle de producto bajo mejores prácticas de restaurante (referencias: Restro/Framer, The Grand Table, Brimky 2026)
+- **Estado**: ✅ verificación estructural completa (12/12 elementos DOM, script, proxy, nonce); render final requiere navegador
+
+**Qué se implementó:**
+1. **Página producto-detalle (id 52)**: breadcrumb, imagen grande con badge de stock (disponible/últimas unidades/agotado), chip de categoría, título, descripción, precio RD$, meta (categoría/estado/código), selector de cantidad, botón "Agregar al carrito" (AJAX del plugin con nonce erpc_cfg), botón "Reservar mesa para este plato" (CTA restaurante), sección "Detalles del plato" (descripción/unidad/ITBIS/ingredientes), productos relacionados de la misma categoría (grid dinámico), CTA final de reserva
+2. **Proxy REST WordPress** (`/wp-json/erpc-proxy/v1/erp/{path}`): reenvía peticiones al ERP API server-side — evita CORS y certificado autofirmado de erp.kalimete.local desde el navegador; API key vive solo server-side
+3. **Interceptor de clics**: tarjetas del catálogo (.erpc-card-open) redirigen a /producto-detalle/?id=XXX
+4. **Workaround ERP**: GET /api/products/{id} no existe en el ERP (solo index) → el JS trae products?per_page=100 vía proxy y filtra por ID
+
+**Hallazgo de depuración (lección)**: curl NO ejecuta JavaScript — verificar datos renderizados client-side con curl da falso negativo. Verificación correcta: elementos DOM presentes + script presente + proxy responde + nonce expuesto. Bug real encontrado y corregido en el proceso: el botón de carrito requería el nonce `erpc_nonce` (check_ajax_referer) que el script original no enviaba — ahora usa `window.erpc_cfg.nonce`.
+
 ### [23:45] - ERP: fix GET /api/categories 500 (columnas inexistentes en business_types) — push a dev/ecomm-erp para Juan Carlos
 - **Tipo**: infra | api | bugfix
 - **Modificado**: `~/dev/erpipo-preprod/code/sistema-facturacion/` (rama `dev/ecomm-erp`, commit b187abc, pushed a origin)
