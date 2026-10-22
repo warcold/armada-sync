@@ -38,4 +38,4 @@ jonas = fuera de servicio (no intentar SSH ni operaciones).
 ## Notas opencode
 
 - `~/.config/opencode/AGENTS.md` es symlink → `~/armada-sync/AGENTS.md`. No reemplazar por archivo real.
-- Permisos (patrón orquestador): subagentes `eco-cloudflare-*` con `edit/write: deny` (solo API); `kalimete` coordina y aplica cambios de archivos. Ver frontmatter de cada agente.
+- Permisos (patrón orquestador): subagente `Cloudflare` con `edit/write: deny` (solo opera vía API); `kalimete` coordina y aplica los cambios de archivos. Ver frontmatter de cada agente.
