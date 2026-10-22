@@ -186,6 +186,12 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
 
 ## Cambios recientes
 
+- **2026-10-22 (noche) — Fixes visuales y UX (v1.2.0)**:
+  - **Banners "al natural"**: overlay de **todas las cabeceras** cambiado a negro sutil (`rgba(0,0,0,.65→.35)`) igual que home — antes tenían capa roja cálida. `productos` (mu-plugin), `contacto`/`reservas` (HTML inline), `sobre-nosotros` (mu-plugin con `!important` vs `style` inline del pack).
+  - **Login limpio**: newsletter bar (`erpc-newsletter-bar`) ocultada en la página de acceso con `body.page-id-9 .erpc-newsletter-bar { display: none }` — ahora solo se ve el formulario de login/registro.
+  - **Productos**: 8 items sin botón "cargar más" (comportamiento actual correcto); para que sean "más vendidos/destacados" se requiere marcar 8 productos como `featured=true` o `best_seller=true` en el ERP tenant 3 (configuración de datos, no código).
+  - Validación 21/21 combinaciones: 5 cabeceras 480px/radius 0 overlay negro, login solo form, card 440px (303 @375), 0 scroll, 0 errores.
+
 - **2026-10-22 (noche) — Sistema visual unificado + fix crítico del detalle de producto**:
   - **Bug crítico**: `uploads/erpc/producto-detalle.html` (y su espejo `mejoras-restaurante/`) no cerraba el IIFE exterior → `SyntaxError: Unexpected end of input` → **todas** las fichas de producto quedaban muertas en "Cargando producto…". Fix: `})();`. Verificado en vivo (id=261 → "ALITAS A LA BARBACOA PICANTES", RD$ 350.00).
   - **Cabeceras unificadas** a 480px / radius 0 / overlay cálido en las 5 secciones (home, productos, contacto, reservas, sobre-nosotros). El hero de productos traía una imagen de **tecnología** hardcodeada (`connector.css:3065`) y "Sobre nosotros" heredaba el **overlay azul** (`connector.css:3341-3343`).

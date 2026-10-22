@@ -83,12 +83,14 @@
     "plugin": "armada-suite 5.5.5 (pack restaurant) — NO tocar: es compartido entre tenants",
     "pack": "restaurant (templates/packs/restaurant/partials/*.php + connector.css)",
     "erp": "tenant 3 (preprod public); 76 ítems con stock=0 y 4 con stock=-1 quedan fuera del catálogo (dato, no bug)",
-    "sistema_visual": "5 cabeceras unificadas a 480px / border-radius 0 / overlay cálido (#d64545, #7a1f1f); 5 banners WebP 1600×914 en uploads/erpc/img/; card de login 440px (303 @375) sobre fondo a sangre; atribución alfredo.pro como barra separada (wp_footer prio 30, opacity .55→1)",
+    "sistema_visual": "5 cabeceras unificadas a 480px / border-radius 0 / overlay negro sutil (rgba(0,0,0,.65→.35) como home); 5 banners WebP 1600×914; card login 440px (303 @375) sobre fondo a sangre; atribución alfredo.pro barra separada; newsletter oculto en login; overflow fix",
     "fix_critico": "producto-detalle.html: faltaba el cierre '})();' del IIFE → SyntaxError mataba TODAS las fichas (quedaban en 'Cargando producto…'). Corregido en uploads/erpc/ y espejo mejoras-restaurante/",
     "verificacion": "scripts/shot-cdp.py — 21/21 combinaciones (7 páginas × 375/768/1440): scroll_h=0, heroes=480px, radii=0px, card=440px, alfredo=1, 0 imágenes rotas, 0 errores de consola. Evidencia: docs/evidencia/2026-10-22/",
     "mu_plugin_nuevo": "wp-content/mu-plugins/erpc-micaserogou-visual.php v1.1.0 (overrides site-level: heroes, login, overflow, atribución)",
     "php": "Warning 'ERPC_HTML_DIR already defined' eliminado (guarda defined() en erpc-html-filter.php y erpc-html-shortcode.php)",
-    "deuda": "API key ERP en texto plano en wp-content/mu-plugins/erpc-html-filter.php:92 → mover a secrets/ (pendiente de autorización)"
+    "deuda": "API key ERP en texto plano en wp-content/mu-plugins/erpc-html-filter.php:92 → mover a secrets/ (pendiente de autorización)",
+    "fix_login": "Newsletter bar ocultada en login (body.page-id-9 .erpc-newsletter-bar { display: none }) — solo formulario de acceso visible",
+    "productos": "8 productos sin botón 'cargar más' (comportamiento correcto); para 'más vendidos/destacados' → marcar featured/best_seller en ERP tenant 3"
   },
   "pitfalls_2026_10_22": [
     "Playwright roto en kalimete ('Connection.init: Connection closed while reading from the driver') → usar scripts/shot-cdp.py (CDP websocket, chromium con --remote-allow-origins=*)",
@@ -96,7 +98,10 @@
     "El pack (templates/packs/<pack>/partials/<slug>.php) GANA al HTML del sitio: /sobre-nosotros/ ignora uploads/erpc/sobre-nosotros.html (código muerto) → el override va por CSS site-level",
     "El CSS inline del HTML del sitio gana al mu-plugin (aparece después en el documento) → /reservas/ necesitó el fix en reservas.html",
     "wp-content/uploads/ es de www-data → 'cp' falla; usar 'docker cp' hacia el contenedor",
-    "El hero del home declara min-height:480px y sus reglas móviles height:380/340px son CÓDIGO MUERTO → usar solo min-height"
+    "El hero del home declara min-height:480px y sus reglas móviles height:380/340px son CÓDIGO MUERTO → usar solo min-height",
+    "Overlay de banners: home usa negro sutil; los demás heredaban rojo cálido → unificados a negro via CSS site-level + HTML inline (contacto/reservas) + !important (sobre-nosotros vs pack)",
+    "Login: newsletter bar es sibling de .erpc-auth-page (ambos hijos de .erpc-container) → ocultar con selector body.page-id-9 .erpc-newsletter-bar",
+    "Productos 'cargar más': no hay botón (OK); 'destacados' es dato ERP, no código"
   ],
   "guias": [
     "docs/GUIA-TEMPLATES-RESTAURANTE.md (en el repo del sitio) — sistema visual, patrones, pitfalls y checklist; reutilizable para MaganTech y futuros negocios",
