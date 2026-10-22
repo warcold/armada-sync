@@ -16,6 +16,14 @@
 - **Estado**: ✅ skill versionada y pusheada (`5d32b76`); smoke 7/7; matriz final re-validada 21/21 en el estado definitivo
 - **Notas**: la skill queda disponible para todos los agentes vía `~/.config/opencode/skills/` (la despliega `sync.sh`, skills PLURAL). La guía detallada por sitio sigue en `~/dev/wordpress/websites/micaserogou.com/docs/GUIA-TEMPLATES-RESTAURANTE.md` y el historial en el `CHANGELOG.md` de la raíz del sitio.
 
+### [05:15] - Micaserogou: overlay negro en 5 banners (como home) + login sin newsletter + productos 8 sin "cargar más"
+- **Tipo**: frontend | ux
+- **Modificado**: micaserogou preprod: mu-plugin `erpc-micaserogou-visual.php` v1.2.0 (overlay banners → negro sutil `rgba(0,0,0,.65→.35)` igual que home; `body.page-id-9 .erpc-newsletter-bar { display: none }` oculta newsletter en login); `uploads/erpc/contacto.html` + `reservas.html` (+ espejos, backups `.bkup-20261022-2`) con overlay negro; mu-plugin `!important` en `.erpc-about-hero-bg` para ganar al `style` inline del pack
+- **Afecta a**: preprod micaserogou; producción NO tocada
+- **Causa**: owner pidió banners "al natural" como home, login limpio (solo form), productos 8 sin "cargar más"
+- **Estado**: ✅ 21/21 (7 págs × 3 anchos): 5 cabeceras 480px/radius 0 overlay negro, login solo form, card 440px (303 @375), 0 scroll, 0 errores
+- **Notas**: (1) Banners unificados a overlay negro como home. (2) Newsletter oculto en login. (3) Productos: 8 items sin "cargar más" (OK); para "más vendidos/destacados" → marcar `featured/best_seller` en ERP tenant 3. (4) `sobre-nosotros` necesitó `!important` vs `style` inline del pack.
+
 ## 2026-10-22
 
 ### [07:30] - MIGRACIÓN COMPLETA proxy vps-proxy → vps-preprod DOCKERIZADO + DNS cutover — vps-proxy listo para cancelación
