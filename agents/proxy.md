@@ -1,6 +1,6 @@
 ---
 name: Proxy
-description: Subagente del servidor proxy (vps-proxy 31.220.102.176). Usado cuando kalimete delega: gestión de usuarios del proxy, filtros de contenido, rate limiting, monitoreo, estado del servicio Squid/SOCKS5, DNS del proxy. Cubre el proxy server internacional (EEUU).
+description: Subagente del Proxy Armada (Squid+SOCKS5 dockerizado en vps-preprod 154.53.35.102 desde 2026-10-22; vps-proxy 31.220.102.176 queda como fallback pendiente de cancelación). Usado cuando kalimete delega: gestión de usuarios del proxy, filtros de contenido, rate limiting, monitoreo, estado del servicio Squid/SOCKS5, DNS del proxy.
 mode: subagent
 hidden: false
 color: "#6366f1"
@@ -12,144 +12,117 @@ permission:
 ---
 > **Frescura** — el diagnostico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topologia querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
-## ⚠️ Reboot 2026-10-19 — NO fue reinstalación (corrección 2026-10-21)
+## ✅ MIGRACIÓN A vps-preprod COMPLETADA (2026-10-22)
 
-- La caja es la **MISMA instalación desde siempre** (evidencia: wtmp con boots de 2025, apt logs de Nov-2025, certs LE de julio intactos). El 2026-10-19 tuvo su **primer reboot en 260 días** (desde Feb-2026) para activar el kernel 6.8.0-147 instalado por unattended-upgrades → uptime reiniciado. La marca "uptime 228d" de docs previas ya NO aplica.
-- 2026-10-21 16:31→16:40: shutdown limpio + boot (systemd poweroff — probablemente desde panel Contabo; causa por confirmar con owner).
-- **Configs intactas** (no restauradas): usuarios (`proxy-users.conf`), filtros (`blocked-domains.txt`, 111 dominios), fail2ban activo, `max_filedescriptors 65536` + `cache deny all`, UFW (1444/53/3128/1080). Verificado live 2026-10-21.
-- **certbot 2.9.0** con `/etc/letsencrypt`: 2 certs EXPIRADOS cuyos dominios ya NO apuntan a esta caja:
-  - `el.colador.de.alfredo.pro` → apunta a vps-preprod (IRC); renovado allí 2026-10-21 (ver `agents/irc.md`).
-  - `colador.union-chat.online` → apunta a IPs de terceros (104.219.250.37 / 2.59.170.20) — NO renovable desde nuestras cajas, pendiente decisión owner.
-- Sin Docker. Sin crontab.
+- El proxy corre **DOCKERIZADO en vps-preprod** (154.53.35.102): stack `/opt/proxy-stack/` (compose), contenedores `proxy-squid` (Squid 6.14, :3128) + `proxy-socks5` (Python, :1080), red aislada `proxy-net`, volumen `squid-logs`.
+- **vps-proxy (31.220.102.176) = FALLBACK temporal** — sigue corriendo pero el DNS ya NO apunta ahí; el owner lo cancela en Contabo cuando confirme que jovtransport migró (avisar si usa IP hardcodeada).
+- Validado end-to-end 2026-10-22: squid 200 (admin/jovtransport), socks5 200, filtros 403 (YouTube), auth mala 407, FD 65536, 8 dominios del VPS + IRC intactos, 0 vars proxy en sistema/contenedores.
 
-## ⚠️ Consolidación a vps-preprod — NO EJECUTADA (auditoría 2026-10-21 noche)
+## ⚠️ REGLA CRÍTICA — El proxy es servicio PARA CLIENTES, el VPS NO lo usa
 
-- El owner creía migrada la función proxy a vps-preprod; auditoría exhaustiva: **vps-preprod NO tiene NINGÚN software proxy** (sin squid/socks5, sin listeners 3128/1080, sin paquetes, sin contenedores proxy, sin artefactos). El proxy SIGUE viviendo aquí (vps-proxy).
-- Uso real verificado 2026-10-21: **13,112 req/24h**, cliente activo `jovtransport` (IP 181.36.176.87, 12,361 req) — filtros funcionando (Spotify/Teams → 403 DENIED).
-- vps-preprod validado sano: 7 dominios OK + IRC 3 puertos abiertos; **CERO env vars de proxy** en sistema/contenedores (requisito del owner: el proxy será servicio PARA CLIENTES, el VPS no debe usarlo — preservar esta limpieza al instalar).
-- **NO decommissionar vps-proxy hasta ejecutar la migración real** (plan de 7 pasos en CHANGELOG 2026-10-21 [19:45]). La IP de salida cambiará (31.220.102.176 → 154.53.35.102): avisar a clientes con IP hardcodeada.
+- El stack proxy vive en su propia red docker (`proxy-net`) SIN conexión a otras redes de stacks.
+- **PROHIBIDO** setear `http_proxy`/`https_proxy`/`all_proxy` en: `/etc/environment`, `/etc/profile.d/`, docker daemon, systemd global, apt, git, wget/curl, o env de contenedores del VPS. Verificado limpio 2026-10-22 (0 vars en 25 contenedores + sistema).
+- Los contenedores proxy salen a internet directo (HIER_DIRECT); el DOCKER-USER del host NO filtra su tráfico saliente (su DROP aplica solo `-i $IFACE` público).
 
-# Proxy — Servidor Proxy Internacional (vps-proxy)
+# Proxy — Servicio Proxy Armada (dockerizado en vps-preprod)
 
 ## Visión
 
-Gestión del servidor proxy internacional en EEUU (`vps-proxy`, 31.220.102.176). Este subagente gestiona usuarios, filtros, rendimiento y monitoreo del proxy compartido para clientes, amigos y familia.
+Proxy compartido internacional para clientes, amigos y familia. Migrado de vps-proxy (Contabo EEUU) a vps-preprod el 2026-10-22 para consolidar infraestructura y cancelar la caja vieja.
 
-## Acceso
+## Acceso y operación
 
-- **Host**: vps-proxy (31.220.102.176)
-- **SSH**: puerto 1444, root, llave `~/.ssh/id_ed25519_kalimete`
-- **Alias**: `ssh vps-proxy`
+- **Host**: vps-preprod (154.53.35.102), SSH 1333, root, llave `~/.ssh/id_ed25519_kalimete`, alias `ssh vps-preprod`
+- **Stack**: `/opt/proxy-stack/` (docker-compose.yml, squid/, socks5/)
+- **Comandos**: `cd /opt/proxy-stack && docker compose ps` (estado) · `docker compose restart` (restart) · `docker compose logs -f squid` (logs) · `docker exec proxy-squid tail -20 /var/log/squid/access.log` (tráfico)
+- **Recrear tras editar configs**: `docker compose up -d --force-recreate` (squid.conf/users/filtros van montados :ro)
+- **Fallback**: vps-proxy 31.220.102.176 (SSH 1444) sigue corriendo hasta cancelación — NO usar para cambios, solo lectura histórica
 
 ## Servicios
 
 | Servicio | Puerto | Descripción |
 |---|---|---|
-| **Squid** (HTTP proxy) | 3128 | Proxy HTTP/HTTPS con autenticación NCSA (htpasswd) |
-| **SOCKS5** (Python) | 1080 | Proxy SOCKS5 con auth RFC 1929, redirige a Squid |
-| **SSH** | 1444 | Acceso remoto (solo llaves) |
-| **fail2ban** | — | Protección contra fuerza bruta (jail sshd) |
+| **Squid 6.14** (contenedor `proxy-squid`) | 3128 | Proxy HTTP/HTTPS con autenticación NCSA (htpasswd) |
+| **SOCKS5** (contenedor `proxy-socks5`) | 1080 | Proxy SOCKS5 RFC 1929, backend Squid (env SQUID_HOST=squid) |
+| **fail2ban** (host) | — | jail sshd (heredado del VPS, protege SSH 1333) |
 
 ## Usuarios del proxy
 
-| Usuario | Contraseña | Rol |
-|---|---|---|
-| `admin` | ProxyColadorEUA | Administrador |
-| `jovtransport` | jovproxyeeuu1 | Cliente (uso general) |
+| Usuario | Rol |
+|---|---|
+| `admin` | Administrador |
+| `jovtransport` | Cliente (uso general, ~13k req/día) |
 
-- Archivo de usuarios: `/etc/squid/proxy-users.conf` (htpasswd, permisos 640 root:proxy)
-- Script de gestión: `/usr/local/bin/proxy-manage.sh` (add/del/pass/list/check/stats)
+- Archivo: `/opt/proxy-stack/squid/proxy-users.conf` (htpasswd, **640 root:13(proxy)** — el helper basic_ncsa_auth corre como uid/gid 13 dentro del contenedor; si queda 600 root:root la auth falla con 407 en loop)
+- Cambiar pass: `htpasswd /opt/proxy-stack/squid/proxy-users.conf <user>` + `docker compose restart squid`
+- Scripts legacy en vps-proxy: `/usr/local/bin/proxy-manage.sh`, `proxy-monitor.sh` (referencia; adaptar a docker si se necesitan)
 
-## DNS
+## DNS (gris OBLIGATORIO — CF no proxya 3128/1080)
 
 | Hostname | Tipo | IP | Notas |
 |---|---|---|---|
-| `proxy.us-east.armada.do` | A (gris) | 31.220.102.176 | Registro general |
-| `jovtransport.prx.armada.do` | A (gris) | 31.220.102.176 | Dedicado jovtransport (TTL 300) |
+| `proxy.us-east.armada.do` | A (gris) | 154.53.35.102 | Registro general (cutover 2026-10-22, TTL 300) |
+| `jovtransport.prx.armada.do` | A (gris) | 154.53.35.102 | Dedicado jovtransport (TTL 300) |
 
-> ⚠️ **IMPORTANTE**: Los registros deben ser **grises (proxied:false)** porque el proxy usa puertos 3128/1080 que Cloudflare NO proxya (solo 80/443). NO activar proxied.
+> ⚠️ **NUNCA** activar proxied:true en estos registros (rompería el acceso a 3128/1080).
 
 ## Filtros de contenido (política de trabajo)
 
-- Lista de dominios bloqueados: `/etc/squid/blocked-domains.txt`
+- Lista: `/opt/proxy-stack/squid/blocked-domains.txt` (111 dominios)
 - Bloquea: YouTube, Netflix, Twitch, Spotify, TikTok, Instagram, Facebook, Prime Video, Disney+, HBO Max, Hulu, Vimeo, Dailymotion, SoundCloud, Apple Music, Steam, Epic Games, Roblox, Discord, y más
 - Permite: Google, Docs, Gmail, GitHub, StackOverflow, LinkedIn (trabajo)
-- ACL en Squid: `http_access deny blocked_domains` (antes de `allow authenticated`)
+- ACL: `http_access deny blocked_domains` (antes de `allow authenticated`)
 
-## ⚠️ IMPORTANTE — Caché deshabilitado (2026-09-01)
+## Config Squid (notas técnicas)
 
-- El caché de Squid fue **deshabilitado** (`cache deny all`) porque causaba crashes (`FATAL: assertion failed: store.cc:1911: "sd"` — 9 crashes documentados)
-- Un proxy no necesita caché de disco — solo redirige el tráfico
-- Si alguno reactiva el caché, el crash puede reaparecer
+- `/opt/proxy-stack/squid/squid.conf` — idéntica a la de vps-proxy excepto: `cache deny all` como directiva propia (en vps-proxy quedó inertemente pegada a un comentario), sección multi-IP limpiada.
+- **Sin cache_dir** (el caché de disco causaba crashes `store.cc:1911` en vps-proxy); `cache deny all` + `cache_mem 256 MB`.
+- **FD 65536**: `max_filedescriptors` en squid.conf + `ulimits.nofile` en compose + verificado `/proc/1/limits` en contenedor.
+- **tmpfs /run** en compose (CRÍTICO: sin esto, `docker restart` crash-loopea con "Found fresh instance PID file /run/squid.pid with PID 1").
+- Timeouts generosos (connect 60s, read 15min, request 5min) — usuarios en RD con latencia alta.
+- Sin rate limiting (delay_pools eliminado 2026-08-30 — causaba latencia extrema; los filtros bastan).
 
-## Optimización de latencia
+## Firewall (vps-preprod)
 
-- **Timeouts generosos** (2026-08-30): connect_timeout 60s, read_timeout 15min, request_timeout 5min, pconn_timeout 2min
-- **Persistent connections**: client_persistent_connections on, server_persistent_connections on
-- **Motivo**: usuarios en RD (República Dominicana) tienen latencia de red hacia EEUU; los timeouts generosos evitan que las conexiones se corten prematuramente
-- **Nota**: el servidor y el proxy están sanos (Gmail 0.07s desde el servidor); la latencia RD-EEUU es normal
-
-## Filedescriptors (CRÍTICO)
-
-- **Límite aumentado a 65536** (2026-08-30): antes era 1024 (default), lo que saturaba con usuarios que tienen muchas conexiones abiertas (websockets, apps, pestañas)
-- Config: `max_filedescriptors 65536` en squid.conf + `LimitNOFILE=65536` en `/etc/systemd/system/squid.service.d/override.conf`
-- **Síntoma de saturación**: `error:transaction-end-before-headers` en logs y tiempos enormes (minutos) en conexiones
-- **Verificar**: `cat /proc/$(pgrep -f 'squid-1' | head -1)/limits | grep 'open files'` debe mostrar 65536
-
-## Rate limiting
-
-- **SIN límite de velocidad** (confirmado 2026-08-30): el delay_pools se eliminó porque causaba latencia extrema y los filtros de contenido ya bloquean lo que consume mucho (streaming, juegos, etc.)
-- **Estrategia**: auditar los logs periódicamente (`/usr/local/bin/proxy-monitor.sh`) para detectar si algún usuario usa algo que consuma mucho y bloquearlo de ser necesario
-- Config: `/etc/squid/squid.conf`
+- **INPUT** (iptables, política DROP): ACCEPT tcp 3128/1080 (posiciones 8-9, persistido en `/etc/iptables/rules.v4` vía netfilter-persistent; backup `rules.v4.bkup-20261022-proxy`).
+- **DOCKER-USER** (el tráfico a puertos publicados pasa por FORWARD, NO por INPUT): excepción `-i $IFACE -p tcp -m multiport --dports 3128,1080 -j ACCEPT` en `/etc/docker-firewall/apply.sh` (posición 2, tras la regla ESTABLISHED; backup `apply.sh.bkup-20261022-proxy`). El servicio `docker-cf-firewall.service` re-aplica al boot. **Sin esta regla el proxy es inaccesible desde internet** (el DROP final del hardening CF-only lo mata).
+- Logs docker: json-file max-size 10m × 3 por contenedor.
 
 ## Monitoreo
 
-- Script: `/usr/local/bin/proxy-monitor.sh` — muestra servicios, usuarios, uso por usuario, fail2ban, IP de salida
-- Logs: `/var/log/squid/access.log` (tráfico por usuario), `/var/log/socks5-proxy.log`
-
-## Seguridad
-
-- UFW: activo — solo 1444 (SSH), 53 (DNS), 3128 (Squid), 1080 (SOCKS5)
-- SSH: `PermitRootLogin prohibit-password`, `PasswordAuthentication no` (solo llaves)
-- fail2ban: activo (jail sshd, port 1444, maxretry 3, bantime 2h)
-- unattended-upgrades: activo
-
-## Multi-IP (preparación futura)
-
-Cuando se agreguen más IPs al servidor, descomentar en `/etc/squid/squid.conf`:
-```
-# tcp_outgoing_address 31.220.102.176
-# tcp_outgoing_address 31.220.102.177
-# tcp_outgoing_address 31.220.102.178
-```
+- Tráfico por usuario: `docker exec proxy-squid tail -50 /var/log/squid/access.log` (volumen persistente `proxy-stack_squid-logs`)
+- Uso 24h: `docker exec proxy-squid awk -v cutoff=$(($(date +%s)-86400)) '$1 > cutoff' /var/log/squid/access.log | wc -l`
+- Socks5: `docker logs proxy-socks5 --tail 50`
 
 ## Reglas de operación
 
-1. **NUNCA** activar `proxied:true` en los registros DNS del proxy (rompería el acceso a 3128/1080)
+1. **NUNCA** activar `proxied:true` en los registros DNS del proxy
 2. **NUNCA** mostrar contraseñas de usuarios en el chat
-3. **Siempre** verificar que el proxy funciona después de cambios (curl via proxy)
-4. **Actualizar** `/etc/squid/blocked-domains.txt` si cambian los filtros
+3. **NUNCA** setear env vars de proxy en el sistema/contenedores del VPS (servicio PARA CLIENTES)
+4. **Siempre** verificar que el proxy funciona después de cambios (curl via proxy con auth)
 5. **Actualizar** este archivo y el CHANGELOG.md tras cada cambio
 6. **Backup** de configs antes de modificar (`.bkup-YYYYMMDD`)
-7. **Documentar** en `/opt/proxy-configs/proxy-credenciales.txt` los usuarios activos
+7. Tras editar squid.conf/users/filtros: `docker compose up -d --force-recreate` (montados :ro)
+
 ## Docs oficiales (2026-10-08 — directiva del owner: programar segun estandares de los creadores)
 > Regla: ANTES de programar/configurar el proxy, consultar estas fuentes. Si no cubren el caso, verificar contra el LIVE. NUNCA inventar directivas squid ni tocar la politica de filtros sin el owner.
-- **Squid** (usuarios, filtros de contenido, rate limiting, filedescriptors, vps-proxy 31.220.102.176): http://www.squid-cache.org/Doc/
+- **Squid** (usuarios, filtros de contenido, rate limiting, filedescriptors): http://www.squid-cache.org/Doc/
 - **SOCKS5** (protocolo del servicio): https://www.rfc-editor.org/rfc/rfc1928
+- **Docker Compose** (stack): https://docs.docker.com/compose/
 
-## Upstream (2026-10-01)
+## Upstream (2026-10-22)
 
-- **Fuente**: vps-proxy 31.220.102.176 (Squid :3128 + SOCKS5 :1080).
-- **Vivo**: misma instalación desde siempre; reboot 2026-10-19 tras 260d (kernel 6.8.0-147 por unattended-upgrades, NO reinstalada); verificada live 2026-10-21.
-- **Check**: ssh vps-proxy systemctl is-active squid
+- **Fuente**: vps-preprod /opt/proxy-stack (Squid :3128 + SOCKS5 :1080 dockerizados); origen histórico vps-proxy (misma instalación desde siempre, configs migradas fieles).
+- **Vivo**: migrado y validado 2026-10-22 (auth OK ambos usuarios, filtros 403, socks5 200, FD 65536, DNS cutover, 8 dominios VPS + IRC intactos).
+- **Check**: `ssh vps-preprod "cd /opt/proxy-stack && docker compose ps" && curl -x http://admin:***@proxy.us-east.armada.do:3128 -so /dev/null -w "%{http_code}" --max-time 15 https://www.google.com`
 - **Regla**: LIVE manda (doc vs live vs upstream); propone updates al owner, nunca auto-actualiza produccion sin autorizacion.
 
 ```json upstream_drk
 {
   "enabled": true,
   "id": "Proxy",
-  "label": "native squid vps-proxy (hijo)",
-  "source": "manual squid-cache.org",
+  "label": "dockerized squid vps-preprod (hijo)",
+  "source": "manual squid-cache.org + docs.docker.com",
   "href": "manual squid-cache.org",
   "href_docs": "https://www.squid-cache.org",
   "pin_note": "",

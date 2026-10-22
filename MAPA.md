@@ -84,22 +84,22 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 ### 3. vps-preprod (154.53.35.102) — VPS Production (multi-app clientes)
 - User: root, SSH 1333, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-preprod`
-- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do (landing juego nuevo RoR), scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do, IRC El Corito (6667/6697/7209, InspIRCd nativo justin_t)
+- Servicios: Docker, caddy, auth.armada.do, pets.armada.do, ragnarok.armada.do (landing juego nuevo RoR), scriberr.armada.do, whiteboard.armada.do, docuseal.armada.do, nextcloud.armada.do, IRC El Corito (6667/6697/7209, InspIRCd nativo justin_t), **Proxy Armada (Squid 6.14 :3128 + SOCKS5 :1080 dockerizado, migrado de vps-proxy 2026-10-22 — stack `/opt/proxy-stack/`, red aislada proxy-net, servicio PARA CLIENTES, el VPS NO lo usa)**
 - TLS IRC: certbot standalone (challenge 8088 + REDIRECT transitorio) — renovado 2026-10-21, expira 2027-01-19, auto-renovación certbot.timer (detalle en agents/irc.md)
-- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied) — ragnarok.cp.armada.do BORRADO de CF 2026-10-20
+- DNS: auth.armada.do, docuseal.armada.do, nextcloud.armada.do, pets.armada.do, ragnarok.armada.do, scriberr.armada.do, whiteboard.armada.do → 154.53.35.102 (CF proxied) — ragnarok.cp.armada.do BORRADO de CF 2026-10-20; **proxy.us-east.armada.do + jovtransport.prx.armada.do → 154.53.35.102 (gris, cutover 2026-10-22)**
 - Proyectos locales: kalimete, victoria, jonas (fuera), Windows (10.0.0.64)
-- UFW: active (solo rangos CF en DOCKER-USER); iptables INPUT: IRC 6667/6697/7209 ACCEPT (2026-10-21) + CF 80/443 + SSH 1333, política DROP
+- UFW: active (solo rangos CF en DOCKER-USER + excepción 3128/1080 en /etc/docker-firewall/apply.sh); iptables INPUT: IRC 6667/6697/7209 + proxy 3128/1080 ACCEPT + CF 80/443 + SSH 1333, política DROP
 - OpenVPN: active (openvpn@server.service)
 
-### 4. vps-proxy (31.220.102.176) — Proxy Server Internacional — ✅ ACTIVO (verificado 2026-10-21)
+### 4. vps-proxy (31.220.102.176) — ⚠️ PENDIENTE DE CANCELACIÓN (Contabo) — proxy MIGRADO a vps-preprod 2026-10-22
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
 - Alias: `ssh vps-proxy` (restaurado 2026-09-19 en `/etc/ssh/ssh_config.d/10-armada-hosts.conf`)
-- ⚠️ **Consolidación a vps-preprod PENDIENTE — NO ejecutada** (auditoría 2026-10-21 noche: preprod sin proxy alguno; uso real 13,112 req/24h, jovtransport activo — NO borrar esta caja hasta migrar; plan en CHANGELOG [19:45])
-- ⚠️ Reboot 2026-10-19 = primer reboot en 260 días (kernel 6.8.0-147 por unattended-upgrades). **NO fue reinstalada** — misma instalación (wtmp/apt logs/certs intactos). La marca "uptime 228d" ya NO aplica. Shutdown+boot limpio también el 2026-10-21 16:31→16:40 (causa por confirmar).
-- Configs intactas: usuarios (admin, jovtransport), 111 filtros, fail2ban, filedescriptors 65536, cache deny all, UFW (1444/53/3128/1080) — verificado live 2026-10-21.
-- certbot 2.9.0 con /etc/letsencrypt: 2 certs expirados de dominios que ya NO apuntan a esta caja (el.colador.de.alfredo.pro → vps-preprod/IRC, renovado allí 2026-10-21; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner).
+- **MIGRACIÓN COMPLETADA 2026-10-22**: Squid+SOCKS5 dockerizados en vps-preprod (/opt/proxy-stack), DNS repuntado (proxy.us-east + jovtransport.prx → 154.53.35.102), validado end-to-end. Esta caja queda como FALLBACK temporal hasta que el owner la cancele en Contabo — avisar a jovtransport si usa la IP 31.220.102.176 hardcodeada (usar hostname).
+- Reboot 2026-10-19 = primer reboot en 260 días (kernel 6.8.0-147 por unattended-upgrades). **NO fue reinstalada** — misma instalación (wtmp/apt logs/certs intactos). Shutdown+boot limpio también el 2026-10-21 16:31→16:40 (causa por confirmar).
+- Configs migradas: usuarios (admin, jovtransport), 111 filtros, filedescriptors 65536, cache deny all — copias originales intactas aquí.
+- certbot 2.9.0 con /etc/letsencrypt: 2 certs expirados de dominios que ya NO apuntan a esta caja (el.colador.de.alfredo.pro → vps-preprod/IRC; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner).
 - Sin Docker. Sin crontab.
-- Servicios: Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
+- Servicios (aún corriendo como fallback): Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
 - DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF); jovtransport.prx.armada.do → 31.220.102.176 (gris, dedicado jovtransport)
 - **Squid Proxy (HTTP/HTTPS)**:
   - Puerto: 3128
@@ -179,7 +179,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 |---|---|---|
 | Cloudflare | Cloudflare único: DNS, SSL/WAF, KV/D1, túneles, Workers | ✅ |
 | IRC | Servidor IRC InspIRCd (vps-preprod) | ✅ |
-| Proxy | Servidor proxy internacional (vps-proxy) | ✅ |
+| Proxy | Proxy Armada dockerizado en vps-preprod (migrado de vps-proxy 2026-10-22) | ✅ |
 | VPS | Servidor VPS producción (vps-preprod) | ✅ |
 | Victoria Server | Servidor GPU/LLM (victoria, solo lectura) | ✅ |
 | PetSuite | Proyecto PetSuite (pets.armada.do) | ✅ |
