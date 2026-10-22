@@ -8,7 +8,26 @@
 - **Estado**: ✅ Validado end-to-end: squid 200 admin/jovtransport (0.15-0.33s), socks5 200 vía dominio dedicado, YouTube 403 (filtros), auth mala 407, FD 65536 verificado, 8 dominios VPS + IRC 6667/6697/7209 intactos, 0 vars proxy en sistema/25 contenedores (aislamiento requisito owner), DNS propagado en 1.1.1.1
 - **Notas**: 3 bugs encontrados y curados durante la migración: (1) proxy-users.conf 600 root:root → helper basic_ncsa_auth (uid 13) no leía → 407 loop; fix 640 root:13. (2) /run/squid.pid persistía en capa rw tras docker restart → squid crash-loop "already running PID 1"; fix tmpfs /run en compose. (3) El tráfico externo a puertos docker publicados pasa por FORWARD→DOCKER-USER (NO por INPUT): el DROP CF-only lo mataba; fix excepción en apply.sh (el builder canónico que re-aplica al boot). Hallazgo de fidelidad: en squid.conf de vps-proxy "cache deny all" estaba INERTE (pegado a un comentario en la línea de multi-IP) — la versión dockerizada lo lleva como directiva propia (intención original documentada). Squid 6.14 = misma versión en ubuntu:24.04 que en vps-proxy. vps-proxy NO se tocó ni apagó: queda como fallback hasta que el owner cancele en Contabo (recomendado: gracia de días para que jovtransport confirme hostname vs IP hardcodeada).
 
-## 2026-10-21
+## 2026-10-22
+
+### [01:30] - micaserogou: validación integral 16 páginas — titles, copy restaurante, imágenes de heroes
+- **Tipo**: servicio | frontend | seo
+- **Modificado**: preprod micaserogou.kalimete.local — mu-plugin nuevo `erpc-restaurante-fixes.php`, `erpc-contacto-template.php` reescrito, reservas.html/contacto.html/producto-detalle.html actualizados, post_title de 10 páginas en DB
+- **Afecta a**: TODAS las páginas del sitio (16) — verificación integral title/nav/imagen/copy
+- **Causa**: owner pidió validar cada página del menú: texto, imagen, diseño acorde a restaurante
+- **Estado**: ✅ 16/16 páginas — title correcto, nav presente, imagen presente, sin textos viejos de tienda
+
+**Problemas encontrados y corregidos:**
+
+1. **9 páginas sin `<title>`** (checkout, login, mi-cuenta, faq, terminos, privacidad, cookies, envios, devoluciones): el tema twentytwentyfive no soporta title-tag y el plugin solo imprime title en sus full-page templates. FIX: mu-plugin con ob_start en hook `wp` (anterior a todos los template_redirect incl. el exit del router) que inserta `<title>` si falta y decodifica entidades (&#8211; → –) si existe.
+2. **Títulos duplicados** ("X — Michelle Casero y Gourmet — Michelle Casero y Gourmet"): los post_title incluían el sufijo y el header del plugin agregaba otro. FIX: post_title limpiados en DB (páginas 2, 6, 11, 13-18, 52).
+3. **Copy genérico de e-commerce** → lenguaje de restaurante (gettext filter, dominio erp-suite, 20+ cadenas): Catálogo→Nuestro Menú, Explora nuestros productos→Explora nuestros platos, hechos al momento, Buscar productos→Buscar platos, Tu carrito de compras→Tu pedido, Ir a la tienda→Ver el menú, Producto→Plato, Seguir comprando→Seguir pidiendo, Recoger en tienda→Recoger en el restaurante, Volver al carrito→Volver a mi pedido, Cargar más productos→Cargar más platos, etc.
+4. **Página "Productos" renombrada a "Menú"** (post_title id 6) — alineada con el nav del sitio.
+5. **Reservas y Contacto sin imagen**: heroes con gradiente plano → ahora llevan imagen del pack restaurant (hero-home.webp / cta-band.webp) con overlay rojo de marca.
+6. **Contacto sin nav del sitio**: mi template_redirect usaba get_header() del tema (block theme sin nav del plugin) → reescrito para usar el frame del plugin (nav + topbar + logo + title).
+7. **Producto-detalle**: CTA de reserva final ahora con imagen de fondo (cta-band.webp).
+
+**Observación para el owner (dato ERP, no template)**: el plato "PASTELON DE BERENJENA" aparece con RD$ 0.00 en el menú — el precio está en 0 en el ERP (tenant 3). Corregir desde el panel del ERP.
 
 ### [00:35] - micaserogou: página de detalle de producto (punto 4) + proxy ERP en WordPress
 - **Tipo**: servicio | frontend | api-integracion
