@@ -186,6 +186,12 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
 
 ## Cambios recientes
 
+- **2026-10-22 (noche) — Login: gap 40px + footer compacto (v1.3.0)**:
+  - **Gap card→footer**: anula `min-height:100vh/80vh` del plugin (`.erpc-page` connector.css:1776, `.erpc-auth-page` connector.css:2135) con `body.page-id-9 .erpc-page, .erpc-auth-page { min-height: auto }` → gap 40px (era 763px), scroll vertical 145px @1440 (era 869px).
+  - **Newsletter oculto**: `body.page-id-9 .erpc-newsletter-bar { display: none }` en login.
+  - **Footer compacto**: oculta newsletter del footer (`body.page-id-9 .erpc-footer-newsletter`) y columnas 3-4 (Ayuda, Legal) → footer 707→635px, solo marca + menú.
+  - Validación 21/21: login gap 40px, newsletter oculto, footer compacto, 0 scroll horizontal.
+
 - **2026-10-22 (noche) — Fixes visuales y UX (v1.2.0)**:
   - **Banners "al natural"**: overlay de **todas las cabeceras** cambiado a negro sutil (`rgba(0,0,0,.65→.35)`) igual que home — antes tenían capa roja cálida. `productos` (mu-plugin), `contacto`/`reservas` (HTML inline), `sobre-nosotros` (mu-plugin con `!important` vs `style` inline del pack).
   - **Login limpio**: newsletter bar (`erpc-newsletter-bar`) ocultada en la página de acceso con `body.page-id-9 .erpc-newsletter-bar { display: none }` — ahora solo se ve el formulario de login/registro.

@@ -90,7 +90,8 @@
     "php": "Warning 'ERPC_HTML_DIR already defined' eliminado (guarda defined() en erpc-html-filter.php y erpc-html-shortcode.php)",
     "deuda": "API key ERP en texto plano en wp-content/mu-plugins/erpc-html-filter.php:92 → mover a secrets/ (pendiente de autorización)",
     "fix_login": "Newsletter bar ocultada en login (body.page-id-9 .erpc-newsletter-bar { display: none }) — solo formulario de acceso visible",
-    "productos": "8 productos sin botón 'cargar más' (comportamiento correcto); para 'más vendidos/destacados' → marcar featured/best_seller en ERP tenant 3"
+    "productos": "8 productos sin botón 'cargar más' (comportamiento correcto); para 'más vendidos/destacados' → marcar featured/best_seller en ERP tenant 3",
+    "login": "gap card→footer 40px (era 763px); newsletter oculto; footer compacto 635px (era 707px, oculta newsletter + 2 columnas); scroll vertical 145px @1440 (era 869px); anula min-height:100vh/80vh del plugin con min-height:auto"
   },
   "pitfalls_2026_10_22": [
     "Playwright roto en kalimete ('Connection.init: Connection closed while reading from the driver') → usar scripts/shot-cdp.py (CDP websocket, chromium con --remote-allow-origins=*)",
@@ -101,7 +102,9 @@
     "El hero del home declara min-height:480px y sus reglas móviles height:380/340px son CÓDIGO MUERTO → usar solo min-height",
     "Overlay de banners: home usa negro sutil; los demás heredaban rojo cálido → unificados a negro via CSS site-level + HTML inline (contacto/reservas) + !important (sobre-nosotros vs pack)",
     "Login: newsletter bar es sibling de .erpc-auth-page (ambos hijos de .erpc-container) → ocultar con selector body.page-id-9 .erpc-newsletter-bar",
-    "Productos 'cargar más': no hay botón (OK); 'destacados' es dato ERP, no código"
+    "Productos 'cargar más': no hay botón (OK); 'destacados' es dato ERP, no código",
+    "Login gap: plugin fuerza .erpc-page { min-height:100vh; display:flex } (connector.css:1776) y .erpc-auth-page { min-height:80vh } (connector.css:2135) → anular con body.page-id-9 .erpc-page, .erpc-auth-page { min-height:auto }",
+    "Footer compacto en login: oculta .erpc-footer-newsletter y columnas 3-4 del grid con selectores nth-child"
   ],
   "guias": [
     "docs/GUIA-TEMPLATES-RESTAURANTE.md (en el repo del sitio) — sistema visual, patrones, pitfalls y checklist; reutilizable para MaganTech y futuros negocios",
