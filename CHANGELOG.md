@@ -1752,6 +1752,14 @@
 - **Verificación**: node --check + php -l OK; CSS 1.1.3 con apilado sirviéndose. Prueba en navegador pendiente (posición + voz según dispositivo del usuario).
 - **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
 
+### [19:40] - Micaserogou: sincronización preprod→prod (auditoría RAW) — tagline/phone/address/contacto/about fixes vía API; categorías footer = dato ERP distinto
+- **Tipo**: servicio | infra
+- **Modificado**: prod micaserogou.com: auditoría RAW vs RAW 16 páginas + settings; fixes API: contacto y sobre-nosotros contenidos → shortcodes [erpc_html] (16/16 RAW idénticas), tagline "Tu tienda de confianza"→"Comida casera y gourmet, hecha al momento" (bk_20261022192336_sq7c8j), contact_phone/address null→valores
+- **Afecta a**: prod micaserogou.com
+- **Causa**: owner — evaluar discrepancias local vs prod; preprod = fuente de verdad
+- **Estado**: 🟡 DB/settings 100% sincronizados; ZIP site-level PENDIENTE del upload del owner (sin él /reservas/ y /producto-detalle/ muestran shortcode crudo — verificado)
+- **Notas**: categorías del footer difieren porque preprod usa ERP local y prod el ERP productivo erpipos.armada.do (sets distintos de categorías tenant 3) — decidir con Juan Carlos; tras el ZIP falta setear brand.logo a URL prod
+
 ### [18:40] - erp-chatbot v1.1.4: separación generosa entre flotantes (verificado con captura)
 - **Tipo**: proyecto | fix | UI | wordpress
 - **Modificado**: erp-chatbot 1.1.3→1.1.4 (~/dev/wordpress: aire entre flotantes a 28px desktop/móvil). **SIN COMMIT (regla: nada de commits hasta probar).**
