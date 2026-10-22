@@ -1,6 +1,6 @@
 {
   "harness": "victoria-server",
-  "updated": "2026-10-20",
+  "updated": "2026-10-21",
   "agent_file": "~/armada-sync/agents/victoria-server.md",
   "mode": "subagent",
   "hidden": false,
@@ -33,5 +33,6 @@
       }
     ]
   },
-  "vivo_2026_10_20": "gateway con /v1/provision-key activo; llave kalimete caps llm/art/tts/whisper/provision; primera llave de negocio armada-magantech provisionada DESDE kalimete (201, chat 200 OK); provision_log con IP 10.0.0.106"
+  "vivo_2026_10_20": "gateway con /v1/provision-key activo; llave kalimete caps llm/art/tts/whisper/provision; primera llave de negocio armada-magantech provisionada DESDE kalimete (201, chat 200 OK); provision_log con IP 10.0.0.106",
+  "vivo_2026_10_21": "gateway sano (LAN+tunel 200); 2da llave de negocio armada-micaserogou provisionada desde kalimete (201, chat 200 via tunel con model -normal); plaintext en websites/micaserogou.com/secrets/ (kalimete), NO en victoria FS (dir secrets inaccesible a warcold, verificado)"
 }

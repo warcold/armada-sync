@@ -1,5 +1,14 @@
 ## 2026-10-21
 
+### [20:46] - victoria: llave de negocio armada-micaserogou provisionada para el chatbot de micaserogou.com (E2E 200 via tunel)
+- **Tipo**: infra | servicio
+- **Modificado**: (victoria, SOLO via API de provisioning) DB gateway: api_keys +`armada-micaserogou` (rol services, caps [llm], rate 120/min, 2 slots, max_tokens 32K, sin budget/expiry) + provision_log id 3; (kalimete, docs) agents/victoria-server.md (linea de llaves curada + seccion 2026-10-21), harness/victoria-server.harness.json, CHANGELOG.md; (kalimete, secrets) `websites/micaserogou.com/secrets/armada-micaserogou.key` + `.meta.json` (600)
+- **Afecta a**: chatbot erpcbot de micaserogou.com (prod cPanel, Armada Suite 5.5.5 — daba "El asistente IA no esta disponible" por ia.api_key vacia) + preprod :8094
+- **Causa**: delegacion de kalimete a victoria-server a peticion del owner: el bot necesita llave propia del gateway (estandar 1-llave-por-negocio armada-<slug>)
+- **Estado**: ✅ E2E 2026-10-21 20:38-20:45 — gateway sano (health LAN 200 + tunel 200; victoria-llm-gateway/cloudflared/nginx active; GPU 45C 0%) · POST /v1/provision-key 201 (slug micaserogou → name forzado armada-micaserogou, owner "Micaserogou (micaserogou.com)") · chat de prueba 200 OK via https://victoria.armada.do/v1, model nvidia/Qwen3.6-35B-A3B-NVFP4-normal (gateway normaliza el id; finish stop, 19 tokens) · DB: armada-micaserogou|services|active=1 · provision_log id 3 (kalimete→armada-micaserogou, 10.0.0.106)
+- **Notas**: plaintext devuelto UNA vez, guardado SOLO en kalimete `~/dev/wordpress/websites/micaserogou.com/secrets/` (600; fp sha256-16 c48066a582502dd1; meta json con settings al lado) — victoria FS intocable por contrato y `~/.victoria-custom/secrets/` verificado NO accesible a warcold (lectura/escritura denegadas); si se quiere copia en victoria, la coloca Victoria manualmente (patron armada-magantech). Budget mensual NO configurable via provisioning (PROVISION_MAX_BUDGET=0 = sin tope; metering por llave en DB). PENDIENTE (kalimete/owner): pegar la key en wp-admin prod → Ajustes → Asistente IA (o env ERPCBOT_LLM_KEY) — api_url y model -normal ya son defaults del plugin. Hallazgo DB: key `erp-bot` (readonly, active) preexistente — evaluar revocacion en panel si es residuo. Drift curado en doc de llaves: faltaban `vaclaaw` (coder) y las armada-*.
+## 2026-10-21
+
 ### [19:45] - AUDITORÍA migración proxy→vps-preprod: NO EJECUTADA — vps-proxy sigue siendo el único proxy (NO borrar todavía)
 - **Tipo**: infra | docs
 - **Modificado**: agents/proxy.md (sección consolidación), harness/proxy.harness.json (vivo + scope), MAPA.md (nota consolidación pendiente en nodo 4), CHANGELOG.md

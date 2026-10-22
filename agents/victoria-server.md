@@ -58,7 +58,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - `victoria-llm-gateway` (systemd): FastAPI en :8010
 - Auth por bearer token `vllm-key-<64hex>`
 - DB SQLite: `/home/victoria/.victoria-llm/llm-gateway.db`
-- Llaves (nombres+roles, nunca secrets): alfredo/victoria (admin), juancarlos/justin-t/jordan-diaz/michael-prestol/kalimete (coder; kalimete +llm/art/tts/whisper/provision), servicios-alfredo-pro-llc/kalimete-ptt (services), victoria-openclaw-sandbox (art), warcold/erp-bot (readonly). Límites: prompt 220K, output 32K, rate 120/min.
+- Llaves (nombres+roles, nunca secrets; verificadas en DB 2026-10-21): alfredo/victoria (admin), juancarlos/justin-t/jordan-diaz/michael-prestol/kalimete/vaclaaw (coder; kalimete +llm/art/tts/whisper/provision), servicios-alfredo-pro-llc/kalimete-ptt/armada-magantech/armada-micaserogou (services; +armada-e2e-test inactiva), victoria-openclaw-sandbox (art), warcold/erp-bot (readonly). Límites: prompt 220K, output 32K, rate 120/min; llaves de negocio armada-*: rate 120/min + 2 slots propios.
 
 ## Generar contenido desde kalimete (imágenes, video, voz — 2026-10-07)
 
@@ -149,6 +149,10 @@ ssh victoria 'curl -s -m 4 -o /dev/null -w "%{http_code}" http://127.0.0.1:8010/
 - El ensure-loop de victoria ahora REINICIA los bridges cuando cambia su md5
   (antes copiaba el archivo y el proceso vivo seguia con codigo viejo).
 - Repo git de victoria: commit a6139aa (10-04) con todo lo anterior.
+
+## 2026-10-21 (provisioning desde kalimete, delegación del owner)
+
+- **Segunda llave de negocio `armada-micaserogou`** (owner "Micaserogou (micaserogou.com)"): chatbot erpcbot de micaserogou.com (Armada Suite 5.5.5, prod cPanel + preprod). Provisionada via `POST /v1/provision-key` con la llave kalimete → 201 (provision_log id 3, IP 10.0.0.106). E2E: chat 200 OK via túnel `https://victoria.armada.do/v1` con model `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` (el gateway normaliza el id en la respuesta). Plaintext SOLO en kalimete: `~/dev/wordpress/websites/micaserogou.com/secrets/armada-micaserogou.key` (600) + `.meta.json` (fp sha256-16 `c48066a582502dd1`) — el dir `~/.victoria-custom/secrets/` de victoria NO es accesible a warcold (lectura/escritura denegadas, verificado live); copia allá la coloca Victoria manualmente (patrón armada-magantech). Budget cap NO configurable via provisioning (PROVISION_MAX_BUDGET=0 = sin tope); metering por llave en DB (total_requests/tokens/cost).
 
 ## 2026-10-20 (documentado por Victoria, autorización del owner)
 
