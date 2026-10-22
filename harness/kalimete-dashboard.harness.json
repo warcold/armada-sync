@@ -16,7 +16,9 @@
   },
   "live_check": {
     "command": "curl -s http://localhost:8081/api/health || echo 'not running'",
-    "ports": ["8081"],
+    "ports": [
+      "8081"
+    ],
     "process": "python3 api.py",
     "description": "Verificar que el API server corre en :8081 y responde /api/health con {\"status\":\"ok\"}"
   },
@@ -33,5 +35,20 @@
     "api": "https://docs.python.org/3/library/http.server.html",
     "frontend": "https://developer.mozilla.org/en-US/docs/Web/HTML"
   },
-  "groom_clean": true
+  "groom_clean": true,
+  "vivo_2026_10_22": "api/health → {\n  \"status\": \"ok\"\n} (auditoría hub 2026-10-22)",
+  "changelog": "armada-sync/CHANGELOG.md",
+  "docs_oficiales": {
+    "regla": "ANTES de programar, consultar estas fuentes; NUNCA inventar APIs.",
+    "fuentes": [
+      {
+        "nombre": "Python http.server",
+        "url": "https://docs.python.org/3/library/http.server.html"
+      },
+      {
+        "nombre": "MDN Web Docs (frontend)",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTML"
+      }
+    ]
+  }
 }

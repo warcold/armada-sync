@@ -25,5 +25,6 @@
         "contenido_clave": "wiki + comandos hf/lf (MIFARE, HID, EM4100, T55xx via /dev/ttyACM0)"
       }
     ]
-  }
+  },
+  "vivo_2026_10_22": "binario pm3 presente (/usr/bin/pm3); /dev/ttyACM0 NO conectado (normal — el dispositivo se conecta al usar la tarjeta) — auditoría hub 2026-10-22"
 }

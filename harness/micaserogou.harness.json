@@ -120,5 +120,6 @@
     "docs/GUIA-TEMPLATES-RESTAURANTE.md (en el repo del sitio) — sistema visual, patrones, pitfalls y checklist; reutilizable para MaganTech y futuros negocios",
     "docs/README.md, docs/WP-SIDE-CONFIG-20261021.md, docs/PROD-DEPLOY-CHECKLIST.md",
     "CHANGELOG.md (raíz del repo del sitio) — historial con el formato del hub"
-  ]
+  ],
+  "live_check": "bash ~/dev/wordpress/websites/micaserogou.com/scripts/smoke-8094.sh (esperado 7/7) + docker ps --filter name=micaserogou + curl -sk -o /dev/null -w \"%{http_code}\" https://micaserogou.kalimete.local/ (esperado 200)"
 }

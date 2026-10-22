@@ -25,5 +25,6 @@
         "url": "https://docs.goauthentik.io/docs/"
       }
     ]
-  }
+  },
+  "vivo_2026_10_22": "4/4 contenedores healthy (authentik-server/worker/db/redis) Up 28h en vps-preprod; https://auth.armada.do 302 (redirect a login, normal) — auditoría hub 2026-10-22"
 }

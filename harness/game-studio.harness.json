@@ -41,5 +41,26 @@
       "evento": "Agente Game Studio creado (nace como orquestador de pipeline verde de juegos 3D). Stack Blender 5.0.1 + mcp-for-blender verificado end-to-end (TCP :9876). MCP blender en opencode.jsonc. Workspace ~/dev/games/godot/studio/ (pendiente primer juego)."
     }
   ],
-  "vivo_2026_10_19": "Dominio ~/dev/games/ creado (mudanza mismo FS: ~/dev/godot/* → ~/dev/games/godot/, ~/dev/tools/blender-mcp → ~/dev/games/blender/blender-mcp; git mario-bros intacto; LOG path del start-blender.sh corregido). DOS MCPs godot en opencode.jsonc: godot (mario-bros, agente Godot) + godot-studio (studio/current — Game Studio ya NO necesita cambio manual de -p; current → _starter proyecto mínimo hasta el primer juego). Agente Blender creado (hermano 3D: decimate/retopo/rig). Staging de granja: ~/dev/games/assets/{concept,models3d,audio}."
+  "vivo_2026_10_19": "Dominio ~/dev/games/ creado (mudanza mismo FS: ~/dev/godot/* → ~/dev/games/godot/, ~/dev/tools/blender-mcp → ~/dev/games/blender/blender-mcp; git mario-bros intacto; LOG path del start-blender.sh corregido). DOS MCPs godot en opencode.jsonc: godot (mario-bros, agente Godot) + godot-studio (studio/current — Game Studio ya NO necesita cambio manual de -p; current → _starter proyecto mínimo hasta el primer juego). Agente Blender creado (hermano 3D: decimate/retopo/rig). Staging de granja: ~/dev/games/assets/{concept,models3d,audio}.",
+  "docs_oficiales": {
+    "regla": "ANTES de programar el juego, consultar estas fuentes; NUNCA inventar APIs de Godot ni del MCP.",
+    "fuentes": [
+      {
+        "nombre": "Godot docs",
+        "url": "https://docs.godotengine.org/en/stable/"
+      },
+      {
+        "nombre": "Blender Python API",
+        "url": "https://docs.blender.org/api/current/"
+      },
+      {
+        "nombre": "godot-mcp",
+        "url": "https://github.com/yanhuifair/godot-mcp"
+      },
+      {
+        "nombre": "mcp-for-blender",
+        "url": "https://github.com/ahujasid/blender-mcp"
+      }
+    ]
+  }
 }

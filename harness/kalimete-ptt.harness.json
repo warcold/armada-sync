@@ -34,5 +34,24 @@
     "whisper": "https://github.com/SYSTRAN/faster-whisper",
     "evdev": "https://python-evdev.readthedocs.io/"
   },
-  "groom_clean": true
+  "groom_clean": true,
+  "vivo_2026_10_22": "servicio user kalimete-ptt: active (auditoría hub 2026-10-22); servidor voz victoria :18810 es recurso del host victoria",
+  "changelog": "armada-sync/CHANGELOG.md",
+  "docs_oficiales": {
+    "regla": "ANTES de programar, consultar estas fuentes; NUNCA inventar APIs.",
+    "fuentes": [
+      {
+        "nombre": "faster-whisper (STT)",
+        "url": "https://github.com/SYSTRAN/faster-whisper"
+      },
+      {
+        "nombre": "python-evdev (captura teclas)",
+        "url": "https://python-evdev.readthedocs.io/"
+      },
+      {
+        "nombre": "opencode docs (agente host)",
+        "url": "https://opencode.ai/docs"
+      }
+    ]
+  }
 }

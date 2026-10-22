@@ -25,5 +25,6 @@
         "url": "https://developers.cloudflare.com/"
       }
     ]
-  }
+  },
+  "vivo_2026_10_22": "DNS proxy verificado hoy por subagente Proxy (proxy.us-east + jovtransport.prx → 154.53.35.102 gris TTL 300, token opencode-dns-cleanup); subagente Cloudflare validó READ-ONLY: 0/33 registros armada.do apuntan a la IP vieja 31.220.102.176 — auditoría hub 2026-10-22"
 }

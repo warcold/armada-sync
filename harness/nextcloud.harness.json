@@ -25,5 +25,6 @@
         "contenido_clave": "Nextcloud + whiteboard (nextcloud.armada.do, OIDC Authentik)"
       }
     ]
-  }
+  },
+  "vivo_2026_10_22": "stack completo Up 28h (nextcloud, caddy, cron, db healthy, redis, whiteboard-ws healthy); https://nextcloud.armada.do 302 (login normal) — auditoría hub 2026-10-22"
 }

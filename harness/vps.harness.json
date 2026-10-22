@@ -30,5 +30,6 @@
         "contenido_clave": "Caddy (TLS, reverse proxy de los proyectos alojados)"
       }
     ]
-  }
+  },
+  "vivo_2026_10_22": "26 contenedores Up 28h (proxy-squid/socks5 12h), uptime 3d 6h; dominios: auth 302, pets 200, nextcloud 302, scriberr 200, docuseal 200, taohemps 200, ragnarok 200; fail2ban solo jail sshd (squid deshabilitada 16:50 — baneaba cliente legit) — auditoría hub 2026-10-22"
 }
