@@ -192,6 +192,12 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
   - **Footer compacto**: oculta newsletter del footer (`body.page-id-9 .erpc-footer-newsletter`) y columnas 3-4 (Ayuda, Legal) → footer 707→635px, solo marca + menú.
   - Validación 21/21: login gap 40px, newsletter oculto, footer compacto, 0 scroll horizontal.
 
+- **2026-10-22 (noche) — Login mobile: sin scroll + gap simétrico 24px + nav "Menú" (v1.4.0)**:
+  - **Móvil sin scroll**: media query `@media (max-width: 767px)` para login — footer solo marca (oculta menú, ayuda, legal, newsletter, bottom), padding footer 8px, card padding 12px, auth-page padding 24px, oculta mobile-search, trustbar/topbar/alfredo-bar compactos → scroll_v ≤100px (era 763px gap), gap simétrico 24px, card 311px, footer 292px (solo marca).
+  - **Nav "Menú"**: gettext filter `'Tienda' => 'Menú'` en `erpc-restaurante-fixes.php` corrige la traducción del plugin que convertía "Menú" a "Tienda".
+  - **Tablet/Desktop intactos**: media query `@media (max-width: 767px)` no afecta 768px/1440px (gap 30px, card 440px, footer completo).
+  - Validación 21/21: móvil 375px scroll_v ≤100px, gap simétrico 24px, nav "Menú"; tablet/desktop intactos.
+
 - **2026-10-22 (noche) — Fixes visuales y UX (v1.2.0)**:
   - **Banners "al natural"**: overlay de **todas las cabeceras** cambiado a negro sutil (`rgba(0,0,0,.65→.35)`) igual que home — antes tenían capa roja cálida. `productos` (mu-plugin), `contacto`/`reservas` (HTML inline), `sobre-nosotros` (mu-plugin con `!important` vs `style` inline del pack).
   - **Login limpio**: newsletter bar (`erpc-newsletter-bar`) ocultada en la página de acceso con `body.page-id-9 .erpc-newsletter-bar { display: none }` — ahora solo se ve el formulario de login/registro.

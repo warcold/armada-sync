@@ -91,7 +91,8 @@
     "deuda": "API key ERP en texto plano en wp-content/mu-plugins/erpc-html-filter.php:92 → mover a secrets/ (pendiente de autorización)",
     "fix_login": "Newsletter bar ocultada en login (body.page-id-9 .erpc-newsletter-bar { display: none }) — solo formulario de acceso visible",
     "productos": "8 productos sin botón 'cargar más' (comportamiento correcto); para 'más vendidos/destacados' → marcar featured/best_seller en ERP tenant 3",
-    "login": "gap card→footer 40px (era 763px); newsletter oculto; footer compacto 635px (era 707px, oculta newsletter + 2 columnas); scroll vertical 145px @1440 (era 869px); anula min-height:100vh/80vh del plugin con min-height:auto"
+    "login": "gap card→footer 40px (era 763px); newsletter oculto; footer compacto 635px (era 707px, oculta newsletter + 2 columnas); scroll vertical 145px @1440 (era 869px); anula min-height:100vh/80vh del plugin con min-height:auto",
+    "login_mobile": "sin scroll (scroll_v ≤100px), gap simétrico 24px, card 311px, footer 292px (solo marca), nav 'Menú'; media query max-width:767px; oculta mobile-search, compacta trustbar/topbar/alfredo-bar; gettext 'Tienda'→'Menú'"
   },
   "pitfalls_2026_10_22": [
     "Playwright roto en kalimete ('Connection.init: Connection closed while reading from the driver') → usar scripts/shot-cdp.py (CDP websocket, chromium con --remote-allow-origins=*)",
@@ -104,7 +105,10 @@
     "Login: newsletter bar es sibling de .erpc-auth-page (ambos hijos de .erpc-container) → ocultar con selector body.page-id-9 .erpc-newsletter-bar",
     "Productos 'cargar más': no hay botón (OK); 'destacados' es dato ERP, no código",
     "Login gap: plugin fuerza .erpc-page { min-height:100vh; display:flex } (connector.css:1776) y .erpc-auth-page { min-height:80vh } (connector.css:2135) → anular con body.page-id-9 .erpc-page, .erpc-auth-page { min-height:auto }",
-    "Footer compacto en login: oculta .erpc-footer-newsletter y columnas 3-4 del grid con selectores nth-child"
+    "Footer compacto en login: oculta .erpc-footer-newsletter y columnas 3-4 del grid con selectores nth-child",
+    "Login mobile: plugin fuerza topbar/trustbar/mobile-search altos → compactar con CSS !important en @media (max-width: 767px)",
+    "Nav 'Tienda' vs 'Menú': plugin usa 'Menú' pero traducción .mo lo cambia a 'Tienda' → forzar con gettext filter 'Tienda' => 'Menú'",
+    "Media query 767px (no 768px) para preservar tablet 768px intacta"
   ],
   "guias": [
     "docs/GUIA-TEMPLATES-RESTAURANTE.md (en el repo del sitio) — sistema visual, patrones, pitfalls y checklist; reutilizable para MaganTech y futuros negocios",
