@@ -1752,6 +1752,14 @@
 - **Verificación**: node --check + php -l OK; CSS 1.1.3 con apilado sirviéndose. Prueba en navegador pendiente (posición + voz según dispositivo del usuario).
 - **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
 
+### [20:30] - Micaserogou/Armada Suite: evaluación arquitectura site-level (delegada) + ZIP verificado 8/8 + runbook post-upload
+- **Tipo**: docs | servicio | arquitectura
+- **Modificado**: docs/POST-UPLOAD-RUNBOOK.md NUEVO (205 líneas, live-testeado: flujo brand.logo vía ops, matriz 7×3 con CHECK_JS listo, rollback granular, pendientes); verificación del ZIP instalador 8/8 PASS (v1.6.0, slug-based, 0 keys, 0 drift vs preprod, SHA-256 d3c25f8f…); evaluación arquitectónica del agente Armada Suite (solo lectura)
+- **Afecta a**: micaserogou (deploy) + armada-suite (roadmap 5.6.0)
+- **Causa**: owner preguntó si el ZIP era update de Armada Suite o customización de Micaserogou → se delegó la evaluación de arquitectura + verificación del artefacto
+- **Estado**: ✅ ZIP listo para upload del owner; propuesta 5.6.0 PENDIENTE de aprobación del owner
+- **Notas**: (1) **Respuesta**: el ZIP es la customización de Micaserogou (NO update del plugin); el mecanismo intendido es escalera: config negocio → pack → override tema → mu-plugins (último recurso); la custom de cliente NUNCA dentro del plugin (fuga entre tenants + updates la borrarían). (2) **Misterio 'Tienda' resuelto**: NO es traducción .mo — page-wrapper.php hace require DIRECTO de partials/header.php DEFAULT (bypassea erpc_template_path) → login/checkout/mi-cuenta reciben header default cuyo nav dice 'Tienda' vs 'Menú' en el pack. (3) **Triaje upstream 5.6.0 propuesto** (6 fixes verificados contra código live): box-sizing .erpc-container, wrapper vía erpc_template_path (arregla header inconsistente+Tienda+frame), filter erpc_frame_slugs (páginas custom sin mu-plugin), hero products pack-aware, overlay about pack-aware, min-height auth; efecto: Micaserogou pasaría de 6 mu-plugins a ~2-3. (4) **⚠️ DERIVA CRÍTICA plugin**: prod corre 5.5.5 editada in-situ SIN commit ni ZIP canónico (working copy en 5.4.2+packs sin commit, header 5.5.1) — antes de cualquier release 5.6.0 hay que landear el trabajo de packs y canonizar. (5) ops file/write confinado al tema = CORRECTO por diseño (abrir mu-plugins remoto = canal RCE); camino oficial = ZIP instalador o SFTP.
+
 ### [19:40] - Micaserogou: sincronización preprod→prod (auditoría RAW) — tagline/phone/address/contacto/about fixes vía API; categorías footer = dato ERP distinto
 - **Tipo**: servicio | infra
 - **Modificado**: prod micaserogou.com: auditoría RAW vs RAW 16 páginas + settings; fixes API: contacto y sobre-nosotros contenidos → shortcodes [erpc_html] (16/16 RAW idénticas), tagline "Tu tienda de confianza"→"Comida casera y gourmet, hecha al momento" (bk_20261022192336_sq7c8j), contact_phone/address null→valores
