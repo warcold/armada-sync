@@ -1,5 +1,17 @@
 ## 2026-10-21
 
+### [23:45] - ERP: fix GET /api/categories 500 (columnas inexistentes en business_types) — push a dev/ecomm-erp para Juan Carlos
+- **Tipo**: infra | api | bugfix
+- **Modificado**: `~/dev/erpipo-preprod/code/sistema-facturacion/` (rama `dev/ecomm-erp`, commit b187abc, pushed a origin)
+- **Afecta a**: endpoint `GET /api/categories` del ERP preprod (tenant 3, micaserogou.com) — usado por el filtro de categorías del sitio restaurante
+- **Causa raíz**: `CategoryController@index` hacía eager-load de `business_types` seleccionando columnas `color_default` e `icono_default` que **no existen** en la tabla `business_types` (esquema real: `color`, `icon`). `CategoryResource` también referenciaba `$bt->key`, `$bt->color_default`, `$bt->icono_default` que no existen. Error SQL: `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'business_types.color_default'`
+- **Fix aplicado**:
+  - `app/Http/Controllers/Api/CategoryController.php`: `select` cambió `color_default, icono_default` → `color, icon`
+  - `app/Http/Resources/CategoryResource.php`: mapeo cambió `key→slug`, `color_default→color`, `icono_default→icon`
+- **Estado**: ✅ verificado en vivo — `GET /api/categories` devuelve HTTP 200 con 8 categorías reales (ADICIONALES, BEBIDAS, CALDOS, ESPECIALIDADES, MOFONGOS, PASTAS, PLATOS DEL DIA, POSTRES) + `?per_page=100` y `?activa=true` OK
+- **Para Juan Carlos**: el fix está en `dev/ecomm-erp` (commit b187abc, pushed). Él hace merge a `main` y despliega a producción (nunca nosotros tocamos prod).
+- **Backups**: `.bkup-20261021` creados antes de editar (no commiteados, quedan en árbol de trabajo)
+
 ### [23:10] - micaserogou: template restaurante — mejoras completas (reservas reales, categorías ERP, datos reales, CTA sticky)
 - **Tipo**: servicio | frontend | api-integracion
 - **Modificado**: preprod micaserogou.kalimete.local (:8094) — páginas WordPress (id 2, 5, 6, 11, 12) + mu-plugins + assets en wp-content/uploads/erpc/
