@@ -44,7 +44,7 @@ Proxy compartido internacional para clientes, amigos y familia. Migrado de vps-p
 |---|---|---|
 | **Squid 6.14** (contenedor `proxy-squid`) | 3128 | Proxy HTTP/HTTPS con autenticación NCSA (htpasswd) |
 | **SOCKS5** (contenedor `proxy-socks5`) | 1080 | Proxy SOCKS5 RFC 1929, backend Squid (env SQUID_HOST=squid) |
-| **fail2ban** (host) | — | jail sshd (heredado del VPS, protege SSH 1333) |
+| **fail2ban** (host) | — | jails sshd + **squid** (407 auth mala: 5 fallos/10min → ban 2h, chain FORWARD, 2026-10-22) |
 
 ## Usuarios del proxy
 
@@ -93,6 +93,15 @@ Proxy compartido internacional para clientes, amigos y familia. Migrado de vps-p
 - Tráfico por usuario: `docker exec proxy-squid tail -50 /var/log/squid/access.log` (volumen persistente `proxy-stack_squid-logs`)
 - Uso 24h: `docker exec proxy-squid awk -v cutoff=$(($(date +%s)-86400)) '$1 > cutoff' /var/log/squid/access.log | wc -l`
 - Socks5: `docker logs proxy-socks5 --tail 50`
+- **Rotación de access.log** (2026-10-22): `logfile_rotate 10` en squid.conf + cron root del VPS `0 4 * * 0 docker exec proxy-squid /usr/sbin/squid -k rotate` (domingos 04:00, 10 generaciones ≈ 10 semanas). Cambios de config en caliente: `docker exec proxy-squid /usr/sbin/squid -k reconfigure` (sin downtime).
+
+## fail2ban jail squid (2026-10-22)
+
+- Filter `/etc/fail2ban/filter.d/squid.conf`: `failregex = ^\s*\d+\s+<HOST>\s+TCP_DENIED/407\s` + `datepattern = {^LN-BEG}EPOCH` (el timestamp epoch se consume ANTES del failregex — por eso el regex empieza en el campo elapsed). Solo 407 (auth mala); los 403 son el filtro de contenido, NO brute force.
+- Jail `/etc/fail2ban/jail.d/squid.local`: **`backend = auto` OBLIGATORIO** (el default systemd de Ubuntu 24.04 ignora logpath y monitorea el journal — sin esto el jail no cuenta nada), logpath = volumen docker, `ignoreip = 127.0.0.1/8 172.20.0.0/16` (evita self-lockout del host), maxretry 5 / findtime 10m / bantime 2h.
+- **`action = iptables-allports[... chain=FORWARD]`**: la coma en `port=3128,1080` ROMPE el parser de acciones ("unexpected option syntax") — por eso allports. chain=FORWARD (no INPUT ni DOCKER-USER): el tráfico a puertos docker publicados va por FORWARD tras el DNAT, y FORWARD sobrevive los flushes de DOCKER-USER de apply.sh.
+- IPs reales de clientes preservadas en el log (el DNAT mantiene la source; solo el tráfico del host aparece como 172.20.0.1).
+- Validado end-to-end 2026-10-22: filtro 13/13 líneas 407, ban real verificado (REJECT en f2b-squid hook FORWARD pos.1), unban OK.
 
 ## Reglas de operación
 
