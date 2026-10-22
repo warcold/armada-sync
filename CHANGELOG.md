@@ -34,6 +34,23 @@
 - **Estado**: ✅ Disco 38G/145G (26%), rotación probada (reconfigure + rotate OK, cron instalado), fail2ban validado end-to-end (filtro 13/13, ban real REJECT en f2b-squid hook FORWARD pos.1, unban OK — me baneé a mí mismo con 6 tests de auth mala, prueba definitiva; desbaneado), jovtransport aún no conecta (00:55 AST), vps-proxy 0 tráfico residual.
 - **Notas**: 3 hallazgos operativos: (1) fail2ban default backend=systemd en Ubuntu 24.04 — sin `backend=auto` el jail NO lee el logpath (solo journal); (2) `iptables-multiport` con `port=3128,1080` falla por coma en parser — usar `iptables-allports`; (3) jovtransport usa el proxy en horario diurno RD — la migración DNS (TTL 300) es transparente si usa hostname; si tiene IP hardcodeada, seguirá en vps-proxy hasta que actualice. vps-proxy queda como fallback sin tocar hasta confirmación.
 
+### [13:15] - HARDENING MEDIO/BAJO EJECUTADO + VERIFICACIONES SERVICIOS + PENDIENTES HEREDADOS
+- **Tipo**: infra | mantenimiento | docs
+- **Modificado**: vps-preprod: logrotate `/etc/logrotate.d/fail2ban` (diario, 28 rotaciones, compress, postrotate reload fail2ban); health check proxy `/usr/local/bin/proxy-healthcheck.sh` + cron `*/5 * * * *` (Squid + SOCKS5 vía dominios, alerta systemd-cat); cron mensual `0 3 1 * * docker builder prune -f` (log en `/var/log/docker-builder-prune.log`); logrotate fail2ban ya instalado (verificado).
+- **Verificaciones**: certs TLS todos vigentes (auth/nextcloud/docuseal/pets/scriberr/ragnarok/whiteboard: dic-2026; taohemps: ene-2027; IRC el.colador.de.alfredo.pro: ene-2027; proxy HTTP plano sin TLS); Nextcloud 33.0.3 sano (maintenance=false, no upgrade pendiente); Authentik 4/4 contenedores healthy (server/worker/redis/db, workers procesando tareas celery OK); IRC certbot auto-renueva ene-2027; taohemps LE ene-2027; proxy HTTP plano (sin TLS, termina en cliente).
+- **Pendientes heredados documentados** (no ejecutados, requieren decisión owner):
+  1. **Backups rotos** (CRÍTICO): `backup-vps.timer` 03:20 → jonas (10.0.0.20) caído desde sep-2026; nextcloud-db/taohemps/petsuite/infra sin backups. Opciones: reparar jonas / repuntar a kalimete/victoria / nuevo NAS.
+  2. **Cancelar vps-proxy** (ALTO): gracia 2-3 días laborables RD para jovtransport (hostname vs IP hardcodeada 31.220.102.176); fallback intacto.
+  3. **Dependencia telecomm**: confirmar si servidores 207.244.236.223 usan `proxy.us-east` (hostname transparente / IP hardcodeada rota).
+  4. **Shutdown Contabo 21-oct 16:31**: causa por confirmar (¿panel?).
+  5. **Retiro `*.alfredo.pro`** en banahosting (pendiente listado; mail.alfredo.pro vive en cPanel).
+  6. **Bot Fight Mode**: dashboard 2 clics (plan Free sin API).
+  7. **Router port-forward 443→10.0.0.5**: eliminar (privacidad, túnel victoria-armada ya maneja 443).
+- **Afecta a**: vps-preprod (hardening operativo), vps-proxy (fallback), Cloudflare (docs), backups (crítico), jovtransport/telecomm (comunicación).
+- **Causa**: orden del owner — ejecutar puntos medio/bajo, documentar pendientes para próximo ciclo.
+- **Estado**: ✅ Logrotate fail2ban instalado (diario, 28 rot, compress, reload); health check proxy activo (cron 5 min, systemd-cat); docker builder prune mensual (1ro de mes 03:00, log dedicado); certs todos vigentes (dic-2026/ene-2027); Nextcloud 33.0.3 sano; Authentik 4/4 healthy + celery OK; IRC/taohemps certs auto-renuevan ene-2027.
+- **Notas**: El proxy es **solo servicio para clientes** (aislado: 0 vars proxy en sistema/25 contenedores, red `proxy-net` dedicada, DNAT preserva IPs reales). Los demás servicios (nextcloud, authentik, IRC, taohemps, pets, scriberr, ror-landing, staging) NO usan el proxy. vps-proxy fallback intacto (0 tráfico residual). Próximo ciclo: backups (crítico), cancelación vps-proxy, telecomm, jonas.
+
 ## 2026-10-22
 
 ### [01:30] - micaserogou: validación integral 16 páginas — titles, copy restaurante, imágenes de heroes
