@@ -24,6 +24,14 @@
 - **Estado**: ✅ 21/21 (7 págs × 3 anchos): 5 cabeceras 480px/radius 0 overlay negro, login solo form, card 440px (303 @375), 0 scroll, 0 errores
 - **Notas**: (1) Banners unificados a overlay negro como home. (2) Newsletter oculto en login. (3) Productos: 8 items sin "cargar más" (OK); para "más vendidos/destacados" → marcar `featured/best_seller` en ERP tenant 3. (4) `sobre-nosotros` necesitó `!important` vs `style` inline del pack.
 
+### [05:45] - Micaserogou login: gap card→footer 40px + newsletter oculto + footer compacto
+- **Tipo**: frontend | ux
+- **Modificado**: micaserogou preprod: mu-plugin `erpc-micaserogou-visual.php` v1.3.0 (anula `min-height:100vh/80vh` del plugin en `.erpc-page`/`.erpc-auth-page` con `body.page-id-9 .erpc-page, .erpc-auth-page { min-height: auto }`; oculta newsletter del footer y columnas 3-4 con `body.page-id-9 .erpc-footer-newsletter { display: none }` + `body.page-id-9 .erpc-footer-grid .erpc-footer-col:nth-child(3), :nth-child(4) { display: none }`)
+- **Afecta a**: preprod micaserogou login
+- **Causa**: owner detectó espacio excesivo entre form y footer (763px gap) haciendo la página scrolleable
+- **Estado**: ✅ 21/21: login gap 40px (era 763px), newsletter oculto, footer 707→635px, scroll vertical 145px @1440 (era 869px)
+- **Notas**: (1) Plugin fuerza `.erpc-page { min-height:100vh; display:flex }` (connector.css:1776) y `.erpc-auth-page { min-height:80vh }` (connector.css:2135) → anulados con `min-height:auto` en login. (2) Footer compactado: oculta newsletter bar + columnas "Ayuda" y "Legal". (3) Gap card→footer = 40px (padding-bottom auth-page), scroll vertical 145px @1440 (era 869px).
+
 ## 2026-10-22
 
 ### [07:30] - MIGRACIÓN COMPLETA proxy vps-proxy → vps-preprod DOCKERIZADO + DNS cutover — vps-proxy listo para cancelación
