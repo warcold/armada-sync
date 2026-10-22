@@ -168,3 +168,23 @@ docker compose --profile tools run --rm \
 
 - **2026-10-20**: superadmin definitivo `v.tapia@eccoqualita.com` (orden del owner, clave elegida por él) — verificado signInEmail; placeholder `admin@eccoqualita.com` eliminado (cascade) + fichero de credenciales borrado. Nuevo script ops `prod-remove-user.ts` (guard último-admin).
 - **2026-10-19**: despliegue completo end-to-end (Docker 29.9.1 + swap 2G + postgres 18 + bootstrap roles + 22 migraciones/57 tablas + app + Caddy TLS + UFW/fail2ban + llave SSH). Health OK en https://suit.eccoqualita.com. **Cierre same-day**: primer admin creado+verificado (signInEmail), backups cron + restore-test, health monitor, password SSH desactivado (lección: cloud-init drop-in ganaba por orden; lección 2: tests de password con ssh-agent activo dan falsos positivos — usar `PubkeyAuthentication=no`).
+
+## Docs oficiales (2026-10-22 — directiva del owner: programar según estándares de los creadores)
+> Regla: ANTES de operar/desplegar en la VPS, consultar estas fuentes. NUNCA inventar flags de compose/Caddy.
+- **Docker Compose**: https://docs.docker.com/compose/
+- **Caddy (TLS automático, Caddyfile)**: https://caddyserver.com/docs/
+- **Next.js (app EccoSuite)**: https://nextjs.org/docs
+- **PostgreSQL**: https://www.postgresql.org/docs/
+
+## Upstream (2026-10-22)
+
+- **Fuente**: repo `VincentEQ/EccoSuit` (copia local `~/dev/eccoqualita/EccoSuit-develop/`); infra propia (compose + Caddy + ops kit `~/dev/eccoqualita/ops/`).
+- **Vivo**: despliegue validado end-to-end 2026-10-19/20 (health OK, backups cron + restore-test 57 tablas, superadmin verificado, password SSH desactivado).
+- **Check**: `ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'` + `curl -s https://suit.eccoqualita.com/api/health`.
+- **Regla**: LIVE manda; el código es de VincentEQ — kalimete solo despliega/opera, no desarrolla upstream.
+
+```json upstream_drk
+{"enabled": true, "id": "ecco-suit", "label": "vps eccoqualita host docker (hijo)", "source": "github VincentEQ/EccoSuit + infra propia", "href": "https://suit.eccoqualita.com/api/health", "href_docs": "https://caddyserver.com/docs/", "pin_note": "solo llaves SSH; postgres/app sin puertos publicados", "groom_clean": true}
+```
+
+> **Harness**: `~/armada-sync/harness/ecco-suit.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

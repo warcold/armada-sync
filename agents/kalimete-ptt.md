@@ -81,3 +81,5 @@ systemctl --user restart kalimete-ptt                       # tras editar env o 
 ```json upstream_drk
 {"enabled": true, "id": "kalimete-ptt", "label": "voz PTT (Ctrl_R+F9, sesión persistente)", "source": "~/dev/apps/kalimete-ptt", "href": "STATE.md", "href_docs": "", "pin_note": "victoria solo lectura; fixes server con autorizacion", "groom_clean": true}
 ```
+
+> **Harness**: `~/armada-sync/harness/kalimete-ptt.harness.json` (scope + live_check + endpoints + upstream + docs de este agente).

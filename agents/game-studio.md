@@ -121,3 +121,23 @@ ls ~/.local/share/godot/app_userdata/*/logs/ 2>/dev/null   # godot.log por proye
 5. Tras cada sesión que deje artefacto: `docs/CHANGELOG.md` del juego + reportar a kalimete para CHANGELOG hub si afecta infra.
 6. Si Blender/Godot no responden → health-check con los comandos de arriba, arreglar stack ANTES de inventar workarounds.
 7. Contexto Qwen 220K: no volcar `.tscn` gigantes al chat; usar offsets/head.
+
+## Docs oficiales (2026-10-22 — directiva del owner: programar según estándares de los creadores)
+> Regla: ANTES de programar el juego, consultar estas fuentes. NUNCA inventar APIs de Godot ni del MCP.
+- **Godot docs (motor, GDScript)**: https://docs.godotengine.org/en/stable/
+- **Blender Python API (assets vía MCP)**: https://docs.blender.org/api/current/
+- **godot-mcp (npm @yanhuifair/godot-mcp)**: https://github.com/yanhuifair/godot-mcp
+- **mcp-for-blender**: https://github.com/ahujasid/blender-mcp
+
+## Upstream (2026-10-22)
+
+- **Fuente**: Godot 4.7.2 (binario oficial) + godot-mcp npm + Blender 5.0.1 apt + mcp-for-blender 2.2.0 + granja victoria (skills art/assets-3d).
+- **Vivo**: stack verificado 2026-10-18/19 (Blender MCP :9876 E2E, Hunyuan3D :18860 E2E, pipeline 7 fases documentado).
+- **Check**: `ss -tln | grep 9876` + `godot --version` + `blender --version`.
+- **Regla**: LIVE manda; updates de godot-mcp/Blender con autorización del owner.
+
+```json upstream_drk
+{"enabled": true, "id": "game-studio", "label": "fabrica juegos 3D pipeline 7 fases (hijo)", "source": "godot 4.7.2 + godot-mcp npm + blender mcp + granja victoria", "href": "https://docs.godotengine.org/en/stable/", "href_docs": "https://docs.godotengine.org/en/stable/", "pin_note": "un job GPU a la vez; 429/503 = cola", "groom_clean": true}
+```
+
+> **Harness**: `~/armada-sync/harness/game-studio.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

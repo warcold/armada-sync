@@ -123,3 +123,22 @@ blender --background --python export_batch.py -- input.glb output.glb 0.05  # de
 6. Tras cada sesión con artefacto: actualizar el ledger `~/dev/games/AGENTS.md` + reportar a kalimete para CHANGELOG hub si afecta infra.
 7. Si Blender no responde → health-check (comandos de arriba) ANTES de inventar workarounds.
 8. Contexto Qwen 220K: no volcar salidas bpy gigantes al chat; usar offsets/head.
+
+## Docs oficiales (2026-10-22 — directiva del owner: programar según estándares de los creadores)
+> Regla: ANTES de programar contra Blender, consultar estas fuentes. NUNCA inventar APIs bpy ni operadores.
+- **Blender Python API (bpy)**: https://docs.blender.org/api/current/
+- **glTF exporter (import/export GLB)**: https://docs.blender.org/manual/en/latest/addons/import_export/scene_gltf2.html
+- **mcp-for-blender (addon + server)**: https://github.com/ahujasid/blender-mcp
+
+## Upstream (2026-10-22)
+
+- **Fuente**: Blender 5.0.1 (apt Kali) + addon mcp-for-blender 2.2.0 (PyPI; clon `~/dev/games/blender/blender-mcp/`).
+- **Vivo**: stack verificado 2026-10-18/19 (TCP :9876, GUI bajo Xvfb, decimate E2E del pipeline games).
+- **Check**: `ss -tln | grep 9876` (si vacío: `~/dev/games/blender/blender-mcp/start-blender.sh`) + `blender --version`.
+- **Regla**: LIVE manda; updates del addon/Blender con autorización del owner, nunca auto-update.
+
+```json upstream_drk
+{"enabled": true, "id": "blender", "label": "blender 3D + mcp :9876 (hijo)", "source": "apt blender 5.0.1 + pypi mcp-for-blender 2.2.0", "href": "https://docs.blender.org/api/current/", "href_docs": "https://docs.blender.org/api/current/", "pin_note": "addon NO funciona --background; GUI bajo Xvfb", "groom_clean": true}
+```
+
+> **Harness**: `~/armada-sync/harness/blender.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

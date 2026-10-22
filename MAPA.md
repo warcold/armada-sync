@@ -92,16 +92,16 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - UFW: active (solo rangos CF en DOCKER-USER + excepción 3128/1080 en /etc/docker-firewall/apply.sh); iptables INPUT: IRC 6667/6697/7209 + proxy 3128/1080 ACCEPT + CF 80/443 + SSH 1333, política DROP
 - OpenVPN: active (openvpn@server.service)
 
-### 4. vps-proxy (31.220.102.176) — ⚠️ PENDIENTE DE CANCELACIÓN (Contabo) — proxy MIGRADO a vps-preprod 2026-10-22
+### 4. vps-proxy (31.220.102.176) — 🔴 DESACTIVADO (Contabo, verificado muerto 2026-10-22) — proxy MIGRADO a vps-preprod
 - User: root, SSH 1444, llave `~/.ssh/id_ed25519_kalimete`
-- Alias: `ssh vps-proxy` (restaurado 2026-09-19 en `/etc/ssh/ssh_config.d/10-armada-hosts.conf`)
-- **MIGRACIÓN COMPLETADA 2026-10-22**: Squid+SOCKS5 dockerizados en vps-preprod (/opt/proxy-stack), DNS repuntado (proxy.us-east + jovtransport.prx → 154.53.35.102), validado end-to-end. Esta caja queda como FALLBACK temporal hasta que el owner la cancele en Contabo — avisar a jovtransport si usa la IP 31.220.102.176 hardcodeada (usar hostname).
+- Alias: `ssh vps-proxy` (restaurado 2026-09-19 en `/etc/ssh/ssh_config.d/10-armada-hosts.conf`) — **hoy MUERTO, NO usar**
+- **MIGRACIÓN COMPLETADA 2026-10-22**: Squid+SOCKS5 dockerizados en vps-preprod (/opt/proxy-stack), DNS repuntado (proxy.us-east + jovtransport.prx → 154.53.35.102), validado end-to-end. **Verificado MUERTO 2026-10-22** (3 puntos de observación: kalimete/Comcast, ecco/Alemania, traceroute — todos los puertos cerrados): cancelada/desactivada en Contabo. NO intentar SSH ni operaciones.
 - Reboot 2026-10-19 = primer reboot en 260 días (kernel 6.8.0-147 por unattended-upgrades). **NO fue reinstalada** — misma instalación (wtmp/apt logs/certs intactos). Shutdown+boot limpio también el 2026-10-21 16:31→16:40 (causa por confirmar).
 - Configs migradas: usuarios (admin, jovtransport), 111 filtros, filedescriptors 65536, cache deny all — copias originales intactas aquí.
 - certbot 2.9.0 con /etc/letsencrypt: 2 certs expirados de dominios que ya NO apuntan a esta caja (el.colador.de.alfredo.pro → vps-preprod/IRC; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner).
 - Sin Docker. Sin crontab.
-- Servicios (aún corriendo como fallback): Squid Proxy 6.14 (HTTP :3128), SOCKS5 Python (:1080), SSH (:1444)
-- DNS: proxy.us-east.armada.do → 31.220.102.176 (gris/CF); jovtransport.prx.armada.do → 31.220.102.176 (gris, dedicado jovtransport)
+- Servicios: NINGUNO operativo (verificado muerto 2026-10-22 — todos los puertos cerrados; Squid/SOCKS5/SSH de esta caja ya NO sirven)
+- DNS: registros proxy repuntados a 154.53.35.102 (cutover 2026-10-22); esta IP ya NO sirve el proxy
 - **Squid Proxy (HTTP/HTTPS)**:
   - Puerto: 3128
   - Autenticación: Basic NCSA (htpasswd)

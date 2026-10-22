@@ -115,3 +115,23 @@ Tools faltantes → reportar al usuario, NO instalar sin autorización (y jamás
 - Validar contra lo real antes de afirmar; lo no verificado se marca "pendiente de validación", nunca se inventa.
 - Cambios en el proyecto/infra → los registra kalimete en `CHANGELOG.md`.
 - Este agente NUNCA hace submit a la plataforma Intigriti: prepara el report, el usuario revisa y sube.
+
+## Docs oficiales (2026-10-22 — directiva del owner: programar según estándares de los creadores)
+> Regla: ANTES de hunting, consultar estas fuentes. NUNCA inventar endpoints/parámetros de la plataforma.
+- **Intigriti Code of Conduct (OBLIGATORIO)**: https://go.intigriti.com/coc
+- **Intigriti Researcher Terms & Conditions**: https://go.intigriti.com/tac
+- **Intigriti bug bounty docs (programa, reportes)**: https://app.intigriti.com/ (platform docs)
+- **Herramientas del framework** (nuclei, feroxbuster, arjun, dalfox): docs oficiales de cada tool
+
+## Upstream (2026-10-22)
+
+- **Fuente**: plataforma Intigriti (app.intigriti.com) + framework propio `kalimetehunt.sh` (~/dev/ethical-hacking).
+- **Vivo**: entorno verificado 2026-10-08 (framework 4 fases: recon/scan/exploit/report).
+- **Check**: `ls ~/dev/ethical-hacking/` + `which nuclei feroxbuster arjun dalfox`.
+- **Regla**: LIVE manda; CoC + T&C estrictos, testing NO-destructivo únicamente.
+
+```json upstream_drk
+{"enabled": true, "id": "intigriti", "label": "bug bounty intigriti (hijo)", "source": "app.intigriti.com + kalimetehunt.sh propio", "href": "https://go.intigriti.com/coc", "href_docs": "https://go.intigriti.com/coc", "pin_note": "no-destructivo; NUNCA submit directo — el owner revisa", "groom_clean": true}
+```
+
+> **Harness**: `~/armada-sync/harness/intigriti.harness.json` (scope + live_check + upstream + docs + changelog de este agente).

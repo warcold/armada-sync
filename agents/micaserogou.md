@@ -220,3 +220,11 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
 - **2026-10-20**: ERP tenant 3 conectado en preprod (key de pruebas + `api_url` local, modo public); webhook id 4 activo; Armada Suite **5.4.2** instalada desde ZIP y e2e verificado (home con hero, `/productos/` 38 productos, webhook unsigned 400, sin debug.log).
 - **2026-10-20**: `PROD-DEPLOY-CHECKLIST.md` completo. Prod verificado 200 y **sin plugin**; los 7 prerrequisitos siguen pendientes.
 - Pendiente: api_key ERP productiva (owner/Juan Carlos) + usuario dedicado/App Password + ventana de deploy + webhook productivo + aclarar key id 6 + redactar password DB en `docs/README.md`.
+
+## Docs oficiales (2026-10-22 — directiva del owner: programar según estándares de los creadores)
+> Regla: ANTES de tocar el sitio, consultar estas fuentes. NUNCA inventar funciones WP ni shortcodes del plugin.
+- **WordPress documentation**: https://wordpress.org/documentation/
+- **Armada Suite (plugin del sitio)**: docs del plugin en `~/dev/wordpress/plugins/armada-suite/` (agente Armada Suite)
+- **Sistema visual websites**: skill `wp-templates` (`~/.config/opencode/skills/wp-templates/SKILL.md`)
+
+> **Harness**: `~/armada-sync/harness/micaserogou.harness.json` (scope + vivo + checks + upstream + pendientes de este agente).
