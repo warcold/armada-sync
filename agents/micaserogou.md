@@ -136,6 +136,11 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
 - **Constantes WP pisan `get_option`**: con `WP_HOME`/`WP_SITEURL` definidas, `get_option('home'/'siteurl')` devuelve la constante, no el valor DB — para actualizar esos rows usar SQL directo (strings planos, seguros).
 - **Acceso canónico**: entrar por `localhost:8094` directo hace que WP canonicalice 301 (subpáginas a `http://localhost/` sin puerto); el acceso correcto del preprod es `https://micaserogou.kalimete.local`.
 - **`http://erpipo-preprod-nginx/api` aparece en el HTML de la homepage** (api_url interna expuesta en frontend) — comportamiento del plugin Armada Suite; reportar al agente `Armada Suite`, no lo arregla este agente.
+- **Playwright NO funciona en kalimete**: `Connection.init: Connection closed while reading from the driver`. Usar `scripts/shot-cdp.py` (CDP por websocket; el chromium CLI exige `--remote-allow-origins=*`). Script en `~/dev/wordpress/websites/micaserogou.com/scripts/shot-cdp.py`.
+- **Un `.html` sin `})();` mata la página entera**: el JS del template va en un IIFE; si le falta el cierre, el navegador lanza `SyntaxError: Unexpected end of input` y la vista queda en "Cargando producto…" sin error visible en el servidor. **Siempre `node --check` sobre el `<script>` extraído** antes de desplegar.
+- **El pack gana al HTML del sitio**: si `templates/packs/<pack>/partials/<slug>.php` define un slug, ese template renderiza y el `[erpc_html file=...]` de la página queda como código muerto. Verificar con `curl | grep` de un comentario único del archivo antes de culpar al render.
+- **CSS inline del HTML del sitio gana al mu-plugin** (mismo orden de especificidad, pero aparece después en el documento). Si una página usa HTML propio, el override definitivo va en ese HTML, no solo en el mu-plugin.
+- **`wp-content/uploads/` es de `www-data`**: `cp` directo falla con *Permission denied*. Usar `docker cp` hacia el contenedor (el bind-mount escribe igual en el host).
 
 ## Reglas
 
@@ -181,6 +186,17 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
 
 ## Cambios recientes
 
+- **2026-10-22 (noche) — Sistema visual unificado + fix crítico del detalle de producto**:
+  - **Bug crítico**: `uploads/erpc/producto-detalle.html` (y su espejo `mejoras-restaurante/`) no cerraba el IIFE exterior → `SyntaxError: Unexpected end of input` → **todas** las fichas de producto quedaban muertas en "Cargando producto…". Fix: `})();`. Verificado en vivo (id=261 → "ALITAS A LA BARBACOA PICANTES", RD$ 350.00).
+  - **Cabeceras unificadas** a 480px / radius 0 / overlay cálido en las 5 secciones (home, productos, contacto, reservas, sobre-nosotros). El hero de productos traía una imagen de **tecnología** hardcodeada (`connector.css:3065`) y "Sobre nosotros" heredaba el **overlay azul** (`connector.css:3341-3343`).
+  - **Descubrimiento clave**: `/sobre-nosotros/` lo sirve el **template del pack** (`templates/packs/restaurant/partials/about.php`) e IGNORA el `[erpc_html file="sobre-nosotros.html"]` del post → ese HTML del sitio es **código muerto**. Por eso el override va por CSS site-level (`.erpc-about-hero`). `/reservas/` y `/contacto/` sí usan el HTML propio → su CSS inline gana por orden en el documento (fix aplicado en el HTML, no solo en el mu-plugin).
+  - **Login a sangre**: fondo cálido con `::before` + `position:fixed` + `isolation:isolate` (porque `.erpc-auth-page` vive dentro de `.erpc-container`); card 440px (303 @375).
+  - **Atribución alfredo.pro**: barra separada bajo el footer del cliente, vía `wp_footer` (prio 30), SVG exacto tomado del bundle de PetSuite, opacity .55 → 1 al hover. El footer/copyright del cliente NO se toca.
+  - **Overflow horizontal de 32px** en todo el sitio (<1272px): `.erpc-container` del plugin usa content-box. Fix site-level `box-sizing:border-box` + `max-width:1280px` → **upstream recomendado** al agente `armada-suite`.
+  - **Warning PHP eliminado**: `ERPC_HTML_DIR` duplicada en 2 mu-plugins → guarda `defined()`.
+  - **Nuevo**: mu-plugin `erpc-micaserogou-visual.php` v1.1.0, 5 banners WebP 1600×914, `scripts/shot-cdp.py` (Playwright está roto en el host), `CHANGELOG.md` del sitio y **`docs/GUIA-TEMPLATES-RESTAURANTE.md`** (reutilizable para MaganTech y futuros negocios).
+  - **Validación**: 21/21 combinaciones (7 páginas × 375/768/1440) con `scroll_h=0`, heroes 480px, card 440px, 1 atribución, 0 imágenes rotas, 0 errores de consola. Evidencia en `docs/evidencia/2026-10-22/`.
+  - **Deuda**: API key del ERP en texto plano en `erpc-html-filter.php:92` → mover a `secrets/` (pendiente de autorización).
 - **2026-10-20 (tarde)**: fix de visibilidad del preprod. WP_HOME/WP_SITEURL promovidos a `https://micaserogou.kalimete.local` (+ snippet `X-Forwarded-Proto`→HTTPS con escape `$$`); vhost nginx front-door reemplazado por proxy estándar (Host real + scheme headers) y sincronizado sites-enabled==sites-available; search-replace DB `http://localhost:8094` → dominio (2 posts default + options siteurl/home; dump en `backups/`); smoke reescrito al dominio canónico → **7/7**; subpáginas todas 200; webhook id 4 re-verificado intacto. **Deriva prod documentada**: plugin 5.4.2 ACTIVO en prod (15:41) con contenido default — deploy incompleto, uploader desconocido.
 - **2026-10-20**: website aprovisionado (hub WP, segundo cliente). Stack `micaserogou` (:8094/:3311/:8027) healthy; WP 7.1.3/PHP 8.3.35; admin preprod; mu-plugin de correo local; permalinks; dominio local `https://micaserogou.kalimete.local` con cert mkcert (exp. 2029-01-20); smoke 7/7.
 - **2026-10-20**: ERP tenant 3 conectado en preprod (key de pruebas + `api_url` local, modo public); webhook id 4 activo; Armada Suite **5.4.2** instalada desde ZIP y e2e verificado (home con hero, `/productos/` 38 productos, webhook unsigned 400, sin debug.log).
