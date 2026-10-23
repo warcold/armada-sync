@@ -14,6 +14,13 @@
 
 **Hallazgo de depuración (lección)**: curl NO ejecuta JavaScript — verificar datos renderizados client-side con curl da falso negativo. Verificación correcta: elementos DOM presentes + script presente + proxy responde + nonce expuesto. Bug real encontrado y corregido en el proceso: el botón de carrito requería el nonce `erpc_nonce` (check_ajax_referer) que el script original no enviaba — ahora usa `window.erpc_cfg.nonce`.
 
+### [02:00] - Micaserogou: verificación remota — el hotfix NO llegó a prod (ZIP v1.0.1 subido o sin re-activar); screenshots ambos estados
+- **Tipo**: bugfix | verificación
+- **Modificado**: verificación vía ops file/read (POST, scope wp-content): erpc-mg-admin-fix.php NO existe en prod (los otros 6 mu-plugins sí, 18KB/8KB verificados) → el owner subió el ZIP v1.0.1 (sin hotfix, confirmado: unzip v1.0.1 grep admin-fix = 0) o no re-activó el instalador tras el Replace. Screenshots preprod vía CDP con sesión admin: T13-admin-sin-hotfix.png (input 0×0 = lo que ve el owner: solo botones Guardar) y T13-admin-con-hotfix.png (input 350×40 visible). Instrucciones al owner: subir export/micaserogou-site-level-deploy-1.0.2.zip (contiene el hotfix, verificado) → si WP pregunta "¿reemplazar?" → Reemplazar → **ACTIVAR** (el hook de activación es el que copia los archivos) → el aviso verde debe decir "7 mu-plugins instalados" (el v1.0.1 decía 6).
+- **Afecta a**: prod micaserogou.com
+- **Estado**: 🟡 hotfix verificado en preprod; prod pendiente del re-upload correcto del v1.0.2 + activación
+- **Notas**: el aviso admin del instalador es el verificador visual: "7 mu-plugins" = correcto; "6 mu-plugins" = versión vieja
+
 ### [01:30] - micaserogou: validación integral 16 páginas — titles, copy restaurante, imágenes de heroes
 - **Tipo**: servicio | frontend | seo
 - **Modificado**: preprod micaserogou.kalimete.local — mu-plugin nuevo `erpc-restaurante-fixes.php`, `erpc-contacto-template.php` reescrito, reservas.html/contacto.html/producto-detalle.html actualizados, post_title de 10 páginas en DB
