@@ -167,7 +167,8 @@ curl -s http://127.0.0.1:8027/api/v1/messages | head -c 300
 ## Upstream
 
 - **Fuente**: prod = cPanel del cliente (externo, sin Cloudflare); preprod = `wordpress:7.1.3-php8.3-apache` + `mariadb:10.11` (kalimete); plugin = ZIP de release de `armada-suite`.
-- **Vivo 2026-10-20 (tarde)**: preprod healthy (3 contenedores) + dominio local canónico (front y subpáginas 200, sin mixed content) + smoke 7/7 + plugin 5.4.2 + tenant 3 + webhook id 4 intacto. Prod: plugin activo pero sitio default (deploy incompleto).
+- **Vivo 2026-10-23 (noche)**: preprod healthy (3 contenedores, plugin **5.5.6** reconciliado byte-idéntico con canónico, smoke 7/7, regresión 26/26, chat e2e OK). **Prod verificado solo-lectura**: plugin **5.5.5** activo, env public, ERP productivo CONECTADO (erpipos.armada.do tenant 3, key fp 8c280a49 ≠ test), front restaurante completo (34 productos reales), REST 200, usuario `victoria` + App Password operativa (`secrets/prod-app-password.txt`), key LLM provisionada pero SIN cablear (chat responde "no disponible"). **ARTEFACTO DEPLOY LISTO**: `export/micaserogou-deploy-5.5.6.zip` (instalador one-shot validado end-to-end en preprod: swap atómico + key LLM + SEO settings + aviso verde; sha256 2735c9e1…). Pendiente owner: subir el instalador (wp-admin → Subir → Activar → aviso verde → BORRAR instalador). El hotfix mu-plugin v1.0.2 quedó OBSOLETO (el fix de raíz va en 5.5.6).
+- **Check**: `docker ps --filter name=micaserogou` + `scripts/smoke-8094.sh` + `ops/status` prod con App Password.
 - **Check**: `docker ps --filter name=micaserogou` + `smoke-8094.sh` + `ops/status` anónimo 403 + `https://micaserogou.com/` 200.
 - **Regla**: LIVE manda; propone updates al owner, nunca auto-actualiza prod sin autorización.
 

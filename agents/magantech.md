@@ -61,7 +61,7 @@ Dev lab ~/dev/wordpress/plugins/armada-suite/  :8091 — SOURCE del plugin (aqu�
 - `secrets/prod-connection.md` (chmod 600, gitignored): site prod + usuario Victoria + App Password. `secrets/preprod-admin.md`: admin del preprod. **Jamás imprimir/reproducir** — kalimete los rota tras exposición.
 - REST preprod: App Passwords **habilitadas** en env local (verificado 2026-10-17); anónimo a `erpsuite/v1/ops/*` → 403 `erpsuite_forbidden` (correcto). El método canónico del preprod sigue siendo wp-cli sidecar (CONEXION-METODO §1).
 - REST prod: HTTPS obligatorio; solo `erpsuite/v1/ops` con la App Password dedicada (scope jaula, REMOTE-OPS.md del plugin).
-- Rotación 90 días / tras exposición (política CONEXION-METODO §4). **Pendiente**: rotar App Password Victoria (circuló por chat 2026-10-17) y credencial admin preprod (expuesta en sesión).
+- Rotación 90 días / tras exposición (política CONEXION-METODO §4). **App Password prod ROTADA/REVOCADA** (verificado live 2026-10-23: `wp/v2/users/me` → 401, ops → 403 anónimo; el archivo local quedó stale) — **PENDIENTE re-provisionar** (owner: wp-admin prod → Perfil → nueva App Password → actualizar `secrets/prod-connection.md`). La rotación del admin preprod ya NO está pendiente (hecho 2026-10-20).
 
 ## Comandos verificados
 
@@ -137,8 +137,9 @@ dev lab :8091 (source — plugins/armada-suite/)
 ## Upstream
 
 - **Fuente**: prod = cPanel del cliente (externo, sin Cloudflare); preprod = `wordpress:7.1.3-php8.3-apache` + mariadb:10.11 (kalimete); plugin = ZIP de release de `armada-suite`.
-- **Vivo 2026-10-17**: preprod healthy (2 contenedores) + dominio local 200 + smoke 100% + prod ops/status/site-info 200.
-- **Check**: `docker ps --filter name=magantech` + `smoke-8093.sh` + `ops/status` (con credencial).
+- **Vivo 2026-10-23**: preprod healthy (3 contenedores, plugin 5.5.6 reconciliado, smoke propio 10/10) · prod front/wp-json/productos 200 con 105 cards reales del ERP, PERO plugin en **5.4.2** (2 versiones atrás), chat sin LLM cableado (responde el literal de configuración), marca "Tienda" sin sync, App Password prod muerta (ver arriba). Key LLM `armada-magantech` provisionada 2026-10-20 (vive en victoria) pero NO copiada a `secrets/` del proyecto ni cableada.
+- **Check**: `docker ps --filter name=magantech` + `scripts/smoke-8093.sh` (del proyecto) + `ops/status` (cuando la App Password prod esté re-provisionada).
+- **Docs del proyecto** (estándar de aislamiento 2026-10-23): `CHANGELOG.md` (nuevo, backfill verificado), `docs/PROD-DEPLOY-CHECKLIST.md` (nuevo, con gaps priorizados), `scripts/smoke-8093.sh` (nuevo, 10 checks), `export/` (ZIPs de deploy). Estándar completo: `docs/NUEVO-CLIENTE.md` del plugin.
 - **Regla**: LIVE manda; propone updates al owner, nunca auto-actualiza prod sin autorización.
 
 ```json upstream_drk
