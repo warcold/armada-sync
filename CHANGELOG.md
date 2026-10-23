@@ -1428,6 +1428,14 @@
 - **Estado**: ✅ sincronizado
 - **Notas**: excepciones documentadas en kalimete.md (harness maestro). Lo no verificado en agentes remotos quedó marcado pendiente, no inventado.
 
+### [01:30] - Micaserogou: BUG plugin — campos Asistente IA invisibles (JS tabs oculta secciones internas) + hotfix site-level (ZIP v1.0.2)
+- **Tipo**: bugfix | upstream
+- **Modificado**: NUEVO mu-plugin erpc-mg-admin-fix.php (hotfix): erpsuite-admin.js activate() hace $('.erpsuite-section').attr('hidden',true) sobre TODAS — incluidas las 3 secciones INTERNAS de los forms del tab Asistente IA — y solo des-oculta la del tab activo → campos LLM/identidad/tools invisibles, botones Guardar visibles (síntoma del owner). Hotfix: inline script prio 99 re-muestra .erpsuite-form .erpsuite-section tras cada activación. Verificado vía CDP con sesión admin preprod: 350×40 visible / 0×0 en otros tabs / visible al volver. ZIP instalador v1.0.2 (7 mu-plugins)
+- **Afecta a**: admin de todos los tenants (upstream); micaserogou hotfix site-level YA en preprod
+- **Causa**: owner no veía dónde pegar config LLM — diagnóstico doble agente: prod==local byte-idéntico (deriva descartada), render_tab_ia sin condiciones, causa = JS de tabs (reproducido: rect 0×0 con computed styles normales)
+- **Estado**: ✅ hotfix verificado; PENDIENTE owner: subir ZIP v1.0.2 + pegar config LLM
+- **Notas**: upstream #12 para 5.6.0: scope selector a '.erpsuite-section[id^="erpsuite-tab-"]' (1 línea). Solo el tab Asistente IA usa secciones internas → bug invisible en otros tabs
+
 ### [00:30] - Consolidación: eco-cloudflare único + ragnarok docs-harness + limpieza duplicados
 - **Tipo**: infra | agentes | refactor | diagnóstico
 - **Modificado**: `agents/eco-cloudflare.md` (NUEVO, unifica dns/security/storage/tunnels/workers con todas sus reglas aprendidas: IDs de zona/ruleset, NO-2-niveles, R2 ban, playbook túneles). BORRADOS los 5 + sus symlinks (limpieza autorizada). `kalimete.md` (permission `eco-cloudflare-*`→`eco-cloudflare` exacto — el wildcard ya no matcheaba; tabla 5 filas→1). MAPA.md (tabla igual). `eco-ragnarok.md` reescrito como harness docs (rAthena/FluxCP/roBrowser/wsProxy + estado vivo). Fuente+despliegue agregados a woodly/petsuite/taohemps/scriberr/alfredo-ecomm (rutas verificadas). Sin duplicados reales: erp-dev (facturación Laravel) vs alfredo-ecomm (e-commerce Node) son sistemas distintos — documentada la distinción (mismo hostname, puertos :8100/:3004). eco-vps vs proyectos = frontera host/app, se mantiene.
