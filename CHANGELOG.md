@@ -1,3 +1,12 @@
+## 2026-10-23
+### [13:45] - armada-suite 5.5.6: fix tab «Asistente IA» + reconciliación de las 3 copias (dev-lab/magantech/micaserogou) + ZIP canónico
+- **Tipo**: plugin | release | bugfix
+- **Modificado**: plugin armada-suite en los 3 ambientes (dev-lab canónico, preprod magantech :8093, preprod micaserogou :8094) — v5.5.6 byte-idéntica en los 3 (diff -rq = 0)
+- **Afecta a**: todos los sitios con armada-suite (el plugin es multi-tenant compartido)
+- **Causa**: el owner reportó el tab «Asistente IA» sin campos (solo títulos y botones de guardar) — bug de colisión de clases: los divs internos usaban `erpsuite-section`, la misma clase que el SPA JS usa para paneles de tab; `activate()` los dejaba `hidden` para siempre. Fix: divs internos → `erpsuite-subsection` + selector JS blindado (`$('.erpsuite-main > .erpsuite-section')`)
+- **Estado**: ✅ regresión 26/26 en los 3 contenedores · smoke 7/7 micaserogou · magantech front 200 · render admin 185 inputs/12 campos · chat nativo end-to-end OK (responde con categorías reales del ERP) · SEO render idéntico tras de-hardcode del pack restaurant · ZIP `armada-suite-5.5.6-plugin-only.zip` (521 archivos, sha256 ce49fe99…, 0 secrets) en export de micaserogou + canónico
+- **Notas**: detalle completo en CHANGELOG del proyecto micaserogou y del plugin. De-hardcode SEO: settings del cliente poblados (contact_hours, seo_description) — cero strings del cliente en el plugin. 2 tests de regresión robustecidos contra sitios con datos reales. PROD-DEPLOY-CHECKLIST actualizado: el artefacto de deploy es ahora el 5.5.6 (el ZIP restaurant-20261021 pisaría el fix). Producción NO tocada (requiere ventana).
+
 ## 2026-10-22
 ### [00:35] - micaserogou: página de detalle de producto (punto 4) + proxy ERP en WordPress
 - **Tipo**: servicio | frontend | api-integracion
