@@ -168,6 +168,12 @@ Los 7 candidatos Fase 2 fueron implementados, verificados e2e y **pushed a origi
 - **Upstream erpipo**: repo de Juan Carlos, rama `dev/ecomm-erp` + `docker-compose.yml` local + fases del .md (canonico del contrato).
 - **Componentes verificados**: nginx https://nginx.org/en/docs/ · MySQL 8.0 https://dev.mysql.com/doc/ · Redis https://redis.io/docs/
 
+## PRIMERA LECTURA (cierre maratón 2026-10-25)
+
+1. **Estado consolidado del ERP**: `~/dev/erpipo-preprod/AGENTS-ESTADO.md` — boundary (ERP=solo data; identidad visual NUNCA del ERP), contrato congelado con payloads canónicos, 6 gaps abiertos (todos Juan Carlos), residuos TEST. Leer ANTES de cualquier análisis.
+2. Reglas locales: `~/dev/erpipo-preprod/REGLAS.md`.
+3. La matriz de intercambio de la flota: `docs/ESTADO-ECOSISTEMA.md` del plugin canónico Armada Suite.
+
 ## Upstream (2026-10-13)
 
 - **Fuente**: `soycarlosjerez-hub/sistema-facturacion` (upstream de Juan Carlos) + stack erpipo-* (kalimete :8100).

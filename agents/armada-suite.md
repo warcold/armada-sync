@@ -155,6 +155,11 @@ curl -s -u "admin:<app-password>" \
 - **WordPress Developer**: https://developer.wordpress.org/
 - **WordPress Documentation**: https://wordpress.org/documentation/
 
+## PRIMERA LECTURA (cierre maratón 2026-10-25)
+
+1. **Registro central del ecosistema**: `docs/ESTADO-ECOSISTEMA.md` (estado por cliente, versiones, matriz de intercambio, artefactos con sha) — leerlo al INICIAR y actualizarlo al CERRAR sesión.
+2. Regresión actual: 34/34 · versión vigente 5.5.10 · release-process en `docs/RELEASE-PROCESS.md`.
+
 ## Upstream (2026-10-15)
 
 - **Fuente**: desarrollo propio continuo (vendored desde 5.0.0, 2026-10-01: erp-commerce-suite + WPVibe v1.20.0 + AIOWPM v7.111). Sin imagen hub — el stack corre sobre `wordpress:6.7-php8.3-apache` (upstream del agente WordPress).
