@@ -21,7 +21,7 @@ permission:
 `micaserogou.com` es un **website cliente** (segundo cliente del hub WordPress, tras MaganTech). Producción vive en **cPanel externo** (sin Cloudflare); preprod local es un **espejo operativo** del sitio para probar el MISMO artefacto ZIP antes de tocar producción (local-first).
 
 - **Preprod**: `http://localhost:8094` + `https://micaserogou.kalimete.local`, stack Docker dedicado, tenant ERP **3**.
-- **Producción**: `https://micaserogou.com/` — WP 7.1.3, cPanel; plugin Armada Suite **5.4.2 ACTIVO** (verificado 2026-10-20 15:41: `wp-content/plugins/armada-suite/armada-suite.php` → 200, homepage encola chatbot.js/logger.js/connector.js `?ver=5.4.2`, REST `?rest_route=/erpsuite/v1/ops/status` → 403 `erpsuite_forbidden`). **DERIVA**: el contenido del sitio sigue siendo el WP default ("Cats And Dogs", blog, permalinks planos, `/wp-json/` 404) — alguien subió/activó el plugin después de la última verificación del doc pero el sitio real (15 páginas, tema, menús, settings ERP) NUNCA fue desplegado. **Quién lo subió = desconocido — preguntar al owner.**
+- **Producción**: `https://micaserogou.com/` — WP 7.1.3, cPanel; plugin Armada Suite **5.4.2 ACTIVO** (verificado 2026-10-20 15:41: `wp-content/plugins/armada-suite/armada-suite.php` → 200, homepage encola chatbot.js/logger.js/connector.js `?ver=5.4.2`, REST `?rest_route=/erpsuite/v1/ops/status` → 403 `erpsuite_forbidden`). **DERIVA**: el contenido del sitio sigue siendo el WP default ("Cats And Dogs", blog, permalinks planos, `/wp-json/` 404) — alguien subió/activó el plugin después de la última verificación del doc pero el sitio real (16 páginas, tema, menús, settings ERP) NUNCA fue desplegado. **Quién lo subió = desconocido — preguntar al owner.**
 - **Plugin**: Armada Suite **5.4.2**, instalado en preprod desde ZIP de release (nunca source bind-mounteado).
 - **ERP**: preprod contra `http://erpipo-preprod-nginx/api`, tenant 3, modo `public`; webhook id 4 apuntando al preprod.
 
@@ -49,7 +49,7 @@ Los puertos del hub son **8094/3311** (ascendente; `3310` está ocupado por otro
 - WP **7.1.3**, PHP **8.3.35**, MariaDB **10.11**.
 - Tema activo: **Twenty Twenty-Five** (`twentytwentyfive`).
 - Plugin activo: **Armada Suite 5.4.2** (`armada-suite/armada-suite.php`).
-- **15 páginas** publicadas; front page `inicio` (ID 5, `show_on_front=page`).
+- **16 páginas** publicadas; front page `inicio` (ID 5, `show_on_front=page`).
 - Permalinks `/%postname%/`.
 - `erpsuite_env_mode=public`; `erp_suite_settings['public']`: `api_url=http://erpipo-preprod-nginx/api`, `tenant_id=3`, API key presente (nunca imprimirla).
 - `wp-cli` **no está instalado** en el contenedor. Comando canónico:
