@@ -1,3 +1,11 @@
+## 2026-10-25
+### [20:30] - Cierre de maratón: registro central del ecosistema + estado final de la flota
+- **Tipo**: docs | coordinación
+- **Creado**: `docs/ESTADO-ECOSISTEMA.md` del plugin (registro central — primera lectura de CUALQUIER agente de la flota: estado por cliente, versiones 5.5.1→5.5.10, matriz de intercambio de mejoras entre negocios, línea ERP con sus 6 gaps, artefactos con sha256) — replicado ×3, commit plugin 9eb193b. `AGENTS-ESTADO.md` del ERP dev (boundary + contrato congelado + payloads canónicos). `docs/ESTADO-PROYECTO.md` de magantech (nuevo, modelo micaserogou). ESTADO-PROYECTO de micaserogou reescrito al estado final.
+- **Harnesses actualizados** (4): PRIMERA LECTURA + Vivo final en micaserogou (5.5.10 rojo blindado, esperando site-fixes del owner), magantech (instalador listo esperando App Password), erp-dev (AGENTS-ESTADO.md), armada-suite (ESTADO-ECOSISTEMA.md).
+- **Estado de la flota al cierre**: Micaserogou prod 5.5.10 VENDIENDO (rojo blindado, chat+voz; faltan: 4 clicks de reservas del owner + categorías de Juan). MaganTech esperando deploy (App Password del owner). Plugin cerrado y consistente (34/34 ×3). WhatsApp aplazado (checklist del cliente). ERP: boundary fijado — data only.
+- **Notas**: los agentes se encuentran vía ESTADO-ECOSISTEMA.md (protocolo: leer al iniciar, actualizar fila al cerrar; mtime de artefactos = verdad cronológica).
+
 ## 2026-10-23
 ### [13:45] - armada-suite 5.5.6: fix tab «Asistente IA» + reconciliación de las 3 copias (dev-lab/magantech/micaserogou) + ZIP canónico
 - **Tipo**: plugin | release | bugfix
