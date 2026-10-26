@@ -72,7 +72,8 @@
     "zip_5_3_5": "2207808 bytes, sha256 b9c67bc8f299e4ff6074b43195e2fe8f29abf63f26d5bd41850f2914cd432bfd — storage/ incluido, sin secrets; SUPERADO por 5.4.x",
     "zip_5_4_0": "2216778 bytes, sha256 24b4255c10a7410f76b8ac00da699f5031ead5fbb2a0de08e721c0835cb0e939 — storage/ incluido, sin secrets",
     "zip_5_4_1": "2225650 bytes, sha256 4bb2fa2c7adf2ff3aa11eb6b5cb8e289381f168dbf1c4a6d396ca9af13c5af96 — storage/ incluido, sin secrets; SUPERADO por 5.4.2",
-    "zip_5_4_2": "2240253 bytes, sha256 157b1633e44f39898a409954cef766839e0c86622996c040a16a2c369c841ba9 — storage/ incluido (19 paths), sin secrets; CANÓNICO actual"
+    "zip_5_4_2": "2240253 bytes, sha256 157b1633e44f39898a409954cef766839e0c86622996c040a16a2c369c841ba9 — storage/ incluido (19 paths), sin secrets; SUPERADO por 5.6.0",
+    "zip_5_6_0": "2581615 bytes, sha256 f9100456318b88fc7b2596033ae280e0186120047a9f7b5db0470407d74d6031 — storage/ incluido (19 paths), CONTRATO-COMPANION.md dentro, sin secrets; CANÓNICO actual (commits b2da1bb + 886d5a7 fix test 26b post-release, ZIP no regenerado por ser snapshot)"
   },
   "legacy_frozen": "Namespace erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, ERPSUITE_*, erp_suite_*/erpc_*, erpsuite/v1, shortcodes erpc_*, text-domain erp-suite — NO renombrar (rompe DB/bookmarks/clientes REST).",
   "integracion_erp_2026_10_13": {
