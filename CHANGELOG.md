@@ -1,4 +1,16 @@
 ## 2026-10-25
+
+### [23:22] - kalimete: fix Bluetooth Intel AX201 (hci0) — autosuspend crónico
+
+- **Tipo**: infra | hardware
+- **Modificado**: kalimete.local (Intel AX201 BT 8087:0026, bus 3-10)
+  - `/etc/modprobe.d/btusb.conf` — `options btusb enable_autosuspend=0`
+  - `/etc/udev/rules.d/99-bluetooth-ax201.rules` — `power/control=on` para vendor 8087:product 0026 y puerto 3-10
+  - `update-initramfs -u` — incluye `/etc/modprobe.d/btusb.conf` en initrd
+- **Afecta a**: kalimete (adaptador BT interno)
+- **Causa**: el chip Intel AX201 se suspende por autosuspend USB → firmware deja de responder → `hciconfig hci0 up` falla con `Operation not permitted (1)`, `dmesg` muestra `Opcode 0x0c03 failed: -110` (ETIMEDOUT). El bug se activaba tras desconexión del Oculus Quest 3S (mismo puerto USB 3-10) que colgaba el controlador.
+- **Estado**: ✅ `hciconfig hci0` → UP RUNNING PSCAN · `bluetoothctl` → Powered: yes · `hcitool inq` → detecta 4 dispositivos · `power/control=on` · `enable_autosuspend=N` · initramfs actualizado · estable tras 15s sin re-suspensión
+- **Notas**: verificación de estabilidad recomendada en ~30min y tras reboot. El fix es persistente (modprobe + udev + initramfs).
 ### [20:30] - Cierre de maratón: registro central del ecosistema + estado final de la flota
 - **Tipo**: docs | coordinación
 - **Creado**: `docs/ESTADO-ECOSISTEMA.md` del plugin (registro central — primera lectura de CUALQUIER agente de la flota: estado por cliente, versiones 5.5.1→5.5.10, matriz de intercambio de mejoras entre negocios, línea ERP con sus 6 gaps, artefactos con sha256) — replicado ×3, commit plugin 9eb193b. `AGENTS-ESTADO.md` del ERP dev (boundary + contrato congelado + payloads canónicos). `docs/ESTADO-PROYECTO.md` de magantech (nuevo, modelo micaserogou). ESTADO-PROYECTO de micaserogou reescrito al estado final.
