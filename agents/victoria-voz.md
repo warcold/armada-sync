@@ -1,7 +1,7 @@
 ---
 name: victoria-voz
 description: Victoria por voz — interfaz conversacional del sistema kalimete-ptt. Cerebro: modelos de Victoria (DGX via gateway). Manos: kalimete completo.
-mode: subagent
+mode: all
 model: vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal
 temperature: 0.6
 top_p: 0.95
