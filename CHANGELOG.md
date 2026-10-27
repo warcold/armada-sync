@@ -1,3 +1,14 @@
+## 2026-10-27
+
+### [01:30] - kalimete-ptt v5.1: bug raíz del PTT (fallback silencioso al default agent) + STT con vocabulario + TTS streaming + Victoria friendly
+
+- **Tipo**: servicio | voz | fix
+- **Modificado**: cliente kalimete-ptt (`~/dev/apps/kalimete-ptt/` + deploy `~/.local/bin/`), agente `~/.config/opencode/agent/victoria-voz.md`, **victoria** `/home/victoria/voice-venv/voice-server-host.py` (backup `.bkup-20261027-stt-prompt` — cambio mínimo autorizado por pedido del owner)
+- **Afecta a**: conversación de voz Ctrl_R con Victoria (PTT)
+- **Causa**: el owner reportó errores + escucha confusa + respuestas técnicas + lentitud. Diagnóstico: (1) **BUG RAÍZ** — desde el deploy v5, `victoria-voz.md` tenía `mode: subagent` y `opencode run` caía silenciosamente al default agent técnico ("Falling back") — Victoria NUNCA respondía, respondía el agente default con listas técnicas de ~1000 chars → 5 chunks TTS ≈ 41s de silencio; (2) STT Whisper small sin `initial_prompt` → nombres propios del ecosistema mal transcritos; (3) TTS secuencial (esperaba el wav completo)
+- **Estado**: ✅ verificado e2e: fix `mode: all` (Victoria responde como Victoria, 13.6s, conversacional, cero jerga) · STT con `?prompt=` de vocabulario en victoria (kalimete/opencode/warcold transcriben perfecto, costo 0) · TTS streaming por frases en el cliente (primera palabra ~15-18s vs ~54s, resto fluye) · timing logs por fase · sesión envenenada eliminada · 4 backups para rollback
+- **Notas**: NO se recomienda Whisper small→medium (initial_prompt resolvió lo real; +2-4s/clip+VRAM) ni streaming TTS server-side (el cliente ya lo resuelve). Vigilancia menor: "STT silencio" tras conectar audífonos = ruteo PulseAudio, no pipeline. Detalle en STATE.md + CHANGELOG.md del proyecto kalimete-ptt.
+
 ## 2026-10-26
 
 ### [17:15] - Arquitectura de 3 capas WP: Armada Suite 5.6.0 (contrato companion) + Armada Templates 1.0.0 (plugin NUEVO) + Fase 0 MaganTech + gobernanza del ecosistema
