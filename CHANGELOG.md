@@ -1,5 +1,14 @@
 ## 2026-10-27
 
+### [16:12] - Readiness producción: Armada Suite 5.7.0 + MaganTech + Micaserogou + ERP + stack WP — todo LISTO PARA VENTANA (sin tocar producción)
+
+- **Tipo**: plugin | servicio | deploy-prep
+- **Modificado**: `~/dev/wordpress/plugins/armada-suite/export/armada-suite-5.7.0.zip` (NUEVO, 2.596.651 B, sha256 `766345c94b585c8863fbb2955c8965294f6d36ecbfc94457ebd7997cf188301c`, 529 archivos, php -l 323/323 OK) · repos de sitios: magantech-website `4a9406d` (pushed), micaserogou-website `27ec07c` (pushed) · harness magantech/micaserogou (vivo_2026_10_27, sincronizados por cron) · docs de ambos sitios (checklists PROD-UPGRADE-5.7.0-CHECKLIST.md nuevos)
+- **Afecta a**: ecosistema WP completo (plugin + 2 sitios + ERP + stack); producción NO tocada (solo curl read-only)
+- **Causa**: el owner pidió dejar la última versión de cada proyecto lista para subir a producción y probar las 2 páginas con el plugin conectado al ERP de producción
+- **Estado**: ✅ verificado — hallazgos clave: (1) **ambos sitios están VIVOS en prod** (MaganTech 5.4.2 exacto, Micaserogou 5.5.10 — la doc "deploy pendiente" de micaserogou era stale del 10-20 y quedó curada; ambos escenarios = UPGRADE); (2) ERP prod `erpipos.armada.do` health 200 y tables/reservations EN main desde 2026-07-01 (sin gap de feature); (3) stack WP 8/8 healthy, WP 7.1.3 ×3, requisitos 5.7.0 (WP≥6.0/PHP≥7.4) cumplen con margen, regresión 35/35
+- **Notas**: Artefactos con sha256 en los export/ de cada sitio: MaganTech (5.7.0 `766345c9…` + rollback 5.4.2 `157b1633…` + bundle Fase 0 `4dfcccc8…`, validaciones smoke 10/10 + login@375 OK) · Micaserogou (5.7.0 `766345c9…` + site-fixes 1.0.3 `130f4b4c…` + rollback 5.5.10 `b35e007c…`, delta site-level confirmado = solo site-fixes, bits local-only limpios, deuda de key del proxy curada). **BLOCKERS pre-ventana del owner**: (1) crear iak tenant 3 en ERP prod erpipos.armada.do (Juan Carlos) — sin ella micaserogou.com no conecta; (2) re-provisionar App Password prod de MaganTech (secrets/prod-app-password.txt, muerta). Checklists operativos: `docs/PROD-UPGRADE-5.7.0-CHECKLIST.md` en cada repo de sitio. Derivas reportadas: DEPLOY-GUIA.md del plugin (línea ZIP actual stale 5.5.1 — pendiente), DEPLOY-PRODUCCION.md raíz (pre-Armada-Suite, territorio WordPress umbrella), CHANGELOG interno del plugin divergió del árbol en formato (528/529 archivos idénticos al ZIP, cero código).
+
 ### [06:15] - Armada Suite 5.7.0: refactor de diseño/template — las 5 recomendaciones de mejora implementadas (pack.css, breakpoints, header wrapper, SEO/OG compartido, reservas al plugin)
 
 - **Tipo**: plugin | servicio
