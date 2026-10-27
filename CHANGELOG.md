@@ -1,5 +1,14 @@
 ## 2026-10-27
 
+### [06:15] - Armada Suite 5.7.0: refactor de diseño/template — las 5 recomendaciones de mejora implementadas (pack.css, breakpoints, header wrapper, SEO/OG compartido, reservas al plugin)
+
+- **Tipo**: plugin | servicio
+- **Modificado**: repo `~/dev/wordpress/plugins/armada-suite` (3 commits push a `warcold/armada-suite`: `a4acd37` fase A, `20579f3` fase B, `4de0fe9` fase C) + réplica a copias de clientes (`~/dev/wordpress/websites/micaserogou.com/` y `~/dev/wordpress/websites/magantech.com.do/`, md5 verificado, backups `.bkup-20261027`)
+- **Afecta a**: plugin Armada Suite (compartido), preprod micaserogou (pack restaurant) y magantech (pack default); ChatEngine con tool nueva OFF por defecto
+- **Causa**: el owner pidió evaluar y proceder con 5 recomendaciones de mejora de diseño/template — todas verificadas contra código real antes de implementar
+- **Estado**: ✅ verificado — regresión 35/35 PASS, matriz responsive micaserogou 21/21 (scroll_h=0, broken=0, heroes 480, radius 0), byte-diff del head de micaserogou VACÍO (SEO idéntico), MaganTech og/ld+json 0→9, enqueue pack.css micaserogou=1/magantech=0, 4 tests live de reservas PASS (15 mesas tenant 3, reservación creada+limpiada, shortcode 11/11 IDs, tool con toggle), docker logs limpios, ambos preprod 200
+- **Notas**: Fase A (rec 4+3): partial `seo-og.php` compartido con `erpc_schema_type()` (filtro, default→Store/restaurant→Restaurant), header del pack = wrapper fino (202→54 líneas, require ruta directa — un fix futuro del frame propaga solo). Fase B (rec 1+2): `pack.css` restaurant (mecanismo v5.6.0 activado por primera vez: `--erpc-overlay: 122,31,31`, heroes 480/radius 0, login a sangre, container fix; NO pisa `--erpc-primary*`), connector.css normalizado a escala 480/768/992/1200 (767→768 ×5, 991→992 ×4, min-993→992 ×1, cero 767/991/993). Fase C (rec 5): reservas absorbidas al plugin — shortcode `[erpc_reservas]` + handler admin-ajax `erpc_reservas` (op=mesas|crear, nonce, rate limit, validación server-side), ApiClient +5 métodos (mesas paginado cache 60s, elegir_mesa, validar, create sin cache), `assets/js/reservas.js` nuevo, tool `crear_reserva` en ChatEngine con toggle OFF por defecto + checkbox admin. El stack site-level de micaserogou queda intacto como fallback vivo. Derivas documentadas: regresión real 35/35 (no 25/25), réplica a websites/ fue necesaria (preprod sirve copias por sitio). ZIP canónico 5.7.0 pendiente para el release process en `export/`.
+
 ### [10:20] - Ecco Suite: hallazgos de auditoría enviados upstream (PR #1 CSP nonce + Issue #2 RLS memberships) — sin aplicar nada
 
 - **Tipo**: servicio | doc
