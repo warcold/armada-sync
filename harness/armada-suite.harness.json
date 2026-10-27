@@ -31,7 +31,7 @@
   ],
   "rutas_canonicas": {
     "plugin": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/ (código vivo, bind-mount al contenedor)",
-    "repo_git": "~/dev/wordpress/plugins/armada-suite/ (repo del plugin — commits locales, remote VACÍO; el hub ~/dev/wordpress/ NO es repo; push = decisión owner)",
+    "repo_git": "~/dev/wordpress/plugins/armada-suite/ (repo del plugin — remote PRIVADO ssh://git@github.com/warcold/armada-suite.git; push con historia completa autorizado owner 2026-10-26; historia sanitizada ese día con git filter-repo ANTES del primer push: backups/, wp-content/uploads/, wp-content/plugins/backup/ purgados de TODA la historia — secrets del dump wp-full-20260920 NUNCA llegaron a remoto; hashes viejos inválidos b2da1bb/886d5a7 → 9e5b274/e2c7119, commit-map en .git/filter-repo/commit-map; HEAD del push cd0d9e1; el hub ~/dev/wordpress/ NO es repo)",
     "artefactos_zip": "~/dev/wordpress/plugins/armada-suite/export/ (ÚNICA ruta de ZIPs + DEPLOY-GUIA.md con comando canónico; los export/ internos de SiteBackup son código y NO se excluyen)",
     "tests": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/tests/regression.php (35 tests, 35/35 PASS exigido)",
     "handoff_erp": "~/dev/wordpress/UPDATE-ERP-AMIGO/ (diffs/notas entregados a ERP Dev — Juan Carlos)",

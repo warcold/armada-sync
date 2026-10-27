@@ -1,6 +1,6 @@
 {
   "harness": "magantech",
-  "updated": "2026-10-18",
+  "updated": "2026-10-26",
   "agent_file": "~/armada-sync/agents/magantech.md",
   "mode": "subagent",
   "hidden": false,
@@ -59,7 +59,8 @@
     "smoke": "~/dev/wordpress/scripts/smoke-8093.sh",
     "pipeline": "~/dev/wordpress/scripts/plugin-preprod.sh (instala ZIP release en el preprod)",
     "zips_release": "~/dev/wordpress/plugins/armada-suite/export/ (artefactos; 5.4.1 sha256 4bb2fa2c…)",
-    "stack_ref": "compose/certs/red → modelo del agente WordPress; código del plugin → agente Armada Suite"
+    "stack_ref": "compose/certs/red → modelo del agente WordPress; código del plugin → agente Armada Suite",
+    "repo_git": "~/dev/wordpress/websites/magantech.com.do/ (repo propio desde 2026-10-26 — remote PRIVADO ssh://git@github.com/warcold/magantech-website.git; push inicial 0c6bb14, 1028 archivos, rama master; VERSIONA: espejo wp-content sin uploads/JetBackup (armada-suite, akismet, mantenimiento-web, themes, mu-plugins), docs+evidencia PNG, installer, assets, scripts, mejoras-default; NUNCA versiona: secrets/, docker-compose.yml (credenciales inline — pendiente migrar a .env+example), backups/, wp-content/uploads/, export/ ZIPs, certs/, *.bkup*, wp-content/plugins/backup/ JetBackup)"
   },
   "pendientes": [
     "Owner: importar CA root en las otras máquinas de la red (http://kalimete.local/kalimete-rootCA.pem → importar como CA raíz; Windows: certutil -addstore -f \"ROOT\" kalimete-rootCA.pem)",

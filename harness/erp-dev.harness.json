@@ -1,6 +1,6 @@
 {
   "harness": "erp-dev",
-  "updated": "2026-10-18",
+  "updated": "2026-10-26",
   "agent_file": "~/armada-sync/agents/erp-dev.md",
   "mode": "subagent",
   "hidden": false,
@@ -12,7 +12,9 @@
     "fase_2_pushed": "2026-10-06: 10 commits Fase 2 pushed a origin (4415e27..790cc8a + merge 2c8fca9) — Juan YA integro via PR #14 (2026-10-07)",
     "fase_3_pushed": "2026-10-08: G6 CORREGIDO por nosotros (ff64301: notas ?? null, fin linea_negocio, tipo enum, almacen_id default) + G1 cancel order + 11 tests (e495454+8ae9bb2) + G2 CRUD webhooks API (f961503) + G3 invoice.issued (5ace5aa) + G4 retry-failed (601959e) + merge del main de Juan (2306b64) — 8 commits esperando PR de Juan (+34de630 2026-10-16: identidad ecomm config/tiendaConfig — brand.name garantizado, aliases logo_url/favicon_url/business_name/company_name, warnings IDENTITY_EMPTY, X-ERP-Tenant, X-API-Key; backward compatible, para WP Armada Suite 5.3.3+)",
     "remotes": "SOLO origin = ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git (upstream Juan Carlos). NO existe remote preprod en este clon.",
-    "regla": "push a dev/ecomm-erp = flujo normal (autorizacion permanente owner 2026-10-18); main/develop read-only; merge a main + deploy prod = SOLO Juan Carlos"
+    "regla": "push a dev/ecomm-erp = flujo normal (autorizacion permanente owner 2026-10-18); main/develop read-only; merge a main + deploy prod = SOLO Juan Carlos",
+    "verificado_2026_10_26": "origin = ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git OK; rama dev/ecomm-erp en sync con origin (solo 2 untracked .bkup-20261021 inofensivos)",
+    "stack_no_git": "~/dev/erpipo-preprod/ (nivel stack) NO es repo: db-backups/, db.sql, preprod.env, keys/ contienen datos+credenciales — quedan solo en disco local, JAMÁS a git"
   },
   "webhooks_activos_2026_10_06": "endpoint WP dado de alta (webhook_endpoints id=2, instance 10 MaganTech, events order.created/stock.updated/price.updated, active); e2e checkout->deliveries sent/200->WP flush_cache verificado; red compartida erpipo-dev-network con stack WP (URL interna http://wordpress-local/wp-json/erpsuite/v1/erp-webhook)",
   "aviso_ajuste_500_RESUELTO_2026_10_13": "G6 corregido por NOSOTROS (ff64301) y LIVE en preprod (bind mount HEAD 2306b64) — POST /api/tienda/inventario/ajuste ya responde; WP puede reintentar el endpoint",

@@ -1,6 +1,6 @@
 {
   "harness": "micaserogou",
-  "updated": "2026-10-22",
+  "updated": "2026-10-26",
   "agent_file": "armada-sync/agents/micaserogou.md",
   "mode": "subagent",
   "hidden": false,
@@ -31,7 +31,8 @@
     "smoke": "~/dev/wordpress/websites/micaserogou.com/scripts/smoke-8094.sh",
     "vhost": "/etc/nginx/sites-enabled/micaserogou.kalimete.local.conf (archivo real, no symlink; sites-available sincronizado)",
     "cert": "/etc/ssl/local-certs/micaserogou.kalimete.local.crt",
-    "zips": "~/dev/wordpress/plugins/armada-suite/export/"
+    "zips": "~/dev/wordpress/plugins/armada-suite/export/",
+    "repo_git": "~/dev/wordpress/websites/micaserogou.com/ (repo propio desde 2026-10-26 — remote PRIVADO ssh://git@github.com/warcold/micaserogou-website.git; push inicial 1829841, 992 archivos, rama master; VERSIONA: espejo wp-content sin uploads (armada-suite, akismet, themes, mu-plugins), docs+evidencia 102 PNGs, installer (deploy/site-fixes/uninstall), assets, scripts, mejoras-restaurante; NUNCA versiona: secrets/, docker-compose.yml (credenciales inline — pendiente migrar a .env+example), backups/ (SQLs), wp-content/uploads/, export/ ZIPs, certs/, *.bkup*)"
   },
   "checks": [
     "docker ps --filter name=micaserogou",

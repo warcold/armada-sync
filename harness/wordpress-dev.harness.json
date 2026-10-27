@@ -1,6 +1,6 @@
 {
   "harness": "wordpress-dev",
-  "updated": "2026-10-17",
+  "updated": "2026-10-26",
   "agent_file": "~/armada-sync/agents/wordpress-dev.md",
   "mode": "subagent",
   "hidden": false,
@@ -49,7 +49,7 @@
     "~/dev/wordpress/DEPLOY-PRODUCCION.md"
   ],
   "rutas_canonicas": {
-    "proyecto": "~/dev/wordpress/ (repo git compartido stack+plugin; ~/Desktop/dev es solo symlink alias — nunca usar en docs)",
+    "proyecto": "~/dev/wordpress/ (hub contenedor — NO es repo git por DECISIÓN 2026-10-26: anidar repos es problemático; cada pieza se versiona en su repo PRIVADO propio: plugins/armada-suite → warcold/armada-suite, plugins/armada-templates → warcold/armada-templates, websites/magantech.com.do → warcold/magantech-website, websites/micaserogou.com → warcold/micaserogou-website; docs del hub se versionan en armada-sync + en el repo de cada pieza; ~/Desktop/dev es solo symlink alias — nunca usar en docs)",
     "compose": "~/dev/wordpress/plugins/armada-suite/docker-compose.yml (+ docker-compose.prod.yml para deploy)",
     "secrets": "~/dev/wordpress/plugins/armada-suite/secrets/ (App Passwords, dir 700 file 600, gitignored)",
     "certs": "~/dev/wordpress/plugins/armada-suite/certs/ca-bundle.crt (mkcert, para curl https)",

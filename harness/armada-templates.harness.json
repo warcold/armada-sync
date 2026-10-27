@@ -27,7 +27,7 @@
     "~/.config/opencode/skills/wp-templates/SKILL.md (estandar visual + matriz 21)"
   ],
   "rutas_canonicas": {
-    "repo": "~/dev/wordpress/plugins/armada-templates/ (git propio, commits locales; hub NO es repo)",
+    "repo": "~/dev/wordpress/plugins/armada-templates/ (git propio, remote PRIVADO ssh://git@github.com/warcold/armada-templates.git — push inicial 1 commit 8a0ccff autorizado owner 2026-10-26; hub NO es repo)",
     "plugin": "~/dev/wordpress/plugins/armada-templates/wp-content/plugins/armada-templates/ (codigo fuente)",
     "artefactos_zip": "~/dev/wordpress/plugins/armada-templates/export/armada-templates-<version>.zip (sha256 anotado en changelog; export/ gitignorado)",
     "ficha_hub": "~/dev/wordpress/plugins-disponibles/armada-templates.txt",

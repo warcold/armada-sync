@@ -1,0 +1,125 @@
+{
+  "harness": "armada-suite",
+  "updated": "2026-10-26",
+  "agent_file": "~/armada-sync/agents/armada-suite.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Plugin Armada Suite (kalimete dev) — super-plugin WP 5.6.0: comercio ERP real multitenant vía ERPIPOS + asistente IA server-side + voz + WhatsApp + SiteBackup vendored + CONTRATO COMPANION (templates externos via keys dir/url/colors, pack.css, admin-notice de pack faltante). Modelo por-sitio (un WP = un tenant): local = tenant 10 MaganTech contra erpipos :8100; producción multi-negocio (magantech, micaserogou tenant 3, futuros). Stack WP (contenedores, compose, certs, secrets, DB, nginx/TLS) = agente WordPress (umbrella). Companion de packs = agente Armada Templates.",
+  "vivo_2026_10_26": "plugin armada-suite 5.6.0 (commits b2da1bb release + 886d5a7 fix test 26b post-release; tree clean): CONTRATO COMPANION — erpc_template_path() resuelve dir del registro con fallback al plugin, erpc_pack_asset() rama URLs externas (keys dir+url), erpc_pack_color_base() lee colors del registro, pack.css automatico tras connector.css, admin-notice de pack faltante, overlays rgba(var(--erpc-overlay)) con filtro erpc_overlay_rgb; fixes site-level absorbidos (.erpc-container box-sizing+1280, heroes height→min-height moviles 380/340, cta-landing usa erpc_pack_asset); docs/CONTRATO-COMPANION.md NUEVO (11 secciones); test 35 nuevo (contrato companion); fix test 26b (unset brand.hero_image antes de asercion — MaganTech 34/35→35/35 verificado); regresion 35/35 ×3 contenedores; replicacion byte-identica ×3; ZIP canonico export/armada-suite-5.6.0.zip 2.581.615 bytes sha256 f9100456318b88fc7b2596033ae280e0186120047a9f7b5db0470407d74d6031 (storage/ incluido, sin secrets, CONTRATO dentro). Companion Armada Templates 1.0.0 construido+probado contra este contrato (agente armada-templates).",
+  "vivo_2026_10_15": "plugin armada-suite 5.3.2 activo (bind-mount; header verificado; git ~/dev/wordpress HEAD a838486 tree clean); REST erpsuite/v1/ops 15 rutas (OpsEndpoints.php) + erp-webhook (WebhookReceiver.php); regresión 19/19 (última verificación 2026-10-14 post-bump); ZIP canónico export/armada-suite-5.3.2.zip (2.203.552 bytes, sha256 d8952c61…, storage/ incluido, sin secrets); ping-erp 200 ok 73ms (2026-10-15); agente creado por split desde wordpress-dev (regla owner: cada plugin su agente)",
+  "vivo_2026_10_16": "plugin armada-suite 5.3.4 activo (bind-mount; git ~/dev/wordpress HEAD 6729d4c tree clean); regresión 19/19; ZIP canónico export/armada-suite-5.3.4.zip (2.207.069 bytes, sha256 c57df620…, storage/ incluido, sin secrets); 5.3.3: fix falso 'Conexión verificada' + guardar-verificar probe + SSOT Negocio; 5.3.4: reporte honesto errores config (prioriza 401/403 sobre 404 de fallback muerto /tenants/{id} — incidente prod owner 2026-10-16); rutas probe prod verificadas 401 (GO público sin esperar merge)",
+  "vivo_2026_10_16_b": "5.3.5 (HEAD b4c2a89): sync acepta forma plana + guard tenant-mismatch 409 + aviso no-iak_; ZIP canónico export/armada-suite-5.3.5.zip (2.207.808 bytes, sha256 b9c67bc8…, sin secrets); incidente prod: key Sanctum válida pero canal equivocado (ecomm público exige iak_ — resolveApiKeyPublic con prefijo obligatorio)",
+  "vivo_2026_10_17": "5.4.0 (working tree SIN commitear, HEAD b4c2a89): sync APLICA datos del negocio del ERP a la tienda (paridad dev/público; snapshot erpsuite_identity_backup + rollback erpsuite_restore_identity); fix payment_methods falsos (merge desde /tienda/config, objetos→ids, nunca defaults inventados); normalize_config conserva negocio completo (contact/policies/store/delivery/pickup/zones/seo); fix path config_fetched_at; bump caché en fetch; regresión 24/24; ZIP 5.4.0 (2.216.778 B, sha256 24b4255c…). HUB REORG (owner 2026-10-17): proyecto movido a ~/dev/wordpress/plugins/armada-suite/ (dump pre-move 606K; down/mv/up; vols wordpress_* intactos; smoke-8091 verde; :8091 200). NUEVO websites/ por cliente: magantech.com.do preprod :8093 con plugin desde ZIP release (agente magantech). 5.4.1 (commit 11b2784): template del tema activo editable vía ops (live reads safe + live-writes work con backup + rollback file-aware) + fix rollback sanitize_key (bug v4.3.0: todos los /ops/rollback fallaban 'Backup no encontrado') + fix SiteBackup cleanup (cron ai1wm_storage_cleanup borraba stubs >24h); regresión 25/25 (re-verificada kalimete); ZIP 5.4.1 (2.225.650 B, sha256 4bb2fa2c…).",
+  "vivo_2026_10_18": "5.4.2 commiteada local (HEAD e2c86ed, 7 archivos; commits locales, remote vacío): auto-sync diario de identidad ERP (cron erpsuite_auto_sync_config, filtro armada_suite_auto_sync_interval, setting auto_sync default ON, lazy idempotente en init, unschedule en deactivate, guards sin-key skip+log, log nº campos módulo auto_sync) + checkbox 'Auto-sync diario' en tab Conexión + mensaje UX 'el ERP no envió nombre del negocio' + doc docs/CONTRATO-ECOMM-CONFIG.md (precedencia brand.name>name, regla solo-no-vacíos, aliases ERP↔plugin); regresión 25/25; php -l OK; ZIP canónico export/armada-suite-5.4.2.zip (2.240.253 B, sha256 157b1633…, storage/ incluido, sin secrets); NO instalado en :8093 (ahí vive 5.4.0) ni prod. WORKFLOW ERP UPSTREAM (owner 2026-10-18): dev/ecomm-erp = NUESTRA rama de trabajo (push autorizado permanente); Juan Carlos mergea a main y deploya a prod — NUNCA nosotros.",
+  "live_check": "docker ps -f name=wordpress  (stack del agente WordPress)",
+  "checks": [
+    "docker exec wordpress-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php",
+    "docker exec wordpress-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php  (35/35 PASS)",
+    "curl -s -u \"admin:<app-password>\" -o /dev/null -w '%{http_code}' \"http://localhost:8091/index.php?rest_route=/erpsuite/v1/ops/status\"  (200; anónimo 403 erpsuite_forbidden)",
+    "curl -s -u \"admin:<app-password>\" -X POST \"http://localhost:8091/index.php?rest_route=/erpsuite/v1/ops/ping-erp\"  (200 ok:true)"
+  ],
+  "upstream": {
+    "fuente": "Desarrollo propio continuo (vendored 5.0.0 2026-10-01: erp-commerce-suite + WPVibe v1.20.0 + AIOWPM v7.111). Sin imagen hub — el stack corre sobre wordpress:6.7-php8.3-apache (upstream del agente WordPress).",
+    "erp_upstream": "ERP erpipo de Juan Carlos — GitHub soycarlosjerez-hub/sistema-facturacion (remote ssh://git@github.com/soycarlosjerez-hub/sistema-facturacion.git). WORKFLOW (regla owner 2026-10-18): dev/ecomm-erp = NUESTRA rama de trabajo (ahí van los updates que el plugin necesita; push autorizado permanente); Juan Carlos mergea dev/ecomm-erp → main y despliega a prod — NUNCA nosotros (único camino a prod del ERP = merge de Juan). Contrato de la integración: docs/CONTRATO-ECOMM-CONFIG.md del dev lab. Repo trabajado por el agente ERP Dev (agents/erp-dev.md).",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/armada-suite.md",
+    "~/dev/wordpress/CHANGELOG.md",
+    "~/dev/wordpress/plugins/armada-suite/export/DEPLOY-GUIA.md",
+    "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/docs/ (REMOTE-OPS.md, WHATSAPP-ACTIVACION.md, WPVIBE-SCOPE.md, FASE2-VOZ-IMAGEN.md, README-connector.md, CHANGELOG-connector.md)"
+  ],
+  "rutas_canonicas": {
+    "plugin": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/ (código vivo, bind-mount al contenedor)",
+    "repo_git": "~/dev/wordpress/plugins/armada-suite/ (repo del plugin — commits locales, remote VACÍO; el hub ~/dev/wordpress/ NO es repo; push = decisión owner)",
+    "artefactos_zip": "~/dev/wordpress/plugins/armada-suite/export/ (ÚNICA ruta de ZIPs + DEPLOY-GUIA.md con comando canónico; los export/ internos de SiteBackup son código y NO se excluyen)",
+    "tests": "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/tests/regression.php (35 tests, 35/35 PASS exigido)",
+    "handoff_erp": "~/dev/wordpress/UPDATE-ERP-AMIGO/ (diffs/notas entregados a ERP Dev — Juan Carlos)",
+    "secrets_ref": "~/dev/wordpress/plugins/armada-suite/secrets/ (gestiona el agente WordPress; este agente los usa en checks pero NUNCA los imprime ni incluye en ZIP/docs)",
+    "stack_ref": "compose/certs/nginx/DB/core WP → agente WordPress (wordpress-dev, umbrella)"
+  },
+  "plugin": {
+    "version": "5.6.0",
+    "header": "Armada Suite / ERPSUITE_VERSION 5.6.0 / ERPSUITE_OPTION erp_suite_settings / text-domain erp-suite",
+    "rest": "erpsuite/v1 — 15 rutas ops (includes/Remote/OpsEndpoints.php) + POST erp-webhook (includes/Remote/WebhookReceiver.php: HMAC body crudo, skew 300s, allowlist 4 eventos, flush_cache) + admin-ajax erpc_get_products_json",
+    "modulos_vendored": "includes/Modules/AiBridge (WPVibe v1.20.0) + includes/Modules/SiteBackup (AIOWPM v7.111, self-heal storage/ vía admin_init)",
+    "entorno": "includes/Core/Environment.php — LOCAL sellado (http://172.19.0.1:8100/api, tenant 10, key iak_* hardcodeada NO reproducible en docs) / PÚBLICO editable erp_suite_settings.public.{api_url,tenant_id,api_key}; fallback fresh-install prod → public (wp_get_environment_type + host .local)",
+    "flags": "8 en erp_suite_settings[features] (erp_sync, catalog, checkout, ai_chat, puente_ia, remote_ops, backups, legacy_logs; default ON por código Features.php:99-103) + filtro armada_suite_feature_enabled",
+    "agente": "erp_suite_settings[agente]: modo mixto|erp_solo|local_solo, instrucciones_extra<=2000, tono, 8 toggles tools, base_negocio 6 campos, memoria 4-20 turnos; prompt componible ChatEngine::system_prompt(); tools ver_pedido + leer_politicas",
+    "llm": "erp_suite_settings[ia][api_url/api_key/model] por sitio; defaults por modo (dev→10.0.0.5:8010/v1, public→victoria.armada.do/v1) + filtros erpsuite_llm_url/model; modelo nvidia/Qwen3.6-35B-A3B-NVFP4",
+    "empaquetado": "comando canónico en export/DEPLOY-GUIA.md (nunca ad-hoc); verificación: unzip -l storage presente + sin .env/secrets"
+  },
+  "multitenant": {
+    "modelo": "POR-SITIO: un WordPress = un tenant ERPIPOS. Verificado 2026-10-15 — sin cambios estructurales necesarios para multi-negocio.",
+    "por_tenant_wp": "erpsuite_env_mode=public + erp_suite_settings.public.{api_url,tenant_id,api_key} + [ia] LLM propio + [agente] identidad propia + [webhooks][secret] propio",
+    "por_tenant_erp": "tenant (business_instances) + tienda + api_key iak_* (instance_api_keys) + almacén + alta webhook endpoint del sitio (webhook_endpoints por tenant)",
+    "tenants_live_2026_10_15": "ERP preprod: 10 instancias; magantech=10 (key iak + webhook id=2 activos, API OK pese a fecha_vencimiento 2026-10-01 vencida); micaserogou=3 'Michelle Casero y Gourmet' (10 usuarios, bloqueado=1, SIN key ni webhook — pendiente provisionar); resto sin ecomm",
+    "citas": "Environment.php:25,84-131 (public.* por sitio); ApiClient.php:159-239,505,692-754,850-861 (tenant_id dinámico); WebhookReceiver.php:29-48 (secreto por sitio); AdminMenu.php:223 (base_negocio→tenant.contact_hours); Main.php:196-256 (brand/pagos del erp_config, fallback genérico); grep magantech en PHP = 0",
+    "observaciones": [
+      "LOCAL_API_KEY/URL selladas viajan en el source del ZIP a todas las instalaciones (Environment.php:29-31) — sin uso en modo public; posible build dev/prod futuro = decisión owner",
+      "fallbacks públicos hardcodeados a erpipos.armada.do (Environment.php:99,159) — válidos mientras todos los tenants vivan en la misma instancia ERPIPOS prod",
+      "WP Multisite NO probado — modelo verificado = un WP por negocio; no prometer multisite",
+      "IA del ERP existe (ai_conversations/ai_messages por tenant) pero vive en el panel con session-auth y config global por env — la IA pública por tenant vive en ESTE plugin; exponerla vía API ERP sería cambio upstream (Juan Carlos)"
+    ]
+  },
+  "zips": {
+    "zip_5_2_0": "2194876 bytes, sha256 b4e5348d…",
+    "zip_5_3_0": "2198973 bytes, sha256 6fbf47f8…",
+    "zip_5_3_1": "2201803 bytes, sha256 d018a73b… — gap storage/ conocido, NO regenerar (artefacto liberado, decisión owner 2026-10-13)",
+    "zip_5_3_2": "2203552 bytes, sha256 d8952c61ccfdd60efbd2d714a8c1007fd41e177422fd3bb392500b91f630f3b3 — storage/ INCLUIDO, lista idéntica al 5.3.0, sin secrets",
+    "zip_5_3_3": "2206021 bytes, sha256 6fd5ed2dde847bd05e35d47c09774ffe8edc96bac2d882c2b9f910dce446402e — storage/ incluido, 501 files (+CHANGELOG.md plugin), sin secrets",
+    "zip_5_3_4": "2207069 bytes, sha256 c57df6200cc6671ad626c578041d83cc7f19647fd4aafb26d4f35aa316002da5 — storage/ incluido, sin secrets; SUPERADO por 5.3.5",
+    "zip_5_3_5": "2207808 bytes, sha256 b9c67bc8f299e4ff6074b43195e2fe8f29abf63f26d5bd41850f2914cd432bfd — storage/ incluido, sin secrets; SUPERADO por 5.4.x",
+    "zip_5_4_0": "2216778 bytes, sha256 24b4255c10a7410f76b8ac00da699f5031ead5fbb2a0de08e721c0835cb0e939 — storage/ incluido, sin secrets",
+    "zip_5_4_1": "2225650 bytes, sha256 4bb2fa2c7adf2ff3aa11eb6b5cb8e289381f168dbf1c4a6d396ca9af13c5af96 — storage/ incluido, sin secrets; SUPERADO por 5.4.2",
+    "zip_5_4_2": "2240253 bytes, sha256 157b1633e44f39898a409954cef766839e0c86622996c040a16a2c369c841ba9 — storage/ incluido (19 paths), sin secrets; SUPERADO por 5.6.0",
+    "zip_5_6_0": "2581615 bytes, sha256 f9100456318b88fc7b2596033ae280e0186120047a9f7b5db0470407d74d6031 — storage/ incluido (19 paths), CONTRATO-COMPANION.md dentro, sin secrets; CANÓNICO actual (commits b2da1bb + 886d5a7 fix test 26b post-release, ZIP no regenerado por ser snapshot)"
+  },
+  "legacy_frozen": "Namespace erp-suite CONGELADO (owner 2026-10-02): slug erp-suite, ERPSUITE_*, erp_suite_*/erpc_*, erpsuite/v1, shortcodes erpc_*, text-domain erp-suite — NO renombrar (rompe DB/bookmarks/clientes REST).",
+  "integracion_erp_2026_10_13": {
+    "fase_1": "VALIDADA: ping-erp 200 ok, catálogo 200/55 productos, App Password operativa",
+    "fase_2_consumida": "orders/{id} (tool ver_pedido), register tenant_id, checkout sin caja e2e, /up, WEBHOOKS ACTIVOS preprod (endpoint id=2 tenant 10; e2e verificado)",
+    "fase_3": "G6 corregido por nosotros (ff64301) live en preprod; G1-G4 implementados; solo G5 pendiente (lado ERP). PR #14 de Juan integró Fase 2/3 a main",
+    "contrato": "Local sellado :8100/api tenant 10, Bearer iak_* 44 chars, throttles 10/30/60, imágenes URL absoluta, total en meta.total",
+    "latencia": "~250-300ms ERP-side (overhead TLS/nginx dev local, decisión owner 2026-10-13: no perseguir); mailpit dev-only intencional"
+  },
+  "lecciones_cli_2026_10_06": [
+    "smokes CLI: requires a mano + wp-admin/includes/template.php (submit_button no existe en CLI)",
+    "smokes que tocan DB: SIEMPRE backup+restore de erp_suite_settings",
+    "regresión por ruta de contenedor (por stdin __DIR__ no resuelve)",
+    "exit codes: no pipear sin PIPESTATUS",
+    "Features: cache SOLO del valor guardado, padres frescos",
+    "docker: container_name único como DB host si hay redes compartidas (service name `db` colisiona)"
+  ],
+  "deudas": [
+    "P3 espejo tenant.api_key en sanitize (AdminMenu.php:128-136, Environment.php:106-116, Main.php:175-179, LegacyConnectorAdmin.php:64-66) — mantener hasta que ERP main deje de leer tenant.api_key (decisión owner 2026-10-13)",
+    "G5 ERP-side (teléfono/stock-sucursal/detalle) — pendiente de Juan Carlos",
+    "LOCAL_API_KEY sellada en source distribuido — observación, decisión owner",
+    "WP Multisite sin probar — modelo = un WP por negocio",
+    "Provisionar tenant 3 micaserogou (desbloquear + key + webhook) — lado ERP Dev"
+  ],
+  "auth_ref": "REST = App Passwords del WP (gestiona el agente WordPress; activa: mcp-kalimete-2026 — alfredo-ecomm REVOCADA 2026-10-15). Password de login NO sirve para REST (401).",
+  "changelog": "~/armada-sync/CHANGELOG.md + ~/dev/wordpress/CHANGELOG.md (historial de releases del plugin)",
+  "changelog_2026_10_18": "Workflow GitHub del ERP upstream documentado en agente+harness (decisión owner 2026-10-18): repo soycarlosjerez-hub/sistema-facturacion; dev/ecomm-erp = nuestra rama de trabajo (push autorizado permanente); Juan Carlos mergea a main + deploy a prod (NUNCA nosotros); contrato ecomm en docs/CONTRATO-ECOMM-CONFIG.md. Re-validación doc-vs-live 5.4.2: regresión 25/25, ZIP canónico sha 157b1633…, stack Up; fixes menores: label checkbox 'Auto-sync diario' + línea Check 25/25 + versión/zips del harness al día.",
+  "name": "Armada Suite",
+  "docs_oficiales": {
+    "regla": "ANTES de programar el plugin, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar hooks/filtros WP ni APIs del plugin.",
+    "fuentes": [
+      {
+        "nombre": "Plugin Handbook",
+        "url": "https://developer.wordpress.org/plugins/",
+        "contenido_clave": "estándares de plugin WP (Armada Suite)"
+      },
+      {
+        "nombre": "WordPress Developer",
+        "url": "https://developer.wordpress.org/",
+        "contenido_clave": "hooks, REST, options API usados por el plugin"
+      },
+      {
+        "nombre": "WordPress Documentation",
+        "url": "https://wordpress.org/documentation/",
+        "contenido_clave": "guía del stack (referencia del agente WordPress)"
+      }
+    ]
+  }
+}
