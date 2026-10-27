@@ -1,5 +1,14 @@
 ## 2026-10-27
 
+### [19:45] - Micaserogou: mejoras de negocio #2/#4/#5 implementadas + ZIP consolidado site-fixes-1.0.4 (ejecución directa por fallo de delegación)
+
+- **Tipo**: servicio | feature | seo | artefacto
+- **Modificado**: repo `~/dev/wordpress/websites/micaserogou.com` commit `54c715a` — 3 mu-plugins NUEVOS (`erpc-page-cache.php`, `erpc-sitemap-direct.php`, `erpc-jsonld-restaurant.php`) + config `uploads/erpc/jsonld-restaurant.json` + `export/micaserogou-site-fixes-1.0.4.zip` (15.639 B, sha256 `36e4bf3da44f0019e5cd187331fef414df7376e46630eafe2a13aac8630c75a0`, consolida reservas 1.0.3 + mejoras nuevas) + installer/site-fixes-build actualizado + CHANGELOG del sitio
+- **Afecta a**: preprod micaserogou (validado e2e); producción NO tocada (espera upload del owner)
+- **Causa**: owner aprobó proceder con las mejoras de la auditoría del 10-27 excepto #1 (gateway de pago → scope ERP Dev). La delegación al subagente Micaserogou falló 3× (1 max-steps + 2 timeouts sin artefactos) → kalimete ejecutó directo bajo la skill wp-templates (plugin compartido intocado, todo site-level)
+- **Estado**: ✅ verificado — cache HIT 0.54s vs MISS 1.54s (preprod), BYPASS correctos (carrito/checkout/login/mi-cuenta/reservas/query/sitemaps), kill-switch operativo, /sitemap.xml 200 XML directo (antes 301), JSON-LD Restaurant enriquecido con email verificado, stock-0 correctamente excluido del catálogo (pitfall #12), 11 páginas 200, docker logs limpios, php -l 3/3
+- **Notas**: (1) Diagnóstico #2 honesto: prod rápida con --resolve (0.26-0.42s) — los 3s de la auditoría eran DNS desde kalimete; el cache es resiliencia ante varianza del shared hosting, no fix de bottleneck. (2) Pitfalls nuevos: hijackers de página a template_redirect prio 1 obligan cache a prio 0; en WP 7.x el query var del sitemap es `sitemap=index` (no `sitemap=sitemap`). (3) Pendientes externos: upload del owner (1 ZIP: 1.0.4), stock real + teléfono/dirección/redes del cliente (JSON-LD se completa vía ops sin nuevo upload), upgrade plugin 5.5.10→5.7.0 (blocker iak tenant 3), #1 gateway → ERP Dev. (4) El teléfono 18095550123 del sitio es placeholder 555 — NO se propagó al schema.
+
 ### [16:12] - Readiness producción: Armada Suite 5.7.0 + MaganTech + Micaserogou + ERP + stack WP — todo LISTO PARA VENTANA (sin tocar producción)
 
 - **Tipo**: plugin | servicio | deploy-prep
