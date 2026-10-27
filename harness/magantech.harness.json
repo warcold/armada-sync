@@ -17,6 +17,10 @@
     "Preprod instalado desde ZIP 5.4.0 (sha256 24b4255c…); pendiente 5.4.1 (ZIP canónico 4bb2fa2c… ya emitido).",
     "⚠️ Rotaciones pendientes: App Password Victoria (circuló por chat 2026-10-17) + credencial admin preprod (expuesta en sesión) — rotar YA."
   ],
+  "vivo_2026_10_26": [
+    "Migración compose→.env (owner 2026-10-26): docker-compose.yml YA SIN credenciales inline (env_file .env required:false en wordpress+db; ${WORDPRESS_DB_PASSWORD}, ${MYSQL_ROOT_PASSWORD}, ${ERPCBOT_LLM_URL/KEY}; healthcheck -p${WORDPRESS_DB_PASSWORD}). .env local-only chmod 600 gitignored + .env.example versionado. Backup: docker-compose.yml.bkup-20261026-env.",
+    "Verificado live tras up -d (recreación): magantech-local + magantech-db healthy; https://magantech.kalimete.local/ 200 + http://localhost:8093 200. Commit c6028e1 (compose + .env.example + .gitignore) pushed a warcold/magantech-website; .env confirmado NO trackeado (git ls-files vacío)."
+  ],
   "dominio_local": {
     "host": "magantech.kalimete.local",
     "estado": "ACTIVO 2026-10-17",
@@ -60,7 +64,7 @@
     "pipeline": "~/dev/wordpress/scripts/plugin-preprod.sh (instala ZIP release en el preprod)",
     "zips_release": "~/dev/wordpress/plugins/armada-suite/export/ (artefactos; 5.4.1 sha256 4bb2fa2c…)",
     "stack_ref": "compose/certs/red → modelo del agente WordPress; código del plugin → agente Armada Suite",
-    "repo_git": "~/dev/wordpress/websites/magantech.com.do/ (repo propio desde 2026-10-26 — remote PRIVADO ssh://git@github.com/warcold/magantech-website.git; push inicial 0c6bb14, 1028 archivos, rama master; VERSIONA: espejo wp-content sin uploads/JetBackup (armada-suite, akismet, mantenimiento-web, themes, mu-plugins), docs+evidencia PNG, installer, assets, scripts, mejoras-default; NUNCA versiona: secrets/, docker-compose.yml (credenciales inline — pendiente migrar a .env+example), backups/, wp-content/uploads/, export/ ZIPs, certs/, *.bkup*, wp-content/plugins/backup/ JetBackup)"
+    "repo_git": "~/dev/wordpress/websites/magantech.com.do/ (repo propio desde 2026-10-26 — remote PRIVADO ssh://git@github.com/warcold/magantech-website.git; push inicial 0c6bb14 + c6028e1, rama master; VERSIONA: espejo wp-content sin uploads/JetBackup (armada-suite, akismet, mantenimiento-web, themes, mu-plugins), docs+evidencia PNG, installer, assets, scripts, mejoras-default, docker-compose.yml (desde 2026-10-26: patrón .env, sin credenciales) + .env.example; NUNCA versiona: secrets/, .env (local-only 600), backups/, wp-content/uploads/, export/ ZIPs, certs/, *.bkup*, wp-content/plugins/backup/ JetBackup)"
   },
   "pendientes": [
     "Owner: importar CA root en las otras máquinas de la red (http://kalimete.local/kalimete-rootCA.pem → importar como CA raíz; Windows: certutil -addstore -f \"ROOT\" kalimete-rootCA.pem)",
