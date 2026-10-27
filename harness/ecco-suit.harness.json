@@ -4,11 +4,11 @@
   "agent_file": "~/armada-sync/agents/ecco-suit.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "VPS Ecco Qualitá (62.171.144.58, alias ssh ecco): host Docker multi-servicio tras Caddy común (TLS Let's Encrypt auto, 80/443). Servicio 1: EccoSuite (suit.eccoqualita.com) — Next.js 16.4 standalone + PostgreSQL 18, contenedores sin puertos públicos, red compartida eccoqualita-proxy para vhosts futuros. Despliegue/operación/respaldos de servicios Ecco Qualitá.",
+  "scope": "VPS Ecco Qualitá (62.171.144.58, alias ssh ecco): host Docker multi-servicio tras Caddy común (TLS Let's Encrypt auto, 80/443). Servicio 1: EccoSuite (suite.eccoqualita.com) — Next.js 16.4 standalone + PostgreSQL 18, contenedores sin puertos públicos, red compartida eccoqualita-proxy para vhosts futuros. Despliegue/operación/respaldos de servicios Ecco Qualitá.",
   "vivo_2026_10_19": "Despliegue completo end-to-end: Docker 29.9.1 + compose v5.6.0, swap 2G, UFW(22/80/443+udp), fail2ban, llave SSH kalimete (password aún ON). /opt/eccoqualita/{proxy,eccosuit}. Bootstrap roles ecco_owner/ecco_app (ALLOW_BOOTSTRAP one-shot) + 22 migraciones (57 tablas) vía contenedor tools (etapa build del Dockerfile). Health HTTPS verificado: {status:ok, app:up, database:up}; login 200; cert Let's Encrypt auto-renovable. Secretos generados EN la VPS (.env/.env.postgres 600). Lecciones rsync: excludes anclados (/storage sin / borró src/platform/storage) y excluir /docker-compose.yml (el sync sobrescribía el compose prod).",
-  "live_check": "curl -s https://suit.eccoqualita.com/api/health",
+  "live_check": "curl -s https://suite.eccoqualita.com/api/health",
   "checks": [
-    "curl -s https://suit.eccoqualita.com/api/health  ({status:ok})",
+    "curl -s https://suite.eccoqualita.com/api/health  ({status:ok})",
     "ssh ecco 'docker ps --format \"{{.Names}}: {{.Status}}\"'  (ecco-caddy, ecco-app, ecco-postgres healthy)",
     "ssh -o BatchMode=yes ecco hostname  (llave OK, sin password)",
     "ssh ecco 'ufw status | head -2'  (active)"
@@ -46,7 +46,7 @@
   "changelog": [
     {
       "fecha": "2026-10-19",
-      "cambio": "Despliegue inicial completo: VPS virgen → producción https://suit.eccoqualita.com (Docker, postgres 18, roles, 22 migraciones, app, Caddy TLS, UFW, fail2ban, llave SSH, alias ecco). Agente creado (21º subagente) + allowlist kalimete + MAPA sección 8."
+      "cambio": "Despliegue inicial completo: VPS virgen → producción https://suite.eccoqualita.com (Docker, postgres 18, roles, 22 migraciones, app, Caddy TLS, UFW, fail2ban, llave SSH, alias ecco). Agente creado (21º subagente) + allowlist kalimete + MAPA sección 8."
     }
   ]
 }

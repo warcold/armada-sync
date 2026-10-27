@@ -1,5 +1,14 @@
 ## 2026-10-27
 
+### [08:35] - Ecco Qualitá: rename de host suit → suite (suite.eccoqualita.com) — Caddy, .env de producción y toda la doc
+
+- **Tipo**: infra | red | doc
+- **Modificado**: VPS ecco — `/opt/eccoqualita/proxy/Caddyfile` (site block `suite.eccoqualita.com` + redirect 301 del viejo, cert LE nuevo obtenido) + `/opt/eccoqualita/eccosuit/.env` (`APP_URL`/`BETTER_AUTH_URL` → `https://suite.eccoqualita.com`, app recreada); kalimete — `MAPA.md`, `agents/ecco-suit.md`, `harness/kalimete.harness.json`, `harness/ecco-suit.harness.json`, `~/.config/opencode/ecosistema-map/MAPA.md` (todas las referencias suit→suite)
+- **Afecta a**: ecco (VPS), kalimete (doc local)
+- **Causa**: el owner renombró el host: ya no es "suit", es "suite" → `suite.eccoqualita.com`; el DNS nuevo ya apuntaba a 62.171.144.58
+- **Estado**: ✅ verificado — health OK en `https://suite.eccoqualita.com/api/health` (`app:up, database:up`), cert Let's Encrypt para suite obtenido por Caddy, dominio viejo `suit.eccoqualita.com` responde **301 → suite** (redirect permanente conservado para links existentes), logs sin errores, cero referencias viejas en doc activa
+- **Notas**: Backups: `Caddyfile.bkup-20261027-rename-suite` + `.env.bkup-20261027-rename-suite` (en el VPS) y `*.bkup-20261027-rename-suite` (locales). El CHANGELOG histórico NO se reescribe (las entradas viejas describen el estado de su fecha). El nombre del agente sigue siendo `Ecco Suit` (identidad del agente, no del dominio). Si el DNS de `suit` se elimina a futuro, el bloque de redirect queda inofensivo.
+
 ### [08:00] - Ecco Suite: deploy Incremento 19 + Next 16.4.3 (parche seguridad) en VPS ecco + local sincronizado con repo GitHub
 
 - **Tipo**: servicio | deploy | seguridad

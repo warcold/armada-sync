@@ -161,8 +161,8 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 - **Alias**: `ssh ecco` (en `~/.ssh/config`)
 - **Hardware**: OVH, Ubuntu 24.04.5, 4 cores AMD EPYC, 7.8GB RAM + 2G swap, 96GB disco
 - **Patrón**: host Docker con servicios pequeños contenedorizados tras Caddy común (TLS Let's Encrypt automático, 80/443); red compartida `eccoqualita-proxy` para nuevos vhosts
-- **Servicio 1 — EccoSuite**: `https://suit.eccoqualita.com` (Next.js 16.4 standalone + PostgreSQL 18, sin puertos públicos; contenedores ecco-caddy/ecco-app/ecco-postgres en `/opt/eccoqualita/`)
-- **DNS**: suit.eccoqualita.com → 62.171.144.58 (sin Cloudflare)
+- **Servicio 1 — EccoSuite**: `https://suite.eccoqualita.com` (Next.js 16.4 standalone + PostgreSQL 18, sin puertos públicos; contenedores ecco-caddy/ecco-app/ecco-postgres en `/opt/eccoqualita/`)
+- **DNS**: suite.eccoqualita.com → 62.171.144.58 (sin Cloudflare)
 - **Seguridad**: UFW (22/80/443+udp), fail2ban activos
 - **Subagente**: Ecco Suit (despliegue, operación, respaldos, nuevos servicios)
 
@@ -201,7 +201,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | blender | Blender 5.0.1 + MCP TCP :9876 (decimate/retopo GLBs, escenas procedurales; dominio ~/dev/games/) — NUEVO en registro (2026-10-20) | ✅ |
 | proxmark | Proxmark3 RFID/NFC (kalimete /dev/ttyACM0) | ✅ |
 | intigriti | Bug bounty Intigriti (~/dev/ethical-hacking, kalimetehunt.sh) — NUEVO (2026-10-08) | ✅ |
-| ecco-suit | VPS Ecco Qualitá (62.171.144.58, `ssh ecco`): host Docker multi-servicio; hoy EccoSuite en suit.eccoqualita.com — NUEVO (2026-10-19) | ✅ |
+| ecco-suit | VPS Ecco Qualitá (62.171.144.58, `ssh ecco`): host Docker multi-servicio; hoy EccoSuite en suite.eccoqualita.com — NUEVO (2026-10-19) | ✅ |
 
 ### Agentes retirados
 cloudflare → kalimete, ecosistema → kalimete, cf-dns→Cloudflare-dns, cf-security→Cloudflare-security, cf-storage→Cloudflare-storage, cf-tunnels→Cloudflare-tunnels, cf-workers→Cloudflare-workers, jonas-ro, kalimete-ro, kalimete-ro-agent — archivo backup BORRADO 2026-08-14, solo historial git.

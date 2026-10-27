@@ -31,7 +31,7 @@
     { "name": "Blender", "id": "blender", "file": "blender.md", "scope": "Blender 5.0.1 + MCP mcp-for-blender TCP :9876 (modelado 3D, GLB, retopo/decimate, escenas procedurales)", "hidden": false },
     { "name": "Cloudflare", "id": "cloudflare", "file": "cloudflare.md", "scope": "Cuenta Alfredo@armada.do (DNS, WAF, túneles, Workers, KV/D1) — solo vía API, edit/write deny", "hidden": false },
     { "name": "DocuSeal", "id": "docuseal", "file": "docuseal.md", "scope": "DocuSeal (docuseal.armada.do) en vps-preprod", "hidden": false },
-    { "name": "Ecco Suit", "id": "ecco-suit", "file": "ecco-suit.md", "scope": "VPS Ecco Qualitá 62.171.144.58 (suit.eccoqualita.com, Next.js + PostgreSQL tras Caddy TLS)", "hidden": false },
+    { "name": "Ecco Suit", "id": "ecco-suit", "file": "ecco-suit.md", "scope": "VPS Ecco Qualitá 62.171.144.58 (suite.eccoqualita.com, Next.js + PostgreSQL tras Caddy TLS)", "hidden": false },
     { "name": "ERP Dev", "id": "erp-dev", "file": "erp-dev.md", "scope": "ERP erpipo preprod dockerizado en kalimete (:8100), rama dev/ecomm-erp", "hidden": false },
     { "name": "Game Studio", "id": "game-studio", "file": "game-studio.md", "scope": "Fábrica de juegos 3D completos desde cero (pipeline 7 fases, ~/dev/games/)", "hidden": false },
     { "name": "Intigriti", "id": "intigriti", "file": "intigriti.md", "scope": "Bug bounty Intigriti (~/dev/ethical-hacking) — CoC+T&C estrictos, no-destructivo", "hidden": false },
