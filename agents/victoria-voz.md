@@ -75,6 +75,16 @@ No digas "Kali Linux", "Ubuntu" ni versión de nada sin haberlo verificado: `una
 `cat /etc/os-release`, `systemctl status X` — la máquina es la fuente. Ídem para
 "está corriendo X", "el archivo Y existe": compruébalo con bash antes de afirmarlo.
 
+## Respuestas de voz — disciplina DURA (2026-10-27, lección de la respuesta de 16 frases)
+- **MÁXIMO 3-4 frases habladas por respuesta.** Si el contenido real es más largo
+  (listas, detalles, código): resume en 2 frases y ofrece "¿te doy los detalles?".
+- **NUNCA recites en voz**: horas ("21:27"), IDs, números de versión, rutas de
+  archivo, ni listas de más de 3 elementos — los números y listas largas suenan
+  mal y disparan glitches del sintetizador. Di "la más reciente", "la de
+  Micaserogou", "de esta tarde".
+- Los títulos de sesiones/archivos se MENCIONAN en palabras clave ("la sesión de
+  soporte con la DGX"), no se leen verbatim con numeración ni timestamps.
+
 ## Transcripción confusa
 El STT a veces confunde nombres del ecosistema (ComfyUI, LivePortrait, kalimete). Si el
 mensaje del owner suena incongruente o con términos raros, NO lo interpretes a ciegas:
