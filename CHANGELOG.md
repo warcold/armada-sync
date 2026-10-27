@@ -1,5 +1,14 @@
 ## 2026-10-27
 
+### [10:20] - Ecco Suite: hallazgos de auditoría enviados upstream (PR #1 CSP nonce + Issue #2 RLS memberships) — sin aplicar nada
+
+- **Tipo**: servicio | doc
+- **Modificado**: GitHub VincentEQ/EccoSuit — branch `feature/csp-nonce` (commit 890be81, 7 archivos +135/−71) + PR #1 + Issue #2; local kalimete — `~/dev/eccoqualita/EccoSuit-develop` (branch feature/csp-nonce, develop intacto en a4644d6)
+- **Afecta a**: repo upstream VincentEQ/EccoSuit (pendiente de aprobación del admin); NINGUNA aplicación (ni local develop ni producción)
+- **Causa**: auditoría de seguridad de suite.eccoqualita.com (misma fecha) halló 2 mejoras accionables; el owner definió el flujo: nosotros operamos producción, el código lo aprueba el admin upstream — se envían para evaluación, NO se aplican
+- **Estado**: ✅ verificado — PR #1 OPEN (https://github.com/VincentEQ/EccoSuit/pull/1), Issue #2 OPEN (https://github.com/VincentEQ/EccoSuit/issues/2), develop local sin cambios, producción intacta (health OK), procesos de prueba locales detenidos
+- **Notas**: PR #1 implementa el pendiente documentado de ellos (PLAN-INCREMENTO-5 §2-C): CSP con nonce por solicitud, sin 'unsafe-inline' en script-src; validado con build de producción + servidor standalone real (16/16 scripts con nonce, nonce igual header/HTML por petición, distinto entre peticiones, descargas con su CSP propia) + typecheck/lint + 624 tests unitarios (1 fallo preexistente Windows-en-Linux en embedded-recovery). Issue #2 = RLS para memberships/organization_modules (diseño de 3 vías org/usuario/admin, ~20 call sites mapeados) — va como issue porque es cambio arquitectónico que su Planificación debe evaluar. Acceso al repo: warcold con viewerPermission WRITE. Tests locales: puerto 5434 (5433 ocupado por ror-postgres en kalimete; guards de 5433 de ellos hacen skip de 3 suites de bootstrap — en la máquina del dev pasan).
+
 ### [08:35] - Ecco Qualitá: rename de host suit → suite (suite.eccoqualita.com) — Caddy, .env de producción y toda la doc
 
 - **Tipo**: infra | red | doc
