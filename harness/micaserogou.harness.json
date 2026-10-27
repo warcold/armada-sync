@@ -1,6 +1,6 @@
 {
   "harness": "micaserogou",
-  "updated": "2026-10-26",
+  "updated": "2026-10-27",
   "agent_file": "armada-sync/agents/micaserogou.md",
   "mode": "subagent",
   "hidden": false,
@@ -51,11 +51,12 @@
     "prod": "cPanel externo (sin Cloudflare) — https://micaserogou.com/",
     "preprod": "wordpress:7.1.3-php8.3-apache + mariadb:10.11 (kalimete)",
     "plugin": "ZIP de release armada-suite",
-    "pin": "WP 7.1.3; plugin Armada Suite 5.4.2 ACTIVO en prod (verificado 2026-10-20 15:41) pero sitio aún default — deploy incompleto"
+    "pin": "WP 7.1.3; prod VIVA con plugin 5.5.10 (verificado read-only 2026-10-27); preprod 5.7.0 — ventana UPGRADE 5.5.10→5.7.0 declarada (docs/PROD-UPGRADE-5.7.0-CHECKLIST.md); BLOCKER: iak tenant 3 en ERP prod erpipos.armada.do"
   },
   "docs": [
     "~/dev/wordpress/websites/micaserogou.com/docs/README.md",
     "~/dev/wordpress/websites/micaserogou.com/docs/ARMADA-SUITE-INSTALL.md",
+    "~/dev/wordpress/websites/micaserogou.com/docs/PROD-UPGRADE-5.7.0-CHECKLIST.md",
     "~/dev/wordpress/websites/micaserogou.com/docs/PROD-DEPLOY-CHECKLIST.md",
     "~/dev/wordpress/docs/CONEXION-METODO.md",
     "~/dev/wordpress/docs/NUEVO-WEBSITE-TEMPLATE.md",
@@ -63,15 +64,14 @@
     "~/dev/wordpress/README-HUB.md"
   ],
   "pendientes": [
-    "api_key ERP productiva tenant 3 (la emite Juan Carlos)",
-    "usuario WP dedicado administrator + App Password HTTPS en prod",
-    "ventana de deploy a prod: backup → permalinks → usuario/App Password → ZIP → settings ERP → smoke → webhook",
-    "webhook productivo tenant 3 (id/secret los provee el owner)",
-    "aclarar propósito de instance_api_keys id 6 tenant 3 micaserogou-website",
-    "redactar password DB en docs/README.md (hoy en claro)",
-    "preguntar al owner quién subió/activó el plugin 5.4.2 a prod (deploy incompleto, contenido default)",
-    "reportar a agente Armada Suite: api_url interna http://erpipo-preprod-nginx/api expuesta en HTML de la homepage",
-    "nota owner: magantech sigue con WP_HOME=http://localhost:8093 sin promover (mismo bug de visibilidad que tenía micaserogou)"
+    "BLOCKER #1 ventana: crear/confirmar iak tenant 3 en ERP prod (erpipos.armada.do) — NO existe aún (ERP Dev 10-27); owner/Juan Carlos",
+    "ejecutar ventana upgrade 5.5.10→5.7.0 según docs/PROD-UPGRADE-5.7.0-CHECKLIST.md (owner): backup → site-fixes 1.0.3 → ZIP 5.7.0 → settings ERP prod (iak) → smoke → rollback listo",
+    "webhook productivo tenant 3 (canal ERP→WP; fuera del scope de la ventana, agenda aparte con owner)",
+    "datos reales del cliente: socials/teléfono/dirección/fotos/stock real o convención 99 (badges Agotado)",
+    "companion Armada Templates 1.0.0: segunda ventana cuando haya release",
+    "WhatsApp: checklist de activación del cliente (aplazado)",
+    "aclarar propósito de instance_api_keys id 6 tenant 3 micaserogou-website (preprod)",
+    "redactar password DB en docs/README.md (hoy en claro)"
   ],
   "changelog": "armada-sync/CHANGELOG.md#2026-10-20",
   "nombre": "Micaserogou",
@@ -134,5 +134,16 @@
     "docs/README.md, docs/WP-SIDE-CONFIG-20261021.md, docs/PROD-DEPLOY-CHECKLIST.md",
     "CHANGELOG.md (raíz del repo del sitio) — historial con el formato del hub"
   ],
-  "live_check": "bash ~/dev/wordpress/websites/micaserogou.com/scripts/smoke-8094.sh (esperado 7/7) + docker ps --filter name=micaserogou + curl -sk -o /dev/null -w \"%{http_code}\" https://micaserogou.kalimete.local/ (esperado 200)"
+  "live_check": "bash ~/dev/wordpress/websites/micaserogou.com/scripts/smoke-8094.sh (esperado 7/7) + docker ps --filter name=micaserogou + curl -sk -o /dev/null -w \"%{http_code}\" https://micaserogou.kalimete.local/ (esperado 200)",
+  "vivo_2026_10_27": {
+    "preprod": "UP — 3 contenedores healthy; plugin armada-suite 5.7.0 (integrado 10-27); smoke 7/7; matriz 21/21 (10-27); pack.css restaurant ver=5.7.0 encolado",
+    "prod": "VIVA — https://micaserogou.com/ 200 (HTTP/2); plugin 5.5.10 activo (scripts ver=5.5.10); título SEO restaurante; REST ops/status 403 anónimo; /productos/ y /reservas/ 200; rojo #d64545 blindado; catálogo/chat/voz vivos",
+    "escenario_ventana": "UPGRADE 5.5.10 → 5.7.0 (la doc 'deploy pendiente' era el estado del 10-20 — stale)",
+    "checklist_ventana": "docs/PROD-UPGRADE-5.7.0-CHECKLIST.md (creada 10-27): paso 0 iak tenant 3 ERP prod (BLOCKER #1) → backup → site-fixes 1.0.3 (reservas, pendiente en prod) → ZIP 5.7.0 → settings ERP prod → smoke → rollback (ZIP 5.5.10 + revertir site-fixes desde 1.0.2 + deploy-backup-*.json)",
+    "artefactos": "armada-suite-5.7.0.zip 2.596.651 B sha256 766345c9…8301c (canónico; preprod validó el MISMO ZIP); micaserogou-site-fixes-1.0.3.zip 9.020 B sha256 130f4b4c…9909; rollback armada-suite-5.5.10-plugin-only.zip 2.567.369 B sha256 b35e007c…5e700",
+    "delta_site_level": "SOLO site-fixes-1.0.3.zip (auditoría 10-27: 5/6 mu-plugins idénticos al baseline 1.0.2; uploads/erpc idéntico salvo reservas.js; visual.php 1.2.0→1.6.0 solo bump de versión; live == ZIP 1.0.3 byte-idéntico)",
+    "mu_plugins_local_only": "cero bits local-only en los 7 funcionales (proxy lee erp_suite_settings vía get_api_key(); deuda key plaintext CURADA); zz-micaserogou-local-mail.php SOLO preprod",
+    "reservas": "site-level (stack probado: 15 mesas ERP local tenant 3, POST 201 vía proxy erpc-proxy/v1/erp); shortcode [erpc_reservas] = alternativa futura; tool crear_reserva OFF por defecto",
+    "blocker_iak": "iak tenant 3 NO existe aún en ERP prod erpipos.armada.do (verificado ERP Dev 10-27); hallazgo: prod mostró catálogo vivo el 10-25 sin iak hoy — key con otro nombre/rotada/caché; paso 0 + re-guardado de settings cubre los 3 casos"
+  }
 }
