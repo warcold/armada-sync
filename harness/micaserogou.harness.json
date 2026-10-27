@@ -32,7 +32,7 @@
     "vhost": "/etc/nginx/sites-enabled/micaserogou.kalimete.local.conf (archivo real, no symlink; sites-available sincronizado)",
     "cert": "/etc/ssl/local-certs/micaserogou.kalimete.local.crt",
     "zips": "~/dev/wordpress/plugins/armada-suite/export/",
-    "repo_git": "~/dev/wordpress/websites/micaserogou.com/ (repo propio desde 2026-10-26 — remote PRIVADO ssh://git@github.com/warcold/micaserogou-website.git; push inicial 1829841, 992 archivos, rama master; VERSIONA: espejo wp-content sin uploads (armada-suite, akismet, themes, mu-plugins), docs+evidencia 102 PNGs, installer (deploy/site-fixes/uninstall), assets, scripts, mejoras-restaurante; NUNCA versiona: secrets/, docker-compose.yml (credenciales inline — pendiente migrar a .env+example), backups/ (SQLs), wp-content/uploads/, export/ ZIPs, certs/, *.bkup*)"
+    "repo_git": "~/dev/wordpress/websites/micaserogou.com/ (repo propio desde 2026-10-26 — remote PRIVADO ssh://git@github.com/warcold/micaserogou-website.git; push inicial 1829841 + 9a151a6, rama master; VERSIONA: espejo wp-content sin uploads (armada-suite, akismet, themes, mu-plugins), docs+evidencia 102 PNGs, installer (deploy/site-fixes/uninstall), assets, scripts, mejoras-restaurante, docker-compose.yml (desde 2026-10-26: patrón .env, sin credenciales) + .env.example; NUNCA versiona: secrets/, .env (local-only 600), backups/ (SQLs), wp-content/uploads/, export/ ZIPs, certs/, *.bkup*)"
   },
   "checks": [
     "docker ps --filter name=micaserogou",
@@ -99,6 +99,10 @@
     "tipografia": "Unificada: H1 héroe clamp(2.25rem,4.5vw,3.2rem)/800 en 5 cabeceras+ficha; subtítulos clamp(1.05-1.2rem)/400; kickers 0.8rem/#ffd8a6; H2 sección 1.8rem/800; tagline 0.7rem todas; page titles 1.75rem/800; body/brand/logo/nav ya eran consistentes",
     "reservas": "Formulario FUNCIONA (bug crítico corregido: reservas.js nunca cargaba); mesas del ERP via proxy (SALON PRINCIPAL/SECUNDARIO); botón se habilita al elegir mesa",
     "produccion": "Artefacto site-level listo: export/micaserogou-site-level-20261022.zip (1,4MB, 23 archivos, agnóstico: proxy lee erp_suite_settings, sin keys hardcodeadas, sin dominios preprod); checklist actualizado con pasos 4b/4c (subir ZIP + crear páginas reservas/producto-detalle)"
+  },
+  "vivo_2026_10_26": {
+    "migracion_env": "docker-compose.yml YA SIN credenciales inline (env_file .env required:false en wordpress+db; ${WORDPRESS_DB_PASSWORD}/${MYSQL_ROOT_PASSWORD}; healthcheck -p${WORDPRESS_DB_PASSWORD}; escapes $$ de CONFIG_EXTRA preservados). .env local-only chmod 600 gitignored + .env.example versionado. Backup: docker-compose.yml.bkup-20261026-env.",
+    "verificacion": "up -d recreó micaserogou-local/db → 3 contenedores healthy; https://micaserogou.kalimete.local/ 200 + http://localhost:8094/ 200. Commit 9a151a6 (compose + .env.example + .gitignore) pushed a warcold/micaserogou-website; .env confirmado NO trackeado (git ls-files grep .env$ = 0)."
   },
   "pitfalls_2026_10_22": [
     "Playwright roto en kalimete ('Connection.init: Connection closed while reading from the driver') → usar scripts/shot-cdp.py (CDP websocket, chromium con --remote-allow-origins=*)",
