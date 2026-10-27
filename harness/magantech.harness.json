@@ -1,6 +1,6 @@
 {
   "harness": "magantech",
-  "updated": "2026-10-26",
+  "updated": "2026-10-27",
   "agent_file": "~/armada-sync/agents/magantech.md",
   "mode": "subagent",
   "hidden": false,
@@ -20,6 +20,13 @@
   "vivo_2026_10_26": [
     "Migración compose→.env (owner 2026-10-26): docker-compose.yml YA SIN credenciales inline (env_file .env required:false en wordpress+db; ${WORDPRESS_DB_PASSWORD}, ${MYSQL_ROOT_PASSWORD}, ${ERPCBOT_LLM_URL/KEY}; healthcheck -p${WORDPRESS_DB_PASSWORD}). .env local-only chmod 600 gitignored + .env.example versionado. Backup: docker-compose.yml.bkup-20261026-env.",
     "Verificado live tras up -d (recreación): magantech-local + magantech-db healthy; https://magantech.kalimete.local/ 200 + http://localhost:8093 200. Commit c6028e1 (compose + .env.example + .gitignore) pushed a warcold/magantech-website; .env confirmado NO trackeado (git ls-files vacío)."
+  ],
+  "vivo_2026_10_27": [
+    "Preprod = Armada Suite 5.7.0 (md5 armada-suite.php e5c2cc24… = ZIP canónico), validado: smoke 10/10, regresión 35/35 (FAIL #26 de 5.6.0 fixeado), shot-cdp login@375 card 311px sin overflow + 0 errores consola, home@1440 hero 480 + alfredo 1. Fase 0 re-validada con 5.7.0 (breakpoints 767→768/991→992 OK).",
+    "Prod auditada read-only SIN credenciales: plugin 5.4.2 exacto (readme.txt Stable tag + assets ?ver=5.4.2 + jaula anónima 403). App Password SIGUE muerta (no existe secrets/prod-app-password.txt) = bloqueante pre-ventana.",
+    "Artefactos en export/ (sha256 verificados): armada-suite-5.7.0-plugin-only.zip 766345c9… (DEPLOY) · armada-suite-5.4.2-rollback.zip 157b1633… (ROLLBACK, versión exacta prod) · magantech-fase0-site-bundle-1.0.0.zip 4dfcccc8… (PORT FASE 0: mu-plugin 8785f3cb… + 5 banners, byte-idénticos a mejoras-default/).",
+    "Creado docs/PROD-UPGRADE-5.7.0-CHECKLIST.md (upgrade 5.4.2→5.7.0 + port Fase 0 + IA chat — en prod basta pegar la key armada-magantech-2 fp 9f1059bf; URL https://victoria.armada.do/v1 + model nvidia/Qwen3.6-35B-A3B-NVFP4-normal = defaults nativos verificados en erpcbot_defaults(); ops bloquea ia.* → wp-admin — + smoke prod + rollback). Absorbe PORT-A-PROD-FASE0.md; supera instaladores one-shot 5.5.x.",
+    "Estado: LISTO PARA VENTANA — falta App Password nueva + ejecutar el checklist (owner)."
   ],
   "dominio_local": {
     "host": "magantech.kalimete.local",
@@ -67,10 +74,11 @@
     "repo_git": "~/dev/wordpress/websites/magantech.com.do/ (repo propio desde 2026-10-26 — remote PRIVADO ssh://git@github.com/warcold/magantech-website.git; push inicial 0c6bb14 + c6028e1, rama master; VERSIONA: espejo wp-content sin uploads/JetBackup (armada-suite, akismet, mantenimiento-web, themes, mu-plugins), docs+evidencia PNG, installer, assets, scripts, mejoras-default, docker-compose.yml (desde 2026-10-26: patrón .env, sin credenciales) + .env.example; NUNCA versiona: secrets/, .env (local-only 600), backups/, wp-content/uploads/, export/ ZIPs, certs/, *.bkup*, wp-content/plugins/backup/ JetBackup)"
   },
   "pendientes": [
+    "BLOQUEANTE pre-ventana: re-provisionar App Password prod (muerta desde ~2026-10-23) → secrets/prod-app-password.txt (600) — Paso 0 de docs/PROD-UPGRADE-5.7.0-CHECKLIST.md",
+    "Owner: ejecutar la ventana de deploy con docs/PROD-UPGRADE-5.7.0-CHECKLIST.md (upgrade 5.4.2→5.7.0 + port Fase 0 + IA chat)",
     "Owner: importar CA root en las otras máquinas de la red (http://kalimete.local/kalimete-rootCA.pem → importar como CA raíz; Windows: certutil -addstore -f \"ROOT\" kalimete-rootCA.pem)",
-    "Rotar App Password Victoria (prod) + credencial admin preprod (expuestas 2026-10-17)",
-    "Actualizar preprod 5.4.0 → 5.4.1 (próxima ventana; plugin-preprod.sh + smoke)",
-    "Opcional: export .wpress manual desde wp-admin prod (§c/§h PROCEDURES) si se quiere snapshot íntegro"
+    "Cliente: sucursal real (la 6 del ERP es test) + checklist WhatsApp (docs/WHATSAPP-READINESS.md)",
+    "ERP Dev: re-apuntar webhook endpoint id 2 (hoy dev-lab :8091) + alinear secret cuando toque prod"
   ],
   "changelog": "~/armada-sync/CHANGELOG.md + docs del website",
   "name": "MaganTech",
