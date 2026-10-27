@@ -1,5 +1,14 @@
 ## 2026-10-27
 
+### [08:00] - Ecco Suite: deploy Incremento 19 + Next 16.4.3 (parche seguridad) en VPS ecco + local sincronizado con repo GitHub
+
+- **Tipo**: servicio | deploy | seguridad
+- **Modificado**: VPS ecco (62.171.144.58) `/opt/eccoqualita/eccosuit/` (código rsync desde repo), imagen `eccosuit-app` (rebuild, Next 16.4.3), imagen `eccosuit-migrate` (rebuild con perfil tools), BD `ecco_suite` (migraciones 0023+0024 aplicadas); kalimete `~/dev/eccoqualita/EccoSuit-develop/` reemplazado por clon git de `github.com/VincentEQ/EccoSuit` rama `develop` (HEAD `a4644d6`)
+- **Afecta a**: ecco (VPS producción suit.eccoqualita.com), kalimete (copia dev local)
+- **Causa**: repo GitHub develop tenía 17 commits ahead (Incrementos 18-19 completos + commit `07649a0` de seguridad Next 16.4.0→16.4.3: GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr, GHSA-p3m5-59mp-jv5r); servidor y copia local estaban en snapshot del 17 oct (Next 16.4.0, sin carpetas del Inc 19, migraciones hasta 0022)
+- **Estado**: ✅ verificado — health `{"status":"ok","app":"up","database":"up"}` vía HTTPS, HTTP 307 (redirect login normal), logs sin errores, 25 migraciones en BD (columnas `purpose/inputs/outputs` en `processes`, enum `project_priority`, `process_kind` + `evaluation`), Next 16.4.3 confirmado dentro del contenedor
+- **Notas**: Backups previos en `/opt/eccoqualita/backups/`: BD `ecco_suite-pre-inc19-20261027-0741.dump` + código `eccosuit-code-pre-inc19-20261027-0742.tar.gz`; local viejo en `~/dev/eccoqualita/EccoSuit-develop.bkup-20261027`. **Lección ops**: `docker compose build` NO reconstruye servicios con `profiles` inactivos (migrate) — el primer run de migraciones usó imagen stale y dijo "aplicadas" sin aplicar nada; detectado verificando `__drizzle_migrations` contra `_journal.json`; fix: `docker compose --profile tools build migrate`. `.env`, `.env.postgres` y `docker-compose.yml` de producción intactos (excluidos del rsync).
+
 ### [01:30] - kalimete-ptt v5.1: bug raíz del PTT (fallback silencioso al default agent) + STT con vocabulario + TTS streaming + Victoria friendly
 
 - **Tipo**: servicio | voz | fix
