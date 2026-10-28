@@ -1,5 +1,21 @@
 ## 2026-10-28
 
+### [23:00] - FUSIÓN COMPLETA: ZionV CRM + Armada Suite → Zion CRM 2.0.0 (plugin unificado)
+
+- **Tipo**: plugin | feature | arquitectura | fusión
+- **Modificado**: Plugin unificado `zion-crm` v2.0.0 (DB 2.0.0) — fusiona ZionV CRM 1.57.0 + Armada Suite 5.9.1 en un solo plugin
+- **Afecta a**: kalimete (dev lab), preprod sitios WP (MaganTech, Micaserogou), ERP erpipos
+- **Causa**: owner pidió unificar ambos plugins en uno solo llamado "Zion CRM" con autores Jordan Diaz + Alfredo Armada (me@alfredo.pro), manteniendo toda la funcionalidad CRM + ERP integrada
+- **Estado**: ✅ completado — PHP lint OK; ZIP generado `zion-crm-2.0.0.zip` (10,045,291 B, sha256 `12d16561…`, 2447 archivos, sin secrets); incluye módulos CRM (16+) + ERP (catálogo/checkout, sync erpipos, IA, AiBridge, SiteBackup, Ops, Templates) + fusión de formularios tipo reserva + sync contactos + endpoint REST reservas + selector modo negocio
+- **Notas**:
+  1. **Plugin unificado**: `zion-crm.php` v2.0.0, text domain `zion-crm`, autores "Jordan Diaz, Alfredo Armada", Author URI `https://alfredo.pro`
+  2. **Módulos CRM** (16+): Contactos, Pipeline, Formularios (tipo reserva/lead/datos), Reservaciones, Automatizaciones, Correo, Talleres, Reportes, IA, HubSpot, Nextcloud, MS365, Google Calendar, Antispam, DataTools, Elementor Bridge, Notificaciones, Papelera, Servicios
+  3. **Módulos ERP integrados** (como submódulos en `src/Modules/ArmadaSuite/`): Catálogo/Checkout ERP (sync erpipos), Sincronización (auto-sync, push órdenes/contactos, modo standalone), Asistente IA (ChatEngine + WhatsApp), AiBridge (WPVibe 1.20.0 vendored), SiteBackup (AIO WP Migration 7.111 vendored), Ops Remotas (status, rollback, auditoría, file ops, kill-switch IA), Templates (landing, contacto, cotizar, packs restaurant/tech/neutral), Shortcodes (catalogo, cart, checkout, reservas)
+  4. **Nuevas funcionalidades de fusión**: Formularios tipo reserva (`submission_type`: lead|reserva|datos), Endpoint REST `POST /wp-json/erpsuite/v1/reservations` (recibe de Zion, normaliza, valida, sync ERP si ON, historial local), Sync contactos bidireccional (tabla mapping `wp_zion_erp_contact_map`), Selector modo negocio (`erp_pos`|`zion_crm`|`both`|`none`), Módulos vendored condicionales (AiBridge, SiteBackup)
+  5. **Migración BD**: Zion 1.25.0→2.0.0 (submission_type, booking_id), AS opciones migradas, feature gates unificados, text domain `zion-crm` (compat legacy `zionv-crm`/`erp-suite` via filters)
+  6. **ZIP unificado**: `export/zion-crm-2.0.0.zip` (10,045,291 B, sha256 `12d16561…`, 2447 archivos, sin secrets) — listo para deploy a preprod MaganTech/Micaserogou via ops API
+  7. **Documentación actualizada**: `readme.txt` + `CHANGELOG.md` unificados, `docs/ARQUITECTURA-INTEGRACION-HIBRIDA.md` con Sección 14 (flujos formularios/reservas/sync contactos)
+
 ### [22:40] - Ecco Suit: deploy CSP-nonce a producción VPS (612ea50)
 
 - **Tipo**: deploy | seguridad | infra
