@@ -53,6 +53,12 @@ ZIP de producción SOLO en `~/dev/wordpress/plugins/armada-suite/export/armada-s
 ### Sistema de feature flags (Fase A, 2026-10-06)
 8 flags en `erp_suite_settings[features]` (`erp_sync, catalog, checkout, ai_chat, puente_ia, remote_ops, backups, legacy_logs`, default ON) + tab **Módulos** + clase `ArmadaSuite_Features::enabled()` (cache solo del valor guardado, padres siempre frescos + filtro `armada_suite_feature_enabled`). Gates duros (requires vendored, menús MenuUnifier, instanciación ERPC_*, shortcodes stub `''`, `ApiClient::request()` → WP_Error si ERP OFF, cron WA) + gates UX (tabs en pausa con aviso, assets/AJAX chat, AJAX tienda, widget). Caso guía soportado: WP solo-chat-IA sin ERP. **Self-heal verificado**: key `features` ausente en live → defaults-ON por código (`Features.php:99-103`); SiteBackup auto-repara `storage/` vía `admin_init → setup_storage_folder()`.
 
+### Selectores por tenant (5.8.0 + 5.9.0, 2026-10-28 — integración ZionV CRM)
+- **`tenant.business_mode`** (5.8.0, tab **Entorno**): enum `erp_pos` (default, backward-compat) | `zion_crm` | `both` | `none`. Gate vía filtro `armada_suite_feature_enabled`: `none|zion_crm` fuerzan `erp_sync` OFF (degradación limpia WP_Error, ApiClient intacto). En `Guard::blocked_subkeys` (solo humano en wp-admin). Test 36.
+- **`tenant.template_mode`** (5.9.0, tab **Negocio**, radios "Quién dibuja el sitio"): enum `plugin` (default) | `default` (theme del sitio intacto — router se aparta TOTALMENTE, solo shortcodes/funciones) | `elementor` (backward-compat intacto). Helper `erpc_theme_intact()` (elementor|default); `erpc_should_print_frame()` usa `!erpc_theme_intact()`. Nota: shortcodes en el CONTENIDO de páginas siguen rindiendo dentro del theme en modo default (comportamiento diseñado). Test 37.
+- Convivencia con plugin ZionV CRM verificada sin conflictos duros (assets/roles/REST/menús aislados; único cuidado: slugs `crm`/`reservar` vs mapa router). CONTRATO-COMPANION NO aplica a ZionV (es visual; ZionV es plugin peer funcional).
+- ZIPs: `armada-suite-5.8.0.zip` (sha256 `5fa5306b…`) y `armada-suite-5.9.0.zip` (2.602.429 B, sha256 `12307394…`, rollback N-1 5.8.0). Commits `1d0639b` + `6c2e028` + `93ab8bf` pushed.
+
 ### Admin uniforme + rebrand (Fase B, 2026-10-06)
 Las 6 superficies son familia ai1wm (verde #27ae60, radius 3px, bordes #dcdcde, español, cero marcas ajenas visibles, cero estilos inline). Congelado por regla: text-domains, slugs, option keys, REST `wpvibe/v1`, clases/funciones, cabeceras GPL.
 
@@ -158,7 +164,7 @@ curl -s -u "admin:<app-password>" \
 ## PRIMERA LECTURA (cierre maratón 2026-10-25)
 
 1. **Registro central del ecosistema**: `docs/ESTADO-ECOSISTEMA.md` (estado por cliente, versiones, matriz de intercambio, artefactos con sha) — leerlo al INICIAR y actualizarlo al CERRAR sesión.
-2. Regresión actual: 34/34 · versión vigente 5.5.10 · release-process en `docs/RELEASE-PROCESS.md`.
+2. Regresión actual: 37/37 · versión vigente 5.9.0 · release-process en `docs/RELEASE-PROCESS.md`.
 
 ## Upstream (2026-10-15)
 
