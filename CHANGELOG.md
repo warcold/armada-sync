@@ -1,5 +1,14 @@
 ## 2026-10-28
 
+### [23:30] - LIMPIEZA ZIP: Zion CRM 2.0.0-clean (cero referencias a negocios específicos)
+
+- **Tipo**: plugin | fix | limpieza
+- **Modificado**: `export/zion-crm-2.0.0-clean.zip` (10,052,868 B, sha256 `56768880...`) — eliminadas todas las referencias a `micaserogou`, `MaganTech` en comentarios/docs de: `pack.css`, `footer-shop.php`, `ApiClient.php`, `Shortcodes.php`, `TemplatePacks.php`, `connector.css`
+- **Afecta a**: kalimete (dev lab), preprod sitios WP
+- **Causa**: El ZIP original `zion-crm-2.0.0.zip` contenía referencias hardcodeadas a `micaserogou`/`MaganTech` en comentarios/docs — violaba el requisito de plugin genérico sin referencias a negocios específicos
+- **Estado**: ✅ verificado — `unzip -l` + `grep` confirman CERO referencias a `micaserogou`/`MaganTech`/`magan` en el ZIP limpio
+- **Notas**: (1) Referencias eliminadas de: `pack.css` (comentario verificación), `footer-shop.php` (ejemplo MaganTech), `ApiClient.php` (comentario flujo site-level), `Shortcodes.php` (contrato flujo), `TemplatePacks.php` (ejemplos MaganTech), `connector.css` (comentarios fix site-level). (2) ZIP limpio listo para deploy a CUALQUIER cliente sin contaminación de datos de referencia. (3) El plugin unificado `zion-crm` v2.0.0 es ahora 100% genérico.
+
 ### [23:00] - FUSIÓN COMPLETA: ZionV CRM + Armada Suite → Zion CRM 2.0.0 (plugin unificado)
 
 - **Tipo**: plugin | feature | arquitectura | fusión
