@@ -1,5 +1,14 @@
 ## 2026-10-28
 
+### [22:30] - Release 5.9.1: Endpoint REST de reservas (integración ZionV CRM → AS → ERP)
+
+- **Tipo**: plugin | feature | integración
+- **Modificado**: `includes/Rest/ReservationController.php` (nuevo, 308 líneas — endpoint `POST /wp-json/erpsuite/v1/reservations` que recibe reservas de ZionV CRM, normaliza campos, valida, sincroniza con ERP si `erp_sync=ON`, o guarda localmente con historial transient `erpsuite_reservations_history`) · `includes/AI/Bootstrap.php` (registro del endpoint en `rest_api_init`) · armada-suite.php + readme.txt bump 5.9.0→5.9.1
+- **Afecta a**: Kalimete (plugin AS); preprod sitios WP (MaganTech, Micaserogou)
+- **Causa**: Integración con ZionV CRM 1.57.0 — los formularios tipo `submission_type='reserva'` de Zion ahora crean reservas reales en el ERP a través de AS
+- **Estado**: ✅ verificado — php -l OK ×2; ZIP generado `armada-suite-5.9.1.zip` (2,606,540 B, sha256 `f348a752…`, 536 archivos, sin secrets); crecer ~4.1KB vs 5.9.0 consistente con los 2 archivos nuevos/modificados
+- **Notas**: (1) Endpoint protegido con rate_limit 3/5min por IP (mismo patrón que otros endpoints del plugin). (2) Normaliza ambos formatos: nativo del plugin (`cliente_nombre`, `fecha`, `hora`) Y formato de Zion (`guest_name`, `slot_start`, `guest_count`). (3) Si el ERP falla, la reserva se guarda local con `synced=0` para recovery — no se pierde la reserva. (4) Historial local en transient `erpsuite_reservations_history` (200 max, 1 semana expiry). (5) ZIP listo para deploy a preprod de MaganTech/Micaserogou y luego prod via ops API.
+
 ### [22:00] - Arquitectura de integración híbrida AS ↔ Zion CRM ↔ erpipos (ERP Dev + ZionV + AS)
 
 - **Tipo**: arquitectura | docs | integración
