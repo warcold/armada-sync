@@ -1,3 +1,14 @@
+## 2026-10-28
+
+### [21:30] - ZionV CRM fix configuración (fatal submit_button) + Armada Suite 5.8.0/5.9.0 selectores por tenant (integración ZionV)
+
+- **Tipo**: plugin | feature | fix | integración
+- **Modificado**: ZionV CRM `src/Core/CrmSettingsPage.php` (commit `3830088` + push GitHub `183fe6a..3830088` — fix fatal `submit_button()` en 7 tabs de `/crm/configuracion/` + cierre body/html; ZIP regenerado sha256 `4b056b58…`) · Armada Suite 5.8.0 (commit `1d0639b`: `tenant.business_mode` none|zion_crm|erp_pos|both, tab Entorno, gate erp_sync vía filtro, test 36, ZIP `5fa5306b…`) · Armada Suite 5.9.0 (commits `6c2e028`+`93ab8bf`: `tenant.template_mode` valor `default` — theme intacto, tab Negocio, helper `erpc_theme_intact`, test 37, ZIP `12307394…` 2.602.429 B) · docs agentes + harnesses de ambos (vivo_2026_10_28, .bkup-20261028)
+- **Afecta a**: kalimete (dev lab :8091/:8092/:8093/:8094); producción NO tocada
+- **Causa**: owner reportó errores en sección configuración de ZionV + pidió evaluar integración ZionV↔Armada Suite con selectores por tenant (template local vs default; CRM Zion vs ERP&POS vs ambos), sin "ERP LOCAL"
+- **Estado**: ✅ verificado — ZionV 7/7 tabs 200/0 errores + wp-admin OK + REST 10/10; Armada regresión 37/37 exit 0 + smoke (default: theme manda, frame 0, shortcodes rinden; none/zion_crm: degradación limpia WP_Error; erp_pos: recuperación OK); elementor backward-compat intacto; "ERP LOCAL" NEGATIVO en ambos plugins (grep definitivo); credenciales debug revocadas (0 app passwords, 0 sesiones)
+- **Notas**: (1) Convivencia ZionV↔Armada verificada sin conflictos duros — único cuidado: slugs `crm`/`reservar` vs mapa del router Armada. (2) CONTRATO-COMPANION no aplica a ZionV (es visual; ZionV = plugin peer funcional; contrato funcional nuevo a futuro si se integra data). (3) Vía de prueba en producción: preprod websites → ZIP → ventana manual (ops API NO instala plugins, deny-list por diseño). (4) WP_DEBUG quedó activo en stack zionv dev (recomendado mantener). (5) Lección e2e: cookie `secure_auth` vía nginx. (6) Pendiente owner: decidir bump de versión ZionV con el fix (regla del repo) y dónde vio "ERP LOCAL" (no está en ZionV).
+
 ## 2026-10-27
 
 ### [20:10] - ZionV CRM: validación full local+GitHub, ZIP 1.56.3 regenerado, push 3 commits, deriva controllers corregida

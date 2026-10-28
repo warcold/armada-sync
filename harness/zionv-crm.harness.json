@@ -1,6 +1,6 @@
 {
   "harness": "zionv-crm",
-  "updated": "2026-10-27",
+  "updated": "2026-10-28",
   "agent_file": "~/armada-sync/agents/zionv-crm.md",
   "mode": "subagent",
   "hidden": false,
@@ -129,5 +129,6 @@
       }
     ]
   },
-  "vivo_2026_10_27": "VALIDACION FULL (owner 2026-10-27): plugin OK — php -l 1437 archivos 0 errores; versiones coherentes 1.56.3 (header=readme=CHANGELOG=DB activo); DB 1.24.0, 43 tablas zion_crm_*; stack zionv-local+zionv-db Up 7d healthy, :8092->301 esperado, wp-json TLS 200; SPA dist Oct 13 marker __zionCfgUnified=1. GitHub: push 3 commits docs (5d3efab..183fe6a) — sync 100% local=origin/main. ZIP: export/zionv-crm-1.56.3.zip 7.2M/1932 archivos, unzip -t OK, sin secrets, sha256 bacba37b. DERIVA corregida: controllers 34->35 (conteo real grep class *Controller = 35, 123 rutas exactas). Agent doc + harness actualizados con .bkup-20261027-validacion."
+  "vivo_2026_10_27": "VALIDACION FULL (owner 2026-10-27): plugin OK — php -l 1437 archivos 0 errores; versiones coherentes 1.56.3 (header=readme=CHANGELOG=DB activo); DB 1.24.0, 43 tablas zion_crm_*; stack zionv-local+zionv-db Up 7d healthy, :8092->301 esperado, wp-json TLS 200; SPA dist Oct 13 marker __zionCfgUnified=1. GitHub: push 3 commits docs (5d3efab..183fe6a) — sync 100% local=origin/main. ZIP: export/zionv-crm-1.56.3.zip 7.2M/1932 archivos, unzip -t OK, sin secrets, sha256 bacba37b. DERIVA corregida: controllers 34->35 (conteo real grep class *Controller = 35, 123 rutas exactas). Agent doc + harness actualizados con .bkup-20261027-validacion.",
+  "vivo_2026_10_28": "FIX CONFIGURACION (owner 2026-10-28): causa raiz de los errores en /crm/configuracion/ = fatal submit_button() (funcion wp-admin no cargada en frontend via template_redirect; 13 llamadas en SystemStatusPage; HTML truncado en las 7 tabs). Fix commit 3830088: require condicional wp-admin/includes/template.php en CrmSettingsPage::render_crm_page() + cierre body/html. Verificado 7/7 tabs 200/0 errores + wp-admin OK + REST settings 10/10 + PUT 3/3 + wp_options sanas. Push a GitHub OK (183fe6a..3830088, sync). ZIP regenerado con fix: sha256 4b056b58 (7,569,192 B, 1932 archivos). Logging reparado: docker logs restaurado (recreate) + WP_DEBUG/WP_DEBUG_LOG activos en dev. Grep 'ERP LOCAL' NEGATIVO en todo el plugin. Credenciales debug revocadas (app passwords vacia, 4 session tokens destruidos, 0 sesiones). Leccion e2e: cookie secure_auth (wordpress_sec_<hash>) requerida via nginx."
 }
