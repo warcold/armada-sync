@@ -1,5 +1,14 @@
 ## 2026-10-28
 
+### [23:45] - PACKS COMPLETOS: tech + neutral añadidos a Zion CRM 2.0.0 + enqueue pack-styles
+
+- **Tipo**: plugin | feature | templates
+- **Modificado**: `templates/packs/tech/pack.css` (nuevo, 6.9 KB, overlay frío #2563eb), `templates/packs/neutral/pack.css` (nuevo, 6.9 KB, overlay neutro #475569), `src/Modules/ArmadaSuite/Core/TemplatePacks.php` (registra tech + neutral con colors/dir/url), `src/Modules/ArmadaSuite/Core/Main.php` (enqueue `erpc-pack-styles` condicional tras `erpc-styles`)
+- **Afecta a**: kalimete (dev lab), preprod sitios WP
+- **Causa**: Armada Templates agent detectó packs faltantes (tech, neutral) y enqueue `erpc-pack-styles` ausente — completados para que Zion CRM 2.0.0 tenga los 3 packs vendibles (default/tech, restaurant, neutral/servicios)
+- **Estado**: ✅ completado — ZIP limpio regenerado `zion-crm-2.0.0-clean.zip` (10,059,849 B, sha256 `a4762290…`, 2450 archivos, sin secrets, CERO referencias a negocios)
+- **Notas**: (1) Pack `tech` (overlay frío #2563eb) para tecnología/SaaS, `neutral` (overlay neutro #475569) para servicios profesionales, `restaurant` (overlay cálido #d64545) existente. (2) Cada pack registrado con `colors` (primary/secondary), `dir`, `url`, `hero`, `cta`, `vertical`. (3) `Main.php` encola `erpc-pack-styles` condicional tras `erpc-styles` si pack activo ≠ default. (4) ZIP limpio verificado: CERO referencias a `micaserogou`/`MaganTech`/`magan`.
+
 ### [23:30] - LIMPIEZA ZIP: Zion CRM 2.0.0-clean (cero referencias a negocios específicos)
 
 - **Tipo**: plugin | fix | limpieza
