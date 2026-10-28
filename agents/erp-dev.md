@@ -21,6 +21,251 @@ Gestión del preprod dockerizado de erpipo en kalimete. Stack standalone local, 
 
 **Modelo de ownership (owner, 2026-10-05; workflow definitivo 2026-10-18)**: el upstream es de **Juan Carlos** (`soycarlosjerez-hub/sistema-facturacion`, GitHub). **Tenemos acceso al repo**: `dev/ecomm-erp` es **nuestra rama de trabajo** — ahí hacemos los updates y todo lo que el plugin **Armada Suite** necesita para funcionar correctamente (push a ESA rama = flujo normal, autorización permanente del owner 2026-10-18). **Juan Carlos mergea `dev/ecomm-erp` → `main` y pasa a producción — NUNCA nosotros** (ERP prod intocable desde kalimete). `main`/`develop` read-only.
 
+## Nueva Arquitectura: ZionV CRM Core + ZionV Commerce (2026-10-28)
+
+### Separación de responsabilidades
+
+| Componente | Tipo | Usa ERP | business_mode | Pack default |
+|---|---|---|---|---|
+| **ZionV CRM Core** | Plugin independiente | **NO** | `zion_crm` / `none` | `neutral` |
+| **ZionV Commerce** | Plugin dependiente (requiere CRM Core) | **SÍ** | `ecommerce` | `commerce` |
+
+### Tenants atendidos por ERP Dev
+
+| Tenant | Negocio | business_mode | ERP activo |
+|---|---|---|---|
+| **10** | MaganTech | `ecommerce` | ✅ Sí |
+| **3** | Micaserogou | `ecommerce` | ✅ Sí |
+
+> **Regla**: ZionV CRM Core (business_mode = `zion_crm`/`none`) **nunca** consume endpoints ERP. Solo ZionV Commerce (`business_mode = ecommerce`) integra con ERP.
+
+## Endpoints ERP para ZionV Commerce (v2026-10-28)
+
+### Catálogo público (store-key: `Authorization: Bearer iak_*`)
+
+| Endpoint | Método | Descripción | Auth |
+|---|---|---|---|
+| `/api/tienda/productos` | GET | Listado paginado de productos | `iak_*` (store-key) |
+| `/api/tienda/categorias` | GET | Categorías activas del tenant | `iak_*` (store-key) |
+| `/api/tienda/inventario` | GET | Stock por producto/almacén | `iak_*` (store-key) |
+| `/api/tienda/kardex/{id}` | GET | Movimientos de stock de un producto | `iak_*` (store-key) |
+| `/api/tienda/config` | GET | Configuración de la tienda (brand, aliases, warnings) | `iak_*` o `?api_key=` |
+| `/api/tienda/inventario/ajuste` | POST | Ajuste de inventario (admin) | `iak_*` (store-key) |
+
+### Ecomm Storefront (client-token: `Authorization: Bearer <client_token>`)
+
+| Endpoint | Método | Descripción | Auth |
+|---|---|---|---|
+| `/api/ecomm/register` | POST | Registro de cliente (resuelve tenant por iak) | `iak_*` |
+| `/api/ecomm/login` | POST | Login cliente → devuelve `client_token` | `iak_*` |
+| `/api/ecomm/logout` | POST | Cierre de sesión | `client_token` |
+| `/api/ecomm/me` | GET | Perfil del cliente autenticado | `client_token` |
+| `/api/ecomm/carts` | POST | Crear carrito | `client_token` |
+| `/api/ecomm/carts/{id}` | GET | Ver carrito | `client_token` |
+| `/api/ecomm/carts/{id}/items` | POST/GET/DELETE | Gestión items del carrito | `client_token` |
+| `/api/ecomm/carts/{cartId}/checkout` | POST | Checkout autenticado | `client_token` |
+| `/api/ecomm/checkout/guest` | POST | Checkout invitado (sin login) | `iak_*` |
+| `/api/ecomm/orders` | GET | Listado pedidos del cliente (`?customer_id=`) | `client_token` |
+| `/api/ecomm/orders/{id}` | GET | Detalle pedido individual (scoping auth.cliente) | `client_token` |
+| `/api/ecomm/orders/{id}/cancel` | PATCH | Cancelar pedido (G1, Fase 3) | `client_token` |
+| `/api/ecomm/promociones/validar` | POST | Validar código promo (requiere `codigo`+`cart_id`+`subtotal`) | `client_token` |
+
+### Webhooks Management (admin: `Authorization: Bearer iak_*`)
+
+| Endpoint | Método | Descripción |
+|---|---|---|
+| `/api/webhook-endpoints` | GET/POST | Listar/crear endpoints de webhook |
+| `/api/webhook-endpoints/{id}` | GET/PATCH/DELETE | CRUD individual |
+| `/api/webhook-endpoints/{id}/test` | POST | Test de entrega |
+| `webhooks:retry-failed` | Artisan CLI | Reintentar entregas fallidas (G4, Fase 3) |
+
+### Health & Diagnostics
+
+| Endpoint | Método | Descripción |
+|---|---|---|
+| `/up` | GET | Health check JSON `{status, database, redis, timestamp}` (200/503) |
+
+---
+
+## Guía de Integración: ZionV Commerce → ERP
+
+### 1. Autenticación
+
+#### InstanceApiKey (store-key) — para catálogo público y operaciones admin
+```bash
+# Header
+Authorization: Bearer iak_<hash>
+
+# Uso: /api/tienda/*, /api/ecomm/tienda/config, /api/webhook-endpoints/*
+# El tenant se deriva AUTOMÁTICAMENTE de la iak (tabla instance_api_keys)
+# NUNCA enviar tenant_id en body/query — anti-IDOR
+```
+
+#### ClientApiToken (client-token) — para operaciones personales del cliente
+```bash
+# Flujo:
+# 1. POST /api/ecomm/login con iak_* → devuelve { token: "cat_...", expires_in: 3600 }
+# 2. Usar token en header para endpoints personales
+Authorization: Bearer cat_<token>
+
+# Uso: /api/ecomm/me, /api/ecomm/carts/*, /api/ecomm/orders/*, /api/ecomm/checkout/*
+```
+
+> **Regla crítica**: El tenant **nunca** va en el body. Se deriva de la iak (store-key) o del client_token (per-cliente). Enviar `tenant_id` en body = 422/403.
+
+### 2. Flujo típico ZionV Commerce
+
+```mermaid
+sequenceDiagram
+    participant WP as WordPress + ZionV Commerce
+    participant ERP as ERP (erp.kalimete.local)
+    
+    WP->>ERP: GET /api/tienda/config (iak_*)
+    ERP-->>WP: { brand, aliases, warnings[], X-ERP-Tenant }
+    
+    WP->>ERP: GET /api/tienda/productos (iak_*)
+    ERP-->>WP: { productos: [...], meta: { total: N } }
+    
+    WP->>ERP: GET /api/tienda/categorias (iak_*)
+    ERP-->>WP: { categorias: [...] }
+    
+    WP->>ERP: GET /api/tienda/inventario (iak_*)
+    ERP-->>WP: { inventario: [{ producto_id, stock, almacen_id }] }
+    
+    # Cliente navega, agrega al carrito
+    WP->>ERP: POST /api/ecomm/carts (client_token)
+    ERP-->>WP: { cart_id, items: [] }
+    
+    WP->>ERP: POST /api/ecomm/carts/{id}/items (client_token)
+    ERP-->>WP: { item_id, producto_id, cantidad, precio }
+    
+    # Checkout guest (sin login)
+    WP->>ERP: POST /api/ecomm/checkout/guest (iak_*)
+    Note right of WP: { cart_id, delivery_type, address?, branch_id?, pickup_time?, pickup_contact?, customer: {name,email,phone}, payment_method }
+    ERP-->>WP: 200 { venta_id, estado: "PENDIENTE" }
+    Note right of ERP: Dispara webhook order.created → WP
+    
+    # O checkout autenticado
+    WP->>ERP: POST /api/ecomm/carts/{cartId}/checkout (client_token)
+    ERP-->>WP: 200 { venta_id }
+```
+
+### 3. Payloads Canónicos (NO inventar campos)
+
+```jsonc
+// CARRITO — POST /api/ecomm/carts → 201
+// tenant NUNCA en body; deriva de la iak/client_token
+{ "type": "REC", "order_type": "pickup", "items": [ {"producto_id": 323, "cantidad": 1} ] }
+
+// CHECKOUT GUEST — POST /api/ecomm/checkout/guest → 200 (NO 201)
+// delivery:
+{ "cart_id": 70, "delivery_type": "delivery", "address": "…", "city": "…",
+  "notes": "…", "payment_method": "efectivo",
+  "customer": {"name": "…", "email": "…", "phone": "…"} }
+// pickup (requiere sucursal ACTIVA del tenant):
+{ "cart_id": 70, "delivery_type": "pickup", "branch_id": 6,
+  "pickup_time": "Y-m-d H:i", "pickup_contact": "…",
+  "customer": {"name": "…", "email": "…", "phone": "…"} }
+
+// RESERVA — POST /api/reservations → 201
+{ "mesa_id": 20, "fecha_hora": "Y-m-d H:i:s", "personas": 2,
+  "cliente_nombre": "…", "cliente_telefono": "…", "cliente_email": "…",
+  "estado": "pendiente", "notas": "" }
+```
+
+### 4. Webhooks ERP → WP (ZionV Commerce)
+
+#### Configuración en ERP (una vez por tenant)
+```sql
+-- Tabla: webhook_endpoints
+INSERT INTO webhook_endpoints (instance_id, url, events, secret, active) VALUES
+(10, 'https://maganTech.com/wp-json/zionv-commerce/v1/webhook/erp',
+ '["order.created","stock.updated","price.updated"]',
+ '<secret_compartido>', 1);
+```
+
+#### Eventos disparados
+
+| Evento | Cuándo | Payload clave |
+|---|---|---|
+| `order.created` | Checkout guest/auth exitoso | `venta_id`, `cliente_id`, `items[]`, `total`, `delivery_type` |
+| `stock.updated` | Venta confirmada + ajuste inventario | `producto_id`, `stock_nuevo`, `almacen_id`, `tipo_movimiento` |
+| `price.updated` | Admin actualiza precio en ERP | `producto_id`, `precio_nuevo`, `precio_anterior`, `moneda` |
+
+#### Formato de entrega (HMAC-SHA256)
+```http
+POST /wp-json/zionv-commerce/v1/webhook/erp
+X-Webhook-Event: order.created
+X-Webhook-Delivery: <uuid>
+X-Webhook-Timestamp: <unix_ts>
+X-Webhook-Signature: sha256=<hmac(secret, payload)>
+Content-Type: application/json
+
+{ "event": "order.created", "data": { ... }, "tenant_id": 10 }
+```
+
+#### Validación en WP (ZionV Commerce)
+```php
+// En el handler del webhook
+$signature = $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'] ?? '';
+$payload = file_get_contents('php://input');
+$expected = 'sha256=' . hash_hmac('sha256', $payload, $secret);
+if (!hash_equals($expected, $signature)) {
+    wp_die('Invalid signature', 401);
+}
+// Procesar evento...
+```
+
+#### Retries automáticos (ERP side)
+- Backoff: 30s → 60s → 120s → 300s (máx 4 reintentos)
+- Job: `WebhookDeliveryJob` en cola `webhooks`
+- Comando manual: `php artisan webhooks:retry-failed`
+
+### 5. Delta-Sync (no hay `?since=` nativo)
+
+> **Limitación**: ERP **no expone** parámetro `?since=` ni `?updated_at=` en endpoints de catálogo.
+
+#### Estrategia client-side (ZionV Commerce)
+
+```php
+// 1. Obtener catálogo completo (paginado)
+$productos = [];
+$page = 1;
+do {
+    $resp = $http->get('/api/tienda/productos', ['page' => $page, 'per_page' => 100]);
+    $productos = array_merge($productos, $resp['productos']);
+    $page++;
+} while (!empty($resp['productos']));
+
+// 2. Filtrar localmente por updated_at
+$ultimoSync = get_option('zionv_last_erp_sync', 0);
+$nuevos = array_filter($productos, fn($p) => strtotime($p['updated_at']) > $ultimoSync);
+
+// 3. Actualizar solo los cambiados
+foreach ($nuevos as $p) {
+    update_product_from_erp($p);
+}
+update_option('zionv_last_erp_sync', time());
+```
+
+#### Frecuencia recomendada
+- **Catálogo completo**: cada 15-30 min (cron WP)
+- **Stock (inventario)**: cada 5 min (más crítico)
+- **Webhooks**: tiempo real (order.created, stock.updated, price.updated)
+
+#### Cache TTL en WP
+```php
+// Transient para catálogo (evita hammer al ERP)
+$cacheKey = "zionv_erp_catalog_{$tenant_id}";
+$catalog = get_transient($cacheKey);
+if (!$catalog) {
+    $catalog = fetch_full_catalog_from_erp();
+    set_transient($cacheKey, $catalog, 900); // 15 min
+}
+```
+
+---
+
 ## Acceso
 
 - **URL**: `https://erp.kalimete.local` (nginx TLS local, `-k` o CA mkcert)
