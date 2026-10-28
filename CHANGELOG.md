@@ -1,5 +1,22 @@
 ## 2026-10-28
 
+### [22:00] - Arquitectura de integración híbrida AS ↔ Zion CRM ↔ erpipos (ERP Dev + ZionV + AS)
+
+- **Tipo**: arquitectura | docs | integración
+- **Modificado**: docs/ARQUITECTURA-INTEGRACION-HIBRIDA.md en micaserogou AS (2732 líneas, secciones 1-13 + 3 appendices) · docs/ARQUITECTURA-INTEGRACION-HIBRIDA.md en erpipo-preprod (891 líneas, API Changes para el ERP)
+- **Afecta a**: kalimete (dev lab), ERP erpipos (:8100), ambos plugins (AS + ZionV)
+- **Causa**: owner pidió analizar cómo fusionar AS y ZionV CRM manteniendo la flexibilidad de activar/desactivar el ERP sin perder datos ni funcionalidad; validar que ZionV no tiene inventario (no lo tiene); definir qué módulos se sincronizan y cómo
+- **Estado**: ✅ documentado — 3 agentes delegados (Armada Suite, ZionV CRM, ERP Dev), documentación completa
+- **Notas**:
+  1. **Hallazgo crítico**: el auto-sync actual de AS SOLO sincroniza config del negocio (brand, contacto, payment_methods). NO sincroniza productos, clientes ni órdenes. El sistema es 100% on-demand API: catálogo desaparece si `erp_sync=OFF`.
+  2. **ZionV no tiene módulo de inventario ni ventas de productos** — solo Leads, Pipeline, Contactos, Servicios, Bookings, Forms, AI, Reportes. El inventario es exclusividad de AS/ERP.
+  3. **Fuente de Verdad por entidad**: Productos=ERP (pull), Contactos=Híbrido (push), Órdenes=ERP (push WP→ERP), Reservas=ERP (push), Forms=WP (local siempre).
+  4. **Zion-UI necesita 5 componentes React**: ProductCatalogPanel, StockDashboard, SalesHistoryPanel, ServiceProductLinker, QuotationBuilder (mixto servicios+productos).
+  5. **ERP Dev requiere 5 nuevos endpoints delta-sync + 1 webhook** (`POST /api/ecomm/webhook/wp`). El ERP ya tiene `updated_at` en productos → suficiente para delta-sync.
+  6. **3 cambios mínimos en BD del ERP**: `ventas.external_order_id` (idempotencia), `productos.ecom_visible` (visibilidad), `ecomm_sync_log` (opcional debug).
+  7. **5 fases de implementación**: (1) Tablas réplica + ErpSync_Manager, (2) Delta-sync + push + conflictos, (3) Cambios ERP (Juan Carlos `dev/ecomm-erp`), (4) UI/UX en Zion (dashboard sync), (5) Migración + rollback.
+  8. Ambos documentos se guardarán en los repos correspondientes para mantener contexto técnico (evitar pérdida por compresión de historial).
+
 ### [21:30] - ZionV CRM fix configuración (fatal submit_button) + Armada Suite 5.8.0/5.9.0 selectores por tenant (integración ZionV)
 
 - **Tipo**: plugin | feature | fix | integración
