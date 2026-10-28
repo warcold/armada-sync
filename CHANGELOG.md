@@ -1,5 +1,14 @@
 ## 2026-10-28
 
+### [22:40] - Ecco Suit: deploy CSP-nonce a producción VPS (612ea50)
+
+- **Tipo**: deploy | seguridad | infra
+- **Modificado**: VPS ecco (62.171.144.58) `/opt/eccoqualita/eccosuit/` — rsync repo `feature/csp-nonce` @ `612ea50` (= origin/develop) con patrón documentado + `--exclude='*.bkup*'` (protege `docker-compose.yml.bkup-repo-20261019` del `--delete`) · rebuild imagen `eccosuit-app` (`b872ba11d879`) + `up -d app` · `agents/ecco-suit.md` (Historia + Upstream)
+- **Afecta a**: https://suite.eccoqualita.com (producción EccoSuite)
+- **Causa**: la VPS corría código pre-CSP-nonce; el audit de la sesión previa validó el diff (proxy.ts, security-headers.ts, módulo ISO eliminado, renovaciones visuales, nuevos tests) y quedó el deploy pendiente
+- **Estado**: ✅ verificado — health `{"status":"ok","app":"up","database":"up"}`; contenedor corre la imagen nueva (`docker inspect` = `b872ba11d879`); logs limpios (Next.js 16.4.3 Ready, sin errores); CSP en vivo: `script-src 'self' 'nonce-…' 'strict-dynamic'` — nonce presente y SIN `unsafe-inline` en script-src (queda solo en `style-src`, esperado); sin deps nuevas ni migraciones (25/25 ya aplicadas)
+- **Notas**: (1) Lección de operación: `docker compose build 2>&1 | tail` retiene el canal ssh abierto tras terminar (pipe sin EOF) → el wrapper local vio timeout a 15 min aunque el build+up remoto SÍ completó (~9 min); verificar siempre estado real (`docker images`/`docker ps`) antes de reintentar. (2) Para builds largos usar `nohup … > log 2>&1 &` + polling. (3) rsync: ~110 archivos actualizados + rutas del módulo ISO eliminadas; `.env*`, `docker-compose.yml` y `.bkup*` intactos.
+
 ### [22:30] - Release 5.9.1: Endpoint REST de reservas (integración ZionV CRM → AS → ERP)
 
 - **Tipo**: plugin | feature | integración

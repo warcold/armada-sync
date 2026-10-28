@@ -108,6 +108,7 @@ rsync -az \
   --exclude=/test-results --exclude=/playwright-report \
   --exclude=/.next-e2e --exclude=/.next-e2e-prod \
   --exclude=/docker-compose.yml \
+  --exclude='*.bkup*' \
   -e ssh \
   ~/dev/eccoqualita/EccoSuit-develop/ ecco:/opt/eccoqualita/eccosuit/
 ```
@@ -115,6 +116,7 @@ rsync -az \
 **LECCIONES (2026-10-19, pagadas con dos builds fallidos)**:
 1. `--exclude storage` (sin `/` inicial) matchea CUALQUIER directorio llamado storage — borró `src/platform/storage/` y el build murió con `Module not found`. Siempre anclar: `/storage`.
 2. Sin `--exclude=/docker-compose.yml` el rsync **sobrescribe el compose de producción** con el del repo (que exige `POSTGRES_ADMIN_PASSWORD` por interpolación y publica puertos). El compose de producción vive SOLO en la VPS; el del repo es dev.
+3. (2026-10-28) Con `--delete`, añadir SIEMPRE `--exclude='*.bkup*'` — sin él borraría `docker-compose.yml.bkup-repo-20261019` de la VPS.
 
 ## Ops kit (scripts de operación — NO del repo upstream)
 
@@ -166,6 +168,7 @@ docker compose --profile tools run --rm \
 
 ## Historia
 
+- **2026-10-28**: deploy CSP-nonce a producción — rsync `feature/csp-nonce` @ `612ea50` (= origin/develop) con `--exclude='*.bkup*'` + rebuild (`b872ba11d879`) + `up -d app`. Verificado: health OK, logs limpios (Next.js 16.4.3), CSP en vivo con `nonce-` en script-src y SIN `unsafe-inline` en script-src. Sin deps/migraciones nuevas. **Lección**: `docker compose build 2>&1 | tail` retiene el canal ssh abierto (pipe sin EOF) → timeout local falso a 15 min aunque el build remoto (~9 min) SÍ completó; verificar estado real (`docker images`/`docker ps`) antes de reintentar; para builds largos, `nohup … > log 2>&1 &` + polling.
 - **2026-10-20**: superadmin definitivo `v.tapia@eccoqualita.com` (orden del owner, clave elegida por él) — verificado signInEmail; placeholder `admin@eccoqualita.com` eliminado (cascade) + fichero de credenciales borrado. Nuevo script ops `prod-remove-user.ts` (guard último-admin).
 - **2026-10-19**: despliegue completo end-to-end (Docker 29.9.1 + swap 2G + postgres 18 + bootstrap roles + 22 migraciones/57 tablas + app + Caddy TLS + UFW/fail2ban + llave SSH). Health OK en https://suite.eccoqualita.com. **Cierre same-day**: primer admin creado+verificado (signInEmail), backups cron + restore-test, health monitor, password SSH desactivado (lección: cloud-init drop-in ganaba por orden; lección 2: tests de password con ssh-agent activo dan falsos positivos — usar `PubkeyAuthentication=no`).
 
@@ -179,7 +182,7 @@ docker compose --profile tools run --rm \
 ## Upstream (2026-10-22)
 
 - **Fuente**: repo `VincentEQ/EccoSuit` (copia local `~/dev/eccoqualita/EccoSuit-develop/`); infra propia (compose + Caddy + ops kit `~/dev/eccoqualita/ops/`).
-- **Vivo**: despliegue validado end-to-end 2026-10-19/20 (health OK, backups cron + restore-test 57 tablas, superadmin verificado, password SSH desactivado).
+- **Vivo**: despliegue validado end-to-end 2026-10-19/20 (health OK, backups cron + restore-test 57 tablas, superadmin verificado, password SSH desactivado). **2026-10-28: VPS AL DÍA** con `origin/develop` @ `612ea50` (CSP-nonce en producción, imagen `b872ba11d879`).
 - **Check**: `ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'` + `curl -s https://suite.eccoqualita.com/api/health`.
 - **Regla**: LIVE manda; el código es de VincentEQ — kalimete solo despliega/opera, no desarrolla upstream.
 
