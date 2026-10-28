@@ -1,6 +1,6 @@
 {
   "harness": "zionv-crm",
-  "updated": "2026-10-17",
+  "updated": "2026-10-27",
   "agent_file": "~/armada-sync/agents/zionv-crm.md",
   "mode": "subagent",
   "hidden": false,
@@ -128,5 +128,6 @@
         "contenido_clave": "ZionV CRM (CRM profesional con React/Vite)"
       }
     ]
-  }
+  },
+  "vivo_2026_10_27": "VALIDACION FULL (owner 2026-10-27): plugin OK — php -l 1437 archivos 0 errores; versiones coherentes 1.56.3 (header=readme=CHANGELOG=DB activo); DB 1.24.0, 43 tablas zion_crm_*; stack zionv-local+zionv-db Up 7d healthy, :8092->301 esperado, wp-json TLS 200; SPA dist Oct 13 marker __zionCfgUnified=1. GitHub: push 3 commits docs (5d3efab..183fe6a) — sync 100% local=origin/main. ZIP: export/zionv-crm-1.56.3.zip 7.2M/1932 archivos, unzip -t OK, sin secrets, sha256 bacba37b. DERIVA corregida: controllers 34->35 (conteo real grep class *Controller = 35, 123 rutas exactas). Agent doc + harness actualizados con .bkup-20261027-validacion."
 }

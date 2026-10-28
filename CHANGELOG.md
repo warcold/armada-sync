@@ -1,5 +1,14 @@
 ## 2026-10-27
 
+### [20:10] - ZionV CRM: validación full local+GitHub, ZIP 1.56.3 regenerado, push 3 commits, deriva controllers corregida
+
+- **Tipo**: plugin | validación | docs
+- **Modificado**: repo plugin `~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin` (push `5d3efab..183fe6a` — 3 commits docs: dominio MaganTech, .gitignore *.bkup*, rutas reorg) · `export/zionv-crm-1.56.3.zip` regenerado (7.568.991 B, 1932 archivos, sha256 `bacba37b…a9d74`, unzip -t OK, sin secrets) · `agents/zionv-crm.md` (controllers 34→35, conteo real) + `harness/zionv-crm.harness.json` (vivo_2026_10_27) con `.bkup-20261027-validacion`
+- **Afecta a**: kalimete (plugin ZionV CRM); GitHub warcold/zionv-crm ahora sync 100%
+- **Causa**: owner pidió validar plugin local+GitHub, crear ZIP de instalación y evaluar agente/harness
+- **Estado**: ✅ verificado — php -l 1437/1437 OK; versiones coherentes 1.56.3 (header=readme=CHANGELOG=DB); DB 1.24.0 con 43 tablas; stack zionv-local+zionv-db Up 7d healthy; wp-json TLS 200; SPA dist marker __zionCfgUnified=1; git status limpio y local=origin/main tras push
+- **Notas**: (1) Deriva doc detectada y corregida: doc decía "34 controllers", conteo real grep = 35 (123 rutas REST exactas ✓). (2) ZIP usa convención canónica del repo (raíz `zionv-crm-plugin/`, header es lo que importa para WP). (3) 6 archivos .bkup de docs en el repo quedan ignorados por git — limpieza opcional pendiente decisión owner. (4) Repo GitHub es privado (API 404 sin auth, fetch SSH OK).
+
 ### [19:45] - Micaserogou: mejoras de negocio #2/#4/#5 implementadas + ZIP consolidado site-fixes-1.0.4 (ejecución directa por fallo de delegación)
 
 - **Tipo**: servicio | feature | seo | artefacto

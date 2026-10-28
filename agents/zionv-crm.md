@@ -1,6 +1,6 @@
 ---
 name: ZionV CRM
-description: Subagente para desarrollo y mantenimiento del plugin ZionV CRM (CRM profesional independiente con SPA React/Vite, 34+ REST controllers, pipeline de ventas, Google/MS365/Nextcloud Calendar, HubSpot, IA OpenAI-compat, automatizaciones y formularios). Usado cuando kalimete delega trabajo sobre este plugin separado del stack Armada Suite.
+description: Subagente para desarrollo y mantenimiento del plugin ZionV CRM (CRM profesional independiente con SPA React/Vite, 35 REST controllers, pipeline de ventas, Google/MS365/Nextcloud Calendar, HubSpot, IA OpenAI-compat, automatizaciones y formularios). Usado cuando kalimete delega trabajo sobre este plugin separado del stack Armada Suite.
 mode: subagent
 hidden: false
 color: "#7b68ee"
@@ -17,7 +17,7 @@ permission:
 
 ## Visión General
 
-**ZionV CRM** gestiona el stack Docker independiente de ZionV CRM (plugin CRM profesional con admin SPA React/Vite, 34+ REST controllers / 123 rutas, pipeline Kanban, reservaciones tipo Calendly, formularios con lógica condicional, automatizaciones con Action Scheduler, SMTP con cola,Talleres, reportes CSV/Excel/PDF, auditoría, papelera y privacidad WP). Stack completamente aislado del WordPress de Armada Suite.
+**ZionV CRM** gestiona el stack Docker independiente de ZionV CRM (plugin CRM profesional con admin SPA React/Vite, 35 REST controllers / 123 rutas, pipeline Kanban, reservaciones tipo Calendly, formularios con lógica condicional, automatizaciones con Action Scheduler, SMTP con cola,Talleres, reportes CSV/Excel/PDF, auditoría, papelera y privacidad WP). Stack completamente aislado del WordPress de Armada Suite.
 
 ## Infraestructura
 
@@ -41,7 +41,7 @@ kalimete (https://zionv.kalimete.local / localhost:8092)
 - **Path**: `~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/` (repo git propio → **GitHub privado `warcold/zionv-crm`**, rama main)
 - **Version**: 1.56.3 (cod), DB 1.24.0 (24 migraciones auto-ascendentes)
 - **Requisitos**: WordPress 6.4+, PHP 8.1+, **permalinks PRETTY obligatorios** (`/%postname%/`) — la SPA vive en `/crm/` y las reservaciones en `/reservar/` vía rewrite rules; desde 1.54.0 el Activator los auto-activa si el sitio no tiene estructura (bug real 2026-10-13, resuelto)
-- **Backend PHP (source COMPLETO)**: `src/` (~1.5M) — `Plugin.php` (service locator, 34 controllers), `Core/` (AppShell, Rewrite, Assets por manifest Vite, Settings, Roles/Capabilities, Encryption, Logger, AuditLogger, Privacy, MigrationRunner 24 versiones), `Modules/` (27 módulos, incl. `Antispam` e `Integrations/Elementor`), `Queue/` (Action Scheduler), `Rest/` (Account, Me). Sanitización por capa de Service (`sanitize_*` + `$wpdb->prepare()` + whitelist `orderby` + `Pagination::args(max 100)`); `permission_callback` en el 100% de rutas (públicas solo con nonce propio + RateLimiter + tokens hex).
+- **Backend PHP (source COMPLETO)**: `src/` (~1.5M) — `Plugin.php` (service locator, 35 controllers), `Core/` (AppShell, Rewrite, Assets por manifest Vite, Settings, Roles/Capabilities, Encryption, Logger, AuditLogger, Privacy, MigrationRunner 24 versiones), `Modules/` (27 módulos, incl. `Antispam` e `Integrations/Elementor`), `Queue/` (Action Scheduler), `Rest/` (Account, Me). Sanitización por capa de Service (`sanitize_*` + `$wpdb->prepare()` + whitelist `orderby` + `Pagination::args(max 100)`); `permission_callback` en el 100% de rutas (públicas solo con nonce propio + RateLimiter + tokens hex).
 - **Frontend (SOLO compilado, SIN source)**: React + Vite — únicamente `assets/dist/` (admin 874K + public-booking + public-form). No existe `*.tsx/*.ts`, `vite.config.*` ni `package.json` del frontend en ningún disco, ZIP ni historial git (verificado exhaustivo 2026-10-15). Los manifests `.vite/manifest.json` citan `src/booking/main.ts` y `src/form/main.ts` huérfanos; `admin/index.html` conserva fósiles `jo-crm-root`/`JoCrmConfig`/`localhost:8888` (el bundle live ya usa `zion-crm-root`/`ZionCrmConfig`). **Regla: `dist/` es artefacto — nunca editar a mano; todo cambio visual pasa por rebuild del futuro `admin-app/` o por `tools/patch-config-route.sh` (idempotente + `.orig`) como única vía temporal.**
 - **Composer deps**: `dompdf/dompdf`, `phpoffice/phpspreadsheet`, `woocommerce/action-scheduler` (vendor/ incluido en git para deploy directo)
 - **Integraciones** (todas configurables desde `/crm/configuracion/` —página unificada PHP desde 1.56.0— y diagnóstico en wp-admin → Zion CRM → Estado del sistema):
@@ -54,7 +54,7 @@ kalimete (https://zionv.kalimete.local / localhost:8092)
   - **Selector de calendario** (1.55.0: `calendar_provider` all|google|ms365|nextcloud|none — el admin elige con cuál/cuáles sincronizar)
 - **Artefactos**: ZIP de producción en `~/dev/wordpress/plugins/zionv-crm/export/` (`zionv-crm-1.56.3.zip`, 7.3M, sha256 `e0b730d8…`, sin secrets ni `.bkup`); procedimiento remoto en `DEPLOY-GUIA.md` del repo (versión actual, 43 tablas, nota del parche, matiz `delete_data_on_uninstall=false` por defecto)
 
-### Módulos del plugin (34+ controllers / 123 rutas REST)
+### Módulos del plugin (35 controllers / 123 rutas REST)
 | Módulo | Funcionalidad |
 |--------|---------------|
 | Contacts / Companies | CRM: contactos, empresas, relaciones, sedes, deduplicación, Lead→Contacto |

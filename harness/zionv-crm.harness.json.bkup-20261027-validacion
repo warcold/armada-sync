@@ -1,0 +1,132 @@
+{
+  "harness": "zionv-crm",
+  "updated": "2026-10-17",
+  "agent_file": "~/armada-sync/agents/zionv-crm.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "ZionV CRM dev (kalimete) — stack WP 6.7-php8.3-apache + plugin ZionV CRM 1.56.3 (CRM independiente: backend PHP completo + SPA React solo-dist, 34+ REST controllers/123 rutas, Google/MS365/Nextcloud Calendar, HubSpot, IA OpenAI-compat, automatizaciones), completamente aislado de Armada Suite (8091)",
+  "vivo_2026_10_15": "zionv-local Up 29h healthy + zionv-db Up 34h healthy; plugin 1.56.3 activo (bind-mount, php -l OK; welcome notice → /crm/configuracion/ verificado con wp eval); DB 1.24.0; 43 tablas zionv_zion_crm_*; permalinks pretty; 302 /crm/dashboard/ sin sesión; bundle parcheado (marker __zionCfgUnified + .orig); config unificada /crm/configuracion/ con sidebar PHP (9 secciones/26 items) + 6 tabs; Estado del sistema 5 tabs; IA Victoria PUBLIC (212ms, Qwen3.6) + ai_prompt e2e OK; GitHub warcold/zionv-crm @5d3efab; ZIP export/zionv-crm-1.56.3.zip (7.3M, sha256 e0b730d8, sin secrets ni .bkup)",
+  "vivo_2026_10_16": "stack movio de ~/dev/zionv-crm/ a ~/dev/wordpress/zionv-crm/ (compose name: zionv-crm pinned, vols zionv-crm_* intactos, .gitignore dotfile recuperado); subrepo plugin intacto (origin warcold/zionv-crm, HEAD 1.56.3, status limpio); smoke 8092 100% verde: front 301, wp-login 302, REST 200, /crm/dashboard/ 302, pretty ON, 43 tablas, db_version 1.24.0",
+  "vivo_2026_10_17": "HUB REORG (owner 2026-10-17): stack movido de ~/dev/wordpress/zionv-crm/ a ~/dev/wordpress/plugins/zionv-crm/ (dump pre-move 967K; down/mv/up limpio; vols zionv-crm_* sin huérfanos; git del plugin HEAD 5d3efab intacto, cero commits; smoke-8092 100% verde tras actualizar su ruta; docs internos README+DEPLOY-GUIA corregidos con .bkup). NOCHE validación: dominio e2e — root 200, /crm/dashboard/ 302 anon, login SPA 200 (zion-crm-root+ZionCrmConfig en HTML), /crm/configuracion/ 200 unificada, wp-json TLS 200; nginx deployed == proyecto (diff vacío); cert mkcert vigente hasta 2029-01-13; /etc/hosts dedup (1 línea zionv); HEAD real a1288fe (release 1.56.3=5d3efab) ahead 1 de origin/main sin push; secrets/ no existe; .gitignore plugin ahora *.bkup*",
+  "live_check": "docker ps --filter name=zionv",
+  "checks": [
+    "curl -sk -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/crm/dashboard/  (302 sin sesión = correcto; :8092 plano da 301 host-mismatch, no es canónico)",
+    "diff /etc/nginx/sites-available/zionv.kalimete.local ~/dev/wordpress/plugins/zionv-crm/zionv.kalimete.local.conf  (idénticos = deploy al día)",
+    "curl -skI https://zionv.kalimete.local  (200; nginx host → 127.0.0.1:8092, cert mkcert expira 2029-01-13)",
+    "docker exec zionv-local wp plugin list --allow-root  (zionv-crm-plugin active 1.56.3)",
+    "docker exec zionv-local wp option get zion_crm_db_version --allow-root  (1.24.0)",
+    "docker exec zionv-local wp option get permalink_structure --allow-root  (/%postname%/)",
+    "grep -c __zionCfgUnified ~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/assets/dist/admin/assets/index-*.js  (1 = parche aplicado)",
+    "docker exec zionv-db sh -c 'mysql -u root -p\"$MYSQL_ROOT_PASSWORD\" zionv_crm -e \"SHOW TABLES LIKE \\\"%zion_crm_%\\\";\"' | wc -l  (44 con cabecera = 43 tablas)"
+  ],
+  "upstream": {
+    "fuente": "ZionV CRM (kalimete) — stack WP 6.7-php8.3-apache + mariadb:10.11; plugin en GitHub privado warcold/zionv-crm (main @a1288fe = docs reorg, ahead 1 de origin/main sin push; release 1.56.3 = 5d3efab)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+  },
+  "docs": [
+    "~/armada-sync/agents/zionv-crm.md",
+    "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/README.md",
+    "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/CHANGELOG.md",
+    "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/DEPLOY-GUIA.md",
+    "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/tools/patch-config-route.sh"
+  ],
+  "rutas_canonicas": {
+    "proyecto": "~/dev/wordpress/plugins/zionv-crm/ (stack: compose + nginx conf + certs + bin; NO es repo git)",
+    "plugin": "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/ (repo git propio → GitHub privado warcold/zionv-crm, rama main)",
+    "export": "~/dev/wordpress/plugins/zionv-crm/export/zionv-crm-1.56.3.zip (ZIP canónico de producción; comando en DEPLOY-GUIA.md)",
+    "tools": "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/tools/patch-config-route.sh (parche idempotente del bundle + .orig, única vía temporal sin source)",
+    "secrets": "~/dev/wordpress/plugins/zionv-crm/secrets/ — NO EXISTE (verificado 2026-10-17); convenio si se crea: dir 700/file 600, ya gitignored en stack y plugin; Application Passwords de debug se generan con WP-CLI y se revocan al terminar",
+    "certs": "~/dev/wordpress/plugins/zionv-crm/certs/ca-bundle-full.crt (142 certs: 140 Debian + mkcert warcold + mkcert root — montado en el contenedor)",
+    "wp_cli": "~/dev/wordpress/plugins/zionv-crm/bin/wp-cli.phar (montado ro en /usr/local/bin/wp — persistente)",
+    "zip_origen": "NO ESTÁ EN DISCO (verificado 2026-10-17: el ZIP original de import ya no existe en ~ ni en ~/dev); los ZIPs de release viven en export/"
+  },
+  "github_repo": {
+    "url": "https://github.com/warcold/zionv-crm",
+    "visibility": "PRIVATE",
+    "branch": "main",
+    "contenido": "plugin completo con vendor/ (deploy directo), README.md, CHANGELOG.md, DEPLOY-GUIA.md, tools/patch-config-route.sh, .gitignore (sin node_modules/.env/secrets)",
+    "head": "a1288fe (docs rutas hub post-reorg 2026-10-17; release 1.56.3 = 5d3efab) — local ahead 1 de origin/main, push pendiente autorización owner",
+    "import": "2026-10-13, commit 6cda97a 'ZionV CRM 1.53.1 — import inicial del plugin' (ya entró solo con dist/, sin frontend source)"
+  },
+  "docker": {
+    "compose": "~/dev/wordpress/plugins/zionv-crm/docker-compose.yml (con .bkup-20261013-mejoras)",
+    "contenedor_wp": "zionv-local (wordpress:6.7-php8.3-apache, puerto 8092:80, healthy)",
+    "contenedor_db": "zionv-db (mariadb:10.11, puerto 3308:3306, healthy)",
+    "red": "zionv-net (bridge)",
+    "vars_db": "DB=zionv_crm, user=zionv_user, prefijo tablas zionv_",
+    "extra_hosts": "zionv.kalimete.local:host-gateway (contenedor resuelve su propio host TLS)",
+    "perm": "PRETTY /%postname%/ — OBLIGATORIO para el plugin (rewrite /crm/ y /reservar/)"
+  },
+  "nginx": {
+    "config": "~/dev/wordpress/plugins/zionv-crm/zionv.kalimete.local.conf",
+    "deploy": "/etc/nginx/sites-available/zionv.kalimete.local → sites-enabled (nginx -t OK, reload OK)",
+    "ssl": "/etc/ssl/local-certs/zionv.kalimete.local.{crt,key} (mkcert, expira 2029-01-13, firmado por CA de ROOT — ver lecciones)"
+  },
+  "plugin": {
+    "version": "1.56.3",
+    "db_version": "1.24.0",
+    "tablas_live": 43,
+    "modulos": "Contacts, Companies, Opportunities, Pipelines, Proposals, Bookings, Forms, Automations, Emails, Tasks, Training, Reports, Dashboard, Activities, Timeline, Notifications, Audit, DataTools, Taxonomy, Users, Elementor, GoogleCalendar, Ms365, Nextcloud, Hubspot, Ai, Settings",
+    "composer_deps": "dompdf/dompdf, phpoffice/phpspreadsheet, woocommerce/action-scheduler (vendor/ en git)",
+    "rest": "zion-crm/v1/* privado (cookie+nonce) + zion-crm/public/v1 (9 rutas públicas con nonce propio + RateLimiter) — 34+ controllers, 123 register_rest_route; permission_callback 100%",
+    "spa": "/crm/ (AppShell + React Router, bundle assets/dist/admin/ ya parcheado) + /crm/configuracion/ unificada PHP (sidebar 9 secciones/26 items + 6 tabs) + reservaciones /reservar/{slug}/ + formularios por shortcode; dist/ es artefacto, nunca editar a mano",
+    "frontend_source": "NO EXISTE en ningún disco/ZIP/git (verificado exhaustivo 2026-10-15: 0 tsx/ts/vite.config/package.json, 0 sourcemaps, manifests huérfanos, fósiles jo-crm-root/localhost:8888). Estrategia correcta: nuevo admin-app/ Vite (basename=ZionCrmConfig.baseUrl, manifest, outDir=../assets/dist/admin) que consuma zion-crm/v1 y reimplemente /configuracion como ruta React; retirar branch config_route_patched.",
+    "integraciones_1_55_0": "SMTP presets + test; Google OAuth; MS365 (Graph + Teams links); Nextcloud CalDAV self-hosted; HubSpot upsert contactos/deals; IA OpenAI-compat (Victoria PUBLIC activa, proxy ai/chat, acción ai_prompt); selector calendar_provider; todo en /crm/configuracion/ + Estado del sistema (tab Calendario unificada)",
+    "instalacion_remota": "ZIP por wp-admin → Plugins → Subir plugin → Activar (1.56.3, 43 tablas, 24 migraciones). Auto: migraciones + roles + permalinks + bienvenida. Bundle YA parcheado en el ZIP. Solo borra datos con delete_data_on_uninstall=true (default false). Ver DEPLOY-GUIA.md"
+  },
+  "auth": "WP-Admin: admin/admin123 (solo dev local). REST: cookie+nonce (SPA) o Application Passwords. IA: api_key cifrada (sodium) en zion_crm_ai_settings, nunca al navegador.",
+  "legacy_frozen": "Namespace ZionCrm\\ (PSR-4), constantes ZIONV_CRM_*/ZION_CRM_*, options zion_crm_*, tablas {prefijo}zion_crm_* (43 live), REST zion-crm/v1 (+ public/v1), text-domains zionv-crm/zion-crm, rutas /crm/ y /reservar/ — NO renombrar.",
+  "lecciones_2026_10_13": [
+    "permalinks PRETTY son requisito duro del plugin: con plain, /crm/ no existe y el menú admin manda al home (bug reportado por el owner, fix = permalink_structure /%postname%/ + wp rewrite flush)",
+    "CA dual mkcert en kalimete: certs generados con 'sudo mkcert' los firma /root/.local/share/mkcert/rootCA.pem (OU=root@victoria), NO el de warcold; el bundle del contenedor necesita AMBOS CAs o curl interno da 'unable to get local issuer certificate'",
+    "WP-CLI instalado con curl dentro del contenedor se PIERDE al recrear el volumen wp_data; fix: bin/wp-cli.phar del host montado ro en /usr/local/bin/wp",
+    "el menú admin 'Zion CRM' es solo un redirect (AppShell::maybe_redirect_admin_menu_page en admin_init) — no renderiza nada en wp-admin por diseño",
+    "bind-mount de wp-content/plugins con permisos www-data: al recrear volumen wp_data, Docker rellena los mounts con los plugins default; el plugin se restaura copiando desde el ZIP a la carpeta host del bind-mount (chown warcold primero)",
+    "docker compose up -d NO recrea el contenedor si solo cambió un comentario; cambios reales en volumes/extra_hosts sí fuerzan recreate — verificar con docker inspect"
+  ],
+  "lecciones_2026_10_15": [
+    "frontend sin source es verdad estructural (no falta de búsqueda): import 1.53.1 ya entró solo con dist/; git log --all -- *.tsx vacío; 0 sourcemaps; manifests huérfanos src/booking/main.ts y src/form/main.ts. Por eso 1.56.0-1.56.1 'escribieron sobre el compilado' — era la única vía disponible, no un error de enfoque.",
+    "parche de bundle (tools/patch-config-route.sh) funciona pero es frágil ante rebuilds (regex sobre minificado); la vía correcta es admin-app/ Vite reproducible + retirar config_route_patched, conservando intacto el backend (24 migraciones, 123 rutas, auth, rate-limit).",
+    "Uninstaller incompleto es bug silencioso real: faltaba ms365_connection (1.22.0) + 7 options (ai/ms365/nextcloud/hubspot + flags); fix 1.56.2 sin cambio de esquema. Regla: cada migración que cree tabla/option debe actualizar Uninstaller en el mismo commit.",
+    "docs stale es deuda operativa: README decía 21 migraciones/1.53.1 y DEPLOY-GUIA 1.54.0/23 tablas; cura 1.56.2 sincroniza todo + bootstrap comenta 1.24.0. Regla: cada bump toca README+DEPLOY-GUIA+bootstrap+readme.txt+CHANGELOG.md.",
+    ":8092 plano no es canónico (301 a http://localhost/ por WP_HOME TLS); el check canónico es https://zionv.kalimete.local/crm/dashboard/ → 302 sin sesión.",
+    "private del padre invisible para subclass (null silencioso) y final bloquea extends — lecciones 1.56.0 para no repetir en PHP.",
+    "las docs deben seguir la superficie canónica: tras 1.56.0 'la configuración vive en el panel', pero README/DEPLOY-GUIA/welcome notice seguían apuntando a Estado del sistema (era 1.54); cura 1.56.3 — regla: cada cambio de 'dónde vive X' actualiza README+DEPLOY-GUIA+welcome notice+changelogs en el mismo commit. El toggle delete_data_on_uninstall vive SOLO en Configuración → General (Estado del sistema no tiene tab General)."
+  ],
+  "deudas_priorizadas_2026_10_15": [
+    "exports con per_page=100000 y backup JSON en memoria → streaming/chunks (OOM con datasets grandes)",
+    "system_logs sin retención → prune 90 días por cron + excluir del backup",
+    "RateLimiter confía en X-Forwarded-For → REMOTE_ADDR primero + allowlist proxies",
+    "ai/chat sin throttle ni max_tokens cap → transient 20/min + AuditLogger",
+    "0 args/schema declarativo en REST → adoptar en rutas hot (menos código manual)",
+    "sin tests/ pese a composer.json phpunit → tests/php/ mínimo (sanitización, require_capability, migraciones, Uninstaller vs SHOW TABLES)",
+    "AppShell 1256 líneas con guías+CSS inline → extraer a asset versionado (cacheable, CSP-futura)",
+    "import CSV solo valida extensión → MIME/tamaño/streaming antes de exponer a no-admin"
+  ],
+  "integration_potential": {
+    "victoria_llm": "LIVE: módulo Ai con Victoria PUBLIC https://victoria.armada.do/v1 (212ms, Qwen3.6) + acción ai_prompt e2e OK. Pendiente: throttle + max_tokens cap server-side.",
+    "erp_integration": "Sin integración ERP activa (plugin standalone). Módulo de integración futuro opcional"
+  },
+  "changelog": "~/armada-sync/CHANGELOG.md",
+  "name": "ZionV CRM",
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "fuentes": [
+      {
+        "nombre": "WordPress Developer",
+        "url": "https://developer.wordpress.org/",
+        "contenido_clave": "WP 6.7 + plugin ZionV CRM (hooks, REST, rewrite rules)"
+      },
+      {
+        "nombre": "WordPress Documentation",
+        "url": "https://wordpress.org/documentation/",
+        "contenido_clave": "guia de usuario/administracion del stack"
+      },
+      {
+        "nombre": "Plugin Handbook",
+        "url": "https://developer.wordpress.org/plugins/",
+        "contenido_clave": "ZionV CRM (CRM profesional con React/Vite)"
+      }
+    ]
+  }
+}
