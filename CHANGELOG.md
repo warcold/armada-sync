@@ -1,6 +1,12 @@
 # CHANGELOG — Ecosistema Armada (Victoria + Kalimete + Jonas)
 
 > Fuente canónica: GitHub `warcold/armada-sync/CHANGELOG.md` | Mirrors locales: Victoria `/home/victoria/CHANGELOG.md`, Kalimete `~/armada-sync/CHANGELOG.md`, Jonas `~/armada-sync/CHANGELOG.md`
+### [2026-10-29 17:51 UTC] [test-e2e-reverse] Validación E2E inversa: Victoria → GitHub → Kalimete
+- **Tipo**: test
+- **Qué**: Entrada escrita desde Victoria, sincronizada a GitHub, leída desde Kalimete
+- **Verificado**: Sync bidireccional completo Victoria↔Kalimete↔GitHub hub
+
+
 ### [2026-10-29 17:50 UTC] [test-e2e] Validación E2E changelog unificado multi-máquina
 - **Tipo**: test
 - **Qué**: Entrada de prueba escrita desde Kalimete, sincronizada a GitHub, leída desde Victoria via /v1/changelog
