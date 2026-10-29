@@ -1,149 +1,66 @@
 {
-  "agent": "wordpress",
-  "version": "2026-10-28",
-  "scope": [
-    "WordPress core stack (Docker, compose, certs, secrets, DB, nginx/TLS)",
-    "Hub WordPress: ~/dev/wordpress/ (plugins/, websites/, scripts/, docs/)",
-    "Dev lab Armada Suite: :8091 (source plugin, ZIPs canónicos)",
-    "ZionV CRM stack: :8092 (plugin CRM independiente, GitHub warcold/zionv-crm)",
-    "Websites clientes preprod: MaganTech :8093, Micaserogou :8094",
-    "Orquestación subagentes: ZionV CRM, ZionV Commerce, Micaserogou, MaganTech, ERP Dev",
-    "Packs: neutral (default), tech, restaurant",
-    "Instalación ordenada: ZionV CRM → ZionV Commerce (dependencia dura)",
-    "Templates compatibles: reglas de override, cabeceras 480px, login a sangre, atribución alfredo.pro",
-    "Integración ERP: store-key (iak_*), client-token, webhooks HMAC-SHA256, delta-sync client-side"
+  "harness": "wordpress",
+  "updated": "2026-10-29",
+  "agent_file": "~/armada-sync/agents/wordpress.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "WordPress genérico + sitios cliente (micaserogou.com, magantech.com.do, wordpress-dev). Mision: gestion multisite WP + plugin Armada Suite + ERP integration.",
+  "vivo_2026_10_29": "Harness estandarizado schema unificado. WordPress multisite: micaserogou.com (prod 5.5.10 -> 5.7.0 ventana), magantech.com.do (preprod 5.7.0), wordpress-dev (:8091 lab). Plugin Armada Suite 5.5.10/5.7.0 + fusion Zion CRM 2.0.0. ERP prod erpipos.armada.do (tenant 3 iak pendiente).",
+  "live_check": "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/ | grep -q 200 && echo 'wordpress-dev:up' || echo 'wordpress-dev:down'",
+  "checks": [
+    "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/",
+    "docker ps --format '{{.Names}}: {{.Status}}' | grep -E 'wordpress|mariadb'",
+    "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt 2>/dev/null) https://micaserogou.com/wp-json/erpsuite/v1/ops/status 2>/dev/null | head -c 100"
   ],
-  "live_check": {
-    "commands": [
-      "docker ps --filter name=wordpress",
-      "docker ps --filter name=zionv",
-      "docker ps --filter name=micaserogou",
-      "docker ps --filter name=magantech",
-      "docker ps --filter name=erpipo",
-      "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/",
-      "curl -s -o /dev/null -w '%{http_code}' http://localhost:8092/",
-      "curl -sk -o /dev/null -w '%{http_code}' https://zionv.kalimete.local/crm/dashboard/",
-      "curl -s -o /dev/null -w '%{http_code}' http://localhost:8093/",
-      "curl -sk -o /dev/null -w '%{http_code}' https://magantech.kalimete.local/",
-      "curl -s -o /dev/null -w '%{http_code}' http://localhost:8094/",
-      "curl -sk -o /dev/null -w '%{http_code}' https://micaserogou.kalimete.local/",
-      "curl -sk -o /dev/null -w '%{http_code}' https://erp.kalimete.local/login"
-    ],
-    "expected": {
-      "wordpress-local": "healthy",
-      "wordpress-db": "healthy",
-      "zionv-local": "healthy",
-      "zionv-db": "healthy",
-      "micaserogou-local": "healthy",
-      "micaserogou-db": "healthy",
-      "micaserogou-mailpit": "healthy",
-      "magantech-local": "healthy",
-      "magantech-db": "healthy",
-      "magantech-mailpit": "healthy",
-      "erpipo-preprod-app": "running",
-      "erpipo-preprod-nginx": "healthy",
-      "erpipo-preprod-db": "healthy",
-      "erpipo-preprod-redis": "healthy",
-      "erpipo-preprod-queue": "running",
-      "erpipo-preprod-scheduler": "running",
-      "erpipo-preprod-phpmyadmin": "healthy",
-      "erpipo-preprod-mailpit": "healthy",
-      "localhost:8091": "200",
-      "localhost:8092": "200",
-      "zionv.kalimete.local/crm/dashboard/": "302",
-      "localhost:8093": "200",
-      "magantech.kalimete.local": "200",
-      "localhost:8094": "200",
-      "micaserogou.kalimete.local": "200",
-      "erp.kalimete.local/login": "200"
-    }
-  },
   "upstream": {
-    "enabled": true,
-    "id": "wordpress",
-    "label": "wordpress:7.1.3-php8.3-apache (hub tag)",
-    "source": "hub.docker.com/_/wordpress latest-tag",
-    "href": "https://hub.docker.com/_/wordpress",
-    "href_docs": "https://wordpress.org/documentation/",
-    "pin_note": "",
-    "groom_clean": true
+    "fuente": "WordPress.org (core) + warcold/armada-suite (plugin) + sitios cliente (micaserogou.com, magantech.com.do). Fusion Zion CRM 2.0.0 (2026-10-28).",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Deploy prod = Plan + owner.",
+    "version_servida_live": "curl -s http://localhost:8091/wp-json/wp/v2/ | python3 -c \"import json,sys; print(json.load(sys.stdin)[0].get('version', '?'))\" 2>/dev/null || echo '?'",
+    "donde_mirar": [
+      "https://wordpress.org/download/releases/",
+      "warcold/armada-suite (plugin)",
+      "~/dev/wordpress/websites/micaserogou.com/docs/PROD-UPGRADE-5.7.0-CHECKLIST.md"
+    ],
+    "frecuencia": "WP core: mensual; plugin: ante ventana deploy; fusion Zion: decision owner",
+    "politica": "WP core updates = Plan + owner. Plugin Armada Suite = ventana owner. Fusion Zion CRM 2.0.0 = decision owner.",
+    "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
   },
+  "servicios": [
+    {"name": "wordpress-dev", "puerto": 8091, "host": "kalimete", "wp": "lab", "db": "mariadb:10.11 (docker, 127.0.0.1:3307)"},
+    {"name": "micaserogou.com", "url": "https://micaserogou.com", "wp": "7.1.4", "plugin": "5.5.10 -> 5.7.0 (ventana)"},
+    {"name": "magantech.com.do", "url": "https://magantech.com.do", "wp": "preprod", "plugin": "5.7.0 (espejo)"},
+    {"name": "ERP prod", "url": "https://erpipos.armada.do", "nota": "tenant 3 iak PENDIENTE (owner/Juan Carlos)"}
+  ],
+  "scripts_host": [],
   "docs": [
-    "https://developer.wordpress.org/",
-    "https://wordpress.org/documentation/",
-    "https://developer.wordpress.org/plugins/",
-    "~/.config/opencode/skills/wp-templates/SKILL.md",
-    "~/dev/wordpress/README-HUB.md",
-    "~/dev/wordpress/docs/CONEXION-METODO.md",
-    "~/dev/wordpress/docs/NUEVO-WEBSITE-TEMPLATE.md",
-    "~/dev/wordpress/docs/ESTADO-ECOSISTEMA.md",
-    "~/dev/wordpress/plugins/armada-suite/wp-content/plugins/armada-suite/docs/",
-    "~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/README.md",
-    "~/dev/erpipo-preprod/AGENTS-ESTADO.md",
-    "~/dev/erpipo-preprod/REGLAS.md"
+    "~/armada-sync/agents/wordpress.md",
+    "~/dev/wordpress/websites/micaserogou.com/docs/PROD-UPGRADE-5.7.0-CHECKLIST.md",
+    "~/dev/wordpress/docs/GOBERNANZA-ECOSISTEMA.md",
+    "~/armada-sync/harness/HARNESS_SCHEMA_UNIFICADO.md"
   ],
-  "changelog": [
-    "2026-10-28: Arquitectura completa final — WordPress como agente principal de plataforma (umbrella) gestionando subagentes ZionV CRM, ZionV Commerce, Micaserogou, MaganTech, ERP Dev. Pack default = neutral. Flujo instalación ZionV CRM → ZionV Commerce. Gestión packs: neutral/tech/restaurant. Templates compatibles documentados.",
-    "2026-10-17: Hub reorg plugins/ + websites/; preprod clientes separados; dev lab solo loopback.",
-    "2026-10-15: Split agente — wordpress-dev redimensionado a SISTEMA (umbrella); plugin Armada Suite → agente propio armada-suite.",
-    "2026-10-06: Red compartida erpipo-dev-network + WORDPRESS_DB_HOST=wordpress-db:3306.",
-    "2026-10-05: Stack TLS CA bundle mkcert + extra_hosts; gitignore secrets/."
-  ],
-  "subagents": [
-    "zionv-crm",
-    "zionv-commerce",
-    "micaserogou",
-    "magantech",
-    "erp-dev"
-  ],
-  "packs": {
-    "default": "neutral",
-    "available": [
-      "neutral",
-      "tech",
-      "restaurant"
-    ],
-    "mapping": {
-      "neutral": "Default genérico, sin tecnología",
-      "tech": "MaganTech (colores #1a73e8/#34a853)",
-      "restaurant": "Micaserogou (colores cálidos #7a1f1f/#d64545)"
-    }
-  },
-  "installation_order": [
-    "1. ZionV CRM Core (independiente, stack propio :8092)",
-    "2. ZionV Commerce (dependiente, requiere ZionV CRM activo)"
-  ],
-  "erp_integration": {
-    "store_key_header": "Authorization: Bearer iak_*",
-    "client_token_header": "Authorization: Bearer cat_*",
-    "webhook_events": [
-      "order.created",
-      "stock.updated",
-      "price.updated"
-    ],
-    "webhook_signature": "HMAC-SHA256 (X-Webhook-Signature)",
-    "delta_sync": "client-side (ERP no expone ?since=)",
-    "catalog_sync_frequency": "15-30 min",
-    "stock_sync_frequency": "5 min",
-    "webhooks": "tiempo real"
-  },
   "docs_oficiales": {
+    "regla": "ANTES de tocar WP/prod, consultar checklist + LIVE (ops/status). NUNCA inventar pasos ventana.",
     "fuentes": [
-      {
-        "nombre": "WordPress developer resources",
-        "url": "https://developer.wordpress.org/",
-        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
-      },
-      {
-        "nombre": "MariaDB docs",
-        "url": "https://mariadb.com/kb/en/documentation/",
-        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
-      },
-      {
-        "nombre": "WP-CLI",
-        "url": "https://wp-cli.org/",
-        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
-      }
+      {"nombre": "WordPress REST API", "url": "https://developer.wordpress.org/rest-api/", "contenido_clave": "endpoints + auth", "verificada": "2026-10-29"},
+      {"nombre": "WP CLI", "url": "https://wp-cli.org/", "contenido_clave": "comandos admin", "verificada": "2026-10-29"}
     ]
+  },
+  "changelog": [
+    {"fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente). WP multisite: dev 8091, micaserogou prod 5.5.10->5.7.0, magantech preprod 5.7.0, fusion Zion CRM 2.0.0."},
+    {"fecha": "2026-10-28", "cambio": "Fusion Zion CRM 2.0.0 (23:00-23:45): ZionV CRM + Armada Suite -> Zion CRM 2.0.0. Repo micaserogou.com HEAD 54c715a."}
+  ],
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ],
+  "no_touch": [
+    "Deploy prod SOLO en ventana owner (cPanel snapshot + wp-admin 4 clicks)",
+    "Rollback C (armada-suite-5.5.10-plugin-only.zip) SIEMPRE listo",
+    "ARQUITECTURA-INTEGRACION-HIBRIDA.md (WIP agente kalimete, NO tocar)"
+  ],
+  "recovery": "Rollback C via wp-admin upload. Preprod: git checkout HEAD~1 + rebuild. ERP prod: tenant 3 iak requiere owner.",
+  "delegacion": {
+    "cuando_usar": "gestionar WP multisite, ventana deploy prod, rollback, plugin Armada Suite, ERP integration",
+    "pre_check": "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/ | grep -q 200 || echo 'wordpress-dev:down'",
+    "post_check": "curl -s http://localhost:8091/wp-json/wp/v2/ | python3 -c \"import json,sys; print(json.load(sys.stdin)[0].get('version', '?'))\" 2>/dev/null"
   }
 }

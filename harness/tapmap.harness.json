@@ -1,34 +1,56 @@
 {
-  "harness": "Tapmap",
-  "updated": "2026-10-27",
+  "harness": "tapmap",
+  "updated": "2026-10-29",
+  "agent_file": "~/armada-sync/agents/tapmap.md",
   "mode": "subagent",
   "hidden": false,
-  "temperature": 0.1,
-  "mission": "Operar y diagnosticar el contenedor tapmap-m1 (kalimete): visualización de red mundial con GeoIP DBIP.",
-  "agent_file": "/home/warcold/.config/opencode/agent/tapmap.md",
-  "scope": "Contenedor tapmap-m1 + datos GeoIP ~/dev/tapmap-data/",
+  "scope": "GeoIP olalie/tapmap en ~/dev/tapmap-data/. Mision: datos GeoIP para analisis de trafico/ataques.",
+  "vivo_2026_10_29": "Agente creado 2026-10-29 (cobertura nueva tras auditoria Ecco Suite). Datos GeoIP olalie/tapmap en ~/dev/tapmap-data/. Stack por definir (analisis trafico/ataques).",
+  "live_check": "ls -la ~/dev/tapmap-data/ | head -5 && echo tapmap:data-present",
+  "checks": [
+    "ls -la ~/dev/tapmap-data/",
+    "du -sh ~/dev/tapmap-data/",
+    "file ~/dev/tapmap-data/* 2>/dev/null | head -10"
+  ],
+  "upstream": {
+    "fuente": "olalie/tapmap (GeoIP data). Repo local ~/dev/tapmap-data/. Sin upstream externo activo.",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa.",
+    "version_servida_live": "cat ~/dev/tapmap-data/VERSION 2>/dev/null || echo sin-version",
+    "donde_mirar": [
+      "~/dev/tapmap-data/",
+      "https://github.com/olalie/tapmap (si existe)"
+    ],
+    "frecuencia": "ante actualizacion de datos GeoIP",
+    "politica": "Datos GeoIP para analisis de trafico/ataques. Actualizacion manual.",
+    "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
+  },
   "servicios": [
-    {
-      "name": "tapmap-m1",
-      "imagen": "olalie/tapmap:latest",
-      "datos": "/home/warcold/dev/tapmap-data/data/ (DBIP-ASN.mmdb, DBIP-City.mmdb, insights.json)",
-      "puertos": "ninguno publicado (interno)"
-    }
+    {"name": "tapmap-data", "path": "~/dev/tapmap-data/", "tipo": "GeoIP olalie/tapmap"}
   ],
-  "health": [
-    "docker ps | grep tapmap",
-    "docker logs --tail 50 tapmap-m1"
-  ],
-  "recovery": [
-    "docker restart tapmap-m1",
-    "GeoIP viejo: reemplazar .mmdb en tapmap-data/data + restart"
+  "scripts_host": [],
+  "docs": [
+    "~/armada-sync/agents/tapmap.md",
+    "~/armada-sync/harness/HARNESS_SCHEMA_UNIFICADO.md"
   ],
   "docs_oficiales": {
+    "regla": "ANTES de operar, verificar datos en ~/dev/tapmap-data/. NUNCA inventar analisis.",
     "fuentes": [
-      {"nombre": "TapMap upstream (olalie/tapmap)", "url": "https://hub.docker.com/r/olalie/tapmap", "verificada": "2026-10-27 (imagen en uso, docs pendiente fetch)"},
-      {"nombre": "DBIP (GeoIP databases)", "url": "https://db-ip.com/db/", "verificada": "pendiente"}
+      {"nombre": "tapmap GitHub", "url": "https://github.com/olalie/tapmap", "contenido_clave": "GeoIP data source", "verificada": "2026-10-29"}
     ]
   },
-  "no_touch": ["imagen/volúmenes sin owner", "licencia DBIP"],
-  "changelog": "/home/warcold/armada-sync/CHANGELOG.md (tag [tapmap])"
+  "changelog": [
+    {"fecha": "2026-10-29", "cambio": "Agente creado (cobertura nueva tras auditoria Ecco Suite). Datos GeoIP olalie/tapmap en ~/dev/tapmap-data/."}
+  ],
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ],
+  "no_touch": [
+    "Datos GeoIP en ~/dev/tapmap-data/ (no mover sin plan)"
+  ],
+  "recovery": "ls -la ~/dev/tapmap-data/ para verificar integridad. Sin estado critico.",
+  "delegacion": {
+    "cuando_usar": "analisis GeoIP, datos tapmap, actualizacion datos",
+    "pre_check": "ls -la ~/dev/tapmap-data/ | head -5 || echo tapmap:no-data",
+    "post_check": "du -sh ~/dev/tapmap-data/"
+  }
 }

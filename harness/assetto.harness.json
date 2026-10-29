@@ -1,70 +1,55 @@
 {
-  "name": "Assetto Corsa",
-  "id": "assetto-corsa",
-  "description": "Servidor de carreras online para República Dominicana",
-  "scope": {
-    "project_dir": "~/dev/games/assetto-corsa/",
-    "remote_host": "vps-preprod (154.53.35.102)",
-    "remote_path": "/srv/assetto-corsa/",
-    "domain": "assetto.armada.do",
-    "ports": {
-      "server_manager": "8772 (TCP)",
-      "game_udp": "9600-9601 (UDP)",
-      "http_api": "8081 (TCP)",
-      "steam_cmd": "27015-27017 (TCP/UDP)"
-    }
-  },
-  "live_check": {
-    "description": "Comandos para verificar estado del servidor",
-    "local": [
-      "git -C ~/dev/games/assetto-corsa log --oneline -5",
-      "ls -la ~/dev/games/assetto-corsa/docs/",
-      "test -d ~/dev/games/assetto-corsa"
-    ],
-    "remote": [
-      "ssh vps-preprod 'systemctl status assetto-server 2>/dev/null || echo \"Servicio no instalado\"'",
-      "ssh vps-preprod 'docker ps 2>/dev/null | grep -i assetto || echo \"Docker no corre AC\"'",
-      "ssh vps-preprod 'curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8772 || echo \"Server Manager no accesible\"'",
-      "ssh vps-preprod 'ss -tln | grep 8772 || echo \"Puerto 8772 no abierto\"'",
-      "ssh vps-preprod 'ss -uln | grep 9600 || echo \"Puerto 9600/UDP no abierto\"'",
-      "ssh vps-preprod 'systemctl is-active cloudflared 2>/dev/null || echo \"Cloudflared no activo\"'"
-    ]
-  },
+  "harness": "assetto",
+  "updated": "2026-10-29",
+  "agent_file": "~/armada-sync/agents/assetto.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Assetto Server Manager (JustaPenguin/assetto-server-manager) en vps-preprod. Mision: gestionar servidor Assetto Corsa Competizione.",
+  "vivo_2026_10_29": "Harness estandarizado schema unificado. Assetto Server Manager en vps-preprod (dockerizado). Repo upstream: JustaPenguin/assetto-server-manager. Stack por validar en vivo.",
+  "live_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i assetto || echo assetto:no-containers\"",
+  "checks": [
+    "ssh vps-preprod \"docker ps --format {{.Names}}: {{.Status}} | grep -i assetto\"",
+    "ssh vps-preprod \"curl -s -o /dev/null -w %{http_code} http://localhost:8080/ 2>/dev/null || echo assetto:no-web\""
+  ],
   "upstream": {
-    "server_manager_repo": "https://github.com/JustaPenguin/assetto-server-manager",
-    "docker_image": "seejy/assetto-server-manager:latest",
-    "steam_app_id": "244210",
-    "content_manager": "https://content-manager.net/",
-    "sol_weather": "https://assettocorsa.net/threads/sol-weather.46499/"
+    "fuente": "github JustaPenguin/assetto-server-manager (upstream oficial). Repo local si existe en ~/dev/assetto/.",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa.",
+    "version_servida_live": "ssh vps-preprod \"docker exec \$(docker ps -qf name=assetto) cat /app/VERSION 2>/dev/null || echo sin-version\"",
+    "donde_mirar": [
+      "https://github.com/JustaPenguin/assetto-server-manager",
+      "~/dev/assetto/ (si existe)"
+    ],
+    "frecuencia": "ante actualizacion upstream",
+    "politica": "Upstream = Plan + owner. Stack en vps-preprod.",
+    "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
   },
-  "docs": {
-    "readme": "https://github.com/JustaPenguin/assetto-server-manager#readme",
-    "docker": "https://hub.docker.com/r/seejy/assetto-server-manager",
-    "installation": "https://github.com/JustaPenguin/assetto-server-manager#installation"
-  },
-  "changelog": {
-    "path": "~/dev/games/assetto-corsa/CHANGELOG.md",
-    "agent_doc": "~/armada-sync/agents/assetto.md"
-  },
-  "constraints": {
-    "steam_license": "REQUERIDO - Assetto Corsa es juego de pago (~$15). Sin license = no se puede instalar.",
-    "repo_archived": "Repo de Server Manager archivado Aug 2026 pero Docker image activa",
-    "no_direct_ports": "Todos los puertos van por Cloudflare tunnel (assetto.armada.do)",
-    "single_env": "Solo producción (no preprod/doble ambiente)"
-  },
-  "groom_clean": true,
+  "servicios": [
+    {"name": "assetto-server", "host": "vps-preprod", "upstream": "JustaPenguin/assetto-server-manager"}
+  ],
+  "scripts_host": [],
+  "docs": [
+    "~/armada-sync/agents/assetto.md",
+    "~/armada-sync/harness/HARNESS_SCHEMA_UNIFICADO.md"
+  ],
   "docs_oficiales": {
+    "regla": "ANTES de operar, verificar LIVE en vps-preprod. NUNCA inventar config.",
     "fuentes": [
-      {
-        "nombre": "assetto-server-manager (JustaPenguin)",
-        "url": "https://github.com/JustaPenguin/assetto-server-manager",
-        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
-      },
-      {
-        "nombre": "Assetto Corsa oficial",
-        "url": "https://www.assettocorsa.net/",
-        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
-      }
+      {"nombre": "Assetto Server Manager GitHub", "url": "https://github.com/JustaPenguin/assetto-server-manager", "contenido_clave": "Docker + config + API", "verificada": "2026-10-29"}
     ]
+  },
+  "changelog": [
+    {"fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente). Assetto en vps-preprod, upstream JustaPenguin/assetto-server-manager."}
+  ],
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ],
+  "no_touch": [
+    "Config en vps-preprod (no tocar sin verificar LIVE)"
+  ],
+  "recovery": "ssh vps-preprod para inspeccionar container assetto. Rebuild desde upstream si necesario.",
+  "delegacion": {
+    "cuando_usar": "gestionar servidor Assetto Corsa, actualizar upstream, diagnosticar",
+    "pre_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i assetto || echo assetto:no-containers\"",
+    "post_check": "ssh vps-preprod \"docker ps --format {{.Names}}: {{.Status}} | grep -i assetto\""
   }
 }

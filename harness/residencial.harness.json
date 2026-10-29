@@ -1,35 +1,55 @@
 {
-  "harness": "Residencial",
-  "updated": "2026-10-27",
+  "harness": "residencial",
+  "updated": "2026-10-29",
+  "agent_file": "~/armada-sync/agents/residencial.md",
   "mode": "subagent",
   "hidden": false,
-  "temperature": 0.1,
-  "mission": "Desarrollar y desplegar la plataforma inmobiliaria Residencial (scaffold platform-v1; staging en vps-preprod).",
-  "agent_file": "/home/warcold/.config/opencode/agent/residencial.md",
-  "scope": "~/dev/apps/residencial (kalimete) + /opt/residencial-staging (vps-preprod) + residencial.armada.do",
+  "scope": "Inmobiliaria scaffold en vps-preprod (/opt/residencial-staging, residencial.armada.do). Traefik labels pendientes limpieza. Mision: scaffold -> staging -> prod inmobiliaria.",
+  "vivo_2026_10_29": "Agente creado 2026-10-29 (cobertura nueva tras auditoria Ecco Suite). Scaffold en vps-preprod: /opt/residencial-staging, dominio residencial.armada.do. Traefik labels pendientes limpieza. Stack por definir (inmobiliaria).",
+  "live_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i residencial || echo residencial:no-containers\"",
+  "checks": [
+    "ssh vps-preprod \"ls -la /opt/residencial-staging/\"",
+    "ssh vps-preprod \"docker ps --format {{.Names}}: {{.Status}} | grep -i residencial\"",
+    "curl -s -o /dev/null -w %{http_code} https://residencial.armada.do/ 2>/dev/null || echo dns/no-service"
+  ],
+  "upstream": {
+    "fuente": "Scaffold propietario (inmobiliaria) en vps-preprod (/opt/residencial-staging). Sin upstream externo.",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Stack por definir.",
+    "version_servida_live": "ssh vps-preprod \"cat /opt/residencial-staging/VERSION 2>/dev/null || echo sin-version\"",
+    "donde_mirar": [
+      "~/dev/residencial/ (si existe repo)",
+      "vps-preprod:/opt/residencial-staging/"
+    ],
+    "frecuencia": "ante avance del scaffold",
+    "politica": "Scaffold -> staging -> prod. Traefik labels pendientes limpieza.",
+    "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
+  },
   "servicios": [
-    {
-      "name": "residencial-staging",
-      "host": "vps-preprod (154.53.35.102:1333)",
-      "ruta": "/opt/residencial-staging",
-      "url": "https://residencial.armada.do (Cloudflare)",
-      "repo": "github.com/warcold/residencial (privado, main)"
-    }
+    {"name": "residencial-staging", "host": "vps-preprod", "path": "/opt/residencial-staging", "dominio": "residencial.armada.do"}
   ],
-  "health": [
-    "curl -s -o /dev/null -w '%{http_code}' https://residencial.armada.do",
-    "ssh vps-preprod 'cd /opt/residencial-staging && git log --oneline -1'"
-  ],
-  "recovery": [
-    "Deploy roto: git pull en vps-preprod + revisar compose (labels traefik sin limpiar)"
+  "scripts_host": [],
+  "docs": [
+    "~/armada-sync/agents/residencial.md",
+    "~/armada-sync/harness/HARNESS_SCHEMA_UNIFICADO.md"
   ],
   "docs_oficiales": {
-    "fuentes": [
-      {"nombre": "Node.js docs", "url": "https://nodejs.org/docs", "verificada": "pendiente"},
-      {"nombre": "Cloudflare proxy (edge)", "url": "https://developers.cloudflare.com/cloudflare-one/", "verificada": "pendiente"}
-    ]
+    "regla": "ANTES de operar, verificar LIVE en vps-preprod. NUNCA inventar stack.",
+    "fuentes": []
   },
-  "ledger": "/home/warcold/dev/apps/residencial/AGENTS.md",
-  "no_touch": ["prod (no existe)", "limpieza traefik sin confirmar"],
-  "changelog": "/home/warcold/dev/apps/residencial/CHANGELOG.md + ~/armada-sync/CHANGELOG.md"
+  "changelog": [
+    {"fecha": "2026-10-29", "cambio": "Agente creado (cobertura nueva tras auditoria Ecco Suite). Scaffold en vps-preprod /opt/residencial-staging, dominio residencial.armada.do. Traefik labels pendientes."}
+  ],
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ],
+  "no_touch": [
+    "Traefik labels pendientes limpieza (no tocar sin plan)",
+    "Stack inmobiliaria por definir"
+  ],
+  "recovery": "ssh vps-preprod para inspeccionar /opt/residencial-staging. Sin estado critico aun.",
+  "delegacion": {
+    "cuando_usar": "avance scaffold residencial, limpieza Traefik, definicion stack inmobiliaria",
+    "pre_check": "ssh vps-preprod \"ls -la /opt/residencial-staging/\" || echo residencial:no-path",
+    "post_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i residencial || echo sin-containers\""
+  }
 }
