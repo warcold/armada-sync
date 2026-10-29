@@ -217,3 +217,98 @@ Archivos de contexto:
 - **Comando** `/mapa` — muestra el mapa en cualquier conversación
 
 Actualizar `INVENTARIO.md` cada vez que cambie el estado de la cuenta (nuevo worker, zona, token, record, túnel).
+
+---
+
+## 🔐 Autenticación Cloudflare Tunnel — Flujo y credenciales (añadido 2026-10-29)
+
+### Dónde se guardan las credenciales con `cloudflared tunnel login`
+
+**En la máquina donde se ejecuta `cloudflared` (el servidor remoto/headless), NO en tu máquina local.**
+
+Cuando haces `cloudflared tunnel login` via SSH:
+1. `cloudflared` imprime una URL de autorización
+2. Tú abres esa URL en **tu navegador local** y autorizas la zona
+3. Cloudflare devuelve el certificado al proceso `cloudflared` que corre en el **servidor remoto**
+4. `cloudflared` guarda en `~/.cloudflared/`:
+   - `cert.pem` — certificado de cuenta (válido para crear/gestionar tunnels en la cuenta)
+   - `<TUNNEL_ID>.json` — credenciales **específicas del tunnel** (el `creds.json`)
+
+> El mensaje *"You may now close this window and start your Cloudflare Tunnel!"* confirma que el certificado se instaló en el servidor remoto.
+
+### Obtener `creds.json` para un tunnel existente
+
+**Opción A: Ya hiciste login en la VPS**
+```bash
+cat ~/.cloudflared/<TUNNEL_ID>.json
+```
+
+**Opción B: NO hiciste login en la VPS (caso típico)**
+```bash
+# En la VPS donde correrá el tunnel
+cloudflared tunnel login
+# 1. Abre la URL en TU navegador local
+# 2. Autoriza la zona (armada.do)
+# 3. Se crea ~/.cloudflared/<TUNNEL_ID>.json
+```
+
+**Opción C: Token de tunnel para systemd (NO es creds.json)**
+```bash
+# Via API (token de cuenta con scope Cloudflare Tunnel:Edit)
+curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/cfd_tunnel/<TUNNEL_ID>/token" \
+  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  -H "Content-Type: application/json" | jq -r '.result.token'
+
+# O via cloudflared (requiere cert.pem en ~/.cloudflared/)
+cloudflared tunnel token <TUNNEL_ID>
+```
+
+> **Diferencia clave:**
+> - `creds.json` (archivo) → para `cloudflared tunnel run` manual / config file con `credentials-file`
+> - `token` (string) → para `cloudflared service install "<TOKEN>"` (systemd)
+
+### Playbook completo: tunnel nuevo en VPS
+
+```bash
+# 1. Login interactivo (genera cert.pem + creds.json)
+cloudflared tunnel login
+
+# 2. Verificar creds.json
+ls -la ~/.cloudflared/<TUNNEL_ID>.json
+
+# 3. Configurar ingress
+cat > ~/.cloudflared/config.yml <<'EOF'
+tunnel: <TUNNEL_ID>
+credentials-file: /home/<USER>/.cloudflared/<TUNNEL_ID>.json
+ingress:
+  - hostname: <sub>.armada.do
+    service: http://127.0.0.1:<PUERTO>
+  - service: http_status:404
+EOF
+
+# 4. Instalar como servicio systemd (usa TOKEN, no creds.json)
+cloudflared service install "$(cloudflared tunnel token <TUNNEL_ID>)"
+
+# 5. Arrancar y verificar
+systemctl enable --now cloudflared
+systemctl status cloudflared
+cloudflared tunnel info <TUNNEL_ID>
+```
+
+### Scopes de token API para tunnels
+
+| Permiso | Scope en dashboard |
+|---------|-------------------|
+| Account → Cloudflare Tunnel → Edit | `com.cloudflare.api.account.cloudflare_tunnel.edit` |
+| Account → Cloudflare Tunnel → Read | `com.cloudflare.api.account.cloudflare_tunnel.read` |
+| Zone → DNS → Edit (para `route dns`) | `com.cloudflare.api.account.zone.dns_records.edit` |
+
+> El token `spring-dream-d681` (account admin) ya tiene estos scopes. Error 9109 = restricción de IP, no falta de scopes.
+
+### ⚠️ NO existe endpoint API para descargar `creds.json` de un tunnel existente
+
+El `creds.json` se genera **solo** via:
+- `cloudflared tunnel login` (interactivo)
+- `cloudflared tunnel token <TUNNEL_ID>` (devuelve token string, no archivo JSON)
+
+Para automatizar en CI/CD: usa el token string + `cloudflared service install` o pasa el token via env `TUNNEL_TOKEN`.
