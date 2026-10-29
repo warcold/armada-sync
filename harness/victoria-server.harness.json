@@ -27,19 +27,82 @@
     "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
   },
   "servicios": [
-    {"name": "Gateway LLM", "puerto": 8010, "baseURL": "victoria.local:8010/v1", "caps": "llm/art/provision"},
-    {"name": "vLLM directo", "puerto": 8000, "nota": "NO usar directo (solo via gateway)"},
-    {"name": "ComfyUI imagenes", "puerto": 8188, "via": "art API gateway (templates z-image-turbo/flux-schnell/sd15-realistic)", "caps": "art"},
-    {"name": "LivePortrait UI", "puerto": 8180, "nota": "LAN-only; headless = lp-animate :18861", "caps": "liveportrait/art"},
-    {"name": "Voz TTS/STT", "puerto": 18810, "endpoint": "POST /tts, /stt (?language=es)", "caps": "tts/whisper"},
-    {"name": "Video server", "puerto": 18811, "endpoint": "POST /analyze", "caps": "services"},
-    {"name": "Web-nav", "puerto": 18820, "uso": "navegacion autonoma Victoria", "caps": "services"},
-    {"name": "Whois", "puerto": 18830, "endpoint": "GET /whois?domain=X", "caps": "services"},
-    {"name": "Host-admin", "puerto": 18840, "nota": "401 por DISEÑO con llave kalimete (solo admin puro)", "caps": "admin"},
-    {"name": "Sonic podcast", "puerto": 18850, "uso": "rutas locales victoria -> pedir a Victoria", "caps": "services"},
-    {"name": "Hunyuan3D", "puerto": 18860, "endpoint": "POST /generate {image_b64} -> GLB", "caps": "art"},
-    {"name": "lp-animate", "puerto": 18861, "endpoint": "POST {foto_b64, preset} -> mp4", "caps": "art"},
-    {"name": "n8n orquestador", "puerto": 5678, "nota": "UI LAN-only victoria.local/n8n/"}
+    {
+      "name": "Gateway LLM",
+      "puerto": 8010,
+      "baseURL": "victoria.local:8010/v1",
+      "caps": "llm/art/provision"
+    },
+    {
+      "name": "vLLM directo",
+      "puerto": 8000,
+      "nota": "NO usar directo (solo via gateway)"
+    },
+    {
+      "name": "ComfyUI imagenes",
+      "puerto": 8188,
+      "via": "art API gateway (templates z-image-turbo/flux-schnell/sd15-realistic)",
+      "caps": "art"
+    },
+    {
+      "name": "LivePortrait UI",
+      "puerto": 8180,
+      "nota": "LAN-only; headless = lp-animate :18861",
+      "caps": "liveportrait/art"
+    },
+    {
+      "name": "Voz TTS/STT",
+      "puerto": 18810,
+      "endpoint": "POST /tts, /stt (?language=es)",
+      "caps": "tts/whisper"
+    },
+    {
+      "name": "Video server",
+      "puerto": 18811,
+      "endpoint": "POST /analyze",
+      "caps": "services"
+    },
+    {
+      "name": "Web-nav",
+      "puerto": 18820,
+      "uso": "navegacion autonoma Victoria",
+      "caps": "services"
+    },
+    {
+      "name": "Whois",
+      "puerto": 18830,
+      "endpoint": "GET /whois?domain=X",
+      "caps": "services"
+    },
+    {
+      "name": "Host-admin",
+      "puerto": 18840,
+      "nota": "401 por DISEÑO con llave kalimete (solo admin puro)",
+      "caps": "admin"
+    },
+    {
+      "name": "Sonic podcast",
+      "puerto": 18850,
+      "uso": "rutas locales victoria -> pedir a Victoria",
+      "caps": "services"
+    },
+    {
+      "name": "Hunyuan3D",
+      "puerto": 18860,
+      "endpoint": "POST /generate {image_b64} -> GLB",
+      "caps": "art"
+    },
+    {
+      "name": "lp-animate",
+      "puerto": 18861,
+      "endpoint": "POST {foto_b64, preset} -> mp4",
+      "caps": "art"
+    },
+    {
+      "name": "n8n orquestador",
+      "puerto": 5678,
+      "nota": "UI LAN-only victoria.local/n8n/"
+    }
   ],
   "scripts_host": [],
   "docs": [
@@ -52,16 +115,33 @@
   "docs_oficiales": {
     "regla": "ANTES de actuar contra la granja, consultar /v1/granja (fuente viva). Si no cubre el caso, verificar LIVE (curl /health). NUNCA inventar endpoints ni caps.",
     "fuentes": [
-      {"nombre": "Victoria /v1/granja", "url": "http://victoria.local:8010/v1/granja", "contenido_clave": "catalogo LIVE 12 servicios + probes + endpoints + caps + ejemplos", "verificada": "2026-10-29"},
-      {"nombre": "Victoria /v1/config-guide", "url": "http://victoria.local:8010/v1/config-guide", "contenido_clave": "config opencode + granja section + ide_integration", "verificada": "2026-10-29"}
+      {
+        "nombre": "Victoria /v1/granja",
+        "url": "http://victoria.local:8010/v1/granja",
+        "contenido_clave": "catalogo LIVE 12 servicios + probes + endpoints + caps + ejemplos",
+        "verificada": "2026-10-29"
+      },
+      {
+        "nombre": "Victoria /v1/config-guide",
+        "url": "http://victoria.local:8010/v1/config-guide",
+        "contenido_clave": "config opencode + granja section + ide_integration",
+        "verificada": "2026-10-29"
+      }
     ]
   },
   "changelog": [
-    {"fecha": "2026-10-29", "cambio": "Catalogo de puertos granja verificado LIVE (5 puertos faltantes: 8188/8180/18820/18830/5678). Skills art/voice-video/assets-3d con Fuente viva /v1/granja. Drift-check bidireccional activo."},
-    {"fecha": "2026-10-01", "cambio": "Agente creado (victoria-server) con allowlist kalimete + MAPA seccion. llave kalimete caps llm/art/tts/whisper/provision."}
+    {
+      "fecha": "2026-10-29",
+      "cambio": "Catalogo de puertos granja verificado LIVE (5 puertos faltantes: 8188/8180/18820/18830/5678). Skills art/voice-video/assets-3d con Fuente viva /v1/granja. Drift-check bidireccional activo."
+    },
+    {
+      "fecha": "2026-10-01",
+      "cambio": "Agente creado (victoria-server) con allowlist kalimete + MAPA seccion. llave kalimete caps llm/art/tts/whisper/provision."
+    }
   ],
   "changelogs": [
-    "~/armada-sync/CHANGELOG.md"
+    "~/armada-sync/CHANGELOG.md",
+    "~/armada-sync/CHANGELOG-MAESTRO.md"
   ],
   "no_touch": [
     "host-admin :18840 exige admin puro -> llave kalimete da 401 por DISEÑO (kalimete consume, no opera)",
@@ -73,5 +153,11 @@
     "cuando_usar": "cualquier tarea que consuma la granja Victoria (LLM, arte, voz, 3D, animacion, video, provision)",
     "pre_check": "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:8010/v1/granja | grep -q tts_stt || echo granja:down",
     "post_check": "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:8010/v1/granja | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get(\\\"health_probes\\\",{}).get(\\\"tts_stt\\\"))\""
+  },
+  "changelog_unificado": {
+    "fuente_canonica": "GitHub warcold/armada-sync/CHANGELOG.md",
+    "mirror_local": "~/armada-sync/CHANGELOG.md",
+    "endpoint_api": "GET http://victoria.local:8010/v1/changelog (via LAN, llave kalimete)",
+    "nota": "El agente victoria-server (en Kalimete) consume la granja Victoria. Debe leer/escribir el changelog unificado para coordinación cross-machine."
   }
 }

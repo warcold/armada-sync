@@ -26,36 +26,198 @@
     }
   },
   "subagentes": [
-    { "name": "Armada Suite", "id": "armada-suite", "file": "armada-suite.md", "scope": "Plugin WP Armada Suite 5.4.x multitenant WP↔ERP (~/dev/wordpress/plugins/armada-suite)", "hidden": false },
-    { "name": "Authentik", "id": "authentik", "file": "authentik.md", "scope": "SSO Authentik (auth.armada.do) en vps-preprod", "hidden": false },
-    { "name": "Blender", "id": "blender", "file": "blender.md", "scope": "Blender 5.0.1 + MCP mcp-for-blender TCP :9876 (modelado 3D, GLB, retopo/decimate, escenas procedurales)", "hidden": false },
-    { "name": "Cloudflare", "id": "cloudflare", "file": "cloudflare.md", "scope": "Cuenta Alfredo@armada.do (DNS, WAF, túneles, Workers, KV/D1) — solo vía API, edit/write deny", "hidden": false },
-    { "name": "DocuSeal", "id": "docuseal", "file": "docuseal.md", "scope": "DocuSeal (docuseal.armada.do) en vps-preprod", "hidden": false },
-    { "name": "Ecco Suit", "id": "ecco-suit", "file": "ecco-suit.md", "scope": "VPS Ecco Qualitá 62.171.144.58 (suite.eccoqualita.com, Next.js + PostgreSQL tras Caddy TLS)", "hidden": false },
-    { "name": "ERP Dev", "id": "erp-dev", "file": "erp-dev.md", "scope": "ERP erpipo preprod dockerizado en kalimete (:8100), rama dev/ecomm-erp", "hidden": false },
-    { "name": "Game Studio", "id": "game-studio", "file": "game-studio.md", "scope": "Fábrica de juegos 3D completos desde cero (pipeline 7 fases, ~/dev/games/)", "hidden": false },
-    { "name": "Intigriti", "id": "intigriti", "file": "intigriti.md", "scope": "Bug bounty Intigriti (~/dev/ethical-hacking) — CoC+T&C estrictos, no-destructivo", "hidden": false },
-    { "name": "IRC", "id": "irc", "file": "irc.md", "scope": "InspIRCd El Corito (chatlatinos.org) en vps-preprod", "hidden": false },
-    { "name": "Kalimete Dashboard", "id": "kalimete-dashboard", "file": "kalimete-dashboard.md", "scope": "Dashboard dev kalimete (api.py :8081 + SPA HTML, monitorea ~/dev/apps/)", "hidden": false },
-    { "name": "Kalimete PTT", "id": "kalimete-ptt", "file": "kalimete-ptt.md", "scope": "Voz push-to-talk (Ctrl_R conversación + F9 dictado; cliente kalimete, servidor victoria :18810 solo lectura)", "hidden": false },
-    { "name": "MaganTech", "id": "magantech", "file": "magantech.md", "scope": "Website cliente MaganTech (magantech.com.do): preprod :8093 + prod cPanel vía erpsuite/v1/ops", "hidden": false },
-    { "name": "Micaserogou", "id": "micaserogou", "file": "micaserogou.md", "scope": "Website cliente Micaserogou (micaserogou.com): preprod :8094 + prod cPanel externo (deploy pendiente)", "hidden": false },
-    { "name": "Nextcloud", "id": "nextcloud", "file": "nextcloud.md", "scope": "Nextcloud (nextcloud.armada.do) + whiteboard en vps-preprod", "hidden": false },
-    { "name": "PetSuite", "id": "petsuite", "file": "petsuite.md", "scope": "PetSuite (pets.armada.do) en vps-preprod", "hidden": false },
-    { "name": "Proxmark", "id": "proxmark", "file": "proxmark.md", "scope": "Proxmark3 RFID/NFC en kalimete (/dev/ttyACM0, binario pm3)", "hidden": false },
-    { "name": "Proxy", "id": "proxy", "file": "proxy.md", "scope": "Proxy Armada dockerizado en vps-preprod (Squid :3128 + SOCKS5 :1080, /opt/proxy-stack) — migrado de vps-proxy 2026-10-22 (vps-proxy DESACTIVADO)", "hidden": false },
-    { "name": "Ragnarok Server", "id": "ragnarok-server", "file": "ragnarok-server.md", "scope": "SERVIDOR rAthena + FluxCP + roBrowser (ragnarok.armada.do) en vps-preprod", "hidden": false },
-    { "name": "Record of Ragnarok", "id": "record-of-ragnarok", "file": "record-of-ragnarok.md", "scope": "JUEGO Godot ARPG (~/dev/games/record-of-ragnarok) — pipeline fases 0.5-7 del GDD", "hidden": false },
-    { "name": "Scriberr", "id": "scriberr", "file": "scriberr.md", "scope": "Scriberr (scriberr.armada.do) en vps-preprod", "hidden": false },
-    { "name": "Taohemps", "id": "taohemps", "file": "taohemps.md", "scope": "Taohemps (taohemps.com) en vps-preprod", "hidden": false },
-    { "name": "Victoria Server", "id": "victoria-server", "file": "victoria-server.md", "scope": "Host GPU/LLM victoria (10.0.0.5) — SOLO LECTURA por defecto", "hidden": false },
-    { "name": "VPS", "id": "vps", "file": "vps.md", "scope": "VPS producción vps-preprod (154.53.35.102): contenedores, servicios, firewall, caddy", "hidden": false },
-    { "name": "WordPress", "id": "wordpress-dev", "file": "wordpress-dev.md", "scope": "SISTEMA WordPress dev en kalimete (umbrella): stack :8091/:3307, hub ~/dev/wordpress, deploy del stack", "hidden": false },
-    { "name": "ZionV CRM", "id": "zionv-crm", "file": "zionv-crm.md", "scope": "Plugin ZionV CRM (stack propio :8092, GitHub warcold/zionv-crm)", "hidden": false }
+    {
+      "name": "Armada Suite",
+      "id": "armada-suite",
+      "file": "armada-suite.md",
+      "scope": "Plugin WP Armada Suite 5.4.x multitenant WP↔ERP (~/dev/wordpress/plugins/armada-suite)",
+      "hidden": false
+    },
+    {
+      "name": "Authentik",
+      "id": "authentik",
+      "file": "authentik.md",
+      "scope": "SSO Authentik (auth.armada.do) en vps-preprod",
+      "hidden": false
+    },
+    {
+      "name": "Blender",
+      "id": "blender",
+      "file": "blender.md",
+      "scope": "Blender 5.0.1 + MCP mcp-for-blender TCP :9876 (modelado 3D, GLB, retopo/decimate, escenas procedurales)",
+      "hidden": false
+    },
+    {
+      "name": "Cloudflare",
+      "id": "cloudflare",
+      "file": "cloudflare.md",
+      "scope": "Cuenta Alfredo@armada.do (DNS, WAF, túneles, Workers, KV/D1) — solo vía API, edit/write deny",
+      "hidden": false
+    },
+    {
+      "name": "DocuSeal",
+      "id": "docuseal",
+      "file": "docuseal.md",
+      "scope": "DocuSeal (docuseal.armada.do) en vps-preprod",
+      "hidden": false
+    },
+    {
+      "name": "Ecco Suit",
+      "id": "ecco-suit",
+      "file": "ecco-suit.md",
+      "scope": "VPS Ecco Qualitá 62.171.144.58 (suite.eccoqualita.com, Next.js + PostgreSQL tras Caddy TLS)",
+      "hidden": false
+    },
+    {
+      "name": "ERP Dev",
+      "id": "erp-dev",
+      "file": "erp-dev.md",
+      "scope": "ERP erpipo preprod dockerizado en kalimete (:8100), rama dev/ecomm-erp",
+      "hidden": false
+    },
+    {
+      "name": "Game Studio",
+      "id": "game-studio",
+      "file": "game-studio.md",
+      "scope": "Fábrica de juegos 3D completos desde cero (pipeline 7 fases, ~/dev/games/)",
+      "hidden": false
+    },
+    {
+      "name": "Intigriti",
+      "id": "intigriti",
+      "file": "intigriti.md",
+      "scope": "Bug bounty Intigriti (~/dev/ethical-hacking) — CoC+T&C estrictos, no-destructivo",
+      "hidden": false
+    },
+    {
+      "name": "IRC",
+      "id": "irc",
+      "file": "irc.md",
+      "scope": "InspIRCd El Corito (chatlatinos.org) en vps-preprod",
+      "hidden": false
+    },
+    {
+      "name": "Kalimete Dashboard",
+      "id": "kalimete-dashboard",
+      "file": "kalimete-dashboard.md",
+      "scope": "Dashboard dev kalimete (api.py :8081 + SPA HTML, monitorea ~/dev/apps/)",
+      "hidden": false
+    },
+    {
+      "name": "Kalimete PTT",
+      "id": "kalimete-ptt",
+      "file": "kalimete-ptt.md",
+      "scope": "Voz push-to-talk (Ctrl_R conversación + F9 dictado; cliente kalimete, servidor victoria :18810 solo lectura)",
+      "hidden": false
+    },
+    {
+      "name": "MaganTech",
+      "id": "magantech",
+      "file": "magantech.md",
+      "scope": "Website cliente MaganTech (magantech.com.do): preprod :8093 + prod cPanel vía erpsuite/v1/ops",
+      "hidden": false
+    },
+    {
+      "name": "Micaserogou",
+      "id": "micaserogou",
+      "file": "micaserogou.md",
+      "scope": "Website cliente Micaserogou (micaserogou.com): preprod :8094 + prod cPanel externo (deploy pendiente)",
+      "hidden": false
+    },
+    {
+      "name": "Nextcloud",
+      "id": "nextcloud",
+      "file": "nextcloud.md",
+      "scope": "Nextcloud (nextcloud.armada.do) + whiteboard en vps-preprod",
+      "hidden": false
+    },
+    {
+      "name": "PetSuite",
+      "id": "petsuite",
+      "file": "petsuite.md",
+      "scope": "PetSuite (pets.armada.do) en vps-preprod",
+      "hidden": false
+    },
+    {
+      "name": "Proxmark",
+      "id": "proxmark",
+      "file": "proxmark.md",
+      "scope": "Proxmark3 RFID/NFC en kalimete (/dev/ttyACM0, binario pm3)",
+      "hidden": false
+    },
+    {
+      "name": "Proxy",
+      "id": "proxy",
+      "file": "proxy.md",
+      "scope": "Proxy Armada dockerizado en vps-preprod (Squid :3128 + SOCKS5 :1080, /opt/proxy-stack) — migrado de vps-proxy 2026-10-22 (vps-proxy DESACTIVADO)",
+      "hidden": false
+    },
+    {
+      "name": "Ragnarok Server",
+      "id": "ragnarok-server",
+      "file": "ragnarok-server.md",
+      "scope": "SERVIDOR rAthena + FluxCP + roBrowser (ragnarok.armada.do) en vps-preprod",
+      "hidden": false
+    },
+    {
+      "name": "Record of Ragnarok",
+      "id": "record-of-ragnarok",
+      "file": "record-of-ragnarok.md",
+      "scope": "JUEGO Godot ARPG (~/dev/games/record-of-ragnarok) — pipeline fases 0.5-7 del GDD",
+      "hidden": false
+    },
+    {
+      "name": "Scriberr",
+      "id": "scriberr",
+      "file": "scriberr.md",
+      "scope": "Scriberr (scriberr.armada.do) en vps-preprod",
+      "hidden": false
+    },
+    {
+      "name": "Taohemps",
+      "id": "taohemps",
+      "file": "taohemps.md",
+      "scope": "Taohemps (taohemps.com) en vps-preprod",
+      "hidden": false
+    },
+    {
+      "name": "Victoria Server",
+      "id": "victoria-server",
+      "file": "victoria-server.md",
+      "scope": "Host GPU/LLM victoria (10.0.0.5) — SOLO LECTURA por defecto",
+      "hidden": false
+    },
+    {
+      "name": "VPS",
+      "id": "vps",
+      "file": "vps.md",
+      "scope": "VPS producción vps-preprod (154.53.35.102): contenedores, servicios, firewall, caddy",
+      "hidden": false
+    },
+    {
+      "name": "WordPress",
+      "id": "wordpress-dev",
+      "file": "wordpress-dev.md",
+      "scope": "SISTEMA WordPress dev en kalimete (umbrella): stack :8091/:3307, hub ~/dev/wordpress, deploy del stack",
+      "hidden": false
+    },
+    {
+      "name": "ZionV CRM",
+      "id": "zionv-crm",
+      "file": "zionv-crm.md",
+      "scope": "Plugin ZionV CRM (stack propio :8092, GitHub warcold/zionv-crm)",
+      "hidden": false
+    }
   ],
   "sync": {
     "sistema": "armada-sync hub (cron 5min) a GitHub, un solo writer, sin followers",
-    "incluye": ["agents/", "skills/", "commands/", "bin/ texto", "harness/"],
+    "incluye": [
+      "agents/",
+      "skills/",
+      "commands/",
+      "bin/ texto",
+      "harness/"
+    ],
     "secrets_gate": true
   },
   "frescura": {
@@ -81,8 +243,27 @@
   "docs_oficiales": {
     "regla": "ANTES de programar/configurar opencode o la flota, consultar estas fuentes. NUNCA inventar campos de config ni modos de agente.",
     "fuentes": [
-      { "nombre": "opencode docs", "url": "https://opencode.ai/docs", "contenido_clave": "orquestacion, Task, subagentes, permisos" },
-      { "nombre": "Schema de config opencode", "url": "https://opencode.ai/config.json", "contenido_clave": "fuente de verdad de opencode.jsonc" }
+      {
+        "nombre": "opencode docs",
+        "url": "https://opencode.ai/docs",
+        "contenido_clave": "orquestacion, Task, subagentes, permisos"
+      },
+      {
+        "nombre": "Schema de config opencode",
+        "url": "https://opencode.ai/config.json",
+        "contenido_clave": "fuente de verdad de opencode.jsonc"
+      }
     ]
-  }
+  },
+  "changelog_unificado": {
+    "fuente_canonica": "GitHub warcold/armada-sync/CHANGELOG.md",
+    "mirror_local": "~/armada-sync/CHANGELOG.md",
+    "endpoint_api": "GET http://victoria.local:8010/v1/changelog (via LAN, llave kalimete)",
+    "sync_script": "~/bin/changelog-sync-kalimete.sh",
+    "cron": "*/10 * * * *",
+    "nota": "Append-only format = merge natural sin conflictos. Los 3 principales (Victoria/Kalimete/Jonas) leen/escriben aquí. Kalimete es HUB GitHub (push 5 min via sync.sh)."
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG-MAESTRO.md"
+  ]
 }
