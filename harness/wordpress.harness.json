@@ -98,7 +98,11 @@
   ],
   "packs": {
     "default": "neutral",
-    "available": ["neutral", "tech", "restaurant"],
+    "available": [
+      "neutral",
+      "tech",
+      "restaurant"
+    ],
     "mapping": {
       "neutral": "Default genérico, sin tecnología",
       "tech": "MaganTech (colores #1a73e8/#34a853)",
@@ -112,11 +116,34 @@
   "erp_integration": {
     "store_key_header": "Authorization: Bearer iak_*",
     "client_token_header": "Authorization: Bearer cat_*",
-    "webhook_events": ["order.created", "stock.updated", "price.updated"],
+    "webhook_events": [
+      "order.created",
+      "stock.updated",
+      "price.updated"
+    ],
     "webhook_signature": "HMAC-SHA256 (X-Webhook-Signature)",
     "delta_sync": "client-side (ERP no expone ?since=)",
     "catalog_sync_frequency": "15-30 min",
     "stock_sync_frequency": "5 min",
     "webhooks": "tiempo real"
+  },
+  "docs_oficiales": {
+    "fuentes": [
+      {
+        "nombre": "WordPress developer resources",
+        "url": "https://developer.wordpress.org/",
+        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
+      },
+      {
+        "nombre": "MariaDB docs",
+        "url": "https://mariadb.com/kb/en/documentation/",
+        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
+      },
+      {
+        "nombre": "WP-CLI",
+        "url": "https://wp-cli.org/",
+        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
+      }
+    ]
   }
 }

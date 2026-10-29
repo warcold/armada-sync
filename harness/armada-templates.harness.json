@@ -48,5 +48,19 @@
     "sin secrets; namespace propio armada_templates_*; cero escrituras en erp_suite_settings salvo tenant.template_pack via superficies existentes"
   ],
   "changelog": "~/dev/wordpress/plugins/armada-templates/CHANGELOG.md (PROPIO, 1.0.0 inicial) + hitos de gobernanza en ~/armada-sync/CHANGELOG.md (escribe kalimete)",
-  "name": "Armada Templates"
+  "name": "Armada Templates",
+  "docs_oficiales": {
+    "fuentes": [
+      {
+        "nombre": "WordPress developer resources",
+        "url": "https://developer.wordpress.org/",
+        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
+      },
+      {
+        "nombre": "WP-CLI",
+        "url": "https://wp-cli.org/",
+        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
+      }
+    ]
+  }
 }

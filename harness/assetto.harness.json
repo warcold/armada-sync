@@ -52,5 +52,19 @@
     "no_direct_ports": "Todos los puertos van por Cloudflare tunnel (assetto.armada.do)",
     "single_env": "Solo producción (no preprod/doble ambiente)"
   },
-  "groom_clean": true
+  "groom_clean": true,
+  "docs_oficiales": {
+    "fuentes": [
+      {
+        "nombre": "assetto-server-manager (JustaPenguin)",
+        "url": "https://github.com/JustaPenguin/assetto-server-manager",
+        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
+      },
+      {
+        "nombre": "Assetto Corsa oficial",
+        "url": "https://www.assettocorsa.net/",
+        "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
+      }
+    ]
+  }
 }
