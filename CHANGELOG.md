@@ -1,4 +1,4 @@
-### [2026-10-29 18:30 UTC] [php] Corrección versiones PHP en harnesses + Plugin Armada Suite Requires PHP 8.1+
+### [2026-10-29 18:30 EDT] [php] Corrección versiones PHP en harnesses + Plugin Armada Suite Requires PHP 8.1+
 - **Tipo**: fix | docs | security
 - **Qué**: Corrección de versiones PHP en harnesses de kalimete (Micaserogou, Magantech, WordPress, WordPress-dev) para reflejar versiones reales de producción/preprod. Actualización header plugin Armada Suite: `Requires PHP: 7.4` → `Requires PHP: 8.1+` (mínimo probado en producción 8.3/8.4/8.5).
 - **Versiones PHP reales auditadas**:
