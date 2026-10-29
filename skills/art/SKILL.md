@@ -5,6 +5,21 @@ description: Generar imágenes con los modelos de arte de Victoria (Z-Image-Turb
 
 # Art — generación de imágenes vía el gateway de Victoria
 
+
+## ⚡ Fuente viva — verifica ANTES de actuar (2026-10-29)
+
+Los servicios, modelos, voces, presets y límites de la granja pueden cambiar.
+**Antes de usar esta skill, consulta el catálogo LIVE del gateway**:
+
+```bash
+curl -s -H "Authorization: Bearer $ARMADA_KEY" http://victoria.local:8010/v1/granja | python3 -m json.tool
+```
+
+Devuelve: servicios disponibles con su estado de salud REAL (probes), endpoints,
+modelos/vozes/presets vigentes, caps necesarias y ejemplos. Si algo de esta skill
+discrepa del catálogo, **manda el catálogo** (lo live nunca miente). Verifica
+también `/health` del puerto objetivo antes de una llamada pesada.
+
 Los modelos de imagen viven en el DGX Spark (victoria.local / 10.0.0.5) y se
 consumen por la art API del gateway `:8010` con la llave `kalimete` (rol coder
 + capacidades llm/art — ya configurada).
