@@ -1,0 +1,35 @@
+{
+  "harness": "Residencial",
+  "updated": "2026-10-27",
+  "mode": "subagent",
+  "hidden": false,
+  "temperature": 0.1,
+  "mission": "Desarrollar y desplegar la plataforma inmobiliaria Residencial (scaffold platform-v1; staging en vps-preprod).",
+  "agent_file": "/home/warcold/.config/opencode/agent/residencial.md",
+  "scope": "~/dev/apps/residencial (kalimete) + /opt/residencial-staging (vps-preprod) + residencial.armada.do",
+  "servicios": [
+    {
+      "name": "residencial-staging",
+      "host": "vps-preprod (154.53.35.102:1333)",
+      "ruta": "/opt/residencial-staging",
+      "url": "https://residencial.armada.do (Cloudflare)",
+      "repo": "github.com/warcold/residencial (privado, main)"
+    }
+  ],
+  "health": [
+    "curl -s -o /dev/null -w '%{http_code}' https://residencial.armada.do",
+    "ssh vps-preprod 'cd /opt/residencial-staging && git log --oneline -1'"
+  ],
+  "recovery": [
+    "Deploy roto: git pull en vps-preprod + revisar compose (labels traefik sin limpiar)"
+  ],
+  "docs_oficiales": {
+    "fuentes": [
+      {"nombre": "Node.js docs", "url": "https://nodejs.org/docs", "verificada": "pendiente"},
+      {"nombre": "Cloudflare proxy (edge)", "url": "https://developers.cloudflare.com/cloudflare-one/", "verificada": "pendiente"}
+    ]
+  },
+  "ledger": "/home/warcold/dev/apps/residencial/AGENTS.md",
+  "no_touch": ["prod (no existe)", "limpieza traefik sin confirmar"],
+  "changelog": "/home/warcold/dev/apps/residencial/CHANGELOG.md + ~/armada-sync/CHANGELOG.md"
+}
