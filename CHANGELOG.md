@@ -1,3 +1,22 @@
+## 2026-10-29
+
+### [04:45] - FIX CRÍTICO: acServer Linux arranca — bug era formato de server_cfg.ini, no el binario
+
+- **Tipo**: servicio | fix | config
+- **Modificado**: `/srv/assetto-corsa/assetto/cfg/server_cfg.ini` + `entry_list.ini` (vps-preprod, backups `.bkup-20261029`)
+- **Afecta a**: vps-preprod (Assetto Corsa server)
+- **Causa**: acServer panic `invalid argument to Intn` en weather.go:61 — la causa NO era el binario ni falta de weather.ini por track: el server_cfg.ini usaba formato inventado (`WEATHER_GRAPHICS=0`, `TRACK_CONFIG=`, sin sección `[WEATHER_0]`). El formato correcto Kunos exige sección `[WEATHER_0]` con `GRAPHICS=3_clear` (preset de `content/weather/`), `CONFIG_TRACK=` (no TRACK_CONFIG) y `CARS=` lista separada por `;`
+- **Estado**: ✅ verificado — acServer Linux nativo v1.15 arranca sin Wine: "Server started", TCP+UDP 9600 escuchando, HTTP 8081, weather 3_clear cargado (ambient 24.1/road 32.5), 7 cars GT3 parseados, sesiones Practice/Qualify/Race activas
+- **Notas**:
+  1. **Formato correcto** (FAQ oficial Kunos): `[WEATHER_0] GRAPHICS=3_clear BASE_TEMPERATURE_AMBIENT=26 BASE_TEMPERATURE_ROAD=8 VARIATION_AMBIENT=2 VARIATION_ROAD=1`; sesiones en secciones `[PRACTICE]/[QUALIFY]/[RACE]`; `FUEL_RATE/TYRE_WEAR_RATE/DAMAGE_MULTIPLIER` en porcentaje (100), no float
+  2. **DRS zones**: con `CONFIG_TRACK=gp_a` el server busca `content/tracks/ks_nurburgring/gp_a/data/drs_zones.ini` — copiado ahí (+ surfaces.ini para checksum)
+  3. **Wine descartado**: el build Windows via Wine tenía el MISMO panic (mismo código Go) — el Linux nativo es el correcto y ya funciona
+  4. **Lobby global**: `ERROR,INVALID SERVER` al registrar en lobby Kunos — esperado (puerto 9600 no alcanzable desde internet con server parado); para server privado RD se puede poner `REGISTER_TO_LOBBY=0`
+  5. **Flujo Server Manager**: proceso manual matado — el SM (https://assetto.armada.do, UI 302 OK) lanza acServer al crear una race desde la UI; primer registro en la UI crea la cuenta admin
+  6. **Red**: docker-compose usa `network_mode: host` — puertos 9600/8081 salen directos al host sin publicar; firewall VPS tiene regla ACCEPT all (UDP pasa)
+  7. **Pendiente usuario**: (a) crear cuenta admin en la UI y crear primera race; (b) decidir DNS de `srv00.assetto.armada.do` — hoy es CNAME al túnel CF (TCP-only); para juego UDP conviene A record "DNS only" → 154.53.35.102; (c) cambiar `session_key` placeholder en `/srv/assetto-corsa/config.yml`
+  8. Limpieza: weather.ini experimentales por track eliminados (la solución correcta vive en server_cfg.ini)
+
 ## 2026-10-28
 
 ### [23:45] - PACKS COMPLETOS: tech + neutral añadidos a Zion CRM 2.0.0 + enqueue pack-styles
