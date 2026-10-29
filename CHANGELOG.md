@@ -8,6 +8,20 @@
 - **Hallazgo de estado**: el inventario de Victoria estaba viejo (5.4.2) — la flota kalimete avanzó a 5.9.1 + fusión Zion CRM 2.0.0. Docs curadas.
 ## 2026-10-29
 
+### [06:00] - Assetto Corsa: puesta en marcha completa — session_key, admin SM, DNS UDP srv00, firewall 9600/8081
+- **Tipo**: servicio | config | dns | seguridad
+- **Modificado**: `/srv/assetto-corsa/config.yml` (session_key, backup `.bkup-20261029`), DNS zona armada.do (record srv00), firewall vps-preprod (`/etc/iptables/rules.v4`, backup `rules.v4.bkup-20261029-assetto`)
+- **Afecta a**: vps-preprod (Assetto Corsa server), Cloudflare DNS
+- **Causa**: completar los 3 pendientes de la entrada 04:45 para dejar el servidor operativo
+- **Estado**: ✅ verificado end-to-end
+- **Notas**:
+  1. **session_key**: placeholder reemplazado por 64-hex (`openssl rand -hex 32`); contenedor reiniciado, SM UI 302 OK (boot ~90s por escaneo de contenido)
+  2. **Cuenta admin SM**: el flujo real NO es "primer login crea cuenta" — credenciales de fábrica `admin`/`servermanager` (doc de config.example.yml) → login 302 a `/accounts/new-password` → password permanente seteado → re-login 302 a `/` ✅. Credenciales en `/srv/assetto-corsa/.sm-admin-credentials` (600, root-only, nunca en chat)
+  3. **DNS srv00** (subagente Cloudflare): CNAME→túnel eliminado (ID `792ea47c…`), nuevo A record DNS-only `154.53.35.102` (ID `d657f44339febb5dcbc523a1850afe5a`, TTL auto, comment "Assetto Corsa game port UDP/TCP 9600"); `dig @1.1.1.1` → 154.53.35.102 al primer intento; `assetto.armada.do` (túnel, UI) intacto
+  4. **CORRECCIÓN entrada 04:45**: el firewall del VPS NO era "ACCEPT all" — es `INPUT policy DROP` con reglas explícitas (el tcpdump captura antes de netfilter, por eso parecía que UDP pasaba). Añadidas y persistidas (netfilter-persistent): UDP 9600, TCP 9600, TCP 8081 (este último para descargas de coches vía Content Manager)
+  5. **E2E verificado desde kalimete**: TCP 9600 `succeeded` con handshake completo capturado (SYN→SYN-ACK→ACK→FIN); UDP 9600 llega a eth0; SM UI 302 vía túnel. Proceso manual acServer matado tras la prueba — el SM lanza el suyo al crear una race desde la UI
+  6. **Lección**: una instancia manual de acServer murió sola tras recibir probes UDP basura — no enviar paquetes malformados a un server en pruebas; y tcpdump en el VPS captura pre-netfilter, no prueba que el paquete llegue a la app
+
 ### [04:45] - FIX CRÍTICO: acServer Linux arranca — bug era formato de server_cfg.ini, no el binario
 
 - **Tipo**: servicio | fix | config
