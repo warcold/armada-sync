@@ -1,38 +1,77 @@
 {
   "harness": "victoria-server",
-  "updated": "2026-10-21",
+  "updated": "2026-10-29",
   "agent_file": "~/armada-sync/agents/victoria-server.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA) + granja de contenido (art API, TTS/STT :18810, video :18811, Sonic :18850) + provisioning de llaves de negocio (POST /v1/provision-key, cap provision)",
-  "vivo_2026_10_07": "13 servicios active + digest 9204569b + driver 580.178.04 + dashboard :18800 + E2E granja desde kalimete OK (imagen z-image-turbo ~20s + TTS es + STT roundtrip)",
-  "live_check": "ssh victoria systemctl is-active (ver agente) + curl victoria.local:8010/health + curl victoria.local:8010/v1/catalog",
+  "scope": "Consumo de la granja Victoria (LLM, arte, voz, 3D, animacion, video, web-nav, whois, Sonic, provision) desde kalimete. Mision: usar /v1/granja como fuente viva; skills art/voice-video/assets-3d referencian el catalogo.",
+  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: agente actualizado con catalogo de puertos verificado LIVE (5 puertos faltantes: 8188/8180/18820/18830/5678). Skills art/voice-video/assets-3d con seccion Fuente viva (/v1/granja). Drift-check bidireccional activo (Victoria cycle 6h + kalimete cron 1h). llave kalimete caps: llm/art/tts/whisper/provision. host-admin :18840 401 por diseño (solo admin puro).",
+  "live_check": "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:8010/v1/granja | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get(\"granja\", \"?\"); sys.exit(0 if d.get(\"health_probes\",{}).get(\"tts_stt\")==\"up\" else 1)\"",
+  "checks": [
+    "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:8010/v1/granja | python3 -m json.tool",
+    "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:8010/health",
+    "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:18810/health",
+    "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:18860/health",
+    "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:18861/health"
+  ],
   "upstream": {
-    "fuente": "GPU/LLM victoria (10.0.0.5, warcold:1666, SOLO LECTURA)",
-    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
+    "fuente": "Victoria DGX Spark (10.0.0.5) — gateway :8010 + granja sentidos :18810-18861. /v1/granja = fuente viva unica.",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Si /v1/granja discrepa de skills -> manda el catalogo.",
+    "version_servida_live": "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:8010/v1/granja | python3 -c \"import json,sys; print(json.load(sys.stdin).get(\\\"generated\\\", \\\"?\\\"))\"",
+    "donde_mirar": [
+      "http://victoria.local:8010/v1/config-guide",
+      "http://victoria.local:8010/v1/granja"
+    ],
+    "frecuencia": "cron horario 25* (granja-drift-kalimete.py) + Victoria cycle 6h",
+    "politica": "Skills referencian /v1/granja antes de actuar. Drift-check bidireccional automatico.",
+    "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
   },
+  "servicios": [
+    {"name": "Gateway LLM", "puerto": 8010, "baseURL": "victoria.local:8010/v1", "caps": "llm/art/provision"},
+    {"name": "vLLM directo", "puerto": 8000, "nota": "NO usar directo (solo via gateway)"},
+    {"name": "ComfyUI imagenes", "puerto": 8188, "via": "art API gateway (templates z-image-turbo/flux-schnell/sd15-realistic)", "caps": "art"},
+    {"name": "LivePortrait UI", "puerto": 8180, "nota": "LAN-only; headless = lp-animate :18861", "caps": "liveportrait/art"},
+    {"name": "Voz TTS/STT", "puerto": 18810, "endpoint": "POST /tts, /stt (?language=es)", "caps": "tts/whisper"},
+    {"name": "Video server", "puerto": 18811, "endpoint": "POST /analyze", "caps": "services"},
+    {"name": "Web-nav", "puerto": 18820, "uso": "navegacion autonoma Victoria", "caps": "services"},
+    {"name": "Whois", "puerto": 18830, "endpoint": "GET /whois?domain=X", "caps": "services"},
+    {"name": "Host-admin", "puerto": 18840, "nota": "401 por DISEÑO con llave kalimete (solo admin puro)", "caps": "admin"},
+    {"name": "Sonic podcast", "puerto": 18850, "uso": "rutas locales victoria -> pedir a Victoria", "caps": "services"},
+    {"name": "Hunyuan3D", "puerto": 18860, "endpoint": "POST /generate {image_b64} -> GLB", "caps": "art"},
+    {"name": "lp-animate", "puerto": 18861, "endpoint": "POST {foto_b64, preset} -> mp4", "caps": "art"},
+    {"name": "n8n orquestador", "puerto": 5678, "nota": "UI LAN-only victoria.local/n8n/"}
+  ],
+  "scripts_host": [],
   "docs": [
     "~/armada-sync/agents/victoria-server.md",
     "~/.config/opencode/skills/art/SKILL.md",
-    "~/.config/opencode/skills/voice-video/SKILL.md"
+    "~/.config/opencode/skills/voice-video/SKILL.md",
+    "~/.config/opencode/skills/assets-3d/SKILL.md",
+    "~/armada-sync/harness/HARNESS_SCHEMA_UNIFICADO.md"
   ],
-  "changelog": "~/armada-sync/CHANGELOG.md",
-  "name": "Victoria Server",
   "docs_oficiales": {
-    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
+    "regla": "ANTES de actuar contra la granja, consultar /v1/granja (fuente viva). Si no cubre el caso, verificar LIVE (curl /health). NUNCA inventar endpoints ni caps.",
     "fuentes": [
-      {
-        "nombre": "Victoria AGENTS.md (canonico del stack)",
-        "url": "victoria.local:~/AGENTS.md",
-        "contenido_clave": "stack GPU/LLM victoria 10.0.0.5 (SOLO LECTURA): vLLM, gateway, servicios, granja"
-      },
-      {
-        "nombre": "vLLM docs",
-        "url": "https://docs.vllm.ai/en/latest/",
-        "contenido_clave": "flags y serving del modelo local"
-      }
+      {"nombre": "Victoria /v1/granja", "url": "http://victoria.local:8010/v1/granja", "contenido_clave": "catalogo LIVE 12 servicios + probes + endpoints + caps + ejemplos", "verificada": "2026-10-29"},
+      {"nombre": "Victoria /v1/config-guide", "url": "http://victoria.local:8010/v1/config-guide", "contenido_clave": "config opencode + granja section + ide_integration", "verificada": "2026-10-29"}
     ]
   },
-  "vivo_2026_10_20": "gateway con /v1/provision-key activo; llave kalimete caps llm/art/tts/whisper/provision; primera llave de negocio armada-magantech provisionada DESDE kalimete (201, chat 200 OK); provision_log con IP 10.0.0.106",
-  "vivo_2026_10_21": "gateway sano (LAN+tunel 200); 2da llave de negocio armada-micaserogou provisionada desde kalimete (201, chat 200 via tunel con model -normal); plaintext en websites/micaserogou.com/secrets/ (kalimete), NO en victoria FS (dir secrets inaccesible a warcold, verificado)"
+  "changelog": [
+    {"fecha": "2026-10-29", "cambio": "Catalogo de puertos granja verificado LIVE (5 puertos faltantes: 8188/8180/18820/18830/5678). Skills art/voice-video/assets-3d con Fuente viva /v1/granja. Drift-check bidireccional activo."},
+    {"fecha": "2026-10-01", "cambio": "Agente creado (victoria-server) con allowlist kalimete + MAPA seccion. llave kalimete caps llm/art/tts/whisper/provision."}
+  ],
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ],
+  "no_touch": [
+    "host-admin :18840 exige admin puro -> llave kalimete da 401 por DISEÑO (kalimete consume, no opera)",
+    "Sonic :18850 rutas locales victoria -> pedir a Victoria o usar tab Estudio Podcast",
+    "NUNCA hardcodear endpoints/puertos: usar /v1/granja como fuente"
+  ],
+  "recovery": "Si /v1/granja down: verificar victoria-llm-gateway.service + cloudflared + red LAN. Skills usan cache local del ultimo catalogo conocido.",
+  "delegacion": {
+    "cuando_usar": "cualquier tarea que consuma la granja Victoria (LLM, arte, voz, 3D, animacion, video, provision)",
+    "pre_check": "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:8010/v1/granja | grep -q tts_stt || echo granja:down",
+    "post_check": "curl -s -H \"Authorization: Bearer $ARMADA_KEY\" http://victoria.local:8010/v1/granja | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get(\\\"health_probes\\\",{}).get(\\\"tts_stt\\\"))\""
+  }
 }
