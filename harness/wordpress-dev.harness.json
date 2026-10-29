@@ -40,7 +40,7 @@
     "docker ps --filter name=wordpress  (wordpress-local + wordpress-db healthy)"
   ],
   "upstream": {
-    "fuente": "wordpress:6.7-php8.3-apache + mariadb:10.11 (kalimete)",
+    "fuente": "wordpress:6.7-php8.3-apache + mariadb:10.11 (kalimete). Plugin Armada Suite 5.8.0 (Requires PHP 8.1+).",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
   },
   "docs": [
@@ -80,5 +80,6 @@
         "contenido_clave": "guía de usuario/administración del stack"
       }
     ]
-  }
+  },
+  "vivo_2026_10_29": "Harness estandarizado schema unificado. wordpress-local + wordpress-db healthy (WP core 7.1.3, PHP 8.3.20); REST wp/v2 200; plugin armada-suite 5.8.0 único en live (agente armada-suite). Plugin header: Requires PHP 8.1+. Agente redimensionado a SISTEMA por split de flota (regla owner: cada plugin su agente)."
 }

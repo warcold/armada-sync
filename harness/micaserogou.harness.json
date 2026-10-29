@@ -5,11 +5,11 @@
   "mode": "subagent",
   "hidden": false,
   "scope": "Website cliente Micaserogou (micaserogou.com): preprod :8094 + prod cPanel via erpsuite/v1/ops. Plugin Armada Suite 5.5.10 -> 5.7.0 (ventana owner). Fusion Zion CRM 2.0.0 en vuelo (2026-10-28 23:00-23:45). Mision: salud preprod, ventana prod, rollback, provisioning llave armada-micaserogou.",
-  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. Preprod :8094 UP (Armada Suite 5.7.0 espejo). Prod: WP 7.1.4, PHP 8.4.27, plugin 5.5.10, ERP prod erpipos.armada.do. ops/status 200 (App Password user victoria). 3 artefactos sha256 verificados en export/: A=armada-suite-5.7.0.zip (766345c9...), B=micaserogou-site-fixes-1.0.3.zip (130f4b4c...), C=armada-suite-5.5.10-plugin-only.zip (b35e007c...). BLOCKERS: (1) iak tenant 3 en ERP prod (solo owner/Juan Carlos), (2) ventana manual cPanel+wp-admin, (3) decision 5.7.0 vs Zion CRM 2.0.0 (fusion 28-oct 23:00). llave armada-micaserogou provisionada (rol services caps [llm]).",
-  "live_check": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | grep -q "ok":true && echo micaserogou:up || echo micaserogou:down",
+  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. Preprod :8094 UP (Armada Suite 5.7.0 espejo, PHP 8.3.35). Prod: WP 7.1.4, PHP 8.4.27, plugin 5.5.10, ERP prod erpipos.armada.do. ops/status 200 (App Password user victoria). 3 artefactos sha256 verificados en export/: A=armada-suite-5.7.0.zip (766345c9...), B=micaserogou-site-fixes-1.0.3.zip (130f4b4c...), C=armada-suite-5.5.10-plugin-only.zip (b35e007c...). BLOCKERS: (1) iak tenant 3 en ERP prod (solo owner/Juan Carlos), (2) ventana manual cPanel+wp-admin, (3) decision 5.7.0 vs Zion CRM 2.0.0 (fusion 28-oct 23:00). llave armada-micaserogou provisionada (rol services caps [llm]). Plugin header actualizado: Requires PHP 8.1+ (produccion 8.4.27, preprod 8.3.35).",
+  "live_check": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | grep -q '\"ok\":true' && echo micaserogou:up || echo micaserogou:down",
   "checks": [
     "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | python3 -m json.tool",
-    "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get(\\\"plugin\\\", \\\"?\\\"))\"",
+    "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('plugin', '?'))\"",
     "ls -la ~/dev/wordpress/websites/micaserogou.com/export/armada-suite-5.7.0.zip ~/dev/wordpress/websites/micaserogou.com/export/micaserogou-site-fixes-1.0.3.zip ~/dev/wordpress/websites/micaserogou.com/export/armada-suite-5.5.10-plugin-only.zip",
     "sha256sum ~/dev/wordpress/websites/micaserogou.com/export/armada-suite-5.7.0.zip | grep -q 766345c9 && echo A OK || echo A FAIL",
     "sha256sum ~/dev/wordpress/websites/micaserogou.com/export/micaserogou-site-fixes-1.0.3.zip | grep -q 130f4b4c && echo B OK || echo B FAIL",
@@ -18,10 +18,10 @@
   "upstream": {
     "fuente": "Repo GitHub warcold/armada-suite (plugin Armada Suite) + repo micaserogou.com (site-fixes) + ERP prod erpipos.armada.do (tenant 3 iak). Fusion Zion CRM 2.0.0 (2026-10-28 23:00-23:45).",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Deploy prod = Plan + owner (ventana manual cPanel+wp-admin). Fusion Zion CRM 2.0.0 en vuelo -> decision owner: 5.7.0 vs Zion 2.0.0.",
-    "version_servida_live": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | python3 -c \"import json,sys; print(json.load(sys.stdin).get(\\\"plugin\\\", \\\"?\\\"))\"",
+    "version_servida_live": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | python3 -c \"import json,sys; print(json.load(sys.stdin).get('plugin', '?'))\"",
     "donde_mirar": [
       "~/dev/wordpress/websites/micaserogou.com/docs/PROD-UPGRADE-5.7.0-CHECKLIST.md (artefactos A/B/C + sha256 + flujo owner)",
-      "~/dev/wordpress/websites/micaserogou.com/wp-content/plugins/armada-suite/armada-suite.php (Version: 5.7.0 espejo)",
+      "~/dev/wordpress/websites/micaserogou.com/wp-content/plugins/armada-suite/armada-suite.php (Version: 5.7.0 espejo, Requires PHP: 8.1)",
       "ERP prod erpipos.armada.do (tenant 3 iak pendiente)"
     ],
     "frecuencia": "ante ventana deploy o cambio en fusion Zion CRM",
@@ -29,10 +29,10 @@
     "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
   },
   "servicios": [
-    {"name": "Preprod Micaserogou", "puerto": 8094, "url": "http://localhost:8094", "plugin": "Armada Suite 5.7.0 (espejo repo)"},
+    {"name": "Preprod Micaserogou", "puerto": 8094, "url": "http://localhost:8094", "plugin": "Armada Suite 5.7.0 (espejo repo)", "php": "8.3.35"},
     {"name": "Prod Micaserogou", "url": "https://micaserogou.com", "wp": "7.1.4", "php": "8.4.27", "plugin": "5.5.10", "erp": "erpipos.armada.do", "llm": "victoria.armada.do"},
     {"name": "ERP Prod", "url": "https://erpipos.armada.do", "nota": "tenant 3 iak PENDIENTE (owner/Juan Carlos)"},
-    {"name": "Armada Suite Plugin", "version": "5.7.0 (preprod) / 5.5.10 (prod)", "repo": "warcold/armada-suite", "espejo": "micaserogou.com/wp-content/plugins/armada-suite/"}
+    {"name": "Armada Suite Plugin", "version": "5.7.0 (preprod) / 5.5.10 (prod)", "repo": "warcold/armada-suite", "espejo": "micaserogou.com/wp-content/plugins/armada-suite/", "php_min": "8.1", "php_tested": "8.3, 8.4"}
   ],
   "scripts_host": [
     "~/dev/wordpress/websites/micaserogou.com/export/ (artefactos A/B/C)"
@@ -52,7 +52,7 @@
     ]
   },
   "changelog": [
-    {"fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado. Preprod 5.7.0 UP, prod 5.5.10, 3 artefactos sha256 OK, ops/status 200. BLOCKERS: iak tenant 3 ERP prod, ventana manual cPanel+wp-admin, decision 5.7.0 vs Zion CRM 2.0.0. llave armada-micaserogou provisionada."},
+    {"fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado. Preprod 5.7.0 UP, prod 5.5.10, 3 artefactos sha256 OK, ops/status 200. BLOCKERS: iak tenant 3 ERP prod, ventana manual cPanel+wp-admin, decision 5.7.0 vs Zion CRM 2.0.0. llave armada-micaserogou provisionada. Plugin header: Requires PHP 8.1+."},
     {"fecha": "2026-10-28", "cambio": "Fusion Zion CRM 2.0.0 (23:00-23:45): ZionV CRM + Armada Suite -> plugin unificado Zion CRM 2.0.0. Repo micaserogou.com HEAD 54c715a (site-fixes 1.0.4). Artefacto A recuperado de replica magantech (sha256 766345c9 MATCH)."}
   ],
   "changelogs": [
@@ -67,7 +67,7 @@
   "recovery": "Si prod caido: rollback C via wp-admin upload (armada-suite-5.5.10-plugin-only.zip) -> verificar ops/status 200. Si preprod roto: git checkout HEAD~1 en micaserogou.com + rebuild.",
   "delegacion": {
     "cuando_usar": "ventana deploy prod Micaserogou, salud preprod/prod, rollback, provisioning llave armada-micaserogou",
-    "pre_check": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | grep -q "ok":true || echo micaserogou:down",
-    "post_check": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get(\\\"plugin\\\", \\\"?\\\"))\""
+    "pre_check": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | grep -q '\"ok\":true' || echo micaserogou:down",
+    "post_check": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt) https://micaserogou.com/wp-json/erpsuite/v1/ops/status | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('plugin', '?'))\""
   }
 }

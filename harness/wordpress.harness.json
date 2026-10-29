@@ -5,7 +5,7 @@
   "mode": "subagent",
   "hidden": false,
   "scope": "WordPress genérico + sitios cliente (micaserogou.com, magantech.com.do, wordpress-dev). Mision: gestion multisite WP + plugin Armada Suite + ERP integration.",
-  "vivo_2026_10_29": "Harness estandarizado schema unificado. WordPress multisite: micaserogou.com (prod 5.5.10 -> 5.7.0 ventana), magantech.com.do (preprod 5.7.0), wordpress-dev (:8091 lab). Plugin Armada Suite 5.5.10/5.7.0 + fusion Zion CRM 2.0.0. ERP prod erpipos.armada.do (tenant 3 iak pendiente).",
+  "vivo_2026_10_29": "Harness estandarizado schema unificado. WordPress multisite: micaserogou.com (prod 5.5.10 -> 5.7.0 ventana, PHP 8.4.27), magantech.com.do (preprod 5.7.0, PHP 8.5.11 prod / 8.3 preprod), wordpress-dev (:8091 lab, PHP 8.3.20). Plugin Armada Suite 5.5.10/5.7.0/5.8.0 + fusion Zion CRM 2.0.0. Plugin header actualizado: Requires PHP 8.1+. ERP prod erpipos.armada.do (tenant 3 iak pendiente).",
   "live_check": "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/ | grep -q 200 && echo 'wordpress-dev:up' || echo 'wordpress-dev:down'",
   "checks": [
     "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/",
@@ -26,10 +26,34 @@
     "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
   },
   "servicios": [
-    {"name": "wordpress-dev", "puerto": 8091, "host": "kalimete", "wp": "lab", "db": "mariadb:10.11 (docker, 127.0.0.1:3307)"},
-    {"name": "micaserogou.com", "url": "https://micaserogou.com", "wp": "7.1.4", "plugin": "5.5.10 -> 5.7.0 (ventana)"},
-    {"name": "magantech.com.do", "url": "https://magantech.com.do", "wp": "preprod", "plugin": "5.7.0 (espejo)"},
-    {"name": "ERP prod", "url": "https://erpipos.armada.do", "nota": "tenant 3 iak PENDIENTE (owner/Juan Carlos)"}
+    {
+      "name": "wordpress-dev",
+      "puerto": 8091,
+      "host": "kalimete",
+      "wp": "lab",
+      "db": "mariadb:10.11 (docker, 127.0.0.1:3307)",
+      "php": "8.3.20"
+    },
+    {
+      "name": "micaserogou.com",
+      "url": "https://micaserogou.com",
+      "wp": "7.1.4",
+      "plugin": "5.5.10 -> 5.7.0 (ventana)",
+      "php": "8.4.27"
+    },
+    {
+      "name": "magantech.com.do",
+      "url": "https://magantech.com.do",
+      "wp": "preprod",
+      "plugin": "5.7.0 (espejo)",
+      "php_prod": "8.5.11",
+      "php_preprod": "8.3"
+    },
+    {
+      "name": "ERP prod",
+      "url": "https://erpipos.armada.do",
+      "nota": "tenant 3 iak PENDIENTE (owner/Juan Carlos)"
+    }
   ],
   "scripts_host": [],
   "docs": [
@@ -41,13 +65,29 @@
   "docs_oficiales": {
     "regla": "ANTES de tocar WP/prod, consultar checklist + LIVE (ops/status). NUNCA inventar pasos ventana.",
     "fuentes": [
-      {"nombre": "WordPress REST API", "url": "https://developer.wordpress.org/rest-api/", "contenido_clave": "endpoints + auth", "verificada": "2026-10-29"},
-      {"nombre": "WP CLI", "url": "https://wp-cli.org/", "contenido_clave": "comandos admin", "verificada": "2026-10-29"}
+      {
+        "nombre": "WordPress REST API",
+        "url": "https://developer.wordpress.org/rest-api/",
+        "contenido_clave": "endpoints + auth",
+        "verificada": "2026-10-29"
+      },
+      {
+        "nombre": "WP CLI",
+        "url": "https://wp-cli.org/",
+        "contenido_clave": "comandos admin",
+        "verificada": "2026-10-29"
+      }
     ]
   },
   "changelog": [
-    {"fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente). WP multisite: dev 8091, micaserogou prod 5.5.10->5.7.0, magantech preprod 5.7.0, fusion Zion CRM 2.0.0."},
-    {"fecha": "2026-10-28", "cambio": "Fusion Zion CRM 2.0.0 (23:00-23:45): ZionV CRM + Armada Suite -> Zion CRM 2.0.0. Repo micaserogou.com HEAD 54c715a."}
+    {
+      "fecha": "2026-10-29",
+      "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente). WP multisite: dev 8091, micaserogou prod 5.5.10->5.7.0, magantech preprod 5.7.0, fusion Zion CRM 2.0.0."
+    },
+    {
+      "fecha": "2026-10-28",
+      "cambio": "Fusion Zion CRM 2.0.0 (23:00-23:45): ZionV CRM + Armada Suite -> Zion CRM 2.0.0. Repo micaserogou.com HEAD 54c715a."
+    }
   ],
   "changelogs": [
     "~/armada-sync/CHANGELOG.md"

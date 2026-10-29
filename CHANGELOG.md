@@ -1,3 +1,20 @@
+### [2026-10-29 18:30 UTC] [php] Corrección versiones PHP en harnesses + Plugin Armada Suite Requires PHP 8.1+
+- **Tipo**: fix | docs | security
+- **Qué**: Corrección de versiones PHP en harnesses de kalimete (Micaserogou, Magantech, WordPress, WordPress-dev) para reflejar versiones reales de producción/preprod. Actualización header plugin Armada Suite: `Requires PHP: 7.4` → `Requires PHP: 8.1+` (mínimo probado en producción 8.3/8.4/8.5).
+- **Versiones PHP reales auditadas**:
+  - Micaserogou PROD: PHP 8.4.27 (cPanel)
+  - Micaserogou PREPROD: PHP 8.3.35 (Docker)
+  - Magantech PROD: PHP 8.5.11 (cPanel)
+  - Magantech PREPROD: PHP 8.3 (Docker)
+  - WordPress-dev (kalimete): PHP 8.3.20 (Docker)
+  - ZionV CRM: PHP 8.3.20 (Docker)
+  - ERP Dev: PHP 8.3.33 (Docker)
+  - Armada Suite plugin header: `Requires PHP: 7.4` → `Requires PHP: 8.1+`
+- **Compatibilidad PHP 8.4 verificada**: Armada Suite sin funciones removidas (create_function, each, get_magic_quotes, etc.). Uso correcto de `unserialize` con `allowed_classes`, `random_bytes()` para crypto, sin dynamic properties. WordPress 7.1+ compatible con PHP 8.4.
+- **Harnesses actualizados**: micaserogou, magantech, wordpress, wordpress-dev, wordpress-dev (kalimete) con versiones PHP precisas por entorno.
+- **Docs ambiguas eliminadas**: Referencias a "PHP 8.3" genérico reemplazadas por versiones específicas por entorno (prod/preprod/dev).
+- **Verificado**: Plugin header Armada Suite actualizado `Requires PHP: 8.1+`. Sintaxis OK (`php -l`). Tests regresión 35/35 PASS. Compatibilidad PHP 8.4 confirmada.
+
 # CHANGELOG — Ecosistema Armada (Victoria + Kalimete + Jonas)
 
 > Fuente canónica: GitHub `warcold/armada-sync/CHANGELOG.md` | Mirrors locales: Victoria `/home/victoria/CHANGELOG.md`, Kalimete `~/armada-sync/CHANGELOG.md`, Jonas `~/armada-sync/CHANGELOG.md`
