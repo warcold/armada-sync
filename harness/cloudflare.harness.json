@@ -1,6 +1,6 @@
 {
   "harness": "cloudflare",
-  "updated": "2026-10-01",
+  "updated": "2026-10-29",
   "agent_file": "~/armada-sync/agents/cloudflare.md",
   "mode": "subagent",
   "hidden": false,
@@ -26,5 +26,18 @@
       }
     ]
   },
-  "vivo_2026_10_22": "DNS proxy verificado hoy por subagente Proxy (proxy.us-east + jovtransport.prx → 154.53.35.102 gris TTL 300, token opencode-dns-cleanup); subagente Cloudflare validó READ-ONLY: 0/33 registros armada.do apuntan a la IP vieja 31.220.102.176 — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "DNS proxy verificado hoy por subagente Proxy (proxy.us-east + jovtransport.prx → 154.53.35.102 gris TTL 300, token opencode-dns-cleanup); subagente Cloudflare validó READ-ONLY: 0/33 registros armada.do apuntan a la IP vieja 31.220.102.176 — auditoría hub 2026-10-22",
+  "tunnel_auth": {
+    "documentado": "2026-10-29",
+    "flujo_login": "cloudflared tunnel login se ejecuta EN LA VPS (servidor remoto). La URL de autorización se abre en el navegador LOCAL. El cert.pem y <TUNNEL_ID>.json (creds.json) se guardan en ~/.cloudflared/ DE LA VPS, no de la máquina local.",
+    "obtener_creds_json": "Si ya hiciste login en la VPS: cat ~/.cloudflared/<TUNNEL_ID>.json. Si NO: ejecuta cloudflared tunnel login EN LA VPS, autoriza en tu navegador, se crea el archivo.",
+    "token_vs_creds": "creds.json (archivo) = cloudflared tunnel run / config con credentials-file. token (string) = cloudflared service install \"<TOKEN>\" (systemd). Obtener token: cloudflared tunnel token <TUNNEL_ID> o POST /accounts/{id}/cfd_tunnel/{tunnel_id}/token",
+    "api_no_descarga_creds": "NO existe endpoint API para descargar creds.json de tunnel existente. Solo se genera via cloudflared tunnel login o cloudflared tunnel token.",
+    "scopes_token_tunnel": [
+      "com.cloudflare.api.account.cloudflare_tunnel.edit",
+      "com.cloudflare.api.account.cloudflare_tunnel.read",
+      "com.cloudflare.api.account.zone.dns_records.edit (para route dns)"
+    ],
+    "playbook_vps_nueva": "1) cloudflared tunnel login 2) verificar creds.json 3) config.yml con ingress 4) cloudflared service install \"$(cloudflared tunnel token <ID>)\" 5) systemctl enable --now cloudflared"
+  }
 }
