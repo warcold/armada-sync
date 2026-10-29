@@ -203,3 +203,23 @@ Victoria corre `upstream-sync.py` diario (8 sistemas, guarda 24h): ComfyUI git, 
 groom_clean: **FALSE** — este subagente apunta a otra maquina; limpiar solo su propia forma (paths/checks rotos), NUNCA historia ni referencias a victoria.
 
 > **Harness**: `~/armada-sync/harness/victoria-server.harness.json` (scope + live_check + upstream + docs + changelog de este agente).
+
+## Catálogo de puertos de la granja (verificado LIVE 2026-10-29 por Victoria)
+
+| Puerto | Servicio | Consumo kalimete | Caps necesarias |
+|---|---|---|---|
+| :8010 | Gateway LLM (chat, art API, provision) | baseURL victoria.armada.do/v1 | llm/art/provision |
+| :8000 | vLLM directo | NO usar directo (solo vía gateway) | — |
+| :8188 | ComfyUI imágenes | vía art API del gateway (templates z-image-turbo/flux-schnell/sd15-realistic) | art |
+| :8180 | LivePortrait UI (talking-head) | UI LAN-only; headless = lp-animate :18861 | liveportrait/art |
+| :18810 | Voz TTS/STT (Qwen3-TTS + Whisper) | POST /tts, /stt (?language=es) | tts/whisper |
+| :18811 | Video server (yt-dlp+frames+transcribe+VLM) | POST /analyze | services |
+| :18820 | Web-nav (Playwright) | navegación autónoma | services |
+| :18830 | Whois | GET /whois?domain=X | services |
+| :18840 | Host-admin | **401 por diseño con llave kalimete** (solo admin puro) | — |
+| :18850 | Sonic podcast (talking-head con voz) | rutas locales de victoria → pedir a Victoria | services |
+| :18860 | Hunyuan3D image→GLB | POST /generate {image_b64} + GET /file | art |
+| :18861 | lp-animate foto→mp4 | POST {foto_b64, preset} + GET /file | art |
+| :5678 | n8n orquestador | UI LAN-only (victoria.local/n8n/) | — |
+
+Regla: antes de actuar contra la granja, verificar LIVE con curl /health del puerto objetivo.
