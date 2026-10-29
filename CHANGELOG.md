@@ -1,20 +1,6 @@
 # CHANGELOG — Ecosistema Armada (Victoria + Kalimete + Jonas)
 
 > Fuente canónica: GitHub `warcold/armada-sync/CHANGELOG.md` | Mirrors locales: Victoria `/home/victoria/CHANGELOG.md`, Kalimete `~/armada-sync/CHANGELOG.md`, Jonas `~/armada-sync/CHANGELOG.md`
-### [2026-10-29 17:51 UTC] [test-e2e-reverse] Validación E2E inversa: Victoria → GitHub → Kalimete
-- **Tipo**: test
-- **Qué**: Entrada escrita desde Victoria, sincronizada a GitHub, leída desde Kalimete
-- **Verificado**: Sync bidireccional completo Victoria↔Kalimete↔GitHub hub
-
-
-### [2026-10-29 17:50 UTC] [test-e2e] Validación E2E changelog unificado multi-máquina
-- **Tipo**: test
-- **Qué**: Entrada de prueba escrita desde Kalimete, sincronizada a GitHub, leída desde Victoria via /v1/changelog
-- **Verificado**: Sync bidireccional Victoria↔Kalimete↔GitHub hub funcionando
-- **Origen**: Kalimete (escritura local) → GitHub hub → Victoria (lectura via /v1/changelog)
-
-
-
 ### [2026-10-29 01:55 EDT] [vllm] GET /v1/granja — catálogo LIVE de la granja + drift-check bidireccional
 - **Tipo**: feature (aprobado por el owner tras la evaluación de sincronización)
 - **Qué**: nuevo endpoint `GET /v1/granja` (cualquier llave): catálogo unificado LIVE de toda la granja (12 servicios: llm/art/tts/stt/hunyuan3d/lp_animate/video/webnav/whois/sonic/host_admin/provision) con **probes de salud TCP en vivo** (7/7 up). Motivación: el conocimiento de kalimete vivía en skills estáticas con drift real (5.4.2 vs 5.9.1). Ahora la fuente es VIVA.
@@ -2157,7 +2143,6 @@
 - **Verificación**: batería 5/5 (IDs EN==ES contra ERP real: 6 impresoras 998/1016/1001/971/944/951) + suite 8/8 PASS ✅; php -l OK.
 - **Estado**: ✅ sincronizado (pendiente prueba del usuario: pedir "printers" en el chat)
 
-
 ## 2026-09-24
 
 ### [23:59] - Producción-ready: erp-chatbot + connector sin secretos en código + PRs GitHub para el admin
@@ -2201,7 +2186,6 @@
 - **Que**: (a) key `kalimete` (coder) creada en gateway Victoria; `opencode.jsonc`: apiKey nueva en `vllm`+`vllm-lan` + `instructions` absoluta (backup `.bkup-20261002-2358-kalimete-key`); la admin de alfredo se conserva (reiniciar TUI para tomar la nueva); (b) `git init` en `~/armada-godot` + `.gitignore` Godot (`.godot/`, `*.backup`, `*.bak`) + commit inicial (Mario Bros sin control de versiones; ledger `armada-godot/AGENTS.md` ya cubría `mario_bros/`, no se duplicó).
 - **Verificado**: JSON válido; `/v1/usage` 200 con la nueva.
 
-
 ## 2026-10-01
 
 ### [23:55] - ZionV CRM 1.56.3: auditoría de discrepancias docs vs live — welcome notice → Configuración unificada
@@ -2217,7 +2201,6 @@
 - **Estado**: ✅ verificado (live 1.56.3, URL welcome generada OK, JSON harness válido, ZIP limpio, push OK)
 - **Notas**: Estado del sistema (wp-admin) queda como diagnóstico técnico + respaldo (tabs heredadas correo/calendario/hubspot/ia siguen funcionando ahí); la canónica es `/crm/configuracion/` con 6 tabs (incluye General+Antispam que Estado del sistema NO tiene).
 
-
 ## 2026-10-14
 
 ### [23:55] - Nuevo subagente Intigriti (bug bounty, proyecto ~/dev/ethical-hacking) + auditoría de flota limpia
@@ -2228,7 +2211,6 @@
 - **Estado**: ✅ CoC (go.intigriti.com/coc, v2026-03-09) + Researcher T&C (go.intigriti.com/tac, v2023-08-21) leídos completos e incorporados como reglas duras del agente (scope primero, no-DoS, PII mínimo, pivoting=parar, 48h, AI disclosure, confidencialidad); auditoría previa de flota: 19/19 harness JSON válidos, symlinks OK, temperaturas conformes, git limpio
 - **Notas**: el agente NUNCA sube submits a la plataforma (prepara el report, el usuario lo sube); tools del framework (nuclei/subfinder/etc.) pendientes de verificación en vivo; flags no-destructivos documentados por herramienta (sqlmap sin --dump, nuclei -rl 10, ffuf -rate 50)
 
-
 ## 2026-10-07
 
 ### [23:55] - Nextcloud: cuenta `alfredo@armada.do` habilitada
@@ -2238,7 +2220,6 @@
 - **Afecta a**: nextcloud.armada.do
 - **Causa**: El usuario se creó automáticamente por OIDC provisioning (`auto_create_user=1`), pero Nextcloud deshabilita los usuarios nuevos por defecto.
 - **Estado**: ✅ desbloqueada
-
 
 ## 2026-09-09
 
@@ -2254,7 +2235,6 @@
 - **Estado**: ✅ verificado (agent list 1+20; dominios 4/4 = 200; JSONs válidos; symlink vivo)
 - **Notas**: pendientes siguen — rotar App Password Victoria (prod) + admin preprod; ventana preprod 5.4.0→5.4.1; push zionv (ahead 2). Bridge MCP `wp-magantech` y variante B de escritura de plugins: esperan OK del owner.
 
-
 ## 2026-10-16
 
 ### [23:55] - Fase 3 ERP implementada y enviada a Juan (G1+G2+G3+G4+G6 vía dev/ecomm-erp) + limpieza export/ plugin
@@ -2264,7 +2244,6 @@
 - **Causa**: pedido del owner — el plugin 5.3.0 necesita del ERP los gaps de RECOMENDACIONES-FASE3-AGENTE que Juan aún no implementó; PR #14 de Juan no rompió el contrato del plugin (verificado: su cambio fue en API interna del panel)
 - **Estado**: ✅ verificado: tests 16/16 (11 nuevos + 5 baseline Juan sin regresión), smoke en vivo (ajuste 4×200 + 422 ajeno, CRUD webhook 201/200/200/200 con limpieza, retry-failed OK, route:cache restaurado, queue:restart, migrate:status sin pendientes, cero migraciones); zip 5.3.0 validado al día con HEAD c084cdb (los 2 archivos "borrados" los auto-regenera el plugin — tree limpio solo)
 - **Notas**: export/ confirmado ruta canónica (decisión owner 2026-10-01, sin huérfanos). Adopción Juan: review dev/ecomm-erp → PR a main/develop, sin migrate, queue:restart tras deploy. Pendientes: G5 (fase futura), ventana cancelación como constante (mover a settings si la quiere por-tenant), ancla e-CF de invoice.issued. Trabajo delegado a subagente ERP Dev (5 sesiones por límite de pasos).
-
 
 ## 2026-10-06
 
@@ -2288,7 +2267,6 @@
   - Test Connection: ✅ Conectado (HTTP 200)
   - Plugin 100% genérico: Un WordPress = Un negocio = Su Key = Su Inventario
 
-
 ## 2026-09-08
 
 ### [23:50] - erp-chatbot v1.4.3: identidad Carlos sincronizada + doc agente wordpress-dev actualizada
@@ -2309,7 +2287,6 @@
 - **Decisión**: hub PROPIO cuando haga falta el 2.º canal (el engine actual porta 1:1); la key sale de WP solo entonces. WhatsApp vía Cloud API oficial de Meta (producción), Telegram primero (BotFather, barato de validar). OpenClaw descartado con razones.
 - **Estado**: ⚠️ pendiente de prueba del usuario en navegador (chat + voz) → luego commit
 
-
 ## 2026-09-23
 
 ### [23:50] - MaganTech: plugin 5.4.2 desplegado y probado en local (:8091 + :8093) — auto-sync verificado end-to-end; modo del espejo public→dev; prod queda en manos del owner (§(b) manual)
@@ -2325,7 +2302,6 @@
 - **Causa**: owner (update del plugin en local y public para pruebas)
 - **Estado**: ✅ verificado (wp plugin list 5.4.2, smoke 100%, config_fetched_at bump, logs auto_sync, brand MaganTech)
 - **Notas**: **PROD queda pendiente del owner** — flujo §(b) manual documentado: wp-admin → Plugins → Añadir nuevo → Subir plugin → `export/armada-suite-5.4.2.zip` (WP reemplaza y reactiva solo). Tras subirlo kalimete verifica con `smoke-prod.sh` (ops/status debe reportar plugin 5.4.2; la marca seguirá "Tienda" hasta el fix de datos de Juan Carlos — el mensaje UX nuevo "el ERP no envió nombre del negocio" lo dirá explícito). Rollback: subir ZIP 5.4.1.
-
 
 ## 2026-10-17
 
@@ -2388,7 +2364,6 @@
 - **Estado**: ✅ todo verificado LIVE (smoke 5/5, regresión 19/19, 3 containers healthy, fetch upstream OK, JSON harness válidos)
 - **Notas**: pendientes para el owner: (1) git remote GitHub privado para alfredo-pro-ecomm (hoy solo vive en kalimete); (2) gap ZIP 5.3.1 storage/ → corregir inclusión en próximo release (NO regenerar el liberado); (3) deuda P3 espejo `tenant.api_key` — bloqueada hasta que el ERP lea solo `public.api_key`; (4) mailpit 7.41% CPU + latencia preprod → investigar lado ERP Dev/Juan Carlos; (5) del ERP solo queda G5 (teléfono/stock-sucursal/detalle). Subagentes WordPress y Alfredo Ecomm alcanzaron límite de pasos 2× cada uno — la parte editorial de docs la completó kalimete como hub (patrón reporta→aplica).
 
-
 ## 2026-10-09
 
 ### [23:45] - EccoSuit CIERRE: primer admin + backups verificados + health monitor + SSH solo-llaves
@@ -2399,7 +2374,6 @@
 - **Estado**: ✅ todo verificado LIVE
 - **Hecho**: (1) Primer admin `admin@eccoqualita.com` (org_admin de la org propietaria) creado con script idempotente que NO pisa contraseñas — credenciales en `/opt/eccoqualita/.first-admin-credentials` (600), verificadas con el call canónico `auth.api.signInEmail` → VERIFIED (el endpoint HTTP /api/auth/sign-in/email responde 404 BY DESIGN: el login real va por Server Actions). (2) Backups cron 04:00 (pg_dump -Fc + tar storage, retención 14d) + **restore-test real: 57 tablas restauradas a BD temporal y eliminada**. (3) Health monitor cada 5 min → /var/log/ecco-health.log. (4) PasswordAuthentication OFF (drop-in 99 + neutralizado 50-cloud-init.conf → .bkup; verificado con `PubkeyAuthentication=no` → Permission denied).
 - **Lecciones**: (a) drop-ins sshd_config.d ganan por ORDEN ALFABÉTICO (first-match-wins) — el `50-cloud-init.conf` de Ubuntu cloud pisaba el hardening; (b) tests de "password bloqueado" con ssh-agent cargado = FALSOS POSITIVOS (la llave autentica y sshpass no se entera) — siempre `-o PubkeyAuthentication=no`; (c) la imagen del contenedor tools es un snapshot — scripts de ops nuevos se montan con `-v` en el `compose run`.
-
 
 ## 2026-10-18
 
@@ -2414,7 +2388,6 @@
 - **Estado**: ✅ verificado en vivo — `GET /api/categories` devuelve HTTP 200 con 8 categorías reales (ADICIONALES, BEBIDAS, CALDOS, ESPECIALIDADES, MOFONGOS, PASTAS, PLATOS DEL DIA, POSTRES) + `?per_page=100` y `?activa=true` OK
 - **Para Juan Carlos**: el fix está en `dev/ecomm-erp` (commit b187abc, pushed). Él hace merge a `main` y despliega a producción (nunca nosotros tocamos prod).
 - **Backups**: `.bkup-20261021` creados antes de editar (no commiteados, quedan en árbol de trabajo)
-
 
 ## 2026-10-21
 
@@ -2433,7 +2406,6 @@
 - **Estado**: ✅ sincronizado (todo OK excepto trufflehog py)
 - **Notas**: kalimetehunt.sh framework está listo pero carpetas vacías (recon/, scanning/, exploitation/, reports/, targets/, logs/) — sin actividad desde Feb 2026. Cron de hacking: ninguno (solo sync.sh cada 5 min). Listo para iniciar caza en Intigriti.
 
-
 ## 2026-09-27
 
 ### [23:36] - Diagnóstico chatbot MaganTech: el error del owner vive en PROD + config remota `ia` denegada por diseño (evaluación Victoria completada)
@@ -2451,7 +2423,6 @@
 - **Causa**: racer Kenney ilegible de cerca; mix final: jugador Arwing + enemigos Kenney
 - **Estado**: ✅ verificado (screenshot Arwing vs nave Kenney + score por combate, log limpio)
 - **Notas**: Kenney Space Kit CC0 en models/ (cero IP). Detalle en `docs/CHANGELOG.md` + `docs/ASSETS.md`.
-
 
 ## 2026-10-03
 
@@ -2539,7 +2510,6 @@
 
 ---
 
-
 ## 2026-09-10
 
 ### [23:27] - ZionV CRM 1.56.2: validación dónde quedamos + higiene desinstalación + agente/harness curados
@@ -2607,7 +2577,6 @@
 - **Implementado**: Regla v3.9.6 — todo shortcode de contenido marca render embebido; los templates suprimen su h1 interno embebido (el título lo pone Elementor) y lo conservan en standalone (modo plugin). Header vacío no se imprime; link huérfano a la derecha por CSS. Profile conserva subtítulo; orders/loyalty intactos (eran títulos de sección, no duplicados).
 - **Verificación**: 1 solo h1 (centrado) en las 4 páginas modo elementor; h1 standalone intacto en modo plugin (switch). CDP con carrito vacío + lleno real (cookie Y localStorage sembrados, IDs reales) en 1280/768/375: 0 overflow horizontal; tabla 692px→353px sin romper; thead visible; empty state centrado sin hueco; footer 1 fila→apilado; qty/checkout/continue OK. Hallazgo de test (no bug real): el JS rinde desde localStorage y oculta la tabla si está vacío — el flujo real mantiene ambos en sync vía `erpc_sync_cart`. Screenshots /tmp/opencode/val-carrito-{empty,full}-*.png.
 - **Estado**: ✅ sincronizado
-
 
 ## 2026-09-18
 
@@ -2684,7 +2653,6 @@
 - **Estado**: ✅ agente+harness+home creados y commiteados · ⏳ fixes de código pendientes de OK del owner (doble lado: victoria requiere autorización de escritura)
 - **Notas**: restaurado agents/kalimete-dashboard.md (el cron sync 22:50 lo borró como zombie — se había commiteado sin symlink en ~/.config/opencode/agent/; ahora con symlink). Lección: TODO agente nuevo del repo lleva su symlink inmediato.
 
-
 ## 2026-10-19
 
 ### [23:00] - FUSIÓN COMPLETA: ZionV CRM + Armada Suite → Zion CRM 2.0.0 (plugin unificado)
@@ -2740,7 +2708,6 @@
 - **Causa**: Usuario: mejorar todo sin tocar secrets ajenos. Imágenes WP rotas (ERP devolvía host del request). Incidente: `perl -i` cambió el inode de `preprod.env` → contenedor con clave vieja → Access denied; fix con `--force-recreate` + md5.
 - **Verificación**: API magantech 200; página WP 200 con 8 URLs al host válido (200 estricto); `php -l` OK; repo ERP limpio 0/0 (cero archivos de Juan tocados).
 - **Estado**: ✅ sincronizado
-
 
 ## 2026-09-20
 
@@ -2850,7 +2817,6 @@
   - Compatible con Elementor (shortcodes funcionan en widgets Elementor)
   - Multi-tenant: un plugin puede servir a múltiples clientes del ERPipos
 
-
 ## 2026-09-07
 
 ### [22:15] - victoria-gui: entorno GRÁFICO web de Victoria (chat burbujas + mic + voz + config)
@@ -2902,7 +2868,6 @@
 - **Hallazgo**: el JS renderizaba items como <tr><td> sin clases pero el CSS esperaba .erpc-summary-item (flex) → sin estilo. La regla Ubuntu anterior no cubría todo el DOM.
 - **Verificación**: node --check OK; php -l OK; CSS 3.13.2 en el sitio con regla body * y estilos nuevos. Prueba visual (desktop + móvil) pendiente del usuario.
 - **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
-
 
 ## 2026-09-22
 
@@ -3132,7 +3097,6 @@
 - **Estado**: ✅ E2E 2026-10-21 20:38-20:45 — gateway sano (health LAN 200 + tunel 200; victoria-llm-gateway/cloudflared/nginx active; GPU 45C 0%) · POST /v1/provision-key 201 (slug micaserogou → name forzado armada-micaserogou, owner "Micaserogou (micaserogou.com)") · chat de prueba 200 OK via https://victoria.armada.do/v1, model nvidia/Qwen3.6-35B-A3B-NVFP4-normal (gateway normaliza el id; finish stop, 19 tokens) · DB: armada-micaserogou|services|active=1 · provision_log id 3 (kalimete→armada-micaserogou, 10.0.0.106)
 - **Notas**: plaintext devuelto UNA vez, guardado SOLO en kalimete `~/dev/wordpress/websites/micaserogou.com/secrets/` (600; fp sha256-16 c48066a582502dd1; meta json con settings al lado) — victoria FS intocable por contrato y `~/.victoria-custom/secrets/` verificado NO accesible a warcold (lectura/escritura denegadas); si se quiere copia en victoria, la coloca Victoria manualmente (patron armada-magantech). Budget mensual NO configurable via provisioning (PROVISION_MAX_BUDGET=0 = sin tope; metering por llave en DB). PENDIENTE (kalimete/owner): pegar la key en wp-admin prod → Ajustes → Asistente IA (o env ERPCBOT_LLM_KEY) — api_url y model -normal ya son defaults del plugin. Hallazgo DB: key `erp-bot` (readonly, active) preexistente — evaluar revocacion en panel si es residuo. Drift curado en doc de llaves: faltaban `vaclaaw` (coder) y las armada-*.
 
-
 ## 2026-10-20
 
 ### [20:45] - Checkout delivery/pickup + autofill cliente + correos por instancia (WP ↔ ERP local)
@@ -3151,7 +3115,6 @@
 - **Verificado**: `--check` TODO OK (gateway 200, evdev 16 dispositivos, ffmpeg/paplay); `--say` E2E streaming OK ("Hola papá, aquí estoy..." + "Listo, papá.", exit 0); py_compile OK; instalado 755 en ~/.local/bin/. La UI interactiva requiere terminal del escritorio (curses) — el owner la prueba con `victoria-tui`.
 - **Impacto**: solo añade ~/.local/bin/victoria-tui + ~/.local/share/victoria-tui/; NO toca kalimete-ptt (comparte su env, se pausa/reanima solo); sin cambios en opencode/agents.
 - **Docs**: changelog kalimete (esta entrada) + CHANGELOG general de victoria (referencia).
-
 
 ## 2026-10-02
 
@@ -3374,7 +3337,6 @@
 - **Verificación**: Playwright headless — AJAX Cables 7 (antes 5)/Monitores 10/Impresoras 22 has_more=true/Computadoras 5 ✅; click sin refresh actualiza grilla + URL, 0 errores JS ✅; fallback caché incompleta → 7 ✅; regresión carrito v3.12.5 OK ✅.
 - **Estado**: ✅ sincronizado
 
-
 ## 2026-09-21
 
 ### [18:50] - micaserogou 5.5.3: SEO del nicho restaurante + OG tags + header compacto (title, lang es-DO, schema Restaurant)
@@ -3535,7 +3497,6 @@
 - **Estado**: ✅ sincronizado
 - **Notas**: Owner debe hacer **Ctrl+F5** en wp-admin para ver el fix (cache-bust `?ver=4.4.2` ayuda). Si quiere historia git pristina (4.4.1 puro separado del bump 4.4.2) requiere `git rebase -i` — no hecho sin autorización. Push del repo plugin sigue pendiente a decisión del owner.
 
-
 ## 2026-09-30
 
 ### [18:00] - DEPLOY A PRODUCCIÓN micaserogou.com: sitio restaurante en vivo (plugin 5.5.1 + pack restaurant + paleta cálida + legales restaurante)
@@ -3681,7 +3642,6 @@
 
 ---
 
-
 ## 2026-09-12
 
 ### [17:00] - CORRECCIÓN: vps-proxy NO fue reinstalada (fue reboot por kernel upgrade) + evaluación consolidación
@@ -3724,7 +3684,6 @@
   - Proyectos verificados corren sobre: npm run dev; docker compose up -d
 
 ---
-
 
 ## 2026-09-03
 - **Tipo**: proyecto | plugin | wordpress | api
@@ -3823,7 +3782,6 @@ EOF又是
 - **Verificación**: Ambas keys dan HTTP 200 al POST `chat/completions` desde kalimete (modelo `openai/gpt-oss-20b` como probe, 3 modelos de NIM dan 404/timeout desde kalimete por restricción regional). auth.json legible, permisos 600 warcold:warcold.
 - **Estado**: ✅ sincronizado
 - **Notas**: Modelo de prueba cambiado de `moonshotai/kimi-k3` a `openai/gpt-oss-20b` (el único que responde 200 consistentemente desde kalimete). Sistema de rotación: `nvapi-rotate.sh status|test|rotate|auto` en kalimete. 3 llaves disponibles, rotación automática si falla la activa.
-
 
 ## 2026-09-14
 
@@ -3990,7 +3948,6 @@ EOF又是
 6. Checkout → ERP cliente_id:61 creado ✅
 7. Mi Cuenta muestra 2 pedidos con fechas y totales ✅
 
-
 ## 2026-09-05
 
 ### [15:55] - IRC El Corito EN SERVICIO: firewall vps-preprod abre puertos 6667/6697/7209
@@ -4073,7 +4030,6 @@ EOF又是
 - **Estado**: ✅ verificado (smokes + regresión + vols + estructura final limpia)
 - **Notas**: symlink legacy `~/dev/zionv-crm` NO creado (decisión: no necesario). Pendiente decisión owner: crear repo git para el hub padre (hoy sin .git) y si los subagentes deben migrar sus paths hardcodeados restantes en herramientas propias.
 
-
 ## 2026-10-15
 
 ### [15:05] - Gaming: arquitectura per-proyecto + nombre corregido "Record of Ragnarok" + flota gaming reorganizada
@@ -4109,7 +4065,6 @@ EOF又是
 - **Verificación**: 200 en /, /productos/, /carrito/, /checkout/; 1 header + 1 footer + 1 float por página; php -l + node --check limpios; sin fatales; commit `665d7d4` push main OK
 - **Notas**: (1) wordpress-dev (subagente) agotó 2×15 pasos solo explorando — implementado directo por kalimete. (2) `_elementor_data` de home ID 8 tiene JSON inválido (char 742): NO se tocó por SQL (riesgo); el fix del hero Elementor fue solo CSS. Pendiente reparar ese JSON por editor. (3) Catálogo sigue en 0 por bloqueo ERP impago (alerta 10:30 vigente) — verificación fue estructural.
 - **Estado**: ✅ sincronizado
-
 
 ## 2026-09-17
 
@@ -4362,7 +4317,6 @@ EOF又是
 
 ---
 
-
 ## 2026-09-13
 
 ### [13:00] - ERP E-Commerce Connector: optimización rendimiento — carrito localStorage + caché productos (v2.3.0)
@@ -4411,7 +4365,6 @@ EOF又是
 - **Afecta a**: kalimete (opencode)
 - **Causa**: El nombre `proxmark-cards` era limitante — el agente cubre tokens, LF 125kHz, sniffing, emulation, data analysis. Mucho más que "cards". Se generaliza el nombre.
 - **Estado**: ✅ sincronizado
-
 
 ## 2026-09-06
 
@@ -5193,7 +5146,6 @@ EOF又是
 - **Verificación**: contacto 200 (soporte centrado, mapa en box, chrome único); home 200 (tagline renderiza, CSS 3.11.3); productos/nosotros/cotizar/términos 200; php -l ×3 OK; log limpio.
 - **Estado**: ✅ sincronizado
 
-
 ## 2026-09-19
 
 ### [02:30] - erp-chatbot v1.3.0: fix loop navegar-llegar-navegar + flujo completo (tienda/carrito/checkout/login)
@@ -5461,7 +5413,6 @@ EOF又是
 - **Causa**: reporte del owner — "solo veo una bolita y la sombra subiendo y bajando, no veo avatar"; diagnóstico: elementos CSS puros (dot/sombra) visibles + imágenes 404 = ruta relativa rota
 - **Estado**: ✅ verificado por análisis de screenshot (cluster denso 3720px en franja inferior, sprite ~200px localizado en x=1100+, transparencia intacta); recorte de verificación en ~/Desktop/victoria-overlay-verificacion.png; log limpio (0 errores); nota operativa: pkill -f "electron apps/overlay" se mata a sí mismo (el patrón matchea el propio shell) — usar /tmp/kill-overlay.sh o pgrep con exclusión
 
-
 ## 2026-10-08
 
 ### [01:11] - Alta website micaserogou.com: preprod verificado + agente Micaserogou + documentación de flota (24 subagentes)
@@ -5543,7 +5494,6 @@ EOF又是
   - Host para SSH remoto: **NO usar `auth.armada.do`** (proxied por Cloudflare, bloquea SSH). Usar IP directa `154.53.35.102 -p 1333`
   - La llave privada se entregó al usuario para que la instale en su máquina
 
-
 ## 2026-09-01
 
 ### [00:55] - MaganTech Store v2.0: llave API corregida + plugin e-commerce completo
@@ -5567,7 +5517,6 @@ EOF又是
   - /tienda/categorias devuelve HTML (Laravel view), no JSON — select de categorías queda pendiente
   - Varios productos tienen precio RD$ 0.00 (dato del ERP, no bug del plugin)
   - `"No hay usuarios activos en la instancia"` en algunas respuestas (config del ERP MaganTech)
-
 
 ## 2026-09-02
 
@@ -5720,7 +5669,6 @@ EOF又是
 - **Estado**: ✅ sincronizado. Suite push OK. ZIP: ~/dev/wordpress/export/erp-commerce-suite-v4.2.0.zip
 - **Notas**: en el camino: restore temporal del admin conector con Main ya en singletons → sitio caído ~2 min, reparado con split correcto (off-by-one en rango de prep)
 
-
 ## 2026-09-29
 
 ### [00:35] - Auditoría read-only servidor ERP externo (acceso retirado 2026-09-19)
@@ -5801,7 +5749,6 @@ EOF又是
 - **Causa**: orden del owner — "procede con los pendientes" + aclaración mailpit (dev-only, producción diferente según main de Juan Carlos, sin tocar ni allá ni aquí)
 - **Estado**: ✅ todo verificado (push OK, ZIP storage/ incluido + sin secrets, regresión 19/19, JSON harness válidos)
 - **Notas**: los 4 pendientes del 2026-10-13 quedan CERRADOS: (1) git remote ✅; (2) gap ZIP → release 5.3.2 ✅; (3) mailpit/latencia → decisión owner documentada ✅; (4) deuda P3 → decisión owner documentada, cerrable solo cuando main de Juan evolucione ✅
-
 
 ## 2026-10-13
 
