@@ -23,3 +23,8 @@
 
 ---
 *Mantener: 1 línea de regla + ref. Última revisión: 2026-10-27.*
+
+## MCP blender — addon responde SIN newline (2026-10-27)
+- **Error**: test TCP crudo con recv-loop esperando `\n` → hang infinito → timeout ssh → kill → addon EBADF + Blender quit (parecía crash del addon, era el patrón de lectura).
+- **Regla**: el addon mcp-for-blender responde JSON SIN `\n` final. Tests crudos: `socket.settimeout()` + recv incremental + `json.loads` incremental. O usar el MCP real (uvx mcp-for-blender stdio).
+- **Ref**: blender.harness.json + blender.md (arranque: start-blender.sh, idempotente por puerto).
