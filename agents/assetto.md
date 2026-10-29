@@ -28,7 +28,9 @@ permission:
 - **Docker** — todo contenedorizado, sin archivos sueltos en el host
 - **Sol Weather** (sistema de clima avanzado con day/night cycle, opcional)
 
-**Dominio**: `assetto.armada.do` → Cloudflare tunnel → vps-preprod:8772 (Server Manager UI)
+**Dominios** (2026-10-29):
+- `assetto.armada.do` → Cloudflare tunnel → vps-preprod:8772 (Server Manager UI, TCP)
+- `srv00.assetto.armada.do` → A record **DNS-only** 154.53.35.102 → UDP/TCP 9600 (juego; el túnel CF NO enruta UDP)
 
 ## Fuentes de verdad del proyecto
 
@@ -68,11 +70,11 @@ Assetto Corsa Server (steam_app_302550 en Docker)
 
 | Fase | Qué | Estado |
 |---|---|---|
-| 0 | Setup infra + DNS + Tunnel | ✅ DNS + Tunnel creado (2026-10-28) |
-| 0.5 | cloudflared activo + creds.json | ⚠️ pendiente creds.json |
-| 0.6 | Docker AC Server Tools (App 302550) | |
-| 0.7 | Server Manager + config | |
-| 1 | Configurar carreras + championships | |
+| 0 | Setup infra + DNS + Tunnel | ✅ (2026-10-28) |
+| 0.5 | cloudflared activo (token-mode) | ✅ (2026-10-28) |
+| 0.6 | Docker AC Server Tools (App 302550) | ✅ acServer Linux v1.15 verificado (2026-10-29) |
+| 0.7 | Server Manager + config + admin + DNS UDP + firewall | ✅ (2026-10-29, commit 464ea96) |
+| 1 | Configurar carreras + championships | pendiente (vía UI, owner) |
 | 2 | Añadir tracks + cars + Sol Weather | |
 | 3 | Integración Discord + Stracker | |
 | 4 | QA + deploy production | |
@@ -83,7 +85,21 @@ Assetto Corsa Server (steam_app_302550 en Docker)
 2. **Docker-only**: todo corre en contenedores, nada instalado en el host (salvo cloudflared + Docker).
 3. **App 302550**: Server Tools gratuito, se descarga con `login anonymous` + `app_update 302550 validate`.
 4. **Tras cada sesión**: actualizar `docs/CHANGELOG.md` del proyecto + este archivo si cambia el stack.
-5. **Puertos no expuestos directamente**: todo va por Cloudflare tunnel + nginx reverse proxy.
+5. **Puertos**: UI por túnel (8772); juego DIRECTO por `srv00.assetto.armada.do` UDP/TCP 9600 + TCP 8081 (firewall INPUT con reglas persistidas — ver Gotchas).
+
+## Gotchas (lecciones duras, 2026-10-29)
+
+1. **Formato Kunos de `server_cfg.ini`** (causa del panic `invalid argument to Intn` en weather.go:61 — NO es el binario):
+   - `[WEATHER_0]` OBLIGATORIA: `GRAPHICS=3_clear` (preset de `content/weather/`), `BASE_TEMPERATURE_AMBIENT/ROAD`, `VARIATION_AMBIENT/ROAD`
+   - `CONFIG_TRACK=` (NO `TRACK_CONFIG=`); `CARS=` lista separada por `;` (no comas/JSON)
+   - `FUEL_RATE/TYRE_WEAR_RATE/DAMAGE_MULTIPLIER` en porcentaje (100), no float; sesiones en secciones `[PRACTICE]/[QUALIFY]/[RACE]`; `RESULT_SCREEN_TIME>=30`
+2. **Server Tools es vista reducida**: cars SIN skins (`SKIN=0`), tracks sin `ui/`; con `CONFIG_TRACK=gp_a` busca `content/tracks/ks_nurburgring/gp_a/data/drs_zones.ini` (+ surfaces.ini para checksum)
+3. **Firewall vps-preprod**: `INPUT policy DROP` con reglas explícitas (NO "ACCEPT all"). 9600 UDP+TCP y 8081 TCP añadidas y persistidas (`netfilter-persistent save`; backup `rules.v4.bkup-20261029-assetto`). **tcpdump captura PRE-netfilter**: ver el paquete en tcpdump NO prueba que llegó a la app
+4. **Admin del SM**: el flujo NO es "primer login crea cuenta" — credenciales de fábrica `admin`/`servermanager` → 302 a `/accounts/new-password` → setear password permanente. Credenciales en `/srv/assetto-corsa/.sm-admin-credentials` (600, root-only, NUNCA en chat)
+5. **Boot del SM tarda ~90s** (escaneo de contenido) — 8772 no escucha inmediatamente tras `docker restart`; no entrar en pánico ni matar el contenedor
+6. **acServer manual muere fácil** (uno crasheó tras recibir probes UDP basura) — no enviar paquetes malformados en pruebas; el SM lanza su propio acServer al crear una race desde la UI; matar instancias manuales al terminar (conflicto de puertos)
+7. **Lobby Kunos**: `ERROR,INVALID SERVER` si el puerto no es alcanzable desde internet; para server privado RD usar `REGISTER_TO_LOBBY=0`
+8. **docker-compose usa `network_mode: host`** — sin publishing de puertos; los puertos salen directos al host
 
 ## Comandos de verificación
 
@@ -103,6 +119,10 @@ ssh vps-preprod "ss -uln | grep 9600"
 
 # Estado del tunnel
 curl -sI https://assetto.armada.do/
+
+# DNS juego (UDP directo) + firewall
+dig +short srv00.assetto.armada.do @1.1.1.1   # → 154.53.35.102
+ssh vps-preprod "iptables -S INPUT | grep -E '9600|8081'"
 ```
 
 ## Capacidades (cuándo delegar aquí)
