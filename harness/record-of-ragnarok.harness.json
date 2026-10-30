@@ -43,5 +43,17 @@
         "url": "https://github.com/rathena/rathena/wiki"
       }
     ]
-  }
+  },
+  "no_touch": [
+    "Manga data no tocar",
+    "Scrapers no modificar sin test"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión datos manga, capítulos, scraping",
+    "pre_check": "ls ~/dev/record-of-ragnarok/ 2>/dev/null | head -5 || echo record-of-ragnarok:no-data",
+    "post_check": "python3 ~/dev/record-of-ragnarok/scraper.py --test 2>/dev/null | head -3"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

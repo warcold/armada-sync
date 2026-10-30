@@ -42,5 +42,17 @@
       "fecha": "2026-10-19",
       "evento": "Agente Blender creado con harness + dominio ~/dev/games/ (mudanza de ~/dev/tools/blender-mcp → ~/dev/games/blender/blender-mcp, LOG path del start script corregido). Doc operativa completa: hallazgos Xvfb/--background/--quiet, tools del server.py, workflows GLB→decimate→Godot, granja victoria (skills art/assets-3d)."
     }
+  ],
+  "no_touch": [
+    "Config en ~/dev/games/blender/blender-mcp/",
+    "Addon MCP no tocar sin test"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión Blender MCP, assets 3D, rendering",
+    "pre_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i blender || echo blender:no-container\"",
+    "post_check": "python3 ~/dev/games/blender/blender-mcp/blender-mcp-test.py 2>/dev/null | head -5"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
   ]
 }

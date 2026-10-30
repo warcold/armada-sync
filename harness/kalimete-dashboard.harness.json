@@ -50,5 +50,25 @@
         "url": "https://developer.mozilla.org/en-US/docs/Web/HTML"
       }
     ]
-  }
+  },
+  "mode": "subagent",
+  "agent_file": "~/armada-sync/agents/kalimete-dashboard.md",
+  "hidden": false,
+  "temperature": 0.1,
+  "checks": [
+    "curl -s -o /dev/null -w %{http_code} http://localhost:8080/ | grep -q 200 || echo kalimete-dashboard:down",
+    "curl -s http://localhost:8080/api/health 2>/dev/null | head -c 100"
+  ],
+  "no_touch": [
+    "No modificar dashboard sin coordinación con Victoria",
+    "Configuración en ~/armada-sync/agents/kalimete-dashboard.md"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión del dashboard de kalimete, métricas, monitoreo",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} http://localhost:8080/ | grep -q 200 || echo kalimete-dashboard:down",
+    "post_check": "curl -s http://localhost:8080/api/health 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

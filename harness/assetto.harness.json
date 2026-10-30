@@ -14,7 +14,7 @@
   "upstream": {
     "fuente": "github JustaPenguin/assetto-server-manager (upstream oficial). Repo local si existe en ~/dev/assetto/.",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa.",
-    "version_servida_live": "ssh vps-preprod \"docker exec \$(docker ps -qf name=assetto) cat /app/VERSION 2>/dev/null || echo sin-version\"",
+    "version_servida_live": "ssh vps-preprod \"docker exec \\$(docker ps -qf name=assetto) cat /app/VERSION 2>/dev/null || echo sin-version\"",
     "donde_mirar": [
       "https://github.com/JustaPenguin/assetto-server-manager",
       "~/dev/assetto/ (si existe)"

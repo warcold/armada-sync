@@ -31,5 +31,21 @@
       }
     ]
   },
-  "vivo_2026_10_22": "contenedor scriberr Up 28h; https://scriberr.armada.do 200 — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "contenedor scriberr Up 28h; https://scriberr.armada.do 200 — auditoría hub 2026-10-22",
+  "checks": [
+    "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i scriberr || echo scriberr:no-container\"",
+    "curl -s -o /dev/null -w %{http_code} https://scriberr.armada.do/ 2>/dev/null | head -c 100"
+  ],
+  "no_touch": [
+    "Config en vps-preprod",
+    "Audio files no tocar"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión Scriberr, transcripción, audio",
+    "pre_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i scriberr || echo scriberr:no-container\"",
+    "post_check": "curl -s -o /dev/null -w %{http_code} https://scriberr.armada.do/ 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

@@ -30,5 +30,21 @@
         "url": "https://ircv3.net/"
       }
     ]
-  }
+  },
+  "checks": [
+    "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i irc || echo irc:no-container\"",
+    "curl -s -o /dev/null -w %{http_code} http://irc.armada.do:6667 2>/dev/null || echo irc:no-web"
+  ],
+  "no_touch": [
+    "Config en vps-preprod",
+    "Canales no modificar sin owner"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión IRC, bots, canales",
+    "pre_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i irc || echo irc:no-container\"",
+    "post_check": "curl -s -o /dev/null -w %{http_code} http://irc.armada.do:6667 2>/dev/null || echo irc:no-web"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

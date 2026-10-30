@@ -26,5 +26,21 @@
       }
     ]
   },
-  "vivo_2026_10_22": "contenedor docuseal Up 28h; https://docuseal.armada.do 200 — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "contenedor docuseal Up 28h; https://docuseal.armada.do 200 — auditoría hub 2026-10-22",
+  "checks": [
+    "curl -s -o /dev/null -w %{http_code} https://docuseal.armada.do/ | grep -q 200 || echo docuseal:down",
+    "curl -s https://docuseal.armada.do/api/health 2>/dev/null | head -c 100"
+  ],
+  "no_touch": [
+    "Config en vps-preprod",
+    "Certificados no tocar"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión DocuSeal, templates, firmas",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} https://docuseal.armada.do/ | grep -q 200 || echo docuseal:down",
+    "post_check": "curl -s https://docuseal.armada.do/api/health 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

@@ -31,5 +31,21 @@
       }
     ]
   },
-  "vivo_2026_10_22": "contenedor petsuite Up 28h; https://pets.armada.do 200 — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "contenedor petsuite Up 28h; https://pets.armada.do 200 — auditoría hub 2026-10-22",
+  "checks": [
+    "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i petsuite || echo petsuite:no-container\"",
+    "curl -s -o /dev/null -w %{http_code} http://petsuite.armada.do:8080/ 2>/dev/null | head -c 100"
+  ],
+  "no_touch": [
+    "Config en vps-preprod",
+    "DB no tocar sin backup"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión PetSuite, mascotas, vet",
+    "pre_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i petsuite || echo petsuite:no-container\"",
+    "post_check": "curl -s -o /dev/null -w %{http_code} http://petsuite.armada.do:8080/ 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

@@ -265,5 +265,24 @@
   },
   "changelogs": [
     "~/armada-sync/CHANGELOG-MAESTRO.md"
-  ]
+  ],
+  "mode": "primary",
+  "agent_file": "~/armada-sync/agents/kalimete.md",
+  "hidden": false,
+  "temperature": 0.2,
+  "checks": [
+    "systemctl is-active docker",
+    "curl -s -o /dev/null -w %{http_code} http://localhost:8080/ | grep -q 200 || echo kalimete-dashboard:down",
+    "docker ps --format {{.Names}} | wc -l"
+  ],
+  "no_touch": [
+    "No modificar agentes de otros sin permiso owner",
+    "No hacer push directo a GitHub sin sync.sh",
+    "No modificar harnesses de Victoria sin coordinación"
+  ],
+  "delegacion": {
+    "cuando_usar": "Orquestación principal de kalimete, coordinación con Victoria, gestión de agentes kalimete",
+    "pre_check": "systemctl is-active docker && curl -s -o /dev/null -w %{http_code} http://localhost:8080/ | grep -q 200 || echo kalimete:down",
+    "post_check": "docker ps --format {{.Names}} | wc -l"
+  }
 }

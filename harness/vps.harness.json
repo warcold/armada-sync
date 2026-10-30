@@ -31,5 +31,21 @@
       }
     ]
   },
-  "vivo_2026_10_22": "26 contenedores Up 28h (proxy-squid/socks5 12h), uptime 3d 6h; dominios: auth 302, pets 200, nextcloud 302, scriberr 200, docuseal 200, taohemps 200, ragnarok 200; fail2ban solo jail sshd (squid deshabilitada 16:50 — baneaba cliente legit) — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "26 contenedores Up 28h (proxy-squid/socks5 12h), uptime 3d 6h; dominios: auth 302, pets 200, nextcloud 302, scriberr 200, docuseal 200, taohemps 200, ragnarok 200; fail2ban solo jail sshd (squid deshabilitada 16:50 — baneaba cliente legit) — auditoría hub 2026-10-22",
+  "checks": [
+    "ssh vps-preprod \"uptime\"",
+    "ssh vps-preprod \"df -h / | tail -1\""
+  ],
+  "no_touch": [
+    "VPS config no tocar sin owner",
+    "SSH keys no rotar sin coordinación"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión VPS preprod, uptime, recursos",
+    "pre_check": "ssh vps-preprod \"uptime\"",
+    "post_check": "ssh vps-preprod \"df -h / | tail -1\""
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

@@ -62,5 +62,17 @@
         "verificada": "2026-10-27 (URL oficial conocida; fetch live pendiente en docsync)"
       }
     ]
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ],
+  "no_touch": [
+    "Templates base no modificar sin test visual",
+    "ZIP exports en ~/dev/wordpress/websites/*/export/"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión templates WP, branding, exports",
+    "pre_check": "ls ~/dev/wordpress/websites/*/export/*.zip 2>/dev/null | head -5",
+    "post_check": "docker exec micaserogou-local php -l /var/www/html/wp-content/plugins/armada-templates/armada-templates.php"
   }
 }

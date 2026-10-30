@@ -26,5 +26,21 @@
       }
     ]
   },
-  "vivo_2026_10_22": "taohemps-frontend + taohemps-backend Up 28h; https://taohemps.com 200 — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "taohemps-frontend + taohemps-backend Up 28h; https://taohemps.com 200 — auditoría hub 2026-10-22",
+  "checks": [
+    "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i taohemps || echo taohemps:no-container\"",
+    "curl -s -o /dev/null -w %{http_code} https://taohemps.armada.do/ 2>/dev/null | head -c 100"
+  ],
+  "no_touch": [
+    "Config en vps-preprod",
+    "Hemp data no tocar"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión TaoHemps, CBD, productos",
+    "pre_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i taohemps || echo taohemps:no-container\"",
+    "post_check": "curl -s -o /dev/null -w %{http_code} https://taohemps.armada.do/ 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

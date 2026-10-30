@@ -35,5 +35,21 @@
         "contenido_clave": "stack dockerizado del proxy"
       }
     ]
-  }
+  },
+  "checks": [
+    "curl -s -o /dev/null -w %{http_code} http://proxy.armada.do/ | grep -q 200 || echo proxy:down",
+    "curl -s http://proxy.armada.do/health 2>/dev/null | head -c 100"
+  ],
+  "no_touch": [
+    "Config nginx no tocar sin test",
+    "SSL certs no tocar"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión proxy reverso, nginx, SSL",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} http://proxy.armada.do/ | grep -q 200 || echo proxy:down",
+    "post_check": "curl -s http://proxy.armada.do/health 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

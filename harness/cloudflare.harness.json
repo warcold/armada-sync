@@ -39,5 +39,21 @@
       "com.cloudflare.api.account.zone.dns_records.edit (para route dns)"
     ],
     "playbook_vps_nueva": "1) cloudflared tunnel login 2) verificar creds.json 3) config.yml con ingress 4) cloudflared service install \"$(cloudflared tunnel token <ID>)\" 5) systemctl enable --now cloudflared"
-  }
+  },
+  "checks": [
+    "curl -s -o /dev/null -w %{http_code} https://victoria.armada.do/health | grep -q 200 || echo cloudflare:down",
+    "curl -s -o /dev/null -w %{http_code} --max-time 10 --resolve victoria.armada.do:443:104.21.32.145 https://victoria.armada.do/health"
+  ],
+  "no_touch": [
+    "Tunel CF token no tocar",
+    "DNS records no tocar sin owner"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión túnel CF, DNS, SSL, proxy",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} https://victoria.armada.do/health | grep -q 200 || echo cloudflare:down",
+    "post_check": "curl -s -o /dev/null -w %{http_code} --max-time 10 --resolve victoria.armada.do:443:104.21.32.145 https://victoria.armada.do/health"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

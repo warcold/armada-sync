@@ -122,5 +122,17 @@
       }
     ]
   },
-  "vivo_2026_10_28": "SELECTORES POR TENANT (owner 2026-10-28, integracion ZionV CRM): 5.8.0 = tenant.business_mode (none|zion_crm|erp_pos|both, tab Entorno, gate via armada_suite_feature_enabled fuerza erp_sync OFF en none|zion_crm, Guard blocked, test 36, commit 1d0639b, ZIP 5fa5306b). 5.9.0 = tenant.template_mode + valor default (tab Negocio radios 'Quien dibuja el sitio': plugin|default|elementor; router se aparta total en default; helper erpc_theme_intact; elementor backward-compat intacto; test 37; commits 6c2e028+93ab8bf, ZIP 12307394 / 2.602.429 B, rollback N-1 5.8.0). Regresion 37/37 exit 0. Smoke: default = theme manda (frame erpc-footer 0, shortcodes en contenido rinden dentro del theme). Convivencia ZionV verificada sin conflictos duros (assets/roles/REST/menus aislados; cuidado slugs crm/reservar). CONTRATO-COMPANION no aplica a ZionV (visual; ZionV = plugin peer funcional). DERIVA doc corregida: live 5.9.0 vs doc 5.5.10; regresion 37/37 vs doc 34/34. Ops API NO instala plugins (deny-list) — prod = ZIP manual en ventana."
+  "vivo_2026_10_28": "SELECTORES POR TENANT (owner 2026-10-28, integracion ZionV CRM): 5.8.0 = tenant.business_mode (none|zion_crm|erp_pos|both, tab Entorno, gate via armada_suite_feature_enabled fuerza erp_sync OFF en none|zion_crm, Guard blocked, test 36, commit 1d0639b, ZIP 5fa5306b). 5.9.0 = tenant.template_mode + valor default (tab Negocio radios 'Quien dibuja el sitio': plugin|default|elementor; router se aparta total en default; helper erpc_theme_intact; elementor backward-compat intacto; test 37; commits 6c2e028+93ab8bf, ZIP 12307394 / 2.602.429 B, rollback N-1 5.8.0). Regresion 37/37 exit 0. Smoke: default = theme manda (frame erpc-footer 0, shortcodes en contenido rinden dentro del theme). Convivencia ZionV verificada sin conflictos duros (assets/roles/REST/menus aislados; cuidado slugs crm/reservar). CONTRATO-COMPANION no aplica a ZionV (visual; ZionV = plugin peer funcional). DERIVA doc corregida: live 5.9.0 vs doc 5.5.10; regresion 37/37 vs doc 34/34. Ops API NO instala plugins (deny-list) — prod = ZIP manual en ventana.",
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ],
+  "no_touch": [
+    "No modificar plugin sin tests regresión 35/35 PASS",
+    "Header Requires PHP: 8.1+ no tocar"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión plugin Armada Suite, releases, tests, deploy",
+    "pre_check": "docker exec micaserogou-local php -l /var/www/html/wp-content/plugins/armada-suite/armada-suite.php",
+    "post_check": "docker exec micaserogou-local php /var/www/html/wp-content/plugins/armada-suite/tests/regression.php"
+  }
 }

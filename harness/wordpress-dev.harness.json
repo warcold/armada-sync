@@ -81,5 +81,17 @@
       }
     ]
   },
-  "vivo_2026_10_29": "Harness estandarizado schema unificado. wordpress-local + wordpress-db healthy (WP core 7.1.3, PHP 8.3.20); REST wp/v2 200; plugin armada-suite 5.8.0 único en live (agente armada-suite). Plugin header: Requires PHP 8.1+. Agente redimensionado a SISTEMA por split de flota (regla owner: cada plugin su agente)."
+  "vivo_2026_10_29": "Harness estandarizado schema unificado. wordpress-local + wordpress-db healthy (WP core 7.1.3, PHP 8.3.20); REST wp/v2 200; plugin armada-suite 5.8.0 único en live (agente armada-suite). Plugin header: Requires PHP 8.1+. Agente redimensionado a SISTEMA por split de flota (regla owner: cada plugin su agente).",
+  "no_touch": [
+    "WP core no tocar sin test",
+    "Plugins no instalar sin test"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión WP dev lab, plugins, themes",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} http://localhost:8091/ | grep -q 200 || echo wordpress-dev:down",
+    "post_check": "curl -s http://localhost:8091/wp-json/wp/v2/ 2>/dev/null | python3 -c \"import json,sys; print(json.load(sys.stdin)[0].get(version, ?))\" 2>/dev/null"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

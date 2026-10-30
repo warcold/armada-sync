@@ -62,5 +62,17 @@
         "url": "https://github.com/ahujasid/blender-mcp"
       }
     ]
-  }
+  },
+  "no_touch": [
+    "Assets en ~/dev/games/",
+    "Godot projects no tocar sin test"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión Godot, assets 3D, export",
+    "pre_check": "ls ~/dev/games/ 2>/dev/null | head -5",
+    "post_check": "godot --version 2>/dev/null | head -1"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

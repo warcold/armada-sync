@@ -102,5 +102,19 @@
       }
     ]
   },
-  "vivo_2026_10_29": "Harness estandarizado schema unificado. Magantech PROD: PHP 8.5.11, WP 7.1.3, plugin 5.4.0. PREPROD: PHP 8.3, WP 7.1.3, plugin 5.4.0. Plugin Armada Suite 5.4.0 instalado. Plugin header: Requires PHP 8.1+. Mailpit local para testing correo."
+  "vivo_2026_10_29": "Harness estandarizado schema unificado. Magantech PROD: PHP 8.5.11, WP 7.1.3, plugin 5.4.0. PREPROD: PHP 8.3, WP 7.1.3, plugin 5.4.0. Plugin Armada Suite 5.4.0 instalado. Plugin header: Requires PHP 8.1+. Mailpit local para testing correo.",
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ],
+  "no_touch": [
+    "PROD en cPanel PHP 8.5.11 no tocar sin owner",
+    "PREPROD Docker PHP 8.3 no tocar sin test",
+    "Plugin Armada Suite 5.4.0 no tocar sin test regresión",
+    "Mailpit local para testing correo - no salir a internet"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión Magantech PROD/PREPROD, plugin Armada Suite, correo, ERP",
+    "pre_check": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/magantech.com.do/secrets/prod-app-password.txt 2>/dev/null) https://magantech.com.do/wp-json/erpsuite/v1/ops/status 2>/dev/null | grep -q ok || echo magantech:down",
+    "post_check": "curl -s -u victoria:$(cat ~/dev/wordpress/websites/magantech.com.do/secrets/prod-app-password.txt 2>/dev/null) https://magantech.com.do/wp-json/erpsuite/v1/ops/status 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get(plugin, ?))\" 2>/dev/null"
+  }
 }

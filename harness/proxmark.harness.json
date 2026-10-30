@@ -26,5 +26,21 @@
       }
     ]
   },
-  "vivo_2026_10_22": "binario pm3 presente (/usr/bin/pm3); /dev/ttyACM0 NO conectado (normal — el dispositivo se conecta al usar la tarjeta) — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "binario pm3 presente (/usr/bin/pm3); /dev/ttyACM0 NO conectado (normal — el dispositivo se conecta al usar la tarjeta) — auditoría hub 2026-10-22",
+  "checks": [
+    "ssh vps-preprod \"ls -la ~/dev/proxmark/ 2>/dev/null | head -5 || echo proxmark:no-repo\"",
+    "echo proxmark:hardware-tool"
+  ],
+  "no_touch": [
+    "Hardware Proxmark3 no tocar",
+    "Firmware no flashear sin test"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión Proxmark3, RFID, NFC",
+    "pre_check": "ssh vps-preprod \"ls -la ~/dev/proxmark/ 2>/dev/null | head -5 || echo proxmark:no-repo\"",
+    "post_check": "echo proxmark:hardware-tool"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

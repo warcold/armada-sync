@@ -48,5 +48,17 @@
       "fecha": "2026-10-19",
       "cambio": "Despliegue inicial completo: VPS virgen → producción https://suite.eccoqualita.com (Docker, postgres 18, roles, 22 migraciones, app, Caddy TLS, UFW, fail2ban, llave SSH, alias ecco). Agente creado (21º subagente) + allowlist kalimete + MAPA sección 8."
     }
+  ],
+  "no_touch": [
+    "Repo en ~/dev/eccoqualita/EccoSuit-develop/",
+    "Deploy solo via GitHub Actions"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión EccoSuit, deploy VPS, CSP",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} https://eccoqualita.com/ | grep -q 200 || echo ecco-suit:down",
+    "post_check": "ssh vps-preprod \"cd ~/dev/eccoqualita && git log -1 --oneline\""
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
   ]
 }

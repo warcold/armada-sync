@@ -26,5 +26,21 @@
       }
     ]
   },
-  "vivo_2026_10_22": "stack completo Up 28h (nextcloud, caddy, cron, db healthy, redis, whiteboard-ws healthy); https://nextcloud.armada.do 302 (login normal) — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "stack completo Up 28h (nextcloud, caddy, cron, db healthy, redis, whiteboard-ws healthy); https://nextcloud.armada.do 302 (login normal) — auditoría hub 2026-10-22",
+  "checks": [
+    "curl -s -o /dev/null -w %{http_code} https://nextcloud.armada.do/ | grep -q 200 || echo nextcloud:down",
+    "curl -s https://nextcloud.armada.do/status.php 2>/dev/null | head -c 100"
+  ],
+  "no_touch": [
+    "Data dir no tocar",
+    "Apps no instalar sin test"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión Nextcloud, archivos, usuarios",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} https://nextcloud.armada.do/ | grep -q 200 || echo nextcloud:down",
+    "post_check": "curl -s https://nextcloud.armada.do/status.php 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

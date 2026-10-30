@@ -35,5 +35,21 @@
         "contenido_clave": "scope/Program Conditions por programa — fuente única de qué está autorizado"
       }
     ]
-  }
+  },
+  "checks": [
+    "curl -s -o /dev/null -w %{http_code} https://intigriti.com/ | grep -q 200 || echo intigriti:down",
+    "echo intigriti:external-service"
+  ],
+  "no_touch": [
+    "API keys no tocar",
+    "Scope bug bounty no cambiar"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión bug bounty Intigriti, reportes, pagos",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} https://intigriti.com/ | grep -q 200 || echo intigriti:down",
+    "post_check": "echo intigriti:external-service"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

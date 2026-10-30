@@ -53,5 +53,25 @@
         "url": "https://opencode.ai/docs"
       }
     ]
-  }
+  },
+  "mode": "subagent",
+  "agent_file": "~/armada-sync/agents/kalimete-ptt.md",
+  "hidden": false,
+  "temperature": 0.1,
+  "checks": [
+    "ssh -i ~/.ssh/id_victoria -p 1111 warcold@kalimete.local \"python3 ~/bin/kalimete-ptt.py --version 2>/dev/null || echo kalimete-ptt:not-installed\"",
+    "ls -la ~/bin/kalimete-ptt.py 2>/dev/null || echo kalimete-ptt:missing"
+  ],
+  "no_touch": [
+    "No modificar PTT sin coordinación con Victoria",
+    "Configuración en ~/.config/kalimete-ptt/env"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión de kalimete-ptt (Push-to-Talk), configuración de audio, diagnóstico",
+    "pre_check": "ls -la ~/bin/kalimete-ptt.py 2>/dev/null || echo kalimete-ptt:missing",
+    "post_check": "python3 ~/bin/kalimete-ptt.py --version 2>/dev/null || echo kalimete-ptt:error"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

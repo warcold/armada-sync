@@ -97,5 +97,17 @@
         "url": "https://redis.io/docs/"
       }
     ]
-  }
+  },
+  "no_touch": [
+    "Dockerfile PHP version no tocar sin test",
+    "Volumes ERP no tocar"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión ERP dev, PHP 8.4, Laravel, MySQL",
+    "pre_check": "docker exec erpipo-preprod-app php -v | head -1",
+    "post_check": "curl -s http://localhost:8100/health 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }

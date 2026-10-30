@@ -26,5 +26,21 @@
       }
     ]
   },
-  "vivo_2026_10_22": "4/4 contenedores healthy (authentik-server/worker/db/redis) Up 28h en vps-preprod; https://auth.armada.do 302 (redirect a login, normal) — auditoría hub 2026-10-22"
+  "vivo_2026_10_22": "4/4 contenedores healthy (authentik-server/worker/db/redis) Up 28h en vps-preprod; https://auth.armada.do 302 (redirect a login, normal) — auditoría hub 2026-10-22",
+  "checks": [
+    "curl -s -o /dev/null -w %{http_code} https://auth.armada.do/ | grep -q 200 || echo authentik:down",
+    "curl -s https://auth.armada.do/api/v3/core/providers/ 2>/dev/null | head -c 100"
+  ],
+  "no_touch": [
+    "Config en vps-preprod (no tocar sin verificar LIVE)",
+    "Certificados TLS no tocar"
+  ],
+  "delegacion": {
+    "cuando_usar": "Gestión SSO/Authentik, usuarios, providers",
+    "pre_check": "curl -s -o /dev/null -w %{http_code} https://auth.armada.do/ | grep -q 200 || echo authentik:down",
+    "post_check": "curl -s https://auth.armada.do/api/v3/core/providers/ 2>/dev/null | head -c 100"
+  },
+  "changelogs": [
+    "~/armada-sync/CHANGELOG.md"
+  ]
 }
