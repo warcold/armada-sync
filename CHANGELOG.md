@@ -1,3 +1,16 @@
+### [2026-10-30 03:30 CET] [assetto] Servidor AC VIVO + identidad dominicana completa 🇩🇴
+- **Tipo**: infra | config
+- **Qué**: el motor de Assetto Corsa nunca arrancaba (Server Manager Docker corría pero sin listener UDP 9600). Se creó el servicio systemd `assetto-acserver` y se desbloqueó el arranque.
+- **Bloqueante real encontrado**: `cfg/entry_list.ini` tenía 10 coches GT3 pero `CARS=` del `server_cfg.ini` solo permitía 3 → acServer abortaba con `Error, entry list CAR_1 car ks_lamborghini_huracan_gt3 is illegal` y systemd entraba en loop de restart. Se alineó `CARS=` con el grid completo (9 modelos).
+- **Segundo hallazgo**: existen DOS `server_cfg.ini`. El que lee acServer es `cfg/server_cfg.ini` (relativo a `/srv/assetto-corsa/assetto/`), NO `content/config/server_cfg.ini`. Las ediciones al segundo no tenían efecto.
+- **Identidad dominicana aplicada**: NAME `🇩🇴 Assetto Corsa RD - Comunidad Dominicana`, DESCRIPTION, `WELCOME_MESSAGE`, y `[MOTD] Text=` con saltos `\n` reales (estaban rotos como `nn`). MOTD incluye Discord + WhatsApp de la comunidad.
+- **Grid**: 10 slots GT3 (488 GT3, Huracán GT3, R8 LMS, 650S GT3, AMG GT3, GT-R GT3, 911 GT3 R 2016, Mazda RX-7 Spirit R, BMW M3 E30). Pista `ks_nurburgring` layout `gp_a`. Practice 30' → Qualify 15' → Race 5 laps.
+- **Verificado LIVE**: `systemctl is-active assetto-acserver` → active; `ss -uln | grep 9600` → LISTENING; `ss -tln | grep 9600` → LISTENING; TCP 9600 alcanzable desde kalimete; `dig srv00.assetto.armada.do` → 154.53.35.102; log con `Server started` + `HTTP server running @ :8081`.
+- **Firewall**: reglas UDP+TCP 9600 ya presentes y persistidas (verificado, sin cambios).
+- **Afecta a**: vps-preprod, agente `Assetto Corsa`, proyecto `~/dev/games/assetto-corsa/`.
+- **Docs**: PROJECT.md (fases 0.5-0.8 ✅, identidad RD, zonas temáticas, gotchas, comandos del servicio), CHANGELOG del proyecto, `agents/assetto.md` (gotchas 9-13, verificación systemd).
+- **Pendiente**: rotar `ADMIN_PASSWORD` (sigue en valor débil de setup); definir las 5 zonas temáticas (DRIFT ZONE, TOUGE/STREET, TRACK DAYS, RACE EVENTS, DOMINICAN GARAGE); Stracker + Discord bot; Sol Weather.
+
 ### [2026-10-29 18:30 EDT] [php] Corrección versiones PHP en harnesses + Plugin Armada Suite Requires PHP 8.1+
 - **Tipo**: fix | docs | security
 - **Qué**: Corrección de versiones PHP en harnesses de kalimete (Micaserogou, Magantech, WordPress, WordPress-dev) para reflejar versiones reales de producción/preprod. Actualización header plugin Armada Suite: `Requires PHP: 7.4` → `Requires PHP: 8.1+` (mínimo probado en producción 8.3/8.4/8.5).

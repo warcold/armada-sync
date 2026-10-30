@@ -74,6 +74,7 @@ Assetto Corsa Server (steam_app_302550 en Docker)
 | 0.5 | cloudflared activo (token-mode) | ✅ (2026-10-28) |
 | 0.6 | Docker AC Server Tools (App 302550) | ✅ acServer Linux v1.15 verificado (2026-10-29) |
 | 0.7 | Server Manager + config + admin + DNS UDP + firewall | ✅ (2026-10-29, commit 464ea96) |
+| 0.8 | **Servidor AC VIVO + identidad RD** (systemd `assetto-acserver`, UDP/TCP 9600, MOTD, grid GT3) | ✅ (2026-10-30) |
 | 1 | Configurar carreras + championships | pendiente (vía UI, owner) |
 | 2 | Añadir tracks + cars + Sol Weather | |
 | 3 | Integración Discord + Stracker | |
@@ -100,6 +101,11 @@ Assetto Corsa Server (steam_app_302550 en Docker)
 6. **acServer manual muere fácil** (uno crasheó tras recibir probes UDP basura) — no enviar paquetes malformados en pruebas; el SM lanza su propio acServer al crear una race desde la UI; matar instancias manuales al terminar (conflicto de puertos)
 7. **Lobby Kunos**: `ERROR,INVALID SERVER` si el puerto no es alcanzable desde internet; para server privado RD usar `REGISTER_TO_LOBBY=0`
 8. **docker-compose usa `network_mode: host`** — sin publishing de puertos; los puertos salen directos al host
+9. **DOS `server_cfg.ini` (2026-10-30)**: `acServer` lee `cfg/server_cfg.ini` **relativo a `/srv/assetto-corsa/assetto/`**, NO `content/config/server_cfg.ini`. Editar el equivocado = cero efecto. El binario lo imprime al arrancar: `Server CFG Path : cfg/server_cfg.ini`
+10. **`entry_list.ini` debe ser subconjunto de `CARS=` (2026-10-30)**: si un `MODEL=` del entry list no está en la lista `CARS=` del server_cfg, acServer aborta con `Error, entry list CAR_N car <modelo> is illegal` y (bajo systemd) entra en loop de restart cada 10s. **Fue el bloqueante real de la fase 0.8.** Alinear ambos archivos siempre
+11. **`data/` faltante en cars = warning, no fatal**: `Error calculating checksum: Folder not found` es normal con la vista reducida de Server Tools; el server arranca igual
+12. **`[MOTD] Text=` usa `\n` literal (dos caracteres)**: si se pierde el backslash el mensaje sale con `nn` pegados. Escribir siempre `\n`, nunca saltos reales
+13. **Servicio `assetto-acserver` vs Server Manager**: el systemd corre su propio acServer en 9600. Si se crea una race desde la UI del SM, este lanza OTRO acServer → choque de puertos. Para flujo SM: `systemctl stop assetto-acserver` primero
 
 ## Comandos de verificación
 
@@ -109,7 +115,9 @@ git -C ~/dev/games/assetto-corsa log --oneline -5   # progreso
 cat ~/dev/games/assetto-corsa/docs/CHANGELOG.md      # últimos cambios
 
 # Estado del servidor (en vps-preprod)
-ssh vps-preprod "docker ps | grep assetto"
+ssh vps-preprod "systemctl is-active assetto-acserver"     # motor AC (systemd)
+ssh vps-preprod "tail -30 /var/log/acserver-rd.log"        # log del motor
+ssh vps-preprod "docker ps | grep assetto"                 # panel SM (Docker)
 ssh vps-preprod "systemctl status cloudflared"
 ssh vps-preprod "curl -s http://localhost:8772 | head -20"
 
