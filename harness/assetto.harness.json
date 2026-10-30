@@ -1,55 +1,104 @@
 {
   "harness": "assetto",
-  "updated": "2026-10-29",
+  "updated": "2026-10-30",
   "agent_file": "~/armada-sync/agents/assetto.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Assetto Server Manager (JustaPenguin/assetto-server-manager) en vps-preprod. Mision: gestionar servidor Assetto Corsa Competizione.",
-  "vivo_2026_10_29": "Harness estandarizado schema unificado. Assetto Server Manager en vps-preprod (dockerizado). Repo upstream: JustaPenguin/assetto-server-manager. Stack por validar en vivo.",
-  "live_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i assetto || echo assetto:no-containers\"",
+  "scope": "Assetto Corsa Server Manager (JustaPenguin/assetto-server-manager) en vps-preprod. Misión: gestionar servidor Assetto Corsa online para comunidad dominicana — races, championships, content, Server Manager UI, acServer lifecycle.",
+  "vivo_2026_10_30": "Harness actualizado tras puesta en producción Modo B (Server Manager nativo). Server Manager Docker corriendo, Cloudflare tunnel activo, DNS UDP configurado, identidad RD aplicada, 4 zonas temáticas operativas. Modo standalone (systemd) desactivado en favor de Modo B nativo.",
+  "live_check": "ssh vps-preprod \"docker ps --format '{{.Names}}: {{.Status}}' | grep -i assetto || echo 'assetto:no-containers'; ss -uln | grep 9600 || echo 'UDP_9600:no-listener'\"",
   "checks": [
-    "ssh vps-preprod \"docker ps --format {{.Names}}: {{.Status}} | grep -i assetto\"",
-    "ssh vps-preprod \"curl -s -o /dev/null -w %{http_code} http://localhost:8080/ 2>/dev/null || echo assetto:no-web\""
+    "ssh vps-preprod \"docker ps --format '{{.Names}}: {{.Status}}' | grep -i assetto\"",
+    "ssh vps-preprod \"curl -s -o /dev/null -w '%{http_code}' http://localhost:8772 2>/dev/null || echo 'SM_UI:down'\"",
+    "ssh vps-preprod \"ss -uln | grep 9600 || echo 'UDP_9600:no-listener'\"",
+    "ssh vps-preprod \"ss -tln | grep -E '8772|9600|8081'\"",
+    "ssh vps-preprod \"systemctl is-active assetto-acserver 2>/dev/null || echo 'standalone:stopped'\""
   ],
   "upstream": {
-    "fuente": "github JustaPenguin/assetto-server-manager (upstream oficial). Repo local si existe en ~/dev/assetto/.",
-    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa.",
-    "version_servida_live": "ssh vps-preprod \"docker exec \\$(docker ps -qf name=assetto) cat /app/VERSION 2>/dev/null || echo sin-version\"",
+    "fuente": "github JustaPenguin/assetto-server-manager (upstream oficial). Repo archivado Aug 2026. Docker image: seejy/assetto-server-manager:latest. Steam App 302550 (gratuito, login anonymous).",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Repo archivado pero Docker image funcional.",
+    "version_servida_live": "ssh vps-preprod \"docker exec $(docker ps -qf name=assetto) cat /app/VERSION 2>/dev/null || echo 'sin-version'\"",
     "donde_mirar": [
       "https://github.com/JustaPenguin/assetto-server-manager",
-      "~/dev/assetto/ (si existe)"
+      "https://hub.docker.com/r/seejy/assetto-server-manager",
+      "~/dev/games/assetto-corsa/ (proyecto local)"
     ],
-    "frecuencia": "ante actualizacion upstream",
-    "politica": "Upstream = Plan + owner. Stack en vps-preprod.",
-    "como_reportar": "entrada en CHANGELOG.md kalimete + aviso a Victoria en Task"
+    "frecuencia": "ante actualización upstream o release Docker",
+    "politica": "Upstream = Plan + owner. Stack en vps-preprod. No auto-actualizar sin autorización."
   },
   "servicios": [
-    {"name": "assetto-server", "host": "vps-preprod", "upstream": "JustaPenguin/assetto-server-manager"}
+    {"name": "assetto-server-manager", "host": "vps-preprod", "upstream": "JustaPenguin/assetto-server-manager", "puerto_ui": 8772, "puerto_juego_udp": 9600, "puerto_juego_tcp": 9600, "puerto_http_api": 8081},
+    {"name": "cloudflared", "host": "vps-preprod", "upstream": "cloudflare/cloudflared", "tunnel": "assetto.armada.do -> localhost:8772"},
+    {"name": "assetto-acserver-standalone", "host": "vps-preprod", "upstream": "Steam App 302550", "estado": "desactivado (Modo B activo)", "systemd_unit": "assetto-acserver.service"}
   ],
-  "scripts_host": [],
+  "scripts_host": [
+    "~/dev/games/assetto-corsa/scripts/switch-zone.sh (4 zonas: drift/touge/trackday/race)",
+    "~/dev/games/assetto-corsa/scripts/deploy.sh",
+    "~/dev/games/assetto-corsa/scripts/install.sh",
+    "~/dev/games/assetto-corsa/scripts/backup.sh"
+  ],
   "docs": [
     "~/armada-sync/agents/assetto.md",
+    "~/dev/games/assetto-corsa/docs/PROJECT.md",
+    "~/dev/games/assetto-corsa/CHANGELOG.md",
     "~/armada-sync/harness/HARNESS_SCHEMA_UNIFICADO.md"
   ],
   "docs_oficiales": {
-    "regla": "ANTES de operar, verificar LIVE en vps-preprod. NUNCA inventar config.",
+    "regla": "ANTES de operar, verificar LIVE en vps-preprod. NUNCA inventar config. Server Manager = server-rendered (NO REST API). Gestión vía web UI 8772.",
     "fuentes": [
-      {"nombre": "Assetto Server Manager GitHub", "url": "https://github.com/JustaPenguin/assetto-server-manager", "contenido_clave": "Docker + config + API", "verificada": "2026-10-29"}
+      {"nombre": "Assetto Server Manager GitHub", "url": "https://github.com/JustaPenguin/assetto-server-manager", "contenido_clave": "Docker + config + web UI + championships", "verificada": "2026-10-30"},
+      {"nombre": "Server Manager Docker Hub", "url": "https://hub.docker.com/r/seejy/assetto-server-manager", "contenido_clave": "Imagen oficial, entrypoint, env vars", "verificada": "2026-10-30"},
+      {"nombre": "Assetto Corsa Server Tools", "url": "https://steamdb.info/app/302550/", "contenido_clave": "App 302550 gratuito, login anonymous", "verificada": "2026-10-30"},
+      {"nombre": "Content Manager", "url": "https://content-manager.net/", "contenido_clave": "Cliente alternativo, direct connect", "verificada": "2026-10-30"},
+      {"nombre": "Sol Weather", "url": "https://assettocorsa.net/threads/sol-weather.46499/", "contenido_clave": "Mod clima day/night", "verificada": "2026-10-30"}
     ]
   },
   "changelog": [
-    {"fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente). Assetto en vps-preprod, upstream JustaPenguin/assetto-server-manager."}
+    {"fecha": "2026-10-30", "cambio": "Modo B activado (Server Manager nativo). Standalone systemd desactivado. Identidad RD aplicada. 4 zonas temáticas operativas. switch-zone.sh creado. Harness actualizado schema unificado."},
+    {"fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente). Assetto en vps-preprod, upstream JustaPenguin/assetto-server-manager."},
+    {"fecha": "2026-10-28", "cambio": "Proyecto creado: estructura, agente, harness, PROJECT.md, CHANGELOG.md, scripts, docker-compose."}
   ],
   "changelogs": [
-    "~/armada-sync/CHANGELOG.md"
+    "~/armada-sync/CHANGELOG.md",
+    "~/dev/games/assetto-corsa/CHANGELOG.md"
   ],
   "no_touch": [
-    "Config en vps-preprod (no tocar sin verificar LIVE)"
+    "Config en vps-preprod generada por Server Manager (no tocar manualmente en Modo B)",
+    "DB Server Manager (BoltDB) — solo backup via script",
+    "Archivos generados por SM en /srv/assetto-corsa/assetto/cfg/ (server_cfg.ini, entry_list.ini)"
   ],
-  "recovery": "ssh vps-preprod para inspeccionar container assetto. Rebuild desde upstream si necesario.",
+  "recovery": "ssh vps-preprod para inspeccionar container assetto-corsa-server. Rebuild: docker-compose pull && docker-compose up -d. Si SM DB corrupta: restaurar backup + reiniciar container.",
   "delegacion": {
-    "cuando_usar": "gestionar servidor Assetto Corsa, actualizar upstream, diagnosticar",
-    "pre_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i assetto || echo assetto:no-containers\"",
-    "post_check": "ssh vps-preprod \"docker ps --format {{.Names}}: {{.Status}} | grep -i assetto\""
+    "cuando_usar": "gestionar servidor Assetto Corsa, crear races, championships, añadir content, actualizar SM, diagnosticar puertos/acServer",
+    "pre_check": "ssh vps-preprod \"docker ps --format '{{.Names}}: {{.Status}}' | grep -i assetto; ss -uln | grep 9600\"",
+    "post_check": "ssh vps-preprod \"docker ps --format '{{.Names}}: {{.Status}}' | grep -i assetto; ss -uln | grep 9600; curl -s -o /dev/null -w '%{http_code}' https://assetto.armada.do/\""
+  },
+  "configuracion_clave": {
+    "server_manager": {
+      "config_file": "/srv/assetto-corsa/config.yml",
+      "ui_port": 8772,
+      "api_port": 8081,
+      "db_type": "bolt",
+      "db_path": "/home/assetto/server-manager/data/ac-server-manager.db",
+      "steam": {"username": "anonymous", "app_id": 302550, "install_path": "assetto", "executable_path": "acServer"}
+    },
+    "dominios": {
+      "ui": "assetto.armada.do (Cloudflare tunnel -> vps-preprod:8772)",
+      "juego_udp": "srv00.assetto.armada.do (A record DNS-only -> 154.53.35.102:9600 UDP/TCP)"
+    },
+    "firewall": "vps-preprod INPUT policy DROP. Reglas persistidas: UDP 9600, TCP 9600, TCP 8081. Backup: /etc/iptables/rules.v4.bkup-20261029-assetto",
+    "identidad_rd": {
+      "nombre": "🇩🇴 Assetto Corsa RD - Comunidad Dominicana",
+      "motd": "Mensaje completo con Discord + WhatsApp (\\n reales)",
+      "discord": "https://discord.gg/6Sc5KAg3Sk",
+      "whatsapp": "https://chat.whatsapp.com/FUpozjvDAjLHeEFY7IJmxe"
+    },
+    "zonas_tematicas": {
+      "drift": {"track": "drift", "cars": "bmw_m3_e30_drift;bmw_m3_e92_drift;bmw_z4_drift;bmw_m3_e30;bmw_z4;ks_mazda_rx7_tuned", "sessions": "Practice 1440"},
+      "touge": {"track": "ks_highlands", "config_track": "long", "cars": "bmw_m3_e30;bmw_m3_e92;bmw_z4;alfa_romeo_giulietta_qv;abarth500;bmw_1m;ks_mazda_rx7_spirit_r", "sessions": "Practice 1440"},
+      "trackday": {"track": "spa", "cars": "ks_ferrari_488_gt3;ks_lamborghini_huracan_gt3;ks_audi_r8_lms;ks_mclaren_650_gt3;ks_mercedes_amg_gt3;ks_nissan_gtr_gt3;ks_porsche_911_gt3_r_2016;bmw_m3_e92;bmw_z4;ks_mazda_rx7_spirit_r", "sessions": "Practice 1440"},
+      "race": {"track": "ks_nurburgring", "config_track": "gp_a", "cars": "ks_ferrari_488_gt3;ks_lamborghini_huracan_gt3;ks_audi_r8_lms;ks_mclaren_650_gt3;ks_mercedes_amg_gt3;ks_nissan_gtr_gt3;ks_porsche_911_gt3_r_2016;ks_mazda_rx7_spirit_r;bmw_m3_e30", "sessions": "Practice 30 / Qualify 15 / Race 5 laps"}
+    },
+    "switch_zone_script": "/srv/assetto-corsa/switch-zone.sh (drift|touge|trackday|race|status)"
   }
 }

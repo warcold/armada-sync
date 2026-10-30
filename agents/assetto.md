@@ -48,7 +48,8 @@ permission:
 | Docker | `seejy/assetto-server-manager:latest` (imagen oficial) |
 | Panel web | Server Manager UI → puerto 8772 |
 | Juego UDP | puertos 9600/9601 (UDP) |
-| HTTP API | puerto 8081 (Assetto Corsa HTTP API) |
+| HTTP API (juego) | puerto 8081 (Assetto Corsa HTTP API nativa) |
+| Server Manager API | **NO hay REST API pública** — app server-rendered (Go + templates). Gestión vía web UI en 8772. |
 | DB | SQLite / BoltDB (Server Manager) |
 | Host | vps-preprod (154.53.35.102) |
 | Dominio | assetto.armada.do (Cloudflare tunnel) |
@@ -60,11 +61,20 @@ permission:
 assetto.armada.do
     ↓ Cloudflare Tunnel (cloudflared en VPS)
 vps-preprod:8772 → Server Manager (Go web UI en Docker)
-    ↓ (gestiona)
-Assetto Corsa Server (steam_app_302550 en Docker)
+    ↓ (gestiona races, content, championships)
+Assetto Corsa Server (steam_app_302550) — lanzado POR EL SM al iniciar race
     ↓ UDP
 9600/9601 → Clientes (Steam)
 ```
+
+### Modos de operación (mutuamente excluyentes)
+
+| Modo | Quién lanza `acServer` | Server Manager UI | Uso recomendado |
+|---|---|---|---|
+| **A. Standalone (systemd)** | `systemd` (`assetto-acserver`) | Muestra **"Offline"** | Servidor 24/7 fijo sin gestión web |
+| **B. Server Manager (nativo)** | **El SM** al hacer *Start Race* | Muestra **"Online"** ✅ | **Comunidad**: races, championships, gestión web |
+
+> **Regla**: Solo UN `acServer` en puertos 9600/9601 a la vez. Para Modo B: `systemctl stop assetto-acserver && systemctl disable assetto-acserver` ANTES de crear race en SM.
 
 ## Fases del proyecto
 
@@ -133,6 +143,27 @@ dig +short srv00.assetto.armada.do @1.1.1.1   # → 154.53.35.102
 ssh vps-preprod "iptables -S INPUT | grep -E '9600|8081'"
 ```
 
+## Flujo Server Manager (Modo B — nativo)
+
+1. **Parar standalone**: `systemctl stop assetto-acserver && systemctl disable assetto-acserver`
+2. **Entrar a UI**: `https://assetto.armada.do` → `admin` / `colador`
+3. **Crear Race**: Races → Create Race → configurar Track, Cars, Sessions
+4. **Start Race** → SM lanza SU `acServer` → UI muestra **"Online"**
+5. **Gestionar**: parar/iniciar races, championships, content, todo desde la web
+
+> **El SM genera sus propios `server_cfg.ini` + `entry_list.ini`** al vuelo desde la config web. **No edites `/cfg/` manualmente** en Modo B — el SM los sobrescribe.
+
+### Endpoints útiles (puerto 8081 — API nativa AC, NO del SM)
+
+| Endpoint | Qué hace |
+|---|---|
+| `GET /api/status` | Estado del servidor AC (si corre) |
+| `GET /api/session` | Sesión actual, tiempo, vueltas |
+| `GET /api/cars` | Coches en pista |
+| `GET /api/leaderboard` | Clasificación (si Stracker activo) |
+
+> Puerto 8081 solo accesible en localhost (no expuesto por túnel). Para monitoreo externo: Stracker o logs.
+
 ## Capacidades (cuándo delegar aquí)
 
 - "crea el servidor AC", "gestiona el server", "configura carreras"
@@ -141,6 +172,8 @@ ssh vps-preprod "iptables -S INPUT | grep -E '9600|8081'"
 - "actualiza el server manager", "revisa logs del servidor"
 - Deploy del servidor en producción
 - Configuración del dominio assetto.armada.do (coordinar con Cloudflare)
+- **Crear/gestionar races vía Server Manager UI (Modo B)**
+- **Cambiar zonas temáticas** (drift/touge/trackday/race) vía `switch-zone.sh` o UI
 
 ## Doc oficiales
 
