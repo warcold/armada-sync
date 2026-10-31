@@ -1,11 +1,3 @@
-### [2026-10-31 02:15 CET] [assetto] Migración a systemd directo — Server Manager retirado
-- **Tipo**: infra | arquitectura
-- **Modificado**: vps-preprod `/etc/systemd/system/assetto-server.service` (nuevo), `content/config/server_cfg.ini` (HTTP_PORT 8082), iptables regla 44 (8081→8082), usuario sistema `assetto` (uid 999), logrotate
-- **Afecta a**: vps-preprod, proyecto `~/dev/games/assetto-corsa/`
-- **Causa**: el Server Manager Docker era la fuente de todos los bloqueos (UI :8772 no fiable, sin API de arranque, no auto-lanzaba acServer, /INFO vacío). El binario acServer.real es Go 32-bit estático → corre directo en host sin GLIBC.
-- **Estado**: ✅ verificado LIVE — UDP+TCP 9600 y TCP 8082 escuchando, /INFO externo 200 OK, auto-restart tras kill -9 (~5 s), enabled para boot, firewall persistido
-- **Notas**: 5 contenedores zombie AC eliminados. Limitación aceptada: /INFO devuelve `"ip":""` (bug binario v1.15) — no afecta juego manual (`srv00.assetto.armada.do:9600` en CM). Legacy SM sin uso en `/srv/assetto-corsa/` (config.yml, data/, entrypoints). Docs: PROJECT.md + CHANGELOG del proyecto actualizados, commit `91b1104`.
-
 ### [2026-10-30 03:30 CET] [assetto] Servidor AC VIVO + identidad dominicana completa 🇩🇴
 - **Tipo**: infra | config
 - **Qué**: el motor de Assetto Corsa nunca arrancaba (Server Manager Docker corría pero sin listener UDP 9600). Se creó el servicio systemd `assetto-acserver` y se desbloqueó el arranque.
@@ -1038,6 +1030,11 @@
 - **Tipo**: feature (UX)
 - **Que**: la tab 🎙️ ahora es 3 pasos: (1) **Guión**: dropdown 5 temáticas (ciberseguridad, programación, crypto, tech, automotriz) + tema libre + duraciones 15s Story/30s Reel/60s Largo → `✨ Generar guión` / `🔁 Otra variante` (LLM local Qwen-normal, hook+tip+CTA, ~40/75/150 palabras) + estimación honesta (palabras→audio→min de video). (2) **Editor + 🔊 Escuchar**: el guión cae editable + pre-audio XTTS en player antes del video. (3) Video (existente). Auth LLM: key `services` leída de la DB viva en runtime (patrón victoria-video-server: sin secretos en código, sobrevive rotación).
 - **Verificado**: guión ES en 3.8s (hook+tip+CTA + estimación), pre-audio 200 en 1.2s, 0 warnings, 3 endpoints nuevos.
+- **Docs**: yes (sonic-ops.md tab + CHANGELOG-comfyui.md). Nada se publica solo (reels sigue manual).
+
+### [2026-09-29 01:45] [podcast] Sonic FUNCIONA en GB10 + Estudio Podcast en vivo + reels listos + subagente sonic-ops
+- **Tipo**: feature (fases 1b, 2, 3) + docs
+- **Que**: (1) **Piloto Sonic E2E OK en ARM64**: foto Victoria + voz XTTS 4.6s → mp4 512×832 con labios moviéndose palabra por palabra + micro-movimiento cabeza (verificado 2 frames), 8m30s (~100s por segundo de audio). (2) **Daemon `victoria-sonic-server.service` (:18850, enabled)**: `sonic-server.py` (stdlib, single-flight 503, auth sense_auth), modelos cargados, /generate verificado (474s). VRAM 24GB; total stack ~76GB/128GB. (3) **Tab 🎙️ Estudio Podcast** en UI LivePortrait: chatbox + idioma + steps + foto precargada → TTS→Sonic→whisper→1080×1920+subs+logo → mp4 en videos/ (E2E API 200 en 5 min; fix `allowed_paths` en launch para servir outputs). (4) **Fase 3 plumbing**: gateway `/ig-media/` acepta .mp4 (restart OK) + `instagram-reels.py` (patrón con guión ES en 3.8s (hook+tip+CTA + estimación), pre-audio 200 en 1.2s, 0 warnings, 3 endpoints nuevos.
 - **Docs**: yes (sonic-ops.md tab + CHANGELOG-comfyui.md). Nada se publica solo (reels sigue manual).
 
 ### [2026-09-29 01:45] [podcast] Sonic FUNCIONA en GB10 + Estudio Podcast en vivo + reels listos + subagente sonic-ops
