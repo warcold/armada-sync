@@ -2088,3 +2088,19 @@ Changes not staged for commit:
 
 no changes added to commit (use "git add" and/or "git commit -a")
 [07:10:01] Push FALLÓ
+[07:20:01] Sync bidireccional...
+[07:20:01] Pull GitHub → local...
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+[07:20:01] Pull FALLÓ
+[07:20:01] Push local → GitHub...
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   changelog-sync.log
+
+no changes added to commit (use "git add" and/or "git commit -a")
+[07:20:01] Push FALLÓ
