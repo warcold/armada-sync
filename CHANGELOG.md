@@ -1,3 +1,19 @@
+### [2026-10-31 02:45 CET] [assetto] Server Manager restaurado — website online + autostart
+- **Tipo**: infra | arquitectura (reversión parcial de la entrada 02:15)
+- **Modificado**: vps-preprod `entrypoint-wrapper.sh` (reescrito, estaba corrupto), wrapper `acServer` (parchea HTTP_PORT 8081→8082 por carrera), ownership `/srv/assetto-corsa` → 1000:1000, `assetto-server.service` → disabled (fallback), nuevo `assetto-sm-autostart.service` + `autostart-race.sh` (enabled)
+- **Afecta a**: vps-preprod, proyecto `~/dev/games/assetto-corsa/`
+- **Causa**: el website `assetto.armada.do` quedó caído (502, túnel sano / origen muerto) al retirar el SM. El owner quiere website + servidor.
+- **Estado**: ✅ verificado LIVE — contenedor Up, carrera Highlands arrancada vía API, UDP+TCP 9600 y TCP 8082 escuchando, website HTTP 302, /INFO externo OK, autostart con skip correcto
+- **Notas**: el entrypoint del VPS tenía mojibake del upload fallido previo (habría crasheado el contenedor). El wrapper acServer parchea el puerto que el SM regenera con 8081 (adminer lo ocupa). `/INFO` sigue con `"ip":""` (limitación binario v1.15, no afecta juego manual). Fallback systemd documentado con conflicto de puertos. Fix colateral: `changelog-sync-kalimete.sh` llevaba semanas fallando por `~` sin expandir (cd fallaba siempre) — corregido a `$HOME`.
+
+### [2026-10-31 02:15 CET] [assetto] Migración a systemd directo — Server Manager retirado
+- **Tipo**: infra | arquitectura
+- **Modificado**: vps-preprod `/etc/systemd/system/assetto-server.service` (nuevo), `content/config/server_cfg.ini` (HTTP_PORT 8082), iptables regla 44 (8081→8082), usuario sistema `assetto` (uid 999), logrotate
+- **Afecta a**: vps-preprod, proyecto `~/dev/games/assetto-corsa/`
+- **Causa**: el Server Manager Docker era la fuente de todos los bloqueos (UI :8772 no fiable, sin API de arranque, no auto-lanzaba acServer, /INFO vacío). El binario acServer.real es Go 32-bit estático → corre directo en host sin GLIBC.
+- **Estado**: ✅ verificado LIVE — UDP+TCP 9600 y TCP 8082 escuchando, /INFO externo 200 OK, auto-restart tras kill -9 (~5 s), enabled para boot, firewall persistido. ⚠️ **Superada por [02:45]**: el website quedó caído y se restauró el SM.
+- **Notas**: 5 contenedores zombie AC eliminados. Limitación aceptada: /INFO devuelve `"ip":""` (bug binario v1.15) — no afecta juego manual (`srv00.assetto.armada.do:9600` en CM). Docs: PROJECT.md + CHANGELOG del proyecto actualizados, commit `91b1104`.
+
 ### [2026-10-30 03:30 CET] [assetto] Servidor AC VIVO + identidad dominicana completa 🇩🇴
 - **Tipo**: infra | config
 - **Qué**: el motor de Assetto Corsa nunca arrancaba (Server Manager Docker corría pero sin listener UDP 9600). Se creó el servicio systemd `assetto-acserver` y se desbloqueó el arranque.
