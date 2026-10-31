@@ -2248,3 +2248,17 @@ Changes not staged for commit:
 
 no changes added to commit (use "git add" and/or "git commit -a")
 [08:50:01] Push FALLÓ
+[09:00:01] Sync bidireccional...
+[09:00:01] Pull GitHub → local...
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+[09:00:01] Pull FALLÓ
+[09:00:01] Push local → GitHub...
+fatal: Unable to create '/home/warcold/armada-sync/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
+[09:00:01] Push FALLÓ
