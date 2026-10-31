@@ -4,8 +4,8 @@
 
 set -euo pipefail
 
-LOCAL_CHANGELOG="~/armada-sync/CHANGELOG.md"
-REPO_DIR="~/armada-sync"
+LOCAL_CHANGELOG="$HOME/armada-sync/CHANGELOG.md"
+REPO_DIR="$HOME/armada-sync"
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 

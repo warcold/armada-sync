@@ -1468,3 +1468,19 @@
 [00:40:01] Push local → GitHub...
 /home/warcold/bin/changelog-sync-kalimete.sh: line 14: cd: ~/armada-sync: No such file or directory
 [00:40:01] Push FALLÓ
+[00:50:01] Sync bidireccional...
+[00:50:01] Pull GitHub → local...
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+[00:50:01] Pull FALLÓ
+[00:50:01] Push local → GitHub...
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   changelog-sync.log
+
+no changes added to commit (use "git add" and/or "git commit -a")
+[00:50:01] Push FALLÓ
