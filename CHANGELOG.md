@@ -1,3 +1,11 @@
+### [2026-10-31 05:15 CET] [assetto] Watchdog de carrera (cron 5 min) + hallazgos UI
+- **Tipo**: infra | mejora
+- **Modificado**: vps-preprod cron root (`*/5 * * * * autostart-race.sh`), `autostart-race.sh` (+flag `.autostart-paused`)
+- **Afecta a**: vps-preprod, proyecto `~/dev/games/assetto-corsa/`
+- **Causa**: el acServer se apagó tras paradas manuales desde la UI del owner (04:27–04:43 UTC); el servidor debe estar 24/7.
+- **Estado**: ✅ verificado LIVE — el watchdog detectó el servidor caído y lo relanzó solo (autostart.log: carrera 302), 3 puertos arriba, website 302, /INFO externo OK
+- **Notas**: hallazgos — Discord channel_id placeholder inválido en boltdb (`...xxx`, HTTP 400 cosmético, fix vía UI Settings); el server se apaga al terminar la sesión (LOOP_MODE=0, el watchdog lo cubre). Commits proyecto: `0579c5d`, `51cd57e`.
+
 ### [2026-10-31 02:45 CET] [assetto] Server Manager restaurado — website online + autostart
 - **Tipo**: infra | arquitectura (reversión parcial de la entrada 02:15)
 - **Modificado**: vps-preprod `entrypoint-wrapper.sh` (reescrito, estaba corrupto), wrapper `acServer` (parchea HTTP_PORT 8081→8082 por carrera), ownership `/srv/assetto-corsa` → 1000:1000, `assetto-server.service` → disabled (fallback), nuevo `assetto-sm-autostart.service` + `autostart-race.sh` (enabled)
