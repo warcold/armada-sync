@@ -5931,3 +5931,9 @@ EOF又是
 - **Estado**: ✅ sincronizado (pendiente commit/push)
 - **Notas**: 386 herramientas vs IvanMurzak/Godot-MCP (42 tools, requiere .NET 8 que no tenemos). @yanhuifair es TypeScript puro, funciona sin Godot abierto para 220+ tools, tiene undo nativo, runtime freeze/step/screenshot (único), 30 categorías
 
+
+## 2026-11-02 (auditoría cruzada) — estado kalimete verificado desde victoria
+- Flota picker OK (6 modelos: Using/Thinking/Coding + 3 nube natural). opencode 1.19.5.
+- Agentes live: 28 subagentes + kalimete (primary) + victoria-voz (mode: all, válido) — la doc interna que dice "18" quedó corta; actualizar en el próximo mantenimiento de kalimete.
+- Higiene: eliminados victoria-voz.md.bkup-20261027 y wordpress-dev.md.bkup-20260926 (stale). bkup-agents/ estructural 20261001 se conserva.
+- ydotoold OK, sync GitHub OK, disco 75% (108G libres).
