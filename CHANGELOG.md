@@ -5920,3 +5920,9 @@ EOF又是
 - **Estado**: ✅ sincronizado (pendiente commit/push)
 - **Notas**: 386 herramientas vs IvanMurzak/Godot-MCP (42 tools, requiere .NET 8 que no tenemos). @yanhuifair es TypeScript puro, funciona sin Godot abierto para 220+ tools, tiene undo nativo, runtime freeze/step/screenshot (único), 30 categorías
 
+
+## 2026-11-02 (Victoria remota) — Flota final + upgrade opencode 1.19.5
+- opencode.jsonc (kalimete): renombres finales de flota — normal → "Using a Victoria", coder → "Coding con Victoria" (Thinking igual) en providers vllm + vllm-lan; nube NIM SIN marca (eliminado bloque models con marca y name del provider; los 3 relevantes vienen del catálogo con nombre natural; whitelist y timeouts intactos).
+- opencode 1.18.35 → 1.19.5 (install oficial, E2E: 6 modelos de flota visibles).
+- Contexto victoria (referencia): doctrina de ruteo — Using = único modelo de sesión; código sustancial → subagente Coder (pineado al modelo Coding con Victoria, on-demand :8001); nube SOLO manual (owner decide); contextos calibrados: generalista 220K / coder 128K / nube 1M.
+- Fix en victoria: flip python3.13 había roto PIL (extensión C cp312) → pipeline de imágenes de broadcasts caído; revert a python3.12 con prioridad durable + story IG publicada E2E. Capacidad PDF del sandbox habilitada (ruta correcta media/outbound; envío E2E verificado).
