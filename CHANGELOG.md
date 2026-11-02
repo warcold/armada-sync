@@ -1,3 +1,14 @@
+### [2026-11-02 00:15 EDT] [opencode] Renombrado final de la flota (decisión owner) + variantes del Coder verificadas
+- **Tipo**: docs + config (display names)
+- **Que**: renombres en el picker (AMBOS hosts, solo `name` — los model ids reales NO cambian, cero impacto gateway):
+  - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` (generalista VLM) → **"Using a Victoria"** (antes "Coding con Victoria")
+  - `NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4` (especialista) → **"Coding con Victoria"** (antes "Coder con Victoria")
+  - "Thinking con Victoria" queda igual.
+- **Lógica del owner**: el generalista es el de todos los días ("Using a Victoria"); el nombre "Coding" le queda mejor al especialista real en código. Menos confuso.
+- **Variantes del Coder (pregunta del owner, verificado con el chat template real del modelo descargado)**: el template de `Qwen3-Coder-30B-A3B-Instruct-FP4` NO tiene `enable_thinking` (el del generalista sí) → **variante ÚNICA por diseño** (Qwen lo entrenó para actuar directo, estilo SWE-bench agéntico; no delibera). No hay modo thinking que configurar en este modelo — la única "gama" real de la familia Coder son otros tamaños (480B-A35B flagship, demasiado grande para GB10) y cuants (BF16 ~61G vs nuestro NVFP4 18.1G). Beneficio de tenerlo non-thinking: respuestas directas sin quemar tokens de razonamiento (3-5.5s medidos).
+- **Impacto**: opencode.jsonc (victoria + kalimete ×2 providers), AGENTS.md §5.-1, AGENTS-summary.md, agents/vllm.md. Backups previos vigentes (`opencode.jsonc.bkup-20261101-branding`).
+- **Docs**: yes (este changelog + general + los 3 docs).
+
 ### [2026-11-01 23:00 EDT] [opencode+gateway] Flota de modelos con nombre (branding) — local primero, nube de último recurso
 - **Tipo**: feature + docs (autorización owner: nombres tipo "Coding con Victoria", sin revelar model names; nube agregada como último recurso)
 - **Que**: renombrado TODA la flota en `opencode.jsonc` (ambos hosts) con nombres de marca, ocultando los model ids técnicos del picker:
