@@ -1,3 +1,14 @@
+### [2026-11-02 17:30 EDT] [stack] Auditoría integral owner: fix pipeline de imágenes (PIL/python), capacidad PDF habilitada, flota consistente, sync + upstream al día
+- **Tipo**: fix (2 causas raíz) + feature (PDF) + docs + higiene
+- **FIX 1 — Posts sociales con imágenes rotos (IG stories desde 11:20)**: CAUSA RAÍZ: el flip global de python3 a 3.13 (29-oct 19:33) rompió la extensión C de Pillow del sistema (`cannot import name '_imaging'` — los .so son cp312) → `story_with_photo`/`story_card` devolvían False SILENCIO (except ImportError sin log) → "no se pudo generar imagen de story" cada 20 min. FIX: `update-alternatives` revert a python3.12 con prioridad durable (2 vs 1) para que apt no lo voltee. **Verificado E2E**: story publicada (id 18053447405813293, QA visual OK). Los 429 og:image de Discord/WhatsApp eran rate-limits externos transitorios (separados).
+- **FIX 2 — Capacidad PDF (CV de José, pedido del owner)**: forense completo: Victoria SÍ generó el CV mejorado (17-oct, 40KB) pero NUNCA pudo enviarlo — el runtime rechaza `/sandbox/.openclaw/workspace/media/outbound/` con `LocalMediaAccessError: path-not-allowed` (3 intentos, 2 días; reverse-engineering de `buildMediaLocalRoots` + evidencia art-gen). FIX: (a) CV copiado a la ruta correcta `/sandbox/.openclaw/media/outbound/`; (b) skill `pdf` corregida con la ruta EXACTA + advertencia (host master + sandbox); (c) skill `webanalyze` rota (sin frontmatter — spameaba el log cada 6s) arreglada. **E2E**: PDF enviado por WhatsApp al DM del owner — `messageId 3EB0A3AD83F7E310E623B2` ✅.
+- **FLOTA**: auditoría de consistencia completa — opencode.jsonc (Using/Thinking/Coding + nube natural + whitelist), 12 agentes (frontmatter OK, Coder pineado), harness central 11 subagents + coder.harness.json, cero referencias viejas (solo nota histórica en AGENTS.md).
+- **UPSTREAM**: opencode 1.19.4 → **1.19.5 en AMBOS hosts** (E2E: 19 agentes + inferencia OK victoria; 6 modelos flota kalimete). doc-fresh Victoria STALE → deep-check hecho → FRESH. upstream-sync: derivas menores (ComfyUI/Gradio/cloudflared) reportadas, no críticas — revisión normal.
+- **ARMADA-SYNC**: victoria timer activo (30 snapshots, último completo); kalimete cron 5min + push GitHub OK. Changelog de kalimete actualizado con la flota final + referencia de la doctrina.
+- **HIGIENE**: eliminados harness bkup 10-08 (stale) + 4 opencode.jsonc bkups viejos (quedan los 2 recientes por política).
+- **Notas**: el review semanal interno de skills (18:24) falla con args malformados (`names` vs `name`) — bug del runtime, benigno (reintenta la próxima semana). Materialización de media inbound (imágenes recibidas por WA) tuvo 3 fallos de fetch el 01-nov — transitorio del CDN de WhatsApp, monitorear.
+- **Impacto**: /usr/bin/python3 (alternatives), instagram-broadcast (sin cambios de código), skills pdf/webanalyze (host+sandbox), opencode ambos hosts, docs. Servicios: todos active, contenedores up.
+- **Docs**: yes (este changelog + kalimete CHANGELOG + skills).
 ### [2026-11-02 02:00 EDT] [opencode] Doctrina de ruteo de modelos y capacidades (decisión owner) + análisis de contextos
 - **Tipo**: docs (doctrina de comportamiento) — cero cambios de config/servicios
 - **Que**: escrita la doctrina de ruteo en `agents/victoria.md` (§ nueva tras "Como delegar a subagentes") + línea en AGENTS-summary:
@@ -5920,9 +5931,3 @@ EOF又是
 - **Estado**: ✅ sincronizado (pendiente commit/push)
 - **Notas**: 386 herramientas vs IvanMurzak/Godot-MCP (42 tools, requiere .NET 8 que no tenemos). @yanhuifair es TypeScript puro, funciona sin Godot abierto para 220+ tools, tiene undo nativo, runtime freeze/step/screenshot (único), 30 categorías
 
-
-## 2026-11-02 (Victoria remota) — Flota final + upgrade opencode 1.19.5
-- opencode.jsonc (kalimete): renombres finales de flota — normal → "Using a Victoria", coder → "Coding con Victoria" (Thinking igual) en providers vllm + vllm-lan; nube NIM SIN marca (eliminado bloque models con marca y name del provider; los 3 relevantes vienen del catálogo con nombre natural; whitelist y timeouts intactos).
-- opencode 1.18.35 → 1.19.5 (install oficial, E2E: 6 modelos de flota visibles).
-- Contexto victoria (referencia): doctrina de ruteo — Using = único modelo de sesión; código sustancial → subagente Coder (pineado al modelo Coding con Victoria, on-demand :8001); nube SOLO manual (owner decide); contextos calibrados: generalista 220K / coder 128K / nube 1M.
-- Fix en victoria: flip python3.13 había roto PIL (extensión C cp312) → pipeline de imágenes de broadcasts caído; revert a python3.12 con prioridad durable + story IG publicada E2E. Capacidad PDF del sandbox habilitada (ruta correcta media/outbound; envío E2E verificado).
