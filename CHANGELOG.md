@@ -1,3 +1,13 @@
+### [2026-11-02 02:00 EDT] [opencode] Doctrina de ruteo de modelos y capacidades (decisión owner) + análisis de contextos
+- **Tipo**: docs (doctrina de comportamiento) — cero cambios de config/servicios
+- **Que**: escrita la doctrina de ruteo en `agents/victoria.md` (§ nueva tras "Como delegar a subagentes") + línea en AGENTS-summary:
+  - **Using a Victoria = único modelo de sesión por defecto**; Victoria orquesta todo (el owner no cambia de modelo en el flujo normal).
+  - **Código sustancial → Task Coder** (edit chico <~30 líneas → directo); el Coder sigue el plan, no re-planea.
+  - **Capacidades (imágenes/3D/animar/podcast/voz/video) = skills/wrappers/servicios, NO agentes** — el LLM las llama, no se crean agentes por capacidad (política owner: "los modelos traen sus capacidades; si falta una, se integra LOCAL descargando un modelo capaz").
+  - **Nube SOLO manual** (owner decide cambiando de modelo en opencode; jamás auto-ruteo a NIM — privacidad + costo).
+- **Análisis de contextos (petición owner: "el principal no necesita 256K si solo delega")**: evaluado y RECHAZADO con datos — (1) los KV son fijos por contenedor (generalista 12GiB :8000, coder 8GiB :8001): bajar el del principal NO transfiere memoria al coder; (2) el principal NO es un router puro — sesiones reales llegan a 150K+ (juancarlos 79K→150K en un día) y bajarlo = compactaciones constantes; (3) prefix-caching ~90% hit hace barato el historial. Contextos calibrados: generalista 220K prompt / coder 128K (prompt enfocado de subagente, le sobra) / nube 1M manual. Si una tarea desborda al coder: dividir la tarea o nube manual — no inflar KV a costa de renders.
+- **Impacto**: agents/victoria.md + AGENTS-summary.md. Sin cambios en opencode.jsonc, gateway ni vLLM.
+- **Docs**: yes (este changelog + los 2 docs).
 ### [2026-11-02 00:15 EDT] [opencode] Renombrado final de la flota (decisión owner) + variantes del Coder verificadas
 - **Tipo**: docs + config (display names)
 - **Que**: renombres en el picker (AMBOS hosts, solo `name` — los model ids reales NO cambian, cero impacto gateway):
