@@ -35,8 +35,8 @@
   2. **vllm-lan** (LAN): misma flota — `http://victoria.local:8010/v1` (rápida en casa; regla: en casa `vllm-lan`, fuera `vllm`)
       - Ambos providers con la MISMA flota con nombre (rename 2026-11-01/02, verificado live 11-03):
         - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → **"Using a Victoria"** — DEFAULT de sesiones nuevas; thinking OFF; VLM (ve imágenes/video)
-        - `nvidia/Qwen3.6-35B-A3B-NVFP4` → **"Thinking con Victoria"** — mismo modelo con thinking ON (budget 2048); 5-6x más lento (~20s vs ~3-4s); misma memoria
-        - `NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4` → **"Coding con Victoria"** — Qwen3-Coder-30B on-demand :8001 (texto only SIN visión; arranca al 1er request ~90s; idle = 0 RAM)
+        - ~~Thinking con Victoria~~ REMOVIDA del picker (11-03, decisión owner) — razonar = @Thinker (instalado, id normal + kwargs thinking; el id -thinking sigue válido a nivel gateway para power users)
+        - ~~Coding con Victoria~~ REMOVIDA del picker de KALIMETE (11-03) — sigue disponible en VICTORIA (motor de @Coder); en kalimete el código pesado va por sus propios agentes dev
       - limit: context 220000 / output 32000 (total 252000 < 262144 ✅)
       - apiKey: llave propia `kalimete` (coder + caps llm/art/tts/whisper/provision — metering propio; la nota vieja "admin alfredo" era stale)
   3. **nvidia** (cloud NIM, SIN marca — nombres naturales del catálogo; whitelist 3 de 52):
@@ -46,7 +46,7 @@
      - baseURL: `https://integrate.api.nvidia.com/v1` · kimi MUERTO en NIM (no usar)
      - SOLO manual (owner decide): contexto >220K o stack local caído — jamás auto-ruteo
   4. **opencode** (built-in): modelos pequeños del propio opencode
-  - **Doctrina de uso de la flota (2026-11-03, owner)**: el owner trabaja SIEMPRE en "Using a Victoria" y no toca el picker en día a día. En VICTORIA el trío delegable sin salir de Using: `@Coder` (código pesado) + `@Thinker` (razonamiento profundo, creado 11-03) + skills (art/3d/animar/podcast). En KALIMETE no se instalan los subagentes de la flota Victoria (los providers duales vllm/vllm-lan romperían el model pin fijo de un .md): para razonar profundo aquí, cambiar la sesión a "Thinking con Victoria" en el picker; para código pesado, el principal kalimete orquesta sus propios agentes dev.
+  - **Doctrina de uso de la flota (2026-11-03, owner)**: el owner trabaja SIEMPRE en "Using a Victoria" y no toca el picker en día a día. En VICTORIA el trío delegable sin salir de Using: `@Coder` (código pesado) + `@Thinker` (razonamiento profundo, creado 11-03) + skills (art/3d/animar/podcast). KALIMETE (11-03 tarde): picker = SOLO "Using a Victoria" en ambos providers (Thinking/Coding removidos — decisión owner, picker simple). @Thinker SÍ está instalado (agent/thinker.md): pin al id NORMAL del provider público vllm (funciona en casa y roaming) + request.body kwargs thinking — el truco evita necesitar la entrada en config. Razonar profundo = @Thinker o pedirselo al principal. Para código pesado, el principal kalimete orquesta sus propios agentes dev (el modelo Coding NO está en el picker de kalimete; si algún día hace falta como motor de un agente, re-agregar la entrada NVFP4/Qwen3-Coder-30B al provider).
 
 - WordPress Dev: `~/dev/wordpress/` — HUB WP (reorg owner 2026-10-17): `plugins/` (proyectos de plugins con sus dev labs) + `websites/` (un ambiente por CLIENTE, nombrado por dominio) — agente `wordpress-dev` = SISTEMA/umbrella; cada plugin su agente; cada website su agente (primero: `MaganTech`, `Micaserogou`)
   - Dev lab Armada Suite: `http://localhost:8091` (loopback; dominio LAN `wordpress.kalimete.local` **RETIRADO 2026-10-18** — consolidación: solo `magantech.kalimete.local` para el proyecto) | DB :3307 (wordpress-db, MariaDB 10.11) — compose project `wordpress`, repo git `~/dev/wordpress/plugins/armada-suite` (HEAD e2c86ed; 5.4.0/5.4.1/5.4.2 + docs CONTROL-PLANE; remote vacío)
