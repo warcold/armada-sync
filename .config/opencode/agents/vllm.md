@@ -145,6 +145,7 @@ Tras lanzar, no reintentar `/health` en bucle. Hacer:
 
 ```bash
 docker logs --tail 200 -f nemoclaw-vllm 2>&1    # seguir startup (usar --tail: ver quirk de logs arriba)
+> **Voice proxy (2026-11-03)**: rutas `/voice/tts`, `/voice/stt`, `/voice/health` en el gateway → proxy a 127.0.0.1:18810. Auth OBLIGATORIA SIEMPRE (validate_key + _key_allows caps tts/whisper) — una ruta cloudflared directa habría sido insegura (túnel llega como 127.0.0.1, sense_auth confía sin llave). Metering en usage_log (rate limit aplica). E2E: local WAV/401/403 + kalimete por túnel (TTS 219KB + STT roundtrip).
 > **Firewall vLLM :8000 (2026-11-03)**: blindaje LAN IPv4 en `DOCKER-USER` (el tráfico publicado pasa por FORWARD, no INPUT): `RETURN` para 127.0.0.1 y 172.16.0.0/12, `DROP` para el resto. Persistido con unit oneshot `victoria-firewall-vllm.service` (After=docker.service, idempotente). E2E: LAN→:8000=000, gateway loopback→vLLM OK, sandbox 172.18.0.1→vLLM 200, LAN→:8010=200.
 > **Gate coder RAM (2026-11-03)**: `CODER_START_MIN_RAM_GB=28` (drop-in systemd `coder-ram-gate.conf`) — data: eventos NVRM NV_ERR_NO_MEMORY (nov 1-2) con coder activo y RAM 24-27GB disp. El coder ya no arranca presionando la UMA (503 claro en su lugar).
 > **opencode 1.19.5** en ambos hosts (E2E OK 2026-11-03).

@@ -375,7 +375,7 @@ do_fleet() {
     [ -f "$central" ] || { echo "FALLA: falta harness central"; return 1; }
     python3 -m json.tool "$central" >/dev/null 2>&1 || { echo "FALLA: harness central JSON inválido"; return 1; }
     local cdir
-    cdir=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("changelogs_dir",""))' "$central")
+    cdir=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("changelogs_dir") or "/home/victoria/.victoria-custom/changelogs")' "$central")
     local obin=""
     if command -v opencode >/dev/null 2>&1; then obin="opencode";
     elif [ -x "/home/victoria/.opencode/bin/opencode" ]; then obin="/home/victoria/.opencode/bin/opencode"; fi
@@ -388,11 +388,11 @@ do_fleet() {
     local n f h bad ts
     while IFS= read -r n; do
         [ -z "$n" ] && continue
-        f=$(python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));p=d["principal"];print(p["file"] if p["name"]==sys.argv[2] else next((s["file"] for s in d["subagents"] if s["name"]==sys.argv[2]),""))' "$central" "$n")
+        f=$(python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));p=d.get("principal") or {"name": d.get("name") or d.get("harness",""),"file": d.get("agent_file","")};print(p["file"] if p["name"]==sys.argv[2] else next((s["file"] for s in d.get("subagents",[]) if s["name"]==sys.argv[2]),""))' "$central" "$n")
         if [ -z "$f" ] || [ ! -f "$f" ]; then echo "FALLA: [$n] falta agent file"; fail=1; continue; fi
         grep -qE "^name: " "$f" || { echo "FALLA: [$n] frontmatter sin name:"; fail=1; }
         grep -qE "^mode: (primary|subagent)" "$f" || { echo "FALLA: [$n] frontmatter sin mode válido"; fail=1; }
-        h=$(python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));p=d["principal"];print(p.get("harness","") if p["name"]==sys.argv[2] else next((s.get("harness","") for s in d["subagents"] if s["name"]==sys.argv[2]),""))' "$central" "$n")
+        h=$(python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));p=d.get("principal") or {"name": d.get("name") or d.get("harness",""),"harness": sys.argv[1]};print(p.get("harness","") if p["name"]==sys.argv[2] else next((s.get("harness","") for s in d.get("subagents",[]) if s["name"]==sys.argv[2]),""))' "$central" "$n")
         if [ -n "$h" ]; then
             if [ ! -f "$h" ]; then echo "FALLA: [$n] falta harness"; fail=1;
             elif ! python3 -m json.tool "$h" >/dev/null 2>&1; then echo "FALLA: [$n] harness JSON inválido"; fail=1; fi
@@ -407,17 +407,29 @@ do_fleet() {
         if [ -n "$alist" ]; then
             echo "$alist" | grep -qE "^${n} \((primary|subagent)\)" || { echo "FALLA: [$n] no resuelve en agent list"; fail=1; }
         fi
-    done < <(python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));print(d["principal"]["name"]);[print(s["name"]) for s in d["subagents"]]' "$central")
+    done < <(python3 -c '
+import json,sys,re
+d=json.load(open(sys.argv[1]))
+p=d.get("principal") or {}
+n=p.get("name")
+if not n:
+    try:
+        m=re.search(r"(?m)^name:\s*(.+)$", open(d.get("agent_file","")).read())
+        n=m.group(1).strip().strip("\"") if m else "Victoria"
+    except Exception:
+        n="Victoria"
+print(n)
+[print(s["name"]) for s in d.get("subagents",[])]' "$central")
     [ -e "/home/victoria/.config/opencode/agent" ] && { echo "FALLA: symlink agent→agents prohibido existe"; fail=1; }
     [ -d "/home/victoria/agent" ] && { echo "FALLA: dir ~/agent singular en victoria (convención kalimete)"; fail=1; }
-    local want="victoria.md vllm.md openclaw.md comfyui.md sonic.md rss-system.md meta-business.md weather.md cloudflare.md liveportrait.md gpu.md"
+    local want="victoria.md vllm.md openclaw.md comfyui.md sonic.md rss-system.md meta-business.md weather.md cloudflare.md liveportrait.md gpu.md coder.md"
     local have extra missing
     have=$(ls "$agents_dir" 2>/dev/null | grep "\.md$" | grep -v "bkup" | sort || true)
     extra=$(comm -13 <(printf "%s\n" $want | sort) <(printf "%s\n" "$have") || true)
     missing=$(comm -23 <(printf "%s\n" $want | sort) <(printf "%s\n" "$have") || true)
     [ -n "$extra" ] && { echo "FALLA: .md inesperados en agents/: $extra"; fail=1; }
     [ -n "$missing" ] && { echo "FALLA: .md esperados faltantes: $missing"; fail=1; }
-    if [ "$fail" -eq 0 ]; then echo "fleet OK: scaffold de la flota consistente (11 agentes)"; else echo "fleet: HAY FALLAS (ver arriba)"; fi
+    if [ "$fail" -eq 0 ]; then echo "fleet OK: scaffold de la flota consistente (12 agentes)"; else echo "fleet: HAY FALLAS (ver arriba)"; fi
     return "$fail"
 }
 

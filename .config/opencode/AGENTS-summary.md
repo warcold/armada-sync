@@ -20,7 +20,7 @@ TODO en CHANGELOG, no dañar lo que funciona.
 - Sandbox nemoclaw `victoria-armada` (Discord/WhatsApp/voz) + dashboard `:18800`
 - OpenClaw genera IMÁGENES vía `art-gen` (solo imágenes, política 10-03; templates API z-image-turbo/flux-schnell/sd15 en `~/.victoria-custom/comfyui-templates-api/`; skill `art` en opencode skills de ambos hosts; art API del gateway con cola gpu_arbiter → 429 gpu_busy = reintentar)
 - Multi-tier por llave (10-03): panel con checkboxes de 8 capacidades; kalimete = llm+art+tts(=voz TTS Qwen3)+whisper+provision (10-20: crea llaves de negocio armada-* vía POST /v1/provision-key — rol services+caps [llm] fijos, auditoría provision_log); sense_auth honra allowed_models
-- Sentidos HOST: voz :18810, video :18811, nav :18820, whois :18830, admin :18840 (con auth), sonic :18850
+- Sentidos HOST: voz :18810, video :18811, nav :18820, whois :18830, admin :18840 (con auth), sonic :18850. Voz fuera de LAN: proxy `/voice/{tts,stt,health}` del gateway (auth siempre, caps tts/whisper) — kalimete usa `VICTORIA_TTS_URL=https://victoria.armada.do/voice/tts`
 - Contenido: ComfyUI :8188, LivePortrait :8180, n8n :5678
 - Infra: cloudflared, nginx (victoria.local solo LAN), gpu-saver
 

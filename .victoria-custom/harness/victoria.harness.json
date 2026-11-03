@@ -1,6 +1,6 @@
 {
  "harness": "victoria",
- "updated": "2026-10-29",
+ "updated": "2026-11-03",
  "mode": "primary",
  "hidden": false,
  "agent_file": "/home/victoria/.config/opencode/agents/victoria.md",
@@ -465,8 +465,8 @@
   },
   {
    "name": "Coder",
-   "file": "~/.config/opencode/agents/coder.md",
-   "harness": "~/.victoria-custom/harness/coder.harness.json",
+   "file": "/home/victoria/.config/opencode/agents/coder.md",
+   "harness": "/home/victoria/.victoria-custom/harness/coder.harness.json",
    "mode": "subagent",
    "model": "vllm/NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4 (Coding con Victoria, on-demand :8001)",
    "scope": "Ejecutor de código pesado (SWE agéntico, texto only). La primaria planea y delega implementación.",
@@ -480,5 +480,6 @@
   "sync_script": "/home/victoria/.victoria-custom/bin/changelog-sync-victoria.sh",
   "cron": "*/15 * * * *",
   "nota": "Append-only format = merge natural sin conflictos. Los 3 principales (Victoria/Kalimete/Jonas) leen/escriben aquí."
- }
+ },
+ "name": "Victoria"
 }
