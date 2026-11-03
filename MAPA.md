@@ -31,18 +31,23 @@
 - Sync hub: `~/armada-sync` (push/pull)
 - Docker: 7 containers (tapmap, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
 - **opencode.jsonc**: 4 providers + MCPs `godot-ror`, `blender` (verificado 2026-10-20; el archivo es la fuente única)
-  1. **vllm** (local): Qwen3.6-35B-A3B-NVFP4 via victoria (2 variantes)
-      - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → "Coding con Victoria" (reasoning: false)
-      - `nvidia/Qwen3.6-35B-A3B-NVFP4` → "Thinking · Coding con Victoria" (reasoning: true)
-      - baseURL: `http://victoria.local:8010/v1` (LAN directo al gateway)
+  1. **vllm** (pública): flota de Victoria vía túnel — `https://victoria.armada.do/v1` (roaming, SIEMPRE conecta)
+  2. **vllm-lan** (LAN): misma flota — `http://victoria.local:8010/v1` (rápida en casa; regla: en casa `vllm-lan`, fuera `vllm`)
+      - Ambos providers con la MISMA flota con nombre (rename 2026-11-01/02, verificado live 11-03):
+        - `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` → **"Using a Victoria"** — DEFAULT de sesiones nuevas; thinking OFF; VLM (ve imágenes/video)
+        - `nvidia/Qwen3.6-35B-A3B-NVFP4` → **"Thinking con Victoria"** — mismo modelo con thinking ON (budget 2048); 5-6x más lento (~20s vs ~3-4s); misma memoria
+        - `NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4` → **"Coding con Victoria"** — Qwen3-Coder-30B on-demand :8001 (texto only SIN visión; arranca al 1er request ~90s; idle = 0 RAM)
       - limit: context 220000 / output 32000 (total 252000 < 262144 ✅)
-      - apiKey: `vllm-key-5d43...` (admin alfredo)
-  2. **nvidia** (cloud): DeepSeek V4 Flash/Pro via NVIDIA API Catalog
-     - `deepseek-ai/deepseek-v4-flash-0731` → "DeepSeek V4 Flash" (reasoning: true)
-     - `deepseek-ai/deepseek-v4-pro-0813` → "DeepSeek V4 Pro" (reasoning: true)
-     - baseURL: `https://integrate.api.nvidia.com/v1`
-     - apiKey: `nvapi-...` (key compartida desde victoria)
-     - Contexto nativo: 1M tokens (vs 262K del Qwen local)
+      - apiKey: llave propia `kalimete` (coder + caps llm/art/tts/whisper/provision — metering propio; la nota vieja "admin alfredo" era stale)
+  3. **nvidia** (cloud NIM, SIN marca — nombres naturales del catálogo; whitelist 3 de 52):
+     - `deepseek-ai/deepseek-v4.1-flash` (1M ctx, reasoning)
+     - `z-ai/glm-5.3-flash` (1M ctx, reasoning)
+     - `nvidia/nemotron-3-ultra-550b-a55b` (flagship, 1M ctx, tool-calling)
+     - baseURL: `https://integrate.api.nvidia.com/v1` · kimi MUERTO en NIM (no usar)
+     - SOLO manual (owner decide): contexto >220K o stack local caído — jamás auto-ruteo
+  4. **opencode** (built-in): modelos pequeños del propio opencode
+  - **Doctrina de uso de la flota (2026-11-03, owner)**: el owner trabaja SIEMPRE en "Using a Victoria" y no toca el picker en día a día. En VICTORIA el trío delegable sin salir de Using: `@Coder` (código pesado) + `@Thinker` (razonamiento profundo, creado 11-03) + skills (art/3d/animar/podcast). En KALIMETE no se instalan los subagentes de la flota Victoria (los providers duales vllm/vllm-lan romperían el model pin fijo de un .md): para razonar profundo aquí, cambiar la sesión a "Thinking con Victoria" en el picker; para código pesado, el principal kalimete orquesta sus propios agentes dev.
+
 - WordPress Dev: `~/dev/wordpress/` — HUB WP (reorg owner 2026-10-17): `plugins/` (proyectos de plugins con sus dev labs) + `websites/` (un ambiente por CLIENTE, nombrado por dominio) — agente `wordpress-dev` = SISTEMA/umbrella; cada plugin su agente; cada website su agente (primero: `MaganTech`, `Micaserogou`)
   - Dev lab Armada Suite: `http://localhost:8091` (loopback; dominio LAN `wordpress.kalimete.local` **RETIRADO 2026-10-18** — consolidación: solo `magantech.kalimete.local` para el proyecto) | DB :3307 (wordpress-db, MariaDB 10.11) — compose project `wordpress`, repo git `~/dev/wordpress/plugins/armada-suite` (HEAD e2c86ed; 5.4.0/5.4.1/5.4.2 + docs CONTROL-PLANE; remote vacío)
   - Dev lab ZionV CRM: `http://localhost:8092` | LAN/SSL `https://zionv.kalimete.local` | DB :3308 — compose project `zionv-crm`, git del plugin en `wp-content/plugins/zionv-crm-plugin/.git` (HEAD 9698224, v1.56.3)
@@ -66,7 +71,7 @@
     - Mu-plugins: `/var/www/html/wp-content/mu-plugins/` (no se borran con updates)
 - Systemd: ssh, nginx, docker, containerd, cron, sddm, waydroid, kalimete-tunnel, publish-kalimete-subdomains, dnsmasq
 - opencode config: `~/.config/opencode/`
-- opencode.jsonc usa gateway LLM de victoria en LAN: `http://victoria.local:8010/v1` (verificado 2026-09-14)
+- opencode.jsonc usa la flota de victoria DUAL: `vllm-lan` (LAN) + `vllm` (pública, roaming) — ver bloque providers arriba
 
 ### 2. victoria (10.0.0.5) — Servidor GPU/LLM
 #### ⚠️ Regla CRÍTICA: victoria = SOLO LECTURA, NUNCA ESCRIBIR
