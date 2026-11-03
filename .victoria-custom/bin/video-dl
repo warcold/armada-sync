@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""video-dl: descarga un video de YouTube (o URL) vía el video-server host.
+
+Uso:
+  video-dl <url>                 -> JSON {"video_path","title","duration",...}
+  video-dl <url> --transcribe    -> incluye transcripción (whisper host)
+  video-dl <url> --frames N      -> incluye N frames extraídos (ffmpeg host)
+
+Comunica con el host vía la UNIX socket /tmp/video-gateway.sock (bridge).
+"""
+import argparse
+import json
+import os
+import socket
+import sys
+
+SOCKET_PATH = "/tmp/video-gateway.sock"
+
+
+def rpc(method, path, body=None, timeout=1800):
+    payload = json.dumps(body).encode("utf-8") if body is not None else b""
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect(SOCKET_PATH)
+        request = (
+            f"{method} {path} HTTP/1.1\r\n"
+            f"Host: localhost\r\n"
+            f"Content-Type: application/json\r\n"
+            f"Content-Length: {len(payload)}\r\n"
+            f"Connection: close\r\n"
+            f"\r\n"
+        ).encode("utf-8") + payload
+        s.sendall(request)
+        response = b""
+        while True:
+            chunk = s.recv(65536)
+            if not chunk:
+                break
+            response += chunk
+        s.close()
+        if response.startswith(b"HTTP/1.1 200"):
+            idx = response.find(b"\r\n\r\n")
+            return json.loads(response[idx+4:].decode("utf-8", "replace"))
+        idx = response.find(b"\r\n\r\n")
+        err = response[idx+4:].decode("utf-8", "replace") if idx > 0 else response.decode("utf-8", "replace")
+        raise RuntimeError(f"error HTTP: {err[:500]}")
+    except RuntimeError:
+        raise
+    except Exception as e:
+        s.close()
+        raise RuntimeError(f"socket error: {e}")
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("url")
+    p.add_argument("--transcribe", action="store_true", help="incluir transcripción")
+    p.add_argument("--frames", type=int, default=0, help="extraer N frames")
+    p.add_argument("--times", nargs="*", default=[], help="timestamps (00:01:00)")
+    p.add_argument("--lang", default="es")
+    args = p.parse_args()
+
+    if not os.path.exists(SOCKET_PATH):
+        print("error: video-gateway.sock no existe (¿bridge caído?)", file=sys.stderr)
+        sys.exit(2)
+
+    d = rpc("POST", "/download", {"url": args.url})
+    out = {"video_path": d.get("video_path"), "title": d.get("title"),
+           "duration": d.get("duration"), "resolution": d.get("resolution"),
+           "id": d.get("id")}
+    if args.transcribe:
+        out["transcript"] = rpc("POST", "/transcribe", {"video": d["video_path"], "lang": args.lang}).get("text", "")
+    if args.frames:
+        times = args.times or None
+        out["frames"] = rpc("POST", "/frames", {"video": d["video_path"], "times": times, "count": args.frames}).get("frames", [])
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(1)

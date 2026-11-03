@@ -1,0 +1,343 @@
+[
+    {
+        "Id": "8794c00e1d3860f9f4a4638a236071747408e6c056e7eaa712e134b9377629e1",
+        "Created": "2026-09-29T23:49:26.974301207Z",
+        "Path": "/opt/nvidia/nvidia_entrypoint.sh",
+        "Args": [
+            "/bin/bash",
+            "-lc",
+            "vllm serve nvidia/Qwen3.6-35B-A3B-NVFP4     --tensor-parallel-size 1 --pipeline-parallel-size 1 --data-parallel-size 1     --port 8000 --trust-remote-code --max-model-len 160000     --gpu-memory-utilization 0.22 --dtype auto --quantization modelopt     --kv-cache-memory-bytes 12884901888     --kv-cache-dtype fp8 --attention-backend flashinfer --moe-backend marlin     --max-num-seqs 4 --max-num-batched-tokens 8192     --enable-chunked-prefill --async-scheduling --enable-prefix-caching     --enable-auto-tool-choice --tool-call-parser qwen3_xml     --reasoning-parser qwen3 --load-format fastsafetensors     --default-chat-template-kwargs '{\"enable_thinking\": false}'     --speculative-config '{\"method\":\"mtp\",\"num_speculative_tokens\":3,\"moe_backend\":\"triton\"}'"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 4047,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-09-30T13:20:55.758655616Z",
+            "FinishedAt": "2026-09-30T13:20:54.075173824Z"
+        },
+        "Image": "sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+        "ResolvConfPath": "/var/lib/docker/containers/8794c00e1d3860f9f4a4638a236071747408e6c056e7eaa712e134b9377629e1/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/8794c00e1d3860f9f4a4638a236071747408e6c056e7eaa712e134b9377629e1/hostname",
+        "HostsPath": "/var/lib/docker/containers/8794c00e1d3860f9f4a4638a236071747408e6c056e7eaa712e134b9377629e1/hosts",
+        "LogPath": "/var/lib/docker/containers/8794c00e1d3860f9f4a4638a236071747408e6c056e7eaa712e134b9377629e1/8794c00e1d3860f9f4a4638a236071747408e6c056e7eaa712e134b9377629e1-json.log",
+        "Name": "/nemoclaw-vllm",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "/home/victoria/.cache/huggingface:/root/.cache/huggingface"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "",
+                        "HostPort": "8000"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "host",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": [
+                "label=disable"
+            ],
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": [
+                {
+                    "Driver": "",
+                    "Count": -1,
+                    "DeviceIDs": null,
+                    "Capabilities": [
+                        [
+                            "gpu"
+                        ]
+                    ],
+                    "Options": {}
+                }
+            ],
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ],
+            "Init": true
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/home/victoria/.cache/huggingface",
+                "Destination": "/root/.cache/huggingface",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "8794c00e1d38",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "8000/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "HF_HOME=/root/.cache/huggingface",
+                "PATH=/usr/local/lib/python3.12/dist-packages/torch_tensorrt/bin:/usr/local/cuda/bin:/usr/local/nixlbench/bin:/usr/local/nixl/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/mpi/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/ucx/bin:/opt/amazon/efa/bin:/opt/tensorrt/bin",
+                "GDRCOPY_VERSION=2.5.1",
+                "HPCX_VERSION=2.26",
+                "MOFED_VERSION=5.4-rdmacore59.1",
+                "OPENUCX_VERSION=1.20.0",
+                "OPENMPI_VERSION=4.1.7",
+                "RDMACORE_VERSION=59.1",
+                "EFA_VERSION=1.48.0",
+                "OPAL_PREFIX=/usr/local/mpi",
+                "OMPI_MCA_coll_hcoll_enable=0",
+                "CUDA_VERSION=13.2.1.009",
+                "CUDA_DRIVER_VERSION=595.58.03",
+                "NVVM_VERSION=13.2.78",
+                "DOCA_VERSION=3.2.0",
+                "_CUDA_COMPAT_PATH=/usr/local/cuda/compat",
+                "ENV=/etc/shinit_v2",
+                "BASH_ENV=/etc/bash.bashrc",
+                "SHELL=/bin/bash",
+                "NVIDIA_REQUIRE_CUDA=cuda>=9.0",
+                "NCCL_VERSION=2.30.4",
+                "CUBLAS_VERSION=13.4.1.1",
+                "CUFFT_VERSION=12.2.0.46",
+                "CURAND_VERSION=10.4.2.55",
+                "CUSPARSE_VERSION=12.7.10.1",
+                "CUSPARSELT_VERSION=0.9.1.1",
+                "CUSOLVER_VERSION=12.2.0.1",
+                "NPP_VERSION=13.1.0.48",
+                "NVJPEG_VERSION=13.1.0.48",
+                "CUFILE_VERSION=1.17.1.22",
+                "NVJITLINK_VERSION=13.2.78",
+                "NVFATBIN_VERSION=13.2.78",
+                "CUBLASMP_VERSION=0.8.1.2360",
+                "CUSOLVERMP_VERSION=0.8.0.3126",
+                "NVSHMEM_VERSION=3.6.5",
+                "CUDLA_VERSION=13.2.75",
+                "NVPTXCOMPILER_VERSION=13.2.78",
+                "CUDNN_VERSION=9.22.0.52",
+                "CUDNN_FRONTEND_VERSION=1.23.0",
+                "TRT_VERSION=10.16.1.11",
+                "TRTOSS_VERSION=",
+                "NSIGHT_SYSTEMS_VERSION=2026.2.1.210",
+                "NSIGHT_COMPUTE_VERSION=2026.1.1.2",
+                "DALI_VERSION=2.1.0",
+                "DALI_BUILD=",
+                "DALI_URL_SUFFIX=130",
+                "POLYGRAPHY_VERSION=0.49.26",
+                "TRANSFORMER_ENGINE_VERSION=2.15",
+                "MODEL_OPT_VERSION=0.43.0",
+                "CUDA_ARCH_LIST=8.0 8.6 9.0 10.0 11.0 12.0",
+                "MAXSMVER=121",
+                "NVRX_VERSION=0.5.0",
+                "NIXL_VERSION=1.0.1",
+                "CUTILE_PYTHON_VERSION=1.3.0",
+                "CUTLASS_DSL_VERSION=4.4.2",
+                "LD_LIBRARY_PATH=/usr/local/lib/python3.12/dist-packages/torch/lib:/usr/local/lib/python3.12/dist-packages/torch_tensorrt/lib:/usr/local/nixlbench/lib:/usr/local/lib:/opt/amazon/efa/lib:/usr/lib:/usr/local/cuda/compat/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/nixl/lib/x86_64-linux-gnu:/usr/local/nixl/lib/aarch64-linux-gnu",
+                "NVIDIA_VISIBLE_DEVICES=all",
+                "NVIDIA_DRIVER_CAPABILITIES=compute,utility,video",
+                "NVIDIA_PRODUCT_NAME=vLLM",
+                "CUDA_COMPONENT_LIST=cccl crt nvrtc driver-dev culibos-dev cudart cudart-dev nvcc tileiras",
+                "LIBRARY_PATH=/usr/local/cuda/lib64/stubs:",
+                "VLLM_VERSION=0.21.0+2325b6f0",
+                "PIP_CONSTRAINT=/etc/pip/constraint.txt",
+                "CUDA_HOME=/usr/local/cuda",
+                "CPATH=/usr/local/cuda/include:",
+                "TORCH_CUDA_ARCH_LIST=8.0 8.6 9.0 10.0 11.0 12.0+PTX",
+                "TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas",
+                "TRITON_CUOBJDUMP_PATH=/usr/local/cuda/bin/cuobjdump",
+                "TRITON_NVDISASM_PATH=/usr/local/cuda/bin/nvdisasm",
+                "TRITON_CUDACRT_PATH=/usr/local/cuda/include",
+                "TRITON_CUDART_PATH=/usr/local/cuda/include",
+                "TRITON_CUPTI_PATH=/usr/local/cuda/include",
+                "MAX_JOBS=12",
+                "PIP_BREAK_SYSTEM_PACKAGES=1",
+                "PIP_NO_BUILD_ISOLATION=1",
+                "PYTORCH_TRITON_VERSION=3.6.0+git5d72932fc5.nv26.3",
+                "TIKTOKEN_CACHE_DIR=/root/.cache/tiktoken_cache",
+                "TIKTOKEN_RS_CACHE_DIR=/root/.cache/tiktoken_cache",
+                "VLLM_FLASH_ATTN_SRC_DIR=/opt/vllm/vllm-flash-attn/",
+                "NVIDIA_VLLM_VERSION=26.05.post1",
+                "NVIDIA_BUILD_ID=329071538"
+            ],
+            "Cmd": [
+                "/bin/bash",
+                "-lc",
+                "vllm serve nvidia/Qwen3.6-35B-A3B-NVFP4     --tensor-parallel-size 1 --pipeline-parallel-size 1 --data-parallel-size 1     --port 8000 --trust-remote-code --max-model-len 160000     --gpu-memory-utilization 0.22 --dtype auto --quantization modelopt     --kv-cache-memory-bytes 12884901888     --kv-cache-dtype fp8 --attention-backend flashinfer --moe-backend marlin     --max-num-seqs 4 --max-num-batched-tokens 8192     --enable-chunked-prefill --async-scheduling --enable-prefix-caching     --enable-auto-tool-choice --tool-call-parser qwen3_xml     --reasoning-parser qwen3 --load-format fastsafetensors     --default-chat-template-kwargs '{\"enable_thinking\": false}'     --speculative-config '{\"method\":\"mtp\",\"num_speculative_tokens\":3,\"moe_backend\":\"triton\"}'"
+            ],
+            "Image": "nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+            "Volumes": null,
+            "WorkingDir": "/workspace",
+            "Entrypoint": [
+                "/opt/nvidia/nvidia_entrypoint.sh"
+            ],
+            "Labels": {
+                "com.nvidia.build.id": "329071538",
+                "com.nvidia.build.ref": "43e8565002209616e3fc02778d7984465085cc9a",
+                "com.nvidia.cublas.version": "13.4.1.1",
+                "com.nvidia.cuda.version": "9.0",
+                "com.nvidia.cudnn.version": "9.22.0.52",
+                "com.nvidia.cufft.version": "12.2.0.46",
+                "com.nvidia.curand.version": "10.4.2.55",
+                "com.nvidia.cusolver.version": "12.2.0.1",
+                "com.nvidia.cusparse.version": "12.7.10.1",
+                "com.nvidia.cusparselt.version": "0.9.1.1",
+                "com.nvidia.nccl.version": "2.30.4",
+                "com.nvidia.nemoclaw.managed-vllm": "true",
+                "com.nvidia.npp.version": "13.1.0.48",
+                "com.nvidia.nvjpeg.version": "13.1.0.48",
+                "com.nvidia.vllm.version": "0.21.0+2325b6f0",
+                "com.nvidia.volumes.needed": "nvidia_driver",
+                "org.opencontainers.image.version": "24.04"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "9e5a903cd32d8d176687eda6111779b0fa4ddccda684d7ab80a5ffafb1c8f799",
+            "SandboxKey": "/var/run/docker/netns/9e5a903cd32d",
+            "Ports": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "8000"
+                    },
+                    {
+                        "HostIp": "::",
+                        "HostPort": "8000"
+                    }
+                ]
+            },
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "8db37d00aba30dfc0f05f6110dc2f7abfb260f8576cf7aad497802fbf6af6755",
+                    "EndpointID": "623e708c34e0ab9abe38f72949c0e909914972bafdaf61777a7bf0c66c5c3ac2",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.3",
+                    "MacAddress": "f6:3e:e7:5b:16:1c",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "digest": "sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+            "size": 8377,
+            "platform": {
+                "architecture": "arm64",
+                "os": "linux"
+            }
+        }
+    }
+]

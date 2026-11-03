@@ -1,0 +1,184 @@
+{
+ "harness": "OpenClaw",
+ "updated": "2026-11-03",
+ "mode": "subagent",
+ "hidden": false,
+ "temperature": 0.1,
+ "agent_file": "/home/victoria/.config/opencode/agents/openclaw.md",
+ "scope": "Sandbox OpenClaw victoria-armada + dashboard :18800 + 5 bridges (voz/video/whois/admin/art) + art-gen/art-approve. Mision: mantener sandbox sincronizado (config/identity/voz/plugins/bridges/ARTE); diagnosticar/reconstruir; gestionar canales Discord/WhatsApp/voz/video/whois/admin/art; ensure-loop 15s.",
+ "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. Sandbox vivo: container openshell-default--victoria-armada-* UP (healthy), dashboard chain 200 (publisher :18800 -> relay :18790 -> gateway interno), 11 plugins cargados (active-memory, discord, whatsapp, tts-local-cli, etc.), 5 bridges UP (voz :18810, video :18811, whois :18830, admin :18840, art :8010 via socket). Canales: WhatsApp DM allowlist + 2 groups wildcard; Discord 2 guilds + voice stt-tts. Policies egress: personal-open-internet (switch maestro) + victoria-art-api + local-inference. Models.mode=replace + contextWindow 220000/32000 aplicado (fix tormenta 1,111x). HEARTBEAT OFF. Backup persist 2.2G (2026-10-08).",
+ "live_check": "curl -s http://victoria.local:18800/health | grep -q '\"ok\":true' && echo 'OpenClaw:up' || echo 'OpenClaw:down'",
+ "checks": [
+  "nemoclaw victoria-armada status",
+  "nemoclaw victoria-armada doctor",
+  "curl -s http://victoria.local:18800/health",
+  "systemctl is-active victoria-openclaw-bridge victoria-voice-server victoria-video-server victoria-whois-server victoria-host-admin",
+  "docker exec $(docker ps -qf name=openshell-victoria-armada) /sandbox/.openclaw/bin/art-gen status",
+  "docker exec $(docker ps -qf name=openshell-victoria-armada) /sandbox/.openclaw/bin/art-approve status"
+ ],
+ "upstream": {
+  "fuente": "github openclaw/openclaw (runtime 2026.9.x fijado por nemoclaw) + nemoclaw source read-only ~/.nemoclaw/source/",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Upgrades runtime = Plan + owner (saltos de schema rompen plugins/patches).",
+  "version_servida_live": "nemoclaw --version + strings $(which openshell-gateway) | grep -E '0\\.0\\.[0-9]+'",
+  "donde_mirar": [
+   "https://docs.openclaw.ai/releases (runtime del sandbox)",
+   "https://docs.openclaw.ai/concepts/model-providers/custom-providers",
+   "https://docs.openclaw.ai/gateway/config-agents/heartbeat-compaction-and-streaming",
+   "~/.nemoclaw/source/docs/ (inference, network-policy, manage-sandboxes, troubleshooting)",
+   "extensions/*/dist/config-schema-*.js (dentro del sandbox, schema REAL)"
+  ],
+  "frecuencia": "ante incidente o salto de runtime planeado",
+  "politica": "Upgrades de runtime = Plan + owner. Saltos de schema rompen plugins/patches.",
+  "como_reportar": "entrada en CHANGELOG-sandbox.md (seccion upstream) + aviso a Victoria en Task"
+ },
+ "servicios": [
+  {
+   "name": "sandbox openshell-default--victoria-armada-*",
+   "red": "victoria-lan 172.22.0.10",
+   "via": "inference.local:443 -> host.openshell.internal:8000"
+  },
+  {
+   "name": "openclaw-publisher (Docker --network host)",
+   "puerto": 18800,
+   "target": "127.0.0.1:18790 relay -> gateway DENTRO sandbox (publisher :18800 desde 2026-10-05, ownership proof nemoclaw v0.0.130)"
+  },
+  {
+   "name": "victoria-openclaw-bridge.service",
+   "puerto": 18800,
+   "loop": "15s ensure-loop: red+publisher+persist+voz+plugins+identity+customize+policies+arte"
+  },
+  {
+   "name": "victoria-voice-server.service",
+   "puerto": 18810,
+   "codigo": "voice-server-host.py (HOST python3.12, Qwen3-TTS-0.6B-Base ICL 24kHz único motor + whisper-small; /stt acepta ?language= ISO 639 opcional desde 2026-10-20, sin param = auto-detección)"
+  },
+  {
+   "name": "victoria-video-server.service",
+   "puerto": 18811,
+   "codigo": "victoria-video-server.py (yt-dlp + ffmpeg + whisper)"
+  },
+  {
+   "name": "victoria-whois-server.service",
+   "puerto": 18830,
+   "codigo": "whois-server.py + fallback RDAP"
+  },
+  {
+   "name": "victoria-host-admin.service",
+   "puerto": 18840,
+   "codigo": "victoria-host-admin.py (auth SIEMPRE, 401 sin llave es NORMAL)"
+  },
+  {
+   "name": "art-bridge.py (container level, socket /tmp/art-gateway.sock)",
+   "target": "172.18.0.1:8010 directo (sin proxy L7)",
+   "via": "ensure_art en 15s loop + preset victoria-art-api (defensa en profundidad)"
+  }
+ ],
+ "scripts_host": [
+  "openclaw-bridge-ensure.sh",
+  "openclaw-persist.sh",
+  "openclaw-voice-host.sh",
+  "openclaw-discord-fix.sh",
+  "openclaw-whatsapp-fix.sh",
+  "openclaw-rss-install.sh",
+  "openclaw-customize-apply.sh",
+  "sense_auth.py",
+  "art-gen",
+  "art-approve"
+ ],
+ "docs": [
+  "/home/victoria/.config/opencode/agents/openclaw.md",
+  "/home/victoria/AGENTS.md §0/§4",
+  "/home/victoria/.config/opencode/agents/victoria.md §Persistencia",
+  "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md"
+ ],
+ "docs_oficiales": {
+  "regla": "ANTES de operar/configurar contra el servicio consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (systemctl/curl/logs). NUNCA inventar flags ni usar features de versiones no servidas.",
+  "fuentes": [
+   {
+    "nombre": "OpenClaw docs (canonicas)",
+    "url": "https://docs.openclaw.ai/",
+    "contenido_clave": "gateway, channels, agents, tools/skills, CLI, schemas, releases",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "Custom providers and local runtimes (models.providers)",
+    "url": "https://docs.openclaw.ai/concepts/model-providers/custom-providers",
+    "contenido_clave": "config de models.providers: campos contextWindow/maxTokens por model entry; max_tokens omitido -> default del provider; 'Recommended: set explicit values that match your proxy/model limits'",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "Configuration - agent heartbeat, compaction, and streaming",
+    "url": "https://docs.openclaw.ai/gateway/config-agents/heartbeat-compaction-and-streaming",
+    "contenido_clave": "agents.defaults.compaction completo (enabled default true, safeguard, keepRecentTokens 20000, midTurnPrecheck opt-in, maxActiveTranscriptBytes opt-in, compaction.model override) + contextPruning + heartbeat",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "nemoclaw source docs (plataforma)",
+    "url": "~/.nemoclaw/source/docs/",
+    "contenido_clave": "inference, network-policy, manage-sandboxes, troubleshooting",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "Schema REAL de plugins del runtime 2026.9.x",
+    "url": "extensions/*/dist/config-schema-*.js (dentro del sandbox)",
+    "contenido_clave": "validacion definitiva de openclaw.json; merge models.mode usa HIGHER value (causa raiz tormenta)",
+    "verificada": "2026-10-08"
+   }
+  ]
+ },
+ "changelog": [
+  {
+   "fecha": "2026-10-29",
+   "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). Sandbox vivo: 11 plugins, 5 bridges, 2 canales, policies egress activas, models.mode=replace, HEARTBEAT OFF. Drift-check bidireccional granja activo."
+  },
+  {
+   "fecha": "2026-10-20",
+   "cambio": "Medicion LIVE post-fix tormenta 1,111x VLLMValidationError: models.mode=replace + contextWindow 220000/32000 aplicado (fix critico: merge tomaba HIGHER value = 262144 exacto = off-by-one). 11 plugins cargados. Canales WhatsApp/Discord configurados. HEARTBEAT OFF."
+  },
+  {
+   "fecha": "2026-10-05",
+   "cambio": "Dashboard chain corregida: publisher :18800 (Docker --network host) -> relay :18790 (openshell forward service) -> gateway interno. Ownership proof nemoclaw v0.0.130 exige 18789-18799 libre."
+  },
+  {
+   "fecha": "2026-10-03",
+   "cambio": "Stack voz unificado: Qwen3-TTS unico motor (XTTS/coqui eliminados). Voz real Victoria clonada (Librivox Little Eve Edgarton) + acento nativo ES/EN via refs por idioma. Claridad +4.5dB@3kHz."
+  },
+  {
+   "fecha": "2026-09-19",
+   "cambio": "Policies egress: ensure_policies en ensure-loop (nemoclaw SIEMPRE como victoria via runuser). personal-open-internet = switch maestro (subsume especificos)."
+  }
+ ],
+ "changelogs": [
+  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-sandbox.md",
+  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-voice.md",
+  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-video.md",
+  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-whois.md",
+  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-host-admin.md",
+  "/home/victoria/CHANGELOG.md"
+ ],
+ "no_touch": [
+  "openclaw plugins install siempre uid 998, nunca root",
+  "container = efimero, snapshot antes con persist.sh backup",
+  "/sandbox/.openclaw modo 2770",
+  "art-approve approve/deny/revoke SOLO el owner (DM o grupo con senderIsOwner) — el agente JAMAS por peticion de un no-owner",
+  "pkill openclaw-gateway / gateway stop / SIGHUP derriban el sandbox (contrato 2026.9.x #1) — unico restart seguro: docker restart <container>"
+ ],
+ "recovery": "destroy + onboard --fresh -> ensure-loop restaura config/identity/voz/plugins/bridges/ARTE (art-gen + art-approve + HEARTBEAT solo-comentarios + TOOLS.md + victoria-photos + art-approvals.json) en ~2-5 min. Gatillo: session.identityLinks ausente = template. tools.media.models (audio whisper-cli + video) viene del overrides via customize-apply. Post-rebuild: docker restart (contrato 2026.9.x #8) + re-agregar policies de canales.",
+ "medicion_live": {
+  "fecha": "2026-10-29T01:55:00Z",
+  "nota": "Harness estandarizado schema unificado. Sandbox vivo: container UP, dashboard chain 200, 11 plugins, 5 bridges, 2 canales, policies egress activas, models.mode=replace, HEARTBEAT OFF.",
+  "versiones": {
+   "nemoclaw": "v0.0.130",
+   "openshell": "0.0.116",
+   "runtime_openclaw": "2026.9.2 (3928bad)",
+   "container": "openshell-default--victoria-armada-*",
+   "container_image_digest": "sha256:6315265961efa2ccf23fb84f8e74025059f823f9710085a1e044902c5d0837be"
+  }
+ },
+ "delegacion": {
+  "cuando_usar": "sandbox se reconstruye, pierde config/identity/canales, diagnosticar bridges/voz/video/whois/admin/art, gestionar policies egress",
+  "pre_check": "curl -s http://victoria.local:18800/health | grep -q '\"ok\":true' || echo 'OpenClaw:down'",
+  "post_check": "nemoclaw victoria-armada doctor"
+ },
+ "vivo_2026_11_03": "Capacidad PDF E2E: skill pdf ruta EXACTA /sandbox/.openclaw/media/outbound/ (workspace/media/outbound RECHAZADA por runtime — LocalMediaAccessError). webanalyze skill frontmatter corregido. Bug semanal skill_workshop (18:24, args names vs name) = runtime, benigno. wa_send usa nsenter+18789 netns (patrón correcto)."
+}

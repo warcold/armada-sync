@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""art-3d — wrapper de image-to-3D (Hunyuan3D-2) para Victoria/OpenClaw.
+
+Habla con el daemon host :18860 (localhost desde host, 172.18.0.1 desde el
+sandbox — autodetecta por /sandbox/.openclaw). Sube la imagen en base64
+(funciona de ambos lados) y descarga el GLB a local.
+
+Uso:
+  art-3d <foto.jpg> [--no-texture] [--steps N] [--seed N] [--out nombre.glb]
+         [--for <scope>] [--owner]
+  art-3d health     # salud del daemon
+
+Salida: una línea JSON {"ok":true,"glb":"...","seconds_taken":N,...}
+El GLB queda en ./ o en --out. Enviar con `openclaw message send --media`
+(verificar messageId: sin messageId NO fue enviado).
+
+Colas: GPU ocupada (Sonic/ComfyUI) → 503/429 con retry_after_s; este wrapper
+espera y reintenta solo hasta --timeout (default 1800s).
+"""
+import argparse
+import base64
+import json
+import os
+import sys
+import time
+import urllib.request
+import urllib.error
+
+SANDBOX = os.path.isdir("/sandbox/.openclaw")
+BASE = os.environ.get("HUNYUAN_BASE",
+                      "http://172.18.0.1:18860" if SANDBOX else "http://127.0.0.1:18860")
+# 2026-10-09: gate de ventanas por grupo/canal y feature (modo creativo). Mismo
+# archivo de estado que art-approve/art-gen; feature "3d". DM ("dm") y owner
+# (--owner) siempre pasan; grupos/canales exigen ventana vigente del feature 3d.
+# Scopes: dm | wa:<group-jid> | dc:<guild-id>[:<channel-id>].
+# Compatible hacia atrás: entradas v1 planas se leen como imagen (no como 3d).
+APPROVALS_FILE = os.environ.get("ART_APPROVALS",
+                                "/sandbox/.openclaw/workspace/art-approvals.json")
+FEATURE = "3d"
+HOW_OPEN = "pídele a Alfredo que abra el modo 3D 🔓"
+
+
+def _load_state():
+    try:
+        with open(APPROVALS_FILE) as f:
+            d = json.load(f)
+        if not isinstance(d, dict):
+            d = {}
+    except Exception:
+        d = {}
+    d.setdefault("scopes", {})
+    d.setdefault("pending", {})
+    return d
+
+
+def _save_state(d):
+    os.makedirs(os.path.dirname(APPROVALS_FILE), exist_ok=True)
+    tmp = APPROVALS_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(d, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, APPROVALS_FILE)
+
+
+def _scope_features(scope_entry):
+    if not isinstance(scope_entry, dict):
+        return {}
+    if "expires_at" in scope_entry:
+        return {"imagen": scope_entry}  # v1 plano = imagen, NO 3d
+    return scope_entry
+
+
+def ensure_owner_window(scope):
+    """Owner generó en un grupo → abre ventana 3d 4h para los demás si no hay
+    una vigente (igual que art-gen con imagen). Solo toca el feature 3d."""
+    from datetime import datetime, timedelta, timezone
+    d = _load_state()
+    feats = _scope_features(d["scopes"].get(scope))
+    e = feats.get(FEATURE)
+    now = datetime.now(timezone.utc)
+    if isinstance(e, dict):
+        try:
+            exp = datetime.fromisoformat(e.get("expires_at", ""))
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if now < exp:
+                return {"window": "existing", "expires_at": e.get("expires_at")}
+        except Exception:
+            pass
+    feats[FEATURE] = {
+        "expires_at": (now + timedelta(hours=4)).isoformat(),
+        "max": 10, "used": 0,
+        "approved_at": now.isoformat(),
+        "approved_by": "owner-auto",
+        "note": "auto: owner generó 3D en el grupo",
+    }
+    d["scopes"][scope] = feats
+    _save_state(d)
+    return {"window": "opened", "expires_at": feats[FEATURE]["expires_at"]}
+
+
+def check_scope(scope, is_owner):
+    """Gate duro de ventanas 3d por grupo/canal. (scope, owner) -> (ok, info)."""
+    scope = (scope or "dm").strip()
+    if scope == "dm" or is_owner:
+        return True, {"scope": scope, "bypass": "owner" if is_owner else "dm"}
+    from datetime import datetime, timezone
+    d = _load_state()
+    feats = _scope_features(d["scopes"].get(scope))
+    e = feats.get(FEATURE)
+    if not e:
+        return False, {"error": "scope_not_approved", "scope": scope,
+                       "feature": FEATURE,
+                       "how": HOW_OPEN}
+    try:
+        exp = datetime.fromisoformat(e.get("expires_at", ""))
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+    except Exception:
+        return False, {"error": "scope_bad_entry", "scope": scope,
+                       "feature": FEATURE, "how": HOW_OPEN}
+    now = datetime.now(timezone.utc)
+    if now >= exp:
+        return False, {"error": "scope_expired", "scope": scope,
+                       "feature": FEATURE,
+                       "expired_at": e.get("expires_at"),
+                       "how": HOW_OPEN}
+    max_n = int(e.get("max", 10))
+    used = int(e.get("used", 0))
+    if used >= max_n:
+        return False, {"error": "scope_quota", "scope": scope,
+                       "feature": FEATURE,
+                       "used": used, "max": max_n,
+                       "how": HOW_OPEN}
+    e["used"] = used + 1
+    feats[FEATURE] = e
+    d["scopes"][scope] = feats
+    _save_state(d)
+    return True, {"scope": scope, "feature": FEATURE,
+                  "used": e["used"], "max": max_n,
+                  "expires_at": e.get("expires_at")}
+
+
+def call(path, body=None, timeout=1700, raw=False):
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(BASE + path, data=data,
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return (r.read(), r.status) if raw else (json.loads(r.read()), r.status)
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read()), e.code
+        except Exception:
+            return {"error": f"http {e.code}"}, e.code
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("image", nargs="?", help="foto de entrada (jpg/png)")
+    ap.add_argument("--no-texture", action="store_true")
+    ap.add_argument("--steps", type=int, default=5)
+    ap.add_argument("--seed", type=int, default=2025)
+    ap.add_argument("--out", default=None)
+    ap.add_argument("--timeout", type=int, default=1800)
+    ap.add_argument("--for", dest="for_scope", default="dm",
+                    help="alcance: dm | wa:<group-jid> | dc:<guild-id>[:<channel-id>]")
+    ap.add_argument("--owner", action="store_true",
+                    help="el que pide es el owner (bypass del gate, queda auditado)")
+    a = ap.parse_args()
+
+    if a.image == "health" or (a.image is None):
+        body, _ = call("/health", timeout=10)
+        print(json.dumps(body))
+        return
+
+    ok, info = check_scope(a.for_scope, a.owner)
+    if not ok:
+        print(json.dumps({"ok": False, **info}, ensure_ascii=False))
+        sys.exit(1)
+
+    if not os.path.exists(a.image):
+        print(json.dumps({"ok": False, "error": "imagen no existe"}))
+        sys.exit(1)
+    with open(a.image, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+
+    t0 = time.time()
+    body, code = call("/generate", {"image_b64": b64, "texture": not a.no_texture,
+                                    "steps": a.steps, "seed": a.seed},
+                      timeout=a.timeout)
+    if code in (503, 429) and "retry_after_s" in body:
+        wait = int(body.get("retry_after_s", 60))
+        deadline = t0 + a.timeout
+        while time.time() + wait < deadline:
+            time.sleep(wait)
+            body, code = call("/generate", {"image_b64": b64,
+                                            "texture": not a.no_texture,
+                                            "steps": a.steps, "seed": a.seed},
+                              timeout=a.timeout)
+            if code not in (503, 429):
+                break
+            wait = int(body.get("retry_after_s", 60))
+    if not body.get("ok"):
+        print(json.dumps({"ok": False, **body, "elapsed_s": round(time.time() - t0, 1)}))
+        sys.exit(1)
+    # Descargar el GLB a local (el daemon lo guarda en el host)
+    name = os.path.basename(body["glb_path"])
+    out = a.out or name
+    req = urllib.request.Request(BASE + "/file/" + name)
+    try:
+        with urllib.request.urlopen(req, timeout=300) as r:
+            with open(out, "wb") as f:
+                f.write(r.read())
+    except Exception as e:
+        print(json.dumps({"ok": False, "error": f"descarga GLB falló: {e}"}))
+        sys.exit(1)
+    print(json.dumps({"ok": True, "glb": out, "bytes": os.path.getsize(out),
+                      "seconds_taken": body.get("seconds_taken"),
+                      "elapsed_s": round(time.time() - t0, 1),
+                      "scope": info,
+                      "auto_window": (ensure_owner_window(a.for_scope)
+                                      if (a.owner and (a.for_scope or "dm") != "dm")
+                                      else None)}))
+
+
+if __name__ == "__main__":
+    main()

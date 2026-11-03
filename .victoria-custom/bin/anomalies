@@ -1,0 +1,39 @@
+#!/bin/bash
+# anomalies — consulta rápida de anomalías del gateway (2026-09-20)
+# Uso:
+#   anomalies            -> eventos de HOY (últimos primero)
+#   anomalies last       -> últimos 20 eventos (histórico)
+#   anomalies fails      -> fallos clasificados de la última hora (por key/razón)
+#   anomalies forensics  -> cajas negras dump-eadas (archivos JSON)
+#   anomalies storms     -> resumen de retry_storms por key (histórico)
+DB="$HOME/.victoria-llm/llm-gateway.db"
+
+case "${1:-today}" in
+  today)
+    sqlite3 "$DB" -header -column \
+      "SELECT id, ts, key_name, kind, detail, count FROM anomaly_events WHERE date(ts)=date('now') ORDER BY id DESC;"
+    ;;
+  last)
+    sqlite3 "$DB" -header -column \
+      "SELECT id, ts, key_name, kind, detail, count FROM anomaly_events ORDER BY id DESC LIMIT 20;"
+    ;;
+  fails)
+    sqlite3 "$DB" -header -column \
+      "SELECT substr(ts,1,16) AS t, key_name, reject_reason, COUNT(*) AS n, MAX(approx_tokens) AS max_approx
+     FROM usage_log
+     WHERE success=0 AND reject_reason!='' AND timestamp > datetime('now','-1 hour')
+     GROUP BY 1,2,3 ORDER BY n DESC LIMIT 20;"
+    ;;
+  forensics)
+    ls -lt "$HOME/.victoria-llm/forensics/" 2>/dev/null | head -20
+    ;;
+  storms)
+    sqlite3 "$DB" -header -column \
+      "SELECT date(ts) AS dia, key_name, COUNT(*) AS storms, SUM(count) AS fails
+     FROM anomaly_events WHERE kind='retry_storm' GROUP BY 1,2 ORDER BY dia DESC LIMIT 20;"
+    ;;
+  *)
+    echo "uso: anomalies [today|last|fails|forensics|storms]"
+    exit 1
+    ;;
+esac

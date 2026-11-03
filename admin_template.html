@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>· www.alfredo.pro - Admin</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon.png">
+<link rel="icon" type="image/x-icon" sizes="32x32" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<style>
+:root {
+  --bg: #0a0a0f; --panel: #161622; --panel2: #12121e; --brd: #2a2a4a;
+  --txt: #e0e0e0; --mut: #888; --mut2: #666; --acc: #7c3aed; --acc2: #a78bfa;
+  --ok: #34d399; --err: #f87171; --danger: #dc2626; --okbtn: #059669;
+  --sideW: 230px; --topbarH: 54px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--txt); min-height: 100vh; }
+
+/* ============ LAYOUT DESKTOP ============ */
+.sidebar { width: var(--sideW); background: var(--panel2); border-right: 1px solid var(--brd); height: 100vh; height: 100dvh; position: fixed; left: 0; top: 0; padding: 20px 0; display: flex; flex-direction: column; z-index: 200; }
+.sidebar h2 { color: var(--acc); padding: 0 20px 20px; font-size: 18px; border-bottom: 1px solid var(--brd); margin-bottom: 8px; }
+.sidebar .sub { padding: 0 20px 12px; font-size: 11px; color: var(--mut2); letter-spacing: 1px; text-transform: uppercase; }
+.sidebar a { display: block; padding: 12px 20px; color: #aaa; text-decoration: none; font-size: 14px; cursor: pointer; }
+.sidebar a:hover, .sidebar a.active { background: #1e1e3a; color: var(--acc); }
+.sidebar .bottom { margin-top: auto; }
+.main { margin-left: var(--sideW); padding: 28px; }
+
+/* ============ COMPONENTES ============ */
+h1 { font-size: 21px; margin-bottom: 20px; }
+h1 small { color: var(--mut2); font-weight: 400; font-size: 13px; margin-left: 10px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--panel); border: 1px solid var(--brd); border-radius: 12px; padding: 16px 18px; }
+.stat-card .label { font-size: 11px; color: var(--mut); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.stat-card .value { font-size: 23px; font-weight: 700; color: var(--acc2); word-break: break-word; }
+.stat-card .value.money { color: var(--ok); }
+.stat-card .sub { font-size: 11px; color: var(--mut2); margin-top: 4px; }
+.card { background: var(--panel); border: 1px solid var(--brd); border-radius: 12px; padding: 18px; margin-bottom: 18px; }
+.card h3 { color: var(--txt); margin-bottom: 14px; font-size: 15px; }
+.card h3 .right { float: right; font-size: 12px; color: #777; font-weight: 400; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 1100px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* ============ CONTROLES (touch-friendly, antizoom iOS: >=16px) ============ */
+input, select { background: #0a0a1a; border: 1px solid var(--brd); border-radius: 8px; padding: 9px 12px; color: var(--txt); font-size: 13px; margin: 0 8px 8px 0; min-height: 40px; }
+input:focus, select:focus { outline: none; border-color: var(--acc); }
+label.f { display: inline-block; font-size: 11px; color: var(--mut); margin-bottom: 2px; }
+.field { display: inline-block; margin: 0 8px 10px 0; }
+button { padding: 9px 16px; background: var(--acc); color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600; min-height: 40px; }
+button:hover { background: #6d28d9; }
+button.danger { background: var(--danger); } button.danger:hover { background: #b91c1c; }
+button.success { background: var(--okbtn); } button.success:hover { background: #047857; }
+button.ghost { background: transparent; border: 1px solid var(--brd); color: #aaa; } button.ghost:hover { color: var(--txt); border-color: var(--acc); }
+button.small { padding: 6px 10px; font-size: 11px; min-height: 32px; }
+
+/* ============ TABLAS (scroll horizontal seguro) ============ */
+.card { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
+th { text-align: left; padding: 10px; border-bottom: 1px solid var(--brd); color: var(--mut); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; position: sticky; top: 0; background: var(--panel); }
+td { padding: 10px; border-bottom: 1px solid #1a1a2a; vertical-align: middle; white-space: nowrap; }
+tr:hover td { background: #1a1a2a; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 10.5px; font-weight: 600; }
+.badge.active { background: #05966920; color: var(--ok); }
+.badge.inactive { background: #dc262620; color: var(--err); }
+.badge.admin { background: #7c3aed20; color: #c4b5fd; }
+.badge.coder { background: #3b82f620; color: #93c5fd; }
+.badge.readonly { background: #64748b20; color: #cbd5e1; }
+.bar { background: #0a0a1a; border-radius: 6px; height: 6px; width: 100px; display: inline-block; vertical-align: middle; margin-right: 8px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 6px; background: var(--acc); }
+.bar-fill.over { background: var(--danger); }
+.key-display { background: #0a0a1a; border: 1px solid var(--brd); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px; color: var(--acc); word-break: break-all; margin: 12px 0; position: relative; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.key-display::after { content: "Toca para copiar"; position: absolute; right: 12px; top: -9px; font-size: 10px; color: #777; background: var(--panel); padding: 0 6px; }
+.key-display.copied::after { content: "Copiado!"; color: var(--ok); }
+.chart { display: flex; align-items: flex-end; gap: 5px; height: 110px; padding-top: 10px; min-width: 420px; }
+.chart .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.chart .col .bar { height: 100%; width: 100%; max-width: 34px; background: linear-gradient(180deg, #7c3aed, #4c1d95); border-radius: 4px 4px 0 0; position: relative; cursor: pointer; min-height: 2px; }
+.chart .col .bar:hover, .chart .col .bar:active { opacity: .85; }
+.chart .col .lbl { font-size: 9.5px; color: var(--mut2); margin-top: 6px; }
+.chart .tooltip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1e1e3a; border: 1px solid var(--brd); padding: 6px 10px; border-radius: 6px; font-size: 11px; white-space: nowrap; display: none; z-index: 5; pointer-events: none; }
+.chart .col .bar:hover .tooltip, .chart .col .bar:active .tooltip { display: block; }
+
+/* ============ MODAL ============ */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 100; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--panel); border: 1px solid var(--brd); border-radius: 14px; width: 100%; max-width: 720px; padding: 22px; }
+.modal h3 { margin-bottom: 16px; }
+.modal .close { float: right; cursor: pointer; color: #777; font-size: 20px; background: none; border: none; min-height: 40px; min-width: 40px; }
+.hidden { display: none !important; }
+.toast { position: fixed; bottom: 16px; right: 16px; left: 16px; background: var(--panel); border: 1px solid var(--acc); border-radius: 10px; padding: 14px 18px; font-size: 13px; z-index: 9999; transform: translateY(120px); opacity: 0; transition: all .3s; text-align: center; }
+@media (min-width: 700px) { .toast { left: auto; right: 20px; bottom: 20px; max-width: 400px; text-align: left; } }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.err { border-color: var(--danger); }
+
+/* ============ LOGIN ============ */
+.login-wrap { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.login-box { background: var(--panel); border: 1px solid var(--brd); border-radius: 16px; padding: 32px 26px; width: 100%; max-width: 380px; }
+.login-box h2 { color: var(--acc); margin-bottom: 6px; }
+.login-box p { color: var(--mut2); font-size: 13px; margin-bottom: 24px; }
+.login-box input { width: 100%; padding: 12px; margin: 0 0 16px; }
+.login-box button { width: 100%; padding: 12px; }
+#error { color: #ef4444; margin-bottom: 12px; display: none; font-size: 13px; }
+.muted { color: var(--mut2); font-size: 12px; }
+.mono { font-family: monospace; }
+.num { text-align: right; }
+.empty { text-align: center; color: #555; padding: 30px; }
+
+/* ============ HAMBURGUESA (solo móvil) ============ */
+.menubtn { display: none; position: fixed; top: 0; left: 0; right: 0; height: var(--topbarH); background: var(--panel2); border-bottom: 1px solid var(--brd); z-index: 300; align-items: center; gap: 12px; padding: 0 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+.menubtn .bars { display: flex; flex-direction: column; gap: 5px; width: 44px; height: 44px; align-items: center; justify-content: center; }
+.menubtn .bars span { display: block; width: 22px; height: 2px; background: var(--txt); border-radius: 2px; }
+.menubtn .brand { color: var(--acc); font-weight: 700; font-size: 15px; }
+.scrim { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 190; }
+
+/* ============ MÓVIL / TABLET (<=860px) ============ */
+@media (max-width: 860px) {
+  .menubtn { display: flex; }
+  .sidebar { transform: translateX(-100%); transition: transform .25s ease; width: min(78vw, 300px); box-shadow: 0 0 40px rgba(0,0,0,.5); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar.open ~ .scrim, .scrim.show { display: block; }
+  .main { margin-left: 0; padding: calc(var(--topbarH) + 14px) 12px 20px; }
+  h1 { font-size: 18px; }
+  h1 small { display: block; margin-left: 0; margin-top: 3px; }
+  .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-card { padding: 13px 14px; }
+  .stat-card .value { font-size: 19px; }
+  .card { padding: 14px; border-radius: 10px; }
+  input, select { font-size: 16px; }               /* anti auto-zoom iOS */
+  button { min-height: 44px; }
+  .field { display: block; margin-right: 0; }
+  .field input, .field select { width: 100%; margin-right: 0; }
+  .modal-overlay { padding: 10px; align-items: flex-start; }
+  .modal { padding: 18px 14px; border-radius: 12px; max-width: 100%; }
+  .modal button.success, .modal button.ghost { width: 100%; margin: 6px 0 0; }
+  .key-display::after { position: static; display: inline-block; margin-top: 8px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login-wrap hidden">
+  <div class="login-box">
+    <h2>· www.alfredo.pro</h2>
+    <p>Panel de administración del gateway</p>
+    <div id="error">Contraseña incorrecta</div>
+    <form onsubmit="doLogin(event)">
+      <input type="password" id="pw" placeholder="Contraseña del panel" autofocus>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panelView" class="hidden">
+  <div class="menubtn" onclick="toggleMenu()">
+    <div class="bars"><span></span><span></span><span></span></div>
+    <div class="brand">· www.alfredo.pro</div>
+  </div>
+  <div class="scrim" onclick="toggleMenu(false)"></div>
+  <div class="sidebar">
+    <h2>· www.alfredo.pro</h2>
+    <div class="sub">Gateway &middot; v2</div>
+    <a class="active" data-page="dashboard" onclick="showPage('dashboard', this)">Dashboard</a>
+    <a data-page="keys" onclick="showPage('keys', this)">API Keys</a>
+    <a data-page="usage" onclick="showPage('usage', this)">Usage</a>
+    <div class="bottom">
+      <a onclick="logout()" style="color:#ef4444;">Salir</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page">
+      <h1>Dashboard <small>resumen del gateway</small></h1>
+      <div class="stats" id="stats-cards"></div>
+      <div class="grid2">
+        <div class="card">
+          <h3>Uso de los últimos 14 días <span class="right">requests / tokens / USD</span></h3>
+          <div class="chart" id="daily-chart"></div>
+        </div>
+        <div class="card">
+          <h3>Top llaves por gasto</h3>
+          <table>
+            <thead><tr><th>Llave</th><th>Owner</th><th class="num">Tokens</th><th class="num">Requests</th><th class="num">Gastado</th></tr></thead>
+            <tbody id="top-keys"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Actividad reciente</h3>
+        <table>
+          <thead><tr><th>Llave</th><th>Modelo</th><th class="num">Tokens</th><th class="num">Costo</th><th>Hora</th><th>Status</th></tr></thead>
+          <tbody id="recent-logs"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- KEYS -->
+    <div id="page-keys" class="page hidden">
+      <h1>API Keys <small>contabilidad y límites por llave</small></h1>
+      <div class="card">
+        <h3>Crear nueva llave</h3>
+        <div class="field"><label class="f">Nombre *</label><br><input id="k-owner" placeholder="ej. Alfredo Armada"></div>
+        <div class="field"><label class="f">Tier (rol)</label><br>
+           <select id="k-role"><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="readonly">readonly</option><option value="admin">admin</option></select>
+        </div>
+        <div class="field"><label class="f">Capacidades (multi-tier) — sin marcar = default del rol</label><br>
+          <span id="k-caps" style="display:inline-flex;flex-wrap:wrap;gap:10px;align-items:center">
+            <label><input type="checkbox" id="k-cap-llm"> LLM (chat)</label>
+            <label><input type="checkbox" id="k-cap-art"> 🎨 Imágenes</label>
+            <label><input type="checkbox" id="k-cap-tts"> 🔊 Voz TTS</label>
+            <label><input type="checkbox" id="k-cap-whisper"> 👂 Voz STT</label>
+            <label><input type="checkbox" id="k-cap-liveportrait"> LivePortrait</label>
+            <label><input type="checkbox" id="k-cap-comfyui"> ComfyUI</label>
+            <label><input type="checkbox" id="k-cap-n8n"> n8n</label>
+            <label><input type="checkbox" id="k-cap-provision"> 🛠️ Provisionar llaves</label>
+          </span>
+        </div>
+        <div style="margin:6px 0 10px">
+          Presets: 
+          <button class="small ghost" type="button" onclick="presetCaps('k','default')">Default del rol</button>
+          <button class="small ghost" type="button" onclick="presetCaps('k',['llm'])">Solo LLM</button>
+          <button class="small ghost" type="button" onclick="presetCaps('k',['llm','art','tts','whisper'])">LLM+Arte+Voz</button>
+          <button class="small ghost" type="button" onclick="presetCaps('k',['llm','art','liveportrait','comfyui','tts','whisper','n8n'])">Todo</button>
+        </div>
+        <div class="muted" style="margin-bottom:10px">Los límites técnicos (tokens, presupuesto, precio) se asignan con valores por defecto y se pueden ajustar después en <b>Editar</b>.<br>Matriz: <b>admin</b>=todo · <b>coder</b>=chat LLM · <b>services</b>=chat+arte+voz · <b>art</b>=solo arte · <b>readonly</b>=solo guía. Las capacidades marcadas <b>añaden</b> a la matriz del rol (ej. coder + 🎨 + 🔊 = chat + imágenes + voz).</div>
+        <br><button class="success" onclick="createKey()">Crear llave</button>
+        <div id="new-key-result"></div>
+      </div>
+      <div class="card">
+        <h3>Llaves existentes</h3>
+        <table>
+          <thead><tr>
+            <th>Owner</th><th>Llave</th><th>Rol</th><th>Caps</th><th>Estado</th><th class="num">$ In/1M</th><th class="num">$ Out/1M</th>
+            <th>Presupuesto</th><th class="num">Tokens</th><th class="num">Req</th><th class="num">Gastado</th><th>Última vez</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="keys-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USAGE -->
+    <div id="page-usage" class="page hidden">
+      <h1>Usage <small>log de requests con costo</small></h1>
+      <div class="card">
+        <h3>Filtro <span class="right" id="usage-summary"></span></h3>
+        <select id="usage-key-filter" onchange="loadUsage()">
+          <option value="">Todas las llaves</option>
+        </select>
+        <table>
+          <thead><tr><th>Llave</th><th>Modelo</th><th class="num">In</th><th class="num">Out</th><th class="num">Total</th><th class="num">Costo USD</th><th class="num">ms</th><th>Hora</th><th>Status</th></tr></thead>
+          <tbody id="usage-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: editar llave -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <button class="close" onclick="closeModal('editModal')">&times;</button>
+    <h3>Editar llave: <span id="edit-name" class="mono"></span></h3>
+    <div class="field"><label class="f">Owner</label><br><input id="e-owner"></div>
+    <div class="field"><label class="f">Rol</label><br>           <select id="e-role" onchange="onEditRoleChange()"><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="readonly">readonly</option><option value="admin">admin</option></select></div>
+    <div class="field"><label class="f">Capacidades (multi-tier) — desmarcar todas = default del rol</label><br>
+      <span id="e-caps" style="display:inline-flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <label><input type="checkbox" id="e-cap-llm"> LLM (chat)</label>
+        <label><input type="checkbox" id="e-cap-art"> 🎨 Imágenes</label>
+        <label><input type="checkbox" id="e-cap-tts"> 🔊 Voz TTS</label>
+        <label><input type="checkbox" id="e-cap-whisper"> 👂 Voz STT</label>
+        <label><input type="checkbox" id="e-cap-liveportrait"> LivePortrait</label>
+        <label><input type="checkbox" id="e-cap-comfyui"> ComfyUI</label>
+        <label><input type="checkbox" id="e-cap-n8n"> n8n</label>
+        <label><input type="checkbox" id="e-cap-provision"> 🛠️ Provisionar llaves</label>
+      </span>
+    </div>
+    <div class="field"><label class="f">Rate (req/min)</label><br><input id="e-rate" type="number"></div>
+    <div class="field"><label class="f">Max tokens</label><br><input id="e-tokens" type="number"></div>
+    <div class="field"><label class="f">Límite de prompt (input) tokens — 0 = default del rol (coder 64K, admin 228K)</label><br><input id="e-mprompt" type="number" value="0"></div>
+    <div class="field"><label class="f">Precio input USD / 1M tokens</label><br><input id="e-price-in" type="number" step="0.01" value="0.10"></div>
+    <div class="field"><label class="f">Precio output USD / 1M tokens</label><br><input id="e-price-out" type="number" step="0.01" value="0.30"></div>
+    <div class="field"><label class="f">Presupuesto USD</label><br><input id="e-budget" type="number" step="0.01"></div>
+    <div class="field"><label class="f">Expira en horas (0 = nunca)</label><br><input id="e-expires" type="number" value="0"></div>
+    <div class="field"><label class="f">Estado</label><br>
+      <select id="e-active"><option value="1">Activa</option><option value="0">Inactiva</option></select>
+    </div>
+    <br><br>
+    <button class="success" onclick="saveEdit()">Guardar cambios</button>
+    <button class="ghost" onclick="closeModal('editModal')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: uso de llave -->
+<div class="modal-overlay" id="usageModal">
+  <div class="modal">
+    <button class="close" onclick="closeModal('usageModal')">&times;</button>
+    <h3>Uso de llave: <span id="u-name" class="mono"></span></h3>
+    <div class="stats" id="u-totals" style="grid-template-columns: repeat(auto-fit,minmax(130px,1fr));"></div>
+    <div class="chart" id="u-chart" style="height:90px;"></div>
+    <h3 style="margin-top:16px;">Últimos requests</h3>
+    <table>
+      <thead><tr><th class="num">Tokens</th><th class="num">Costo</th><th>Hora</th><th>Status</th></tr></thead>
+      <tbody id="u-recent"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let token = localStorage.getItem('admin_token');
+
+function toast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function fmtMoney(v) { const n = Number(v || 0); return '$' + (n < 0.0001 ? n.toFixed(6) : n.toFixed(4)); }
+function fmtNum(n) { return Number(n || 0).toLocaleString('en-US'); }
+function fmtTime(ts) { return ts ? String(ts).replace('T',' ').slice(0,16) : '-'; }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function api(path, opts={}) {
+  const headers = {'Content-Type': 'application/json', ...opts.headers};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const r = await fetch(path, {...opts, headers});
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && path.startsWith('/admin')) { localStorage.removeItem('admin_token'); token = null; showLogin(); }
+  return { status: r.status, data };
+}
+
+function showLogin() {
+  document.getElementById('loginView').classList.remove('hidden');
+  document.getElementById('panelView').classList.add('hidden');
+  document.getElementById('pw').value = ''; document.getElementById('pw').focus();
+}
+function showPanel() {
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('panelView').classList.remove('hidden');
+  showPage('dashboard', document.querySelector('.sidebar a[data-page="dashboard"]'));
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const pw = document.getElementById('pw').value;
+  const r = await fetch('/admin/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pw})});
+  const d = await r.json().catch(() => ({}));
+  if (r.ok) { token = d.token; localStorage.setItem('admin_token', token); showPanel(); }
+  else document.getElementById('error').style.display = 'block';
+}
+
+function logout() { localStorage.removeItem('admin_token'); token = null; showLogin(); }
+
+function toggleMenu(force) {
+  const sb = document.querySelector('.sidebar');
+  const sc = document.querySelector('.scrim');
+  const open = (force !== undefined) ? force : !sb.classList.contains('open');
+  sb.classList.toggle('open', open);
+  if (sc) sc.classList.toggle('show', open);
+}
+
+function showPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.getElementById('page-' + page).classList.remove('hidden');
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+  toggleMenu(false);
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'keys') loadKeys();
+  else if (page === 'usage') loadUsage();
+}
+
+function renderChart(el, daily, fmt) {
+  const vals = daily.map(d => fmt ? fmt(d) : (Number(d.tokens) || 0));
+  const max = Math.max(...vals, 1);
+  el.innerHTML = daily.map((d, i) => {
+    const h = Math.max(2, Math.round((vals[i] / max) * 100));
+    const label = d.date ? d.date.slice(5) : '';
+    const tip = `${d.date}<br>${fmtNum(d.requests)} req · ${fmtNum(d.tokens)} tok<br>${fmtMoney(d.cost)}`;
+    return `<div class="col"><div class="bar" style="height:${h}%"><div class="tooltip">${tip}</div></div><div class="lbl">${label}</div></div>`;
+  }).join('');
+}
+
+async function loadDashboard() {
+  const { data } = await api('/admin/dashboard');
+  if (!data || !data.stats) return;
+  const s = data.stats;
+  document.getElementById('stats-cards').innerHTML = `
+    <div class="stat-card"><div class="label">Llaves</div><div class="value">${s.total_keys}</div><div class="sub">${s.active_keys} activas</div></div>
+    <div class="stat-card"><div class="label">Requests totales</div><div class="value">${fmtNum(s.total_requests)}</div><div class="sub">${fmtNum(s.today.requests)} hoy</div></div>
+    <div class="stat-card"><div class="label">Tokens totales</div><div class="value">${fmtNum(s.total_tokens)}</div><div class="sub">${fmtNum(s.today.tokens)} hoy</div></div>
+    <div class="stat-card"><div class="label">Ingreso total</div><div class="value money">${fmtMoney(s.total_cost)}</div><div class="sub">${fmtMoney(s.today.cost)} hoy</div></div>`;
+  renderChart(document.getElementById('daily-chart'), data.daily || []);
+  document.getElementById('top-keys').innerHTML = (data.top_keys || []).map(k => `
+    <tr><td><strong class="mono">${esc(k.name)}</strong></td><td>${esc(k.owner) || '-'}</td>
+    <td class="num">${fmtNum(k.total_tokens)}</td><td class="num">${fmtNum(k.total_requests)}</td>
+    <td class="num" style="color:#34d399">${fmtMoney(k.total_cost)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Sin llaves</td></tr>';
+  document.getElementById('recent-logs').innerHTML = (data.recent_logs || []).map(l => `
+    <tr><td class="mono">${esc(l.key_name)}</td><td>${esc(l.model) || '-'}</td>
+    <td class="num">${fmtNum(l.total_tokens)}</td><td class="num">${fmtMoney(l.cost)}</td>
+    <td>${fmtTime(l.timestamp)}</td><td>${l.success ? '<span style="color:#34d399">OK</span>' : '<span style="color:#f87171">FAIL</span>'}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Sin actividad aún</td></tr>';
+}
+
+function budgetCell(k) {
+  const b = Number(k.budget || 0);
+  const c = Number(k.total_cost || 0);
+  if (!b) return '<span class="muted">sin límite</span>';
+  const pct = Math.min(100, Math.round((c / b) * 100));
+  const over = c >= b;
+  return `<span class="bar"><span class="bar-fill ${over ? 'over' : ''}" style="width:${pct}%"></span></span><span class="muted">${fmtMoney(c)} / ${fmtMoney(b)}</span>`;
+}
+
+// ---- Capacidades multi-tier (2026-10-03) ----
+const CAPS = ['llm','art','liveportrait','comfyui','tts','whisper','n8n','provision'];
+const CAP_LABELS = {llm:'LLM', art:'🎨', liveportrait:'LP', comfyui:'CF', tts:'🔊', whisper:'👂', n8n:'n8n', provision:'🛠️Prov'};
+const ROLE_DEFAULTS = {
+  admin: ['llm','art','liveportrait','comfyui','tts','whisper','n8n'],
+  coder: ['llm'],
+  services: ['llm','art','tts','whisper'],
+  art: ['art','liveportrait','comfyui','tts','whisper','n8n'],
+  liveportrait: ['liveportrait'], comfyui: ['comfyui','art'], tts: ['tts'],
+  whisper: ['whisper'], n8n: ['n8n'], readonly: []
+};
+function effectiveCaps(k) {
+  try { const a = (k.allowed_models || '').trim(); if (a) return JSON.parse(a); } catch (e) {}
+  return ROLE_DEFAULTS[k.role] || [];
+}
+function capsBadges(k) {
+  const caps = effectiveCaps(k);
+  if (!caps.length) return '<span class="muted">—</span>';
+  const custom = (k.allowed_models || '').trim().length > 0;
+  return caps.map(c => `<span class="badge" title="${c}${custom ? ' (multi-tier)' : ' (default del rol)'}" style="${custom ? 'background:#8b5cf622;border:1px solid #8b5cf655' : ''}">${CAP_LABELS[c] || c}</span>`).join(' ');
+}
+function readCaps(prefix) {
+  return CAPS.filter(c => { const el = document.getElementById(prefix + '-cap-' + c); return el && el.checked; });
+}
+function setCaps(prefix, caps) {
+  CAPS.forEach(c => { const el = document.getElementById(prefix + '-cap-' + c); if (el) el.checked = (caps || []).includes(c); });
+}
+function presetCaps(prefix, which) {
+  if (which === 'default') { setCaps(prefix, []); return; }
+  setCaps(prefix, which);
+}
+function onEditRoleChange() {
+  const k = window._editingKeyData;
+  if (!k) return;
+  const hasOverride = (k.allowed_models || '').trim().length > 0;
+  if (!hasOverride) setCaps('e', ROLE_DEFAULTS[document.getElementById('e-role').value] || []);
+}
+
+async function loadKeys() {
+  const { data } = await api('/admin/keys');
+  if (!data) return;
+  document.getElementById('keys-table').innerHTML = data.map(k => `
+    <tr>
+      <td><strong>${esc(k.owner) || '—'}</strong><br><small class="muted mono">id: ${esc(k.name)}</small></td>
+      <td class="key-col"><code class="key-val mono" data-full="${esc(k.key_plaintext || '')}">vllm-key-••••••••••••••••••••••••••••••••••••••••••</code> <button class="small ghost" onclick="toggleKeyVisible(this)" title="Mostrar/ocultar valor real">Ver</button> <button class="small ghost" onclick="copyKeyVal(this)" title="Copiar valor real">Copiar</button></td>
+      <td><span class="badge ${k.role}">${esc(k.role)}</span></td>
+      <td>${capsBadges(k)}</td>
+      <td><span class="badge ${k.active ? 'active' : 'inactive'}">${k.active ? 'activa' : 'inactiva'}</span></td>
+      <td class="num">${fmtMoney(k.price_input_per_1m != null ? k.price_input_per_1m : '')}</td>
+      <td class="num">${fmtMoney(k.price_output_per_1m != null ? k.price_output_per_1m : '')}</td>
+      <td>${budgetCell(k)}</td>
+      <td class="num">${fmtNum(k.total_tokens)}</td>
+      <td class="num">${fmtNum(k.total_requests)}</td>
+      <td class="num" style="color:#34d399">${fmtMoney(k.total_cost)}</td>
+      <td>${fmtTime(k.last_used)}</td>
+      <td style="white-space:nowrap">
+        <button class="small ghost" onclick="openUsage('${esc(k.name)}')">Uso</button>
+        <button class="small ghost" onclick="openEdit('${esc(k.name)}')">Editar</button>
+        ${k.active
+          ? `<button class="small danger" onclick="toggleKey('${esc(k.name)}', false)">Desactivar</button>`
+          : `<button class="small success" onclick="toggleKey('${esc(k.name)}', true)">Activar</button>`}
+        <button class="small danger" onclick="deleteKey('${esc(k.name)}')">Borrar</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="12" class="empty">No hay llaves todavía. Crea la primera arriba.</td></tr>';
+}
+
+function toggleKeyVisible(btn) {
+  const c = btn.closest('td').querySelector('.key-val');
+  if (c.dataset.full && c.textContent !== c.dataset.full) { c.textContent = c.dataset.full; }
+  else { c.textContent = 'vllm-key-••••••••••••••••••••••••••••••••••••••••••'; }
+}
+function copyKeyVal(btn) {
+  const c = btn.closest('td').querySelector('.key-val');
+  if (!c.dataset.full) { toast('Sin valor de llave', true); return; }
+  (navigator.clipboard ? navigator.clipboard.writeText(c.dataset.full) : Promise.reject())
+    .then(() => toast('Llave copiada')).catch(() => toast('No se pudo copiar', true));
+}
+
+async function createKey() {
+  const owner = document.getElementById('k-owner').value.trim();
+  if (!owner) { toast('Ponle un Nombre a la llave', true); return; }
+  const body = {
+    owner,
+    role: document.getElementById('k-role').value,
+  };
+  const caps = readCaps('k');
+  if (caps.length) body.allowed_models = JSON.stringify(caps);
+  const { status, data } = await api('/admin/keys', {method: 'POST', body: JSON.stringify(body)});
+  if (status !== 201) { toast(data.detail || 'Error al crear', true); return; }
+  toast('Llave creada — copiala ahora, solo se muestra una vez');
+  document.getElementById('new-key-result').innerHTML = `
+    <div style="margin-top:14px; padding:14px; background:#0a0a1a; border:1px solid #2a2a4a; border-radius:8px;">
+      <small style="color:#888">API Key (única vez):</small>
+      <div class="key-display" onclick="copyKey(this)">${esc(data.api_key)}</div>
+      <small style="color:#ef4444">No se volverá a mostrar. Guardala en un lugar seguro.</small>
+    </div>`;
+  document.getElementById('k-owner').value = '';
+  loadKeys();
+}
+
+function copyKey(el) {
+  navigator.clipboard.writeText(el.textContent.trim());
+  el.classList.add('copied');
+  toast('Llave copiada al portapapeles');
+  setTimeout(() => el.classList.remove('copied'), 2000);
+}
+
+async function toggleKey(name, activate) {
+  const { status, data } = await api(`/admin/keys/${encodeURIComponent(name)}/${activate ? 'activate' : 'deactivate'}`, {method: 'POST'});
+  if (status === 200) { toast(activate ? 'Llave activada' : 'Llave desactivada'); loadKeys(); }
+  else toast('Error', true);
+}
+
+async function deleteKey(name) {
+  if (!confirm(`¿Borrar la llave '${name}'?\nSe borrará también su historial de uso.`)) return;
+  const { status, data } = await api(`/admin/keys/${encodeURIComponent(name)}`, {method: 'DELETE'});
+  if (status === 200) { toast(`Llave '${name}' borrada`); loadKeys(); }
+  else toast('Error al borrar', true);
+}
+
+let editingKey = null;
+async function openEdit(name) {
+  const { data } = await api('/admin/keys');
+  const k = (data || []).find(x => x.name === name);
+  if (!k) return;
+  editingKey = name;
+  window._editingKeyData = k;
+  document.getElementById('edit-name').textContent = name;
+  document.getElementById('e-owner').value = k.owner || '';
+  document.getElementById('e-role').value = k.role || 'coder';
+  setCaps('e', effectiveCaps(k));
+  document.getElementById('e-rate').value = k.rate_limit;
+  document.getElementById('e-tokens').value = k.max_tokens;
+  document.getElementById('e-mprompt').value = k.max_prompt_tokens || 0;
+  document.getElementById('e-price-in').value = k.price_input_per_1m != null ? k.price_input_per_1m : 0.10;
+  document.getElementById('e-price-out').value = k.price_output_per_1m != null ? k.price_output_per_1m : 0.30;
+  document.getElementById('e-budget').value = k.budget || 0;
+  document.getElementById('e-expires').value = 0;
+  document.getElementById('e-active').value = k.active ? '1' : '0';
+  document.getElementById('editModal').classList.add('show');
+}
+
+async function saveEdit() {
+  if (!editingKey) return;
+  const caps = readCaps('e');
+  const body = {
+    owner: document.getElementById('e-owner').value.trim(),
+    role: document.getElementById('e-role').value,
+    allowed_models: caps.length ? JSON.stringify(caps) : "",
+    rate_limit: parseInt(document.getElementById('e-rate').value) || 60,
+    max_tokens: parseInt(document.getElementById('e-tokens').value) || 2048,
+    max_prompt_tokens: parseInt(document.getElementById('e-mprompt').value) || 0,
+    price_input_per_1m: parseFloat(document.getElementById('e-price-in').value) || 0,
+    price_output_per_1m: parseFloat(document.getElementById('e-price-out').value) || 0,
+    budget: parseFloat(document.getElementById('e-budget').value) || 0,
+    expires_in_hours: parseInt(document.getElementById('e-expires').value) || 0,
+    active: document.getElementById('e-active').value === '1',
+  };
+  const { status, data } = await api(`/admin/keys/${encodeURIComponent(editingKey)}`, {method: 'PUT', body: JSON.stringify(body)});
+  if (status === 200) { toast('Cambios guardados'); closeModal('editModal'); loadKeys(); }
+  else toast(data.detail || 'Error al guardar', true);
+}
+
+async function openUsage(name) {
+  const { status, data } = await api(`/admin/keys/${encodeURIComponent(name)}/usage`);
+  if (status !== 200) { toast('No se pudo cargar el uso', true); return; }
+  document.getElementById('u-name').textContent = name;
+  const t = data.totals;
+  document.getElementById('u-totals').innerHTML = `
+    <div class="stat-card"><div class="label">Requests</div><div class="value">${fmtNum(t.requests)}</div></div>
+    <div class="stat-card"><div class="label">Tokens</div><div class="value">${fmtNum(t.tokens)}</div></div>
+    <div class="stat-card"><div class="label">Gastado</div><div class="value money">${fmtMoney(t.cost)}</div></div>`;
+  renderChart(document.getElementById('u-chart'), data.daily || [], d => Number(d.cost) * 1000);
+  document.getElementById('u-recent').innerHTML = (data.recent || []).map(l => `
+    <tr><td class="num">${fmtNum(l.total_tokens)}</td><td class="num">${fmtMoney(l.cost)}</td>
+    <td>${fmtTime(l.timestamp)}</td><td>${l.success ? '<span style="color:#34d399">OK</span>' : '<span style="color:#f87171">FAIL</span>'}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">Sin uso aún</td></tr>';
+  document.getElementById('usageModal').classList.add('show');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+async function loadUsage() {
+  const filter = document.getElementById('usage-key-filter').value;
+  const { data } = await api('/admin/usage' + (filter ? '?key=' + encodeURIComponent(filter) : ''));
+  if (!data) return;
+  const totalCost = (data || []).reduce((a, l) => a + Number(l.cost || 0), 0);
+  document.getElementById('usage-summary').textContent = data.length + ' requests · ' + fmtMoney(totalCost);
+  document.getElementById('usage-table').innerHTML = (data || []).map(l => `
+    <tr>
+      <td class="mono">${esc(l.key_name)}</td><td>${esc(l.model) || '-'}</td>
+      <td class="num">${fmtNum(l.prompt_tokens)}</td><td class="num">${fmtNum(l.completion_tokens)}</td>
+      <td class="num">${fmtNum(l.total_tokens)}</td><td class="num" style="color:#34d399">${fmtMoney(l.cost)}</td>
+      <td class="num">${Number(l.response_time_ms || 0).toFixed(0)}</td>
+      <td>${fmtTime(l.timestamp)}</td>
+      <td>${l.success ? '<span style="color:#34d399">OK</span>' : '<span style="color:#f87171">FAIL</span>'}</td>
+    </tr>`).join('') || '<tr><td colspan="9" class="empty">Sin requests aún</td></tr>';
+}
+
+// Init: llenar filtro de llaves una vez al entrar a usage
+async function fillKeyFilter() {
+  const { data } = await api('/admin/keys');
+  const sel = document.getElementById('usage-key-filter');
+  sel.innerHTML = '<option value="">Todas las llaves</option>' + (data || []).map(k =>
+    `<option value="${esc(k.name)}">${esc(k.name)}</option>`).join('');
+}
+
+(function init() {
+  if (token) { api('/admin/check').then(r => { if (r.data.authenticated) showPanel(); else showLogin(); }); }
+  else showLogin();
+  document.getElementById('usage-key-filter').addEventListener('change', () => {});
+})();
+</script>
+</body>
+</html>

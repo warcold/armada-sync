@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""whois: wrapper del sandbox que consulta whois via whois-bridge (UNIX socket).
+
+El sandbox no puede ejecutar whois localmente (binario ausente, apt roto,
+puerto 43 bloqueado). Este wrapper habla con el whois-bridge
+(/tmp/whois-gateway.sock) que forwardea al whois-server del host
+(host.docker.internal:18830). Mismo patron que victoria-tts y video-analyze.
+
+Uso:
+  whois <dominio>
+"""
+import socket
+import sys
+import urllib.parse
+
+SOCKET_PATH = "/tmp/whois-gateway.sock"
+
+
+def rpc(path, timeout=45):
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect(SOCKET_PATH)
+        request = (
+            f"GET {path} HTTP/1.1\r\n"
+            f"Host: localhost\r\n"
+            f"Content-Length: 0\r\n"
+            f"Connection: close\r\n"
+            f"\r\n"
+        ).encode("utf-8")
+        s.sendall(request)
+        response = b""
+        while True:
+            chunk = s.recv(65536)
+            if not chunk:
+                break
+            response += chunk
+        s.close()
+        idx = response.find(b"\r\n\r\n")
+        status_line = response.split(b"\r\n", 1)[0].decode("utf-8", "replace")
+        body = response[idx+4:].decode("utf-8", "replace") if idx > 0 else response.decode("utf-8", "replace")
+        if b" 200 " in response.split(b"\r\n", 1)[0]:
+            return body
+        raise RuntimeError(f"whois-server {status_line}: {body[:400]}")
+    except RuntimeError:
+        raise
+    except Exception as e:
+        s.close()
+        raise RuntimeError(f"socket error: {e}")
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("uso: whois <dominio>", file=sys.stderr)
+        return 1
+    domain = sys.argv[1].strip().lower()
+    if not domain:
+        print("uso: whois <dominio>", file=sys.stderr)
+        return 1
+    path = f"/whois?domain={urllib.parse.quote(domain)}"
+    try:
+        print(rpc(path))
+        return 0
+    except Exception as e:  # noqa: BLE001
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

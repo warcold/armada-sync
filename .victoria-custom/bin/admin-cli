@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""admin-cli: wrapper del sandbox para el Host Admin Bridge (victoria-host-admin).
+
+Da a Victoria acceso SEGURO a operaciones del HOST via el admin-server
+(host.docker.internal:18840), por bridge UNIX socket /tmp/admin-gateway.sock.
+
+Uso:
+  admin-cli status                       -> servicios del host + tools disponibles
+  admin-cli exec <tool> [args...]        -> ejecuta tool del host (dig, host, curl,
+                                            whois, nslookup, jq, ping, openssl)
+  admin-cli apt <package>                -> instala paquete apt en host (allowlist)
+  admin-cli service <action> <name>      -> systemctl (status, start, stop, restart)
+
+Ejemplos:
+  admin-cli exec dig resego.com +short
+  admin-cli exec curl -sI https://alfredo.pro
+  admin-cli exec whois resego.com
+  admin-cli apt dnsutils
+  admin-cli service status victoria-whois-server
+
+El admin-server valida: API key, red, ALLOWLIST de tools/paquetes/servicios y
+audita cada operacion. NO se puede ejecutar shell arbitrario.
+"""
+import json
+import socket
+import sys
+
+SOCKET_PATH = "/tmp/admin-gateway.sock"
+
+
+def rpc(method, path, body=None, timeout=60):
+    payload = json.dumps(body).encode("utf-8") if body is not None else b""
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect(SOCKET_PATH)
+        request = (
+            f"{method} {path} HTTP/1.1\r\n"
+            f"Host: localhost\r\n"
+            f"Content-Type: application/json\r\n"
+            f"Content-Length: {len(payload)}\r\n"
+            f"Connection: close\r\n"
+            f"\r\n"
+        ).encode("utf-8") + payload
+        s.sendall(request)
+        response = b""
+        while True:
+            chunk = s.recv(65536)
+            if not chunk:
+                break
+            response += chunk
+        s.close()
+        status_line = response.split(b"\r\n", 1)[0].decode("utf-8", "replace")
+        idx = response.find(b"\r\n\r\n")
+        body_out = response[idx+4:].decode("utf-8", "replace") if idx > 0 else response.decode("utf-8", "replace")
+        if " 200 " in status_line:
+            return body_out
+        raise RuntimeError(f"admin-server {status_line}: {body_out[:500]}")
+    except RuntimeError:
+        raise
+    except Exception as e:  # noqa: BLE001
+        s.close()
+        raise RuntimeError(f"socket error: {e}")
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__, file=sys.stderr)
+        return 1
+    cmd = sys.argv[1]
+
+    if cmd == "status":
+        print(rpc("GET", "/status"))
+        return 0
+
+    if cmd == "exec":
+        if len(sys.argv) < 3:
+            print("uso: admin-cli exec <tool> [args...]", file=sys.stderr)
+            return 1
+        tool = sys.argv[2]
+        args = sys.argv[3:]
+        print(rpc("POST", "/exec", {"tool": tool, "args": args}))
+        return 0
+
+    if cmd == "apt":
+        if len(sys.argv) < 3:
+            print("uso: admin-cli apt <package>", file=sys.stderr)
+            return 1
+        print(rpc("POST", "/apt/install", {"package": sys.argv[2]}, timeout=320))
+        return 0
+
+    if cmd == "service":
+        if len(sys.argv) < 4:
+            print("uso: admin-cli service <status|start|stop|restart> <name>", file=sys.stderr)
+            return 1
+        action = sys.argv[2]
+        name = sys.argv[3]
+        print(rpc("POST", "/service", {"name": name, "action": action}))
+        return 0
+
+    print(f"comando desconocido: {cmd}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "compaction": { "auto": true, "prune": true, "reserved": 10000 },
+  "provider": {
+    "vllm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "· www.alfredo.pro",
+      "options": {
+        "baseURL": "https://victoria.armada.do/v1",
+        "apiKey": "REPLACE_CON_TU_KEY",
+        "timeout": 3600000,
+        "chunkTimeout": 600000
+      },
+      "models": {
+        "nvidia/Qwen3.6-35B-A3B-NVFP4-normal": {
+          "name": "Coding con Victoria",
+          "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
+          "limit": { "context": 200000, "output": 32000 },
+          "attachment": true,
+          "tool_call": true,
+          "reasoning": false,
+          "modalities": { "input": ["text", "image", "video"], "output": ["text"] }
+        },
+        "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking": {
+          "name": "Thinking · Coding con Victoria",
+          "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking",
+          "limit": { "context": 200000, "output": 32000 },
+          "attachment": true,
+          "tool_call": true,
+          "reasoning": true,
+          "modalities": { "input": ["text", "image", "video"], "output": ["text"] }
+        }
+      }
+    }
+  }
+}

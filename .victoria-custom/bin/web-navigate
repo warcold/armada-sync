@@ -1,0 +1,5 @@
+#!/bin/bash
+# Wrapper independiente para web-navigate
+curl -s -X POST http://host.docker.internal:18820/navigate \
+  -H "Content-Type: application/json" \
+  -d "{\"url\": \"$1\"}" 2>/dev/null | python3 -m json.tool 2>/dev/null

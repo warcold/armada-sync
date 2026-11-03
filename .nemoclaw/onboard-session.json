@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "sessionId": "1792189104339-f1960ba9-6cbf-4292-b329-e25e0828cfc4",
+  "resumable": false,
+  "status": "complete",
+  "mode": "non-interactive",
+  "startedAt": "2026-10-16T22:18:24.339Z",
+  "updatedAt": "2026-10-16T22:29:43.911Z",
+  "lastStepStarted": "policies",
+  "lastCompletedStep": "policies",
+  "failure": null,
+  "cancellationRecovery": null,
+  "agent": null,
+  "sandboxName": "victoria-armada",
+  "provider": "vllm-local",
+  "model": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+  "vllmInstallModel": null,
+  "vllmGpuDevice": null,
+  "servingProfileProvenance": null,
+  "stationExpressIntent": null,
+  "stationExpressReceiptRetirement": null,
+  "endpointUrl": "http://host.openshell.internal:8000/v1",
+  "credentialEnv": null,
+  "hermesAuthMethod": null,
+  "preferredInferenceApi": "openai-completions",
+  "compatibleEndpointReasoning": null,
+  "compatibleEndpointReasoningEffort": null,
+  "nimContainer": null,
+  "routerPid": null,
+  "routerPort": null,
+  "routerCredentialHash": null,
+  "webSearchConfig": null,
+  "sandboxPromptProgress": {
+    "sandboxName": true,
+    "webSearch": true,
+    "messaging": true,
+    "resourceProfile": true
+  },
+  "resourceProfile": null,
+  "toolDisclosure": "progressive",
+  "observabilityEnabled": false,
+  "observabilityRequestedExplicitly": false,
+  "apfInterceptorRequested": false,
+  "hermesToolGateways": [],
+  "messagingPlan": null,
+  "stagedCredentialProviders": [],
+  "migratedLegacyValueHashes": null,
+  "gpuPassthrough": true,
+  "telegramConfig": null,
+  "wechatConfig": null,
+  "metadata": {
+    "gatewayName": "nemoclaw",
+    "fromDockerfile": null,
+    "fromImage": null
+  },
+  "machine": {
+    "version": 1,
+    "state": "complete",
+    "stateEnteredAt": "2026-10-16T22:29:43.911Z",
+    "revision": 16
+  },
+  "checkpoint": {
+    "schemaVersion": 4,
+    "sessionId": "1792189104339-f1960ba9-6cbf-4292-b329-e25e0828cfc4",
+    "machineState": "complete",
+    "updatedAt": "2026-10-16T22:29:43.911Z",
+    "profile": {
+      "kind": "selected",
+      "value": "default"
+    },
+    "runtimeAuthority": {
+      "kind": "unset"
+    },
+    "sandboxIdentity": {
+      "kind": "selected",
+      "value": {
+        "name": "victoria-armada",
+        "agent": "openclaw"
+      }
+    },
+    "webSearch": {
+      "kind": "declined"
+    },
+    "messaging": {
+      "kind": "declined"
+    },
+    "resourceProfile": {
+      "kind": "declined"
+    },
+    "gatewayAuthority": {
+      "kind": "selected",
+      "value": {
+        "gatewayName": "nemoclaw",
+        "gatewayPort": 8080,
+        "mode": "nemoclaw-managed",
+        "source": "packaged-service",
+        "endpoint": null,
+        "stateDir": null,
+        "supervisor": null,
+        "requiredCapabilities": []
+      }
+    },
+    "effectGroups": {
+      "sandbox_create": {
+        "completedAt": "2026-10-16T22:29:31.062Z",
+        "fingerprint": "0.0.130|vllm-local|nvidia/Qwen3.6-35B-A3B-NVFP4|openai-completions||{\"mode\":\"1\",\"hostGpuDetected\":true,\"hostGpuPlatform\":\"spark\",\"sandboxGpuEnabled\":true,\"sandboxGpuDevice\":null,\"errors\":[],\"sandboxGpuProof\":{\"status\":\"verified\",\"cudaVerified\":true,\"label\":null,\"detail\":null,\"at\":\"2026-10-16T22:29:30.789Z\"}}||{\"sandboxName\":\"victoria-armada\",\"inferenceProvider\":\"vllm-local\",\"activeMessagingChannels\":[],\"messagingProviderRequests\":[],\"reusableMessagingProviders\":[],\"hermesToolGateways\":[],\"sandboxGpuDevice\":null,\"gpuCreateArgs\":[\"--gpu\"],\"resourceCreateArgs\":[],\"gpuRoutePlan\":\"native-only\",\"sandboxGpuLogMessage\":\"  Direct sandbox GPU enabled; allowing OpenShell GPU policy enrichment.\",\"disabledChannelNames\":[],\"extraPlaceholderKeys\":[]}"
+      },
+      "sandbox_register": {
+        "completedAt": "2026-10-16T22:29:31.062Z",
+        "fingerprint": "victoria-armada"
+      }
+    },
+    "bindings": {
+      "credentialEnvs": [],
+      "registeredProviders": []
+    },
+    "sandboxRecreate": null
+  },
+  "steps": {
+    "preflight": {
+      "status": "complete",
+      "startedAt": "2026-10-16T22:18:24.367Z",
+      "completedAt": "2026-10-16T22:18:27.574Z",
+      "error": null
+    },
+    "gateway": {
+      "status": "complete",
+      "startedAt": "2026-10-16T22:18:27.688Z",
+      "completedAt": "2026-10-16T22:26:09.031Z",
+      "error": null
+    },
+    "sandbox": {
+      "status": "complete",
+      "startedAt": "2026-10-16T22:29:12.292Z",
+      "completedAt": "2026-10-16T22:29:31.055Z",
+      "error": null
+    },
+    "provider_selection": {
+      "status": "complete",
+      "startedAt": "2026-10-16T22:26:09.043Z",
+      "completedAt": "2026-10-16T22:29:12.092Z",
+      "error": null
+    },
+    "inference": {
+      "status": "complete",
+      "startedAt": null,
+      "completedAt": "2026-10-16T22:29:12.149Z",
+      "error": null
+    },
+    "openclaw": {
+      "status": "complete",
+      "startedAt": null,
+      "completedAt": "2026-10-16T22:29:31.324Z",
+      "error": null
+    },
+    "agent_setup": {
+      "status": "skipped",
+      "startedAt": null,
+      "completedAt": null,
+      "error": null
+    },
+    "policies": {
+      "status": "complete",
+      "startedAt": "2026-10-16T22:29:31.765Z",
+      "completedAt": "2026-10-16T22:29:32.106Z",
+      "error": null
+    }
+  }
+}

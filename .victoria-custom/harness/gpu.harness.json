@@ -1,0 +1,152 @@
+{
+  "harness": "Gpu",
+  "updated": "2026-10-29",
+  "mode": "subagent",
+  "hidden": false,
+  "temperature": 0.1,
+  "agent_file": "/home/victoria/.config/opencode/agents/gpu.md",
+  "scope": "GPU unificada GB10 (DGX Spark, 128GB unificada, sm_121a): guardian gpu-saver + arbitro turnos (gpu_arbiter.py) + termica + VRAM/OOM + watchdog carga sostenida. Mision: freeze/OOM, temp alta, locks atascados, headroom antes de render pesado. NUNCA matar vLLM; liberar ComfyUI idle via /free; forense journal abrupto = freeze/corte.",
+  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. GPU GB10: 128GB unificada (121GB visibles, ~7GB reservados). Procesos UP: vLLM 37.9GB (pesos 22GB + KV 12GiB = 1,012,483 tokens, NUNCA se mata), Sonic idle 5.3G (render pico ~24G), Voice 5.3G, LivePortrait 3.0G, ComfyUI idle 0.3G. Total 50.6GB / 121GB (43GB available). Termica: temp 64C, util 75%, power 30W. Locks: 5 holders (sonic-standalone, comfy-art, liveportrait-animate/retouch, estudio-podcast). gpu-saver: probe vLLM max_tokens=3 c/30s, hang 4 probes -> docker restart nemoclaw-vllm (cooldown 15min). Watchdog carga sostenida: util>=85% 10min -> alerta WA + fallback Discord si WA falla 2x. Clock cap: nvidia-smi -lgc 300,2100 (anti-sobrecorriente 2026-10-26). Swappiness 10 (2026-10-26). /free falso positivo FIXED (body vacio = exito).",
+
+  "live_check": "systemctl is-active victoria-gpu-saver && nvidia-smi --query-gpu=temperature.gpu,utilization.gpu --format=csv | tail -1 | awk -F, '{print $1+0}' | awk '{if($1<90) print \"Gpu:up\"; else print \"Gpu:down\"}'",
+
+  "checks": [
+    "systemctl is-active victoria-gpu-saver",
+    "tail -n 30 ~/logs/victoria-gpu-saver.log",
+    "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu --format=csv",
+    "nvidia-smi --query-compute-apps=pid,name,used_memory --format=csv,noheader",
+    "python3 -c \"import gpu_arbiter; print(gpu_arbiter.status())\" 2>/dev/null | head -5"
+  ],
+
+  "upstream": {
+    "fuente": "NVIDIA DGX Spark (GB10, 128GB unified, sm_121a) + driver/CUDA kernel pinned (NO actualizar sin Plan + owner) + watchdog/OOM drop-ins systemd local",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Reboot coordinado con owner; el stack auto-arranca. Clock cap 300/2100 MHz (anti-sobrecorriente 2026-10-26). Swappiness 10 (2026-10-26).",
+    "version_servida_live": "nvidia-smi --query-gpu=driver_version,temperature.gpu,utilization.gpu --format=csv",
+    "donde_mirar": [
+      "https://docs.nvidia.com/dgx/ (docs familia DGX incl. Spark/GB10)",
+      "https://www.nvidia.com/en-us/products/workstations/dgx-spark/ (specs GB10: 128GB unified, sm_121a)",
+      "~/.nemoclaw/source/docs/reference/troubleshooting.mdx (§2603: gpu-mem-util >0.4 congela host)",
+      "kernel NVIDIA del host (pinned; NO actualizar sin Plan + owner)"
+    ],
+    "frecuencia": "ante incidente (freeze/OOM/termica)",
+    "politica": "Reboot coordinado con owner; el stack auto-arranca. Clock cap 300/2100 MHz + swappiness 10 fijos.",
+    "como_reportar": "entrada en CHANGELOG-gpu.md (seccion upstream) + aviso a Victoria en Task"
+  },
+
+  "servicios": [
+    {
+      "name": "victoria-gpu-saver.service",
+      "codigo": "/home/victoria/victoria-gpu-saver.py",
+      "log": "/home/victoria/logs/victoria-gpu-saver.log",
+      "interval_s": 30,
+      "comfy_idle_free_s": 600,
+      "vllm_probe_max_tokens": 3,
+      "vllm_probe_timeout_s": 25,
+      "vllm_hang_cooldown_s": 600,
+      "vllm_boot_grace_s": 600,
+      "vllm_restart_after_hung_probes": 4,
+      "vllm_restart_cooldown_s": 900,
+      "vllm_container": "nemoclaw-vllm",
+      "memory_safety_pct": 90,
+      "gpu_warn_temp_c": 75.0,
+      "gpu_block_temp_c": 80.0,
+      "thermal_cooldown_s": 300,
+      "metrics_db": "/home/victoria/logs/victoria-metrics.db (retencion 30d)"
+    },
+    {
+      "name": "gpu_arbiter.py",
+      "lock": "/home/victoria/logs/gpu-heavy.lock (stale 5h)",
+      "reglas": "1 pesado a la vez; 503 ocupado; 429 >=80C; Comfy en cola bloquea",
+      "holders": [
+        {"servicio": "Sonic standalone", "holder": "sonic-standalone", "kind": "sonic"},
+        {"servicio": "Art API gateway (/v1/images)", "holder": "comfy-art", "kind": "comfy", "sweeper": "hilo art-sweeper 30s"},
+        {"servicio": "LivePortrait Animar", "holder": "liveportrait-animate", "kind": "liveportrait"},
+        {"servicio": "LivePortrait Retoque", "holder": "liveportrait-retouch", "kind": "liveportrait"},
+        {"servicio": "Estudio Podcast (tab LP)", "holder": "estudio-podcast", "kind": "podcast", "reentrancia": "gpu_token via Sonic"}
+      ],
+      "block_temp_c": 80.0,
+      "warn_temp_c": 75.0,
+      "busy_util_pct": 85.0,
+      "lock_stale_s": 18000,
+      "free_comfy": "POST /free {unload_models:true, free_memory:true} ANTES de tomar lock"
+    }
+  ],
+
+  "scripts_host": [
+    "victoria-gpu-saver.py",
+    "gpu_arbiter.py"
+  ],
+
+  "docs": [
+    "/home/victoria/.config/opencode/agents/gpu.md",
+    "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md"
+  ],
+
+  "docs_oficiales": {
+    "regla": "ANTES de operar/configurar contra el servicio consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (systemctl/curl/logs). NUNCA inventar flags ni usar features de versiones no servidas.",
+    "fuentes": [
+      {
+        "nombre": "NVIDIA DGX docs (hub)",
+        "url": "https://docs.nvidia.com/dgx/",
+        "contenido_clave": "docs familia DGX (incl. Spark/GB10)",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "DGX Spark product page",
+        "url": "https://www.nvidia.com/en-us/products/workstations/dgx-spark/",
+        "contenido_clave": "specs GB10: 128GB unified, sm_121a",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Troubleshooting NGC vLLM (OOM GB10)",
+        "url": "~/.nemoclaw/source/docs/reference/troubleshooting.mdx (§2603)",
+        "contenido_clave": "gpu-memory-utilization >0.4 congela el host — documentado por NVIDIA",
+        "verificada": "2026-10-08"
+      }
+    ]
+  },
+
+  "changelog": [
+    { "fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). GPU GB10: 121GB visibles, vLLM 37.9GB (KV 12GiB=1,012K tokens), Sonic 5.3G/24G, Voice 5.3G, LP 3.0G, ComfyUI 0.3G. Total 50.6GB. 5 holders: sonic/comfy-art/liveportrait-animate/retouch/estudio-podcast. Watchdog carga sostenida (util>=85% 10min -> WA+Discord fallback). Clock cap 300/2100 + swappiness 10. /free falso positivo FIXED." },
+    { "fecha": "2026-10-08", "cambio": "Medicion LIVE: 50.6GB GPU usada (vLLM 37.9G + Sonic 5.3G + Voice 5.3G + LP 3.0G + ComfyUI 0.3G). 43GB available. Termica: picos 80-84C transitorios 1-3min por prefill vLLM grande (KV 9-21%). /free falso positivo FIXED (body vacio = exito). LivePortrait 3 holders (animate/retouch/estudio-podcast). Clock cap 300/2100 + swappiness 10 aplicados 2026-10-26." },
+    { "fecha": "2026-10-03", "cambio": "Art API gateway es consumidor del arbol (holder comfy-art, kind comfy; sweeper art-sweeper 30s). 429 gpu_busy = cola normal, no fallo." },
+    { "fecha": "2026-09-30", "cambio": "Watchdog carga sostenida (gpu-saver): util>=85% ventana 10min -> alerta WA + fallback Discord si WA falla 2x (patron freeze 2026-10-13 + apagón 2026-10-16). Dead man's switch: envio WA falla 2x -> Discord." },
+    { "fecha": "2026-09-20", "cambio": "RuntimeWatchdogSec=180 (SBSA GWDT /dev/watchdog0) -> reboot auto si kernel freeze. OOMScoreAdjust: -500 gateway/docker/cloudflared/nginx, -750 ssh. Observacion 24h cron */15 (observe-24h.py) -> caja negra sqlite mode=ro + nvidia-smi + /health 3s." }
+  ],
+
+  "changelogs": [
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-gpu.md",
+    "/home/victoria/CHANGELOG.md"
+  ],
+
+  "no_touch": [
+    "NUNCA matar vLLM por VRAM",
+    "NUNCA subir gpu-memory-utilization (KV lo manda kv-cache-memory-bytes, dueño vLLM)",
+    "NUNCA cambiar umbrales del gpu-saver/arbitro sin Plan del owner (medir y documentar solamente)",
+    "Clock cap 300/2100 MHz + swappiness 10: fijos, no tocar sin Plan"
+  ],
+
+  "recovery": [
+    "Locks stales se limpian solos (5h). NUNCA matar vLLM; liberar ComfyUI idle via /free. Forense: journal abrupto = freeze/corte; NVRM OOM = muerte ~20min.",
+    "Art API gateway: holder comfy-art + sweeper 30s. 429 gpu_busy = cola normal, reintentar.",
+    "LivePortrait: 3 holders (animate/retouch/estudio-podcast). Estudio-podcast re-entra via gpu_token de Sonic."
+  ],
+
+  "medicion_live": {
+    "fecha": "2026-10-29T01:55:00Z",
+    "nota": "Harness estandarizado schema unificado. GPU GB10: 121GB visibles, 50.6GB usados, 43GB available. 5 holders activos. Watchdog carga sostenida + clock cap + swappiness 10 activos.",
+    "versiones": {
+      "gpu": "GB10 (DGX Spark, 128GB unified, sm_121a)",
+      "driver": "580.178.04",
+      "kernel": "6.17.0-1032-nvidia",
+      "clock_cap": "300,2100 MHz",
+      "swappiness": 10
+    }
+  },
+
+  "delegacion": {
+    "cuando_usar": "freeze/OOM, temp alta, lock atorado, headroom antes de render pesado",
+    "pre_check": "systemctl is-active victoria-gpu-saver && nvidia-smi --query-gpu=temperature.gpu,utilization.gpu --format=csv | tail -1 | awk -F, '{print $1+0}' | awk '{if($1<90) print \"Gpu:up\"; else print \"Gpu:down\"}'",
+    "post_check": "python3 -c \"import gpu_arbiter; print(gpu_arbiter.status())\" 2>/dev/null | head -5"
+  }
+}

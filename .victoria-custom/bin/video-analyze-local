@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""video-analyze-local: analiza un archivo de video local (mp4/avi/mov/etc).
+
+Recibe la ruta de un archivo de video ya presente en el sandbox (un MediaPath
+subido por WhatsApp/Discord/Web), lo envía como binary al video-server del host
+(vía el bridge de UNIX socket) y devuelve el análisis completo:
+frames + transcripción + descripciones VLM.
+
+Uso:
+  video-analyze-local <video.mp4> [--count N] [--lang es|en]
+
+Esto complementa a `video-analyze` (que solo acepta URLs vía yt-dlp).
+"""
+import argparse
+import socket
+import sys
+import os
+
+SOCKET_PATH = "/tmp/video-gateway.sock"
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("video", nargs="?", default=None)
+    parser.add_argument("--count", type=int, default=5)
+    parser.add_argument("--lang", default="es")
+    args = parser.parse_args()
+
+    video_path = args.video
+    if not video_path or not os.path.isfile(video_path):
+        print("uso: video-analyze-local <video.mp4> [--count N] [--lang es|en]",
+              file=sys.stderr)
+        sys.exit(2)
+
+    # Leer el archivo binario
+    with open(video_path, "rb") as f:
+        data = f.read()
+    if not data:
+        print("error: archivo vacío", file=sys.stderr)
+        sys.exit(2)
+
+    filename = os.path.basename(video_path)
+
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(1800)
+    try:
+        s.connect(SOCKET_PATH)
+        request = (
+            f"POST /analyze-upload?count={args.count}&lang={args.lang}&describe_frames=true HTTP/1.1\r\n"
+            f"Host: localhost\r\n"
+            f"Content-Type: application/octet-stream\r\n"
+            f"X-Filename: {filename}\r\n"
+            f"Content-Length: {len(data)}\r\n"
+            f"Connection: close\r\n"
+            f"\r\n"
+        ).encode("utf-8") + data
+        s.sendall(request)
+        response = b""
+        while True:
+            chunk = s.recv(65536)
+            if not chunk:
+                break
+            response += chunk
+    except Exception as e:
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        s.close()
+
+    # Parsear respuesta HTTP
+    idx = response.find(b"\r\n\r\n")
+    if idx < 0:
+        print("error: respuesta inválida del bridge", file=sys.stderr)
+        sys.exit(1)
+    body = response[idx + 4:].decode("utf-8", errors="replace").strip()
+    print(body)
+
+
+if __name__ == "__main__":
+    main()

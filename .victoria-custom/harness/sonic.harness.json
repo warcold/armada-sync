@@ -1,0 +1,119 @@
+{
+  "harness": "Sonic",
+  "updated": "2026-10-29",
+  "mode": "subagent",
+  "hidden": false,
+  "temperature": 0.6,
+  "top_p": 0.95,
+  "agent_file": "/home/victoria/.config/opencode/agents/sonic.md",
+  "scope": "Podcast talking-head con voz sincronizada (Sonic :18850) + reels IG + tab Estudio Podcast en LivePortrait :8180. Pipeline: guion -> TTS :18810 (Qwen3-TTS victoria/usuario; voces daisy/tanja/dionisio/damien con refs propias) O audio propio (nota de voz -> ffmpeg pcm_s16le 22050 mono) -> Sonic :18850 -> whisper -> ffmpeg 1080x1920+subs+logo -> instagram-reels.py. Single-flight, VRAM pico ~24G, licencia CC BY-NC-SA 4.0 (no comercial). Mision: operar Sonic daemon, generar podcasts/reels, gestionar VRAM via gpu_arbiter.",
+  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. Sonic daemon UP (systemctl active, /health 200). Pipeline verificado: tab Estudio Podcast (640px default, 25 steps) + audio propio (2026-10-14: nota de voz salta TTS, guion opcional, subs via whisper). Pesos 38G completos (Sonic/ 6.2G, SVD-XT 31G gated, whisper-tiny, RIFE, yoloface). VRAM idle 5.3G, pico render ~24G. Single-flight 503 si busy. GPU arbitro: lock sonic-standalone, block_temp ≥80C, warn 75C, busy_util ≥85%. Licencia CC BY-NC-SA 4.0 (no comercial).",
+
+  "live_check": "systemctl is-active victoria-sonic-server && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18850/health | grep -q 200 && echo 'Sonic:up' || echo 'Sonic:down'",
+
+  "checks": [
+    "systemctl is-active victoria-sonic-server",
+    "curl -s http://127.0.0.1:18850/health | python3 -m json.tool",
+    "python3 /home/victoria/gpu_arbiter.py status 2>/dev/null | grep -E 'sonic|lock|temp'",
+    "du -sh /home/victoria/Sonic/checkpoints/ 2>/dev/null | cut -f1"
+  ],
+
+  "upstream": {
+    "fuente": "github jixiaozhong/Sonic (CVPR 2025, repo de investigacion, 49 commits, sin releases, HEAD c1bd2d13 = origin/main)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Repo sin releases; no modificar src salvo fix documentado. Alternativa comercial Tencent VCLM = decision owner.",
+    "version_servida_live": "cd ~/Sonic && git log -1 --oneline",
+    "donde_mirar": [
+      "cd ~/Sonic && git fetch && git log HEAD..origin/main --oneline (upstream-sync.py cada 6h)",
+      "https://github.com/jixiaozhong/Sonic (README + checkpoints/ structure)",
+      "https://openaccess.thecvf.com/content/CVPR2025/papers/Ji_Sonic_Shifting_Focus_to_Global_Audio_Perception_in_Portrait_Animation_CVPR_2025_paper.pdf",
+      "https://github.com/jixiaozhong/Sonic/blob/main/LICENSE (CC BY-NC-SA 4.0)"
+    ],
+    "frecuencia": "upstream-sync.py cada 6h",
+    "politica": "No modificar src salvo fix documentado. Comercial -> Tencent VCLM (decision owner).",
+    "como_reportar": "entrada en CHANGELOG-sonic.md (seccion upstream) + aviso a Victoria en Task"
+  },
+
+  "servicios": [
+    {
+      "name": "victoria-sonic-server.service",
+      "puerto": 18850,
+      "codigo": "sonic-server.py SonicServer/1.0 (single-flight 503; VRAM idle 5.3G + pico render ~24G)",
+      "venv": "/home/victoria/sonic-venv (torch 2.14.0+cu130, SIN xformers)"
+    }
+  ],
+
+  "scripts_host": [
+    "sonic-server.py",
+    "victoria-podcast-demo.sh",
+    "instagram-reels.py",
+    "gpu_arbiter.py"
+  ],
+
+  "docs": [
+    "/home/victoria/.config/opencode/agents/sonic.md",
+    "/home/victoria/AGENTS.md §11",
+    "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md"
+  ],
+
+  "docs_oficiales": {
+    "regla": "ANTES de operar/configurar contra el servicio consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (systemctl/curl/logs). NUNCA inventar flags ni usar features de versiones no servidas.",
+    "fuentes": [
+      {
+        "nombre": "Repo Sonic (canonico)",
+        "url": "https://github.com/jixiaozhong/Sonic",
+        "contenido_clave": "CVPR 2025, 3.3k estrellas; estructura checkpoints/ (unet+audio2token+audio2bucket, SVD-XT gated, whisper-tiny, RIFE, yoloface); demo.py CLI; licencia non-commercial -> Tencent VCLM para comercial",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Paper CVPR 2025",
+        "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Ji_Sonic_Shifting_Focus_to_Global_Audio_Perception_in_Portrait_Animation_CVPR_2025_paper.pdf",
+        "contenido_clave": "metodo (global audio perception)",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Licencia del repo",
+        "url": "https://github.com/jixiaozhong/Sonic/blob/main/LICENSE",
+        "contenido_clave": "CC BY-NC-SA 4.0 non-commercial (badge oficial; README: 'our license is non-commercial', comercial -> Tencent Cloud VCLM)",
+        "verificada": "2026-10-08"
+      }
+    ]
+  },
+
+  "changelog": [
+    { "fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). Sonic UP: single-flight 503, VRAM idle 5.3G/pico 24G, GPU arbitro sonic-standalone, licencia CC BY-NC-SA 4.0. Audio propio en tab Estudio Podcast (2026-10-14)." },
+    { "fecha": "2026-10-14", "cambio": "Audio propio en tab Estudio Podcast: uploader 🎧 nota de voz -> Sonic directo (sin TTS), guion opcional, subs via whisper sobre audio. Fix #9: label uploader dice DOBLAJE sin lip-sync, apunta a Estudio Podcast." },
+    { "fecha": "2026-10-08", "cambio": "Deep treatment: pesos 38G verificados 1:1 vs README (Sonic/ 6.2G, SVD-XT 31G gated, whisper-tiny, RIFE, yoloface). VRAM idle 5.3G, pico render ~24G. Single-flight 503. Licencia CC BY-NC-SA 4.0 confirmada (no comercial). Tiempos render: 512px 25steps ~100-105s/s, 640px ~180s/s." },
+    { "fecha": "2026-09-29", "cambio": "Tab Estudio Podcast en LivePortrait: guion EXACTO a duracion (15s->35pal/195chars, 30s->70/390, 60s->140/780) + pre-escucha audio REAL + gpu_wrapped_execute_podcast (guion->TTS->Sonic->whisper->1080x1920+subs+logo) + biblioteca-podcast.json + guia movimiento opcional hibridada con LivePortrait region pose." },
+    { "fecha": "2026-09-18", "cambio": "Sonic movido a grupo Contenido (grupo 4). GPU compartida via gpu_arbiter.py (lock sonic-standalone, block_temp 80C, warn 75C, busy_util 85%). Pipeline podcast: chatbox -> TTS -> Sonic -> whisper -> ffmpeg -> instagram-reels.py." }
+  ],
+
+  "changelogs": [
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-sonic.md",
+    "/home/victoria/CHANGELOG.md"
+  ],
+
+  "no_touch": [
+    "NUNCA --publish sin orden explicita",
+    "Licencia CC BY-NC-SA 4.0: NO uso comercial (comercial -> Tencent VCLM, decision owner)",
+    "No correr con renders ComfyUI grandes (OOM)",
+    "NUNCA disparar render de prueba en tareas de docs/medicion (~24G VRAM + ~100-180s por segundo de audio); renders SOLO via tab Estudio Podcast o pedido explicito"
+  ],
+
+  "recovery": "sudo systemctl restart victoria-sonic-server (recarga pipeline 11-28s, tipico 15-17s medido). No paralelizar (single-flight 503). GPU arbitro libera lock si stale >5h.",
+
+  "medicion_live": {
+    "fecha": "2026-10-29T01:55:00Z",
+    "nota": "Harness estandarizado schema unificado. Sonic UP: daemon activo, single-flight, VRAM idle 5.3G/pico 24G, GPU arbitro sonic-standalone, audio propio en tab Estudio Podcast.",
+    "versiones": {
+      "repo": "jixiaozhong/Sonic @ c1bd2d13 (2026-01-08 = origin/main)",
+      "venv": "torch 2.14.0+cu130, diffusers 0.29.0, transformers 4.43.2 (SIN xformers)",
+      "daemon": "sonic-server.py SonicServer/1.0 (stdlib http.server, 149 lineas)"
+    }
+  },
+
+  "delegacion": {
+    "cuando_usar": "podcast no genera, daemon Sonic caido, lip-sync, publicar reel, VRAM Sonic, audio propio",
+    "pre_check": "systemctl is-active victoria-sonic-server && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18850/health | grep -q 200 || echo 'Sonic:down'",
+    "post_check": "curl -s http://127.0.0.1:18850/health | python3 -m json.tool"
+  }
+}

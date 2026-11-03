@@ -1,0 +1,201 @@
+# CHANGELOG — Sandbox OpenClaw (victoria-armada) + Dashboard Bridge
+### [2026-10-08 15:05 EDT] [sandbox] Restructuring agente OpenClaw (patrón vLLM): docs oficiales + 2 derivas STALE curadas
+- **Tipo**: docs + refactor (sin cambios de servicio)
+- **Que**: (1) §Docs oficiales (docs.openclaw.ai VERIFICADA viva + nemoclaw source docs locales) + §Upstream check agregados a `openclaw.md`; las ~890 líneas de lecciones intactas (cura, no rewrite). (2) **Deriva 1**: `openclaw.md:869` referenciaba `/usr/local/lib/nemoclaw/.../cron-jobs.md` (path INEXISTENTE) → docs.openclaw.ai/automation + `~/.nemoclaw/source/docs/`. (3) **Deriva 2**: `openclaw.harness.json` decía publisher/dashboard :18789 (×3 lugares) → **:18800** (real desde 2026-10-05, ownership proof nemoclaw v0.0.130); idem `victoria.harness.json` central. Harness + bloques docs_oficiales/upstream.
+- **Verificado**: JSON válidos, doc-fresh OpenClaw FRESH.
+- **Gap profundo pendiente**: medición LIVE del sandbox en el harness (runtime exacto 2026.9.2, canales, plugins versionados) — prioridad ALTA del siguiente wave.
+### [2026-10-08 13:15 EDT] [sandbox] FIX nemoclaw CLI (SDK @nvidia/openshell-sdk faltante) + KNOWN ISSUE fase Error del lifecycle
+- **Tipo**: fix + known-issue
+- **Que**: (1) `nemoclaw <name> start/stop/recover` daba `OpenShell is unavailable (Error, code ERR_MODULE_NOT_FOUND)` — el paquete `@nvidia/openshell-sdk@0.0.116` (dep del source `~/.nemoclaw/source`, registro privado npm.pkg.github.com) faltaba en node_modules desde la actualización a v0.0.130 (Oct-1). Fix con el flujo oficial del installer: `node scripts/lib/openshell-sdk-install.mts prepare` (stages el tarball vendored `scripts/vendor/openshell-sdk/nvidia-openshell-sdk-0.0.116.tgz` en el cache npm) + `npm install --ignore-scripts --prefer-offline --include=optional --@nvidia:registry=https://npm.pkg.github.com` + `check` → import OK. (2) **KNOWN ISSUE**: sandbox en fase **Error** del lifecycle OpenShell (secuela del corte eléctrico: Exited(255) + `docker start` manual = lifecycle desincronizado). Deadlock: stop exige Ready, start exige Stopped, recover/rebuild se rehúsan; gateway restart no limpia; fase en protobuf de `openshell.db`. Operativamente TODO funciona (canales, dashboard, inferencia, bridges — docker+ensure-loop cubren). **Cura planificada**: upgrade nemoclaw v0.0.131/openshell v0.1.2 (recrea registro) o destroy+re-onboard en ventana (procedimiento 2026-09-05). **Lección**: tras un corte, si el sandbox queda Exited, arrancarlo con `nemoclaw <name> start` (OpenShell-owned) NUNCA con `docker start` — el CLI debe estar sano primero (verificar con `node -e "import('@nvidia/openshell-sdk')"`).
+- **Verificado**: doctor CLI completo OK (SDK import OK); rebuild abortó SIEMPRE sin daño ("sandbox is untouched"); estado operativo final: WhatsApp listening, dashboard 200, sockets OK.
+- **Docs**: yes (general + este changelog)
+### [2026-10-08 12:35 EDT] [sandbox] Fix crash-loop ensure-loop (`local` fuera de función) + recovery post-corte 11:37
+- **Tipo**: fix (bug en `openclaw-bridge-ensure.sh:976-977`: `local WCOUNT_FILE` / `local wcount` en cuerpo del while, no en función; con `set -u` → `WCOUNT_FILE: unbound variable` → exit 1 → crash-loop del service cada 15s solo cuando existía `.gateway-restart-needed`, o sea justo post-restore). Fix: asignación global + nota anti-`local`.
+- **Que**: tras el corte, openshell-gateway user-service quedó `inactive` (start manual), `nemoclaw start` da `ERR_MODULE_NOT_FOUND` del CLI (workaround: `docker start` directo — issue abierto del CLI, no del stack), sandbox healthy, ensure-loop reparado procesó el restore (hot-reload, sin restart) y recreó el relay :18790.
+- **Verificado**: bridge active estable, dashboard 200 live, WhatsApp listening, Discord @Victoria OK, 4 sockets OK.
+- **Docs**: yes (script + general)
+### [2026-10-06 12:05 EDT] [sandbox] Bucle arte 17+gen/0envíos + fix re-declaración 15s (mataba el sensor) + regla ANTI-BUCLE
+- **Tipo**: fix
+- **Que**: turno con foto del motor del owner → 17+ `art-gen` variando prompt sin enviar (typing 5 min; inferencia sana, bucle de razonamiento). Fix skill/TOOLS: 1 generación por pedido, ok:true→envío inmediato. Bug propio: `ensure_art` re-declaraba el job cada 15s (2811 "job added", timer every-2m reseteado, sensor muerto) → gate solo-si-falta, spam detenido.
+- **Verificado**: delta job-added 0/60s; markers sync; bridge active.
+### [2026-10-06 02:20 EDT] [sandbox] Job nativo art-pending-notify: sensor headless 2m + agent-turn aislado → DM al owner con pedidos nuevos
+- **Tipo**: feature (patrón oficial docs/automation/cron-jobs.md "Event triggers")
+- **Que**: `art-pending-notify` (declaration `victoria:art-pending-notify`): `art-pending-watcher.js` (workspace, read-only) evalúa `art-approvals.json` cada 2m sin LLM; `fire:true` solo con pedidos nuevos (dedup `scope@requested_at`) → agent-turn isolated light-context no-deliver → DM en español al owner. Re-declarado por `ensure_art` tras rebuild (converge, pisa payload → siempre canónico completo). Memory Dreaming auditado OK (nativo, no duplicar). Regla de decisión host-cron vs native-cron vs hooks escrita en openclaw.md.
+- **Verificado**: E2E real — reposo 0 runs; pedido de prueba → run ok 06:11:25Z + DM messageId `3EB03CACE8…`; unit test dedup 4/4; job único tras ciclo del ensure-loop; journal bridge limpio.
+### [2026-10-06 01:45 EDT] [sandbox] Heartbeat OFF de raíz (every="") + USER.md timezone DC + regla español + NO_REPLY exacto
+- **Tipo**: fix
+- **Que**: los mensajes DM al owner que terminaban "NO_REPLY" eran heartbeats cada 30 min (sesión main = DM owner); el runtime solo suprime si la respuesta es EXACTAMENTE NO_REPLY — el modelo mandaba texto inglés + NO_REPLY. Fix de raíz: `agents.defaults.heartbeat.every: ""` (overrides + _managed + validate OK) → heartbeat skipped. TOOLS.md: si un wake llega igual → EXACTO NO_REPLY + español. USER.md: America/Santo_Domingo → America/New_York (DC) + nota RD (UTC-4 fijo; divergen 1h en invierno) + "todo en español". El HEARTBEAT.md solo-comentarios del 05-10 era inerte en 2026.9.2 (el scratch del heartbeat se lee del cron-jobs-store, no del HEARTBEAT.md).
+- **Verificado**: 0 eventos DM tras tick 05:19Z (antes 1 cada 30 min exactos); config validate OK (solo warnings preexistentes).
+### [2026-10-06 00:20 EDT] [sandbox] Cierre documental jornada 10-05/06: openclaw.md + harness + AGENTS.md al día
+- **Tipo**: docs (auditoría doc-vs-live pedida por el owner; cero cambios de código/servicios/config live)
+- **Que**: (1) `openclaw.md` (subagente) ganó las notas faltantes de la jornada: 15:15 exec AND-capa (deny global 14 sin exec + `guilds."*"` nuevo; SUPERSEDE la línea exec de la nota v2 14:05), 15:45 fotos personales (repo+sync), 16:00 heartbeat OFF (solo-comentarios + maestro), 20:25 STT inbound (bullet `tools.media.models` whisper-cli + nota schema `tts` top-level en el bullet de config), 23:00 cierre de turno, 00:05 `--send-to` atómico + privacidad de terceros, lección `sessions archive` (runtime 2026.9.2 reactiva la sesión archivada). (2) Harness `openclaw.harness.json`: art-gen con flags completos (--for/--owner/--send-to/--caption/--channel), art-approve nuevo, sección `workspace_sync_ensure_art` (TOOLS/HEARTBEAT/victoria-photos/art-approvals.json), `media_config` (tools.media.models), health +art-gen/art-approve status, recovery extendido (arte + tools.media.models + docker restart), no_touch +regla owner-only de art-approve + contrato gateway lifecycle. (3) `AGENTS.md` host: fila art-gen corregida (media/outbound + envío atómico + gate), fila art-approve nueva, fila maestros del workspace (TOOLS/HEARTBEAT/photos), fila skill art actualizada (--send-to canónico), bullet STT inbound en §Servicio de Voz. §10 historial NO tocado.
+- **Verificado live (read-only)**: openclaw.json del sandbox — `tts` top-level (legacy `messages.tts` ausente), `tools.media.models` = [video-analyze-local(video), whisper-cli(audio)], deny global `*` = 14 tools SIN exec, `guilds` = ["*", 1365731253629751406, 233040661492924418], `groups` WA = ["*", 120363428629110824@g.us, 120363429817888300@g.us]; bin/ con art-gen+art-approve+whisper-cli+victoria-tts; workspace con HEARTBEAT.md solo-comentarios + art-approvals.json; media/outbound/ con victoria-photos/; overrides `_managed` cubre tools.media.* y tts.
+- **Docs**: yes (este + openclaw.md + harness + AGENTS.md)
+### [2026-10-06 00:05 EDT] [sandbox] FIX RAÍZ: art-gen --send-to atómico + regla privacidad terceros
+- **Tipo**: fix+feature
+- **Que**: (1) el modelo alucinaba el envío ("la mandé" sin send) — ahora `--send-to` genera Y envía en un comando (sent.messageId en el JSON); (2) archive de sesión se revierte solo (runtime reactiva) — descartada esa vía, el fix es estructural; (3) regla owner: en grupos no mencionar nombres/temas de terceros (SOUL+IDENTITY+skill). Imagen perrito pendiente entregada.
+- **Verificado**: parser+gate OK; md5 sync; markers.
+### [2026-10-05 23:20 EDT] [sandbox] RESET sesión grupo Warcoldology + imagen pendiente entregada
+- **Tipo**: fix (contingencia prevista en 14:05: sesión con historial envenenado)
+- **Que**: turno owner 22:59Z pidió confirmación innecesaria + no envió la imagen ("ya está lista" sin send). Fix: imagen entregada (3EB0FDF2…), sesión archivada vía CLI oficial (no destructivo, próxima = limpia), cuota restaurada (test propio gastó 1 uso).
+- **Verificado**: archived_at en session_nodes; ventana vigente hasta 07:00Z; gateway limpio.
+### [2026-10-05 23:00 EDT] [sandbox] FIX mensajes de cierre espurios post-entrega — regla CIERRE DE TURNO
+- **Tipo**: fix comportamiento (textos finales extra llegan como mensajes separados: "no había audio", despedidas)
+- **Que**: TOOLS+skill: caption del send = respuesta; tras envío exitoso NO texto final, solo NO_REPLY. Sync verificado.
+### [2026-10-05 20:25 EDT] [sandbox] FIX notas de voz: media-understanding audio configurado (whisper-cli)
+- **Tipo**: fix (voz sin transcribir tras upgrade 2026.9.2 — "no audio-understanding model is configured")
+- **Que**: entry CLI audio en tools.media.models (overrides+_managed, customize-apply, hot-reload 00:13Z) → wrapper whisper-cli → socket tts → voice-server host. Runtime convierte ogg→wav solo. Paridad voz/texto en DM+grupos (audio-preflight corre antes del mention-check). Docs: skill+TOOLS (nota de voz = pedido normal), victoria.md (mecanismo STT 2026.9.2).
+- **Verificado**: E2E con TTS real (transcripción exacta wav y ogg→wav); ffmpeg sandbox OK; sin invalid config.
+### [2026-10-05 16:00 EDT] [sandbox] FIX heartbeat: poll filtró texto en inglés al DM del owner → heartbeat OFF
+- **Tipo**: fix
+- **Que**: heartbeat poll (30 min, sesión main = DM owner) → el modelo respondió texto visible en inglés y el runtime lo mandó al DM. HEARTBEAT.md era el template de fábrica (activo). Fix: solo-comentarios (skip empty-heartbeat-file, cero llamadas) + maestro host + sync ensure_art (rebuild trae el template de vuelta).
+- **Verificado**: live solo-comentarios; ensure OK.
+### [2026-10-05 15:45 EDT] [sandbox] FEATURE fotos personales de Victoria compartibles desde el agente
+- **Tipo**: feature (el agente decía "no tengo fotos" — vivían solo en el host)
+- **Que**: repo canónico `~/.victoria-custom/victoria-photos/` (6 fotos) → sync a `media/outbound/victoria-photos/` (send directo, managed root) por ensure_art; skill/TOOLS/SOUL: "cómo eres" → compartir del repo, no generar, jamás "no tengo fotos"; grupos sin ventana; DM solo owner. 2 fotos entregadas al grupo (3EB0CDF5…).
+- **Verificado**: fotos en sandbox + markers md5 + envío real.
+### [2026-10-05 15:15 EDT] [sandbox] FIX DEFINITIVO: exec global AND-capas + anti-bucle + imagen pendiente entregada
+- **Tipo**: fix (forense live completo en el general 15:15)
+- **Que**: el runtime aplica `tools.toolsBySender.*.deny` (con exec) como capa AND ENCIMA del grupo → no-owners sin exec en TODOS los grupos (catálogo 30 tools, bucle art-gen 12x). Fix: exec fuera del deny global + `guilds."*"` nuevo (deny completo, cubre guilds nuevos) + wildcard WA intacto → exec SOLO en los 4 grupos elegibles. Skill/SOUL/TOOLS: envío-al-grupo sin objeción, --owner solo con senderIsOwner actual, anti-bucle tool-ids. Imagen pendiente del owner entregada al grupo (3EB0D4F1…).
+- **Verificado**: config live + hot-reload 19:05Z + ventana auto vigente + messageId.
+### [2026-10-05 14:05 EDT] [sandbox] FEATURE v2 imágenes-en-grupos: constitución + 4h + auto-ventana + pendientes
+- **Tipo**: fix+feature (la v1 13:25 no bastaba: SOUL/IDENTITY prohibían tools a no-owners en grupos sin excepción → el modelo obedecía la constitución y decía "solo en DM")
+- **Que**: excepción constitucional en SOUL+IDENTITY+USER (solo imágenes con ventana; nunca mandar al miembro al DM; precedente "solo en DM" OBSOLETO); art-approve v2 (cap 4h, request/deny, pending, approve devuelve pending_request); art-gen v2 (estado {scopes,pending}, auto-ventana 4h owner-en-grupo); skill+TOOLS flujo completo; sync md5 7 archivos.
+- **Verificado**: 12/12 tests sin GPU + smoke uid 998 en sandbox; gateway limpio; ver general 14:05.
+- **Pendiente**: live test owner; contingencia reset sesión grupo si el precedente viejo persiste.
+### [2026-10-05 13:25 EDT] [sandbox] FEATURE imágenes en grupos con aprobación owner (ventana+cuota, auto-reversión)
+- **Tipo**: feature (petición owner)
+- **Que**: ver general 13:25 (art-approve nuevo + art-gen --for/--owner con gate duro + art-approvals.json + skill/TOOLS sección grupos + exec a `*` solo en 2 WA + 2 DC + ensure_art extendido). DM siempre libre; grupos solo con ventana vigente.
+- **Verificado**: refusal/approve/status/revoke/gate/cuota sin GPU; sync md5; policies live; gateway limpio.
+- **FIX 13:40**: prueba owner-en-grupo falló por regla faltante (auto-limitación vieja, 0 tools) → EXCEPCIÓN OWNER en skill+TOOLS (live): owner en grupo genera directo con `--owner`.
+### [2026-10-05 13:05 EDT] [sandbox] FIX flujo arte→WhatsApp: secuencia atómica + media/outbound (LocalMediaAccessError 2026.9.x)
+- **Tipo**: fix (reporte owner: imagen "hecha" pero nunca recibida)
+- **Que**: (1) el agente alucinó el envío (sin send real) → skill art + TOOLS.md exigen `--json` con `"messageId"` y prohiben afirmar envío sin él; (2) runtime 2026.9.x solo acepta adjuntos locales desde `media/outbound/` para remitentes restringidos → `art-gen` (canónico host) descarga ahí por defecto; docstring + `openclaw.md` actualizados; TOOLS.md live sincronizado a mano (el ensure no pisa ediciones live), wrapper+skill por ensure_art (md5 verificados).
+- **Verificado**: send real al owner (messageId `3EB006E723922F7CB7704D`); dry-run limpio; upstream docs.openclaw.ai/nodes/images + /cli/message.
+### [2026-10-05 05:45 EDT] [sandbox] OpenClaw 2026.7.1->2026.9.2 + openshell 0.0.116 — canales LIVE, 10 trampas del runtime nuevo resueltas
+- **Tipo**: upgrade mayor (owner: procede con el update)
+- **Que**: runtime 2026.9.2 via destroy+onboard (rebuild directo bloqueado por ownership proof del dashboard port). Publisher :18789->:18800 (uid 1000). Relay dashboard nsenter-socat (gateway vive en netns interior OCSF). Config migrada (14 claves legacy). Trust records cirugia (artifactKind/sourcePath del onboard = untrusted). 10 trampas documentadas en el general 05:45.
+- **Verificado**: WhatsApp Listening + Discord @Victoria (Tech Hub + La Verganza); dashboard 200+WS 101 (publisher 18800 -> relay 18790 -> netns interior); 5 bridges; TTS 172KB; arte 25.3s; vLLM digest intacto (KEEP_VLLM).
+- **Pendientes**: fase Error (inerte; proximo onboard la resetea), policy add built-ins broken v0.0.130, hot-reload no carga canales (restore usa docker restart).
+- **Docs**: yes (general 05:45 + openclaw.md + harness)
+
+### [2026-10-05 01:45 EDT] [sandbox] nemoclaw CLI v0.0.123->v0.0.130 (sin rebuild, E2E verde)
+- **Tipo**: upgrade (owner: procede con nemoclaw)
+- **Que**: npm-link al source (~/.nemoclaw/source) -> git checkout v0.0.130 + npm install (build:cli auto). Sandbox intacto (OpenClaw v2026.7.1, sin rebuild). Rollback: git checkout f75f722b + npm install. Backups: sandboxes.json/onboard-session.json .bak-20261005-pre-v130 + snapshot nativo v15 pre-runtime-2027.
+- **Mejoras**: falso-positivo "mutable mode" del doctor DESAPARECIDO; inference "healthy" 3 rutas; status anuncia runtime v2026.9.2 sin auto-rebuild; npm registry accesible desde sandbox (200) -> rebuild futuro puede instalar plugins de npm directo.
+- **Verificado**: doctor healthy (1 warn informativa); vLLM digest intacto; ensure-loop 0 errores con CLI nuevo; WhatsApp listening + Discord activo; 5 bridges + 5 sockets; dashboard 200/200; arte E2E 25.5s; voz wrapper 1.8s. Pendiente: rebuild runtime 2026.9.2 (ventana + schemas overrides + plugin whatsapp matching).
+- **Docs**: yes (general 01:45)
+
+### [2026-10-04 23:35 EDT] [sandbox] Fix bucle 397 turnos art: TOOLS.md con bloque art + art-bridge socket + preset victoria-art-api
+- **Tipo**: fix causa-raiz + feature (mision owner: fallo "gatito + tiempo" por WhatsApp DM quemo 16.8M tokens sin invocar art-gen ni una vez)
+- **Causa raiz (evidencia en `03849d07...jsonl`)**: skills llegan al prompt SOLO como nombres (`skillsSnapshot.skills[]`, `entries:{}`); la carga bajo demanda fallo en cadena: `tool_describe art` -> Unknown (skills no son tools), `read` con path de skill -> "Tool read not found" (no existe tool bare `read`), `find /` -> Permission denied; el modelo nunca intento exec con rutas /sandbox absolutas. Fase 2 (02:54): tras heartbeat poll con senderIsOwner:false el contexto quedo restringido (hasta `tool_call openclaw:core:exec` dio Unknown) y el modelo adivino ids en bucle 300+ turnos.
+- **Que**: (1) `TOOLS.md` live extendido (1337->3277 bytes, se inyecta INTEGRO: `injectedWorkspaceFiles` 1325 chars verificados) con bloque art (comando exacto `tool_call openclaw:core:exec` + `/sandbox/.openclaw/bin/art-gen`, templates, envio `--media`, NUNCAs: find //read/file_read/openclaw:core:image) + wrappers whois/video + seccion Antibucles (2 fallos = parar y responder). Maestro host `~/.victoria-custom/openclaw-TOOLS.md` + sync en `ensure_art` (solo si falta el marcador, no pisa ediciones live). (2) **art-bridge.py NUEVO** (patron endurecido 10-04: threads+timeouts): socket `/tmp/art-gateway.sock` (container level) -> `172.18.0.1:8010` directo; art-gen dual-transporte (`_urlopen`: socket si existe, TCP si no). Sin esto el arte NUNCA podia funcionar desde el agente: el netns del gateway sale solo por proxy L7 y el motor rechaza destinos privados en presets de usuario (intentos: preset con allowed_ips rechazado, IP literal rechazada sin --trusted-private-host, con trust+ pins aplicados siguio policy_denied). Arquitectura real: DOS netns (container-level directo vs gateway-interno via proxy) — bridges corren a container level sin proxy env. (3) Preset `victoria-art-api` creado y aplicado (defensa en profundidad + re-aplicado por `ensure_policies` tras rebuild; no basta solo por el punto 2). (4) `SKILL.md` art host+sandbox con seccion "Como invocar". (5) Bug propio cazado: check `ps -e || ps aux` (ps -e trunca a 4 procs en el sandbox) -> relanzaba art-bridge cada 15s (3 huerfanos); fix a `ps aux || ps -e`, huerfanos matados, 1 proceso estable.
+- **Verificado EN VIVO**: E2E `art-gen image "cute kitten, cartoon style, warm light"` via `nemoclaw exec` -> `{"ok":true,"path":".../e2e-kitten-20261005.png" (736KB),"elapsed_s":20.3,seed 2755927820}`; ComfyUI history 6->7; usage_log `victoria-openclaw-sandbox /v1/images success=1` sin reject; `art-gen status` por socket `{"ok":true,"gateway":"ok"}`; gateway.log 0 invalid config; bridge service NRestarts=0; backup 1.7G con los 3 archivos nuevos verificados (grep en backup).
+- **No tocado (a proposito)**: dmPolicy allowlist (overrides+live coinciden; el texto "open+invite" del doc es lo stale — cambiarlo seria debilitar seguridad sin OK), toolsBySender wildcard (postura correcta; el loop era conducta del modelo, mitigada por Antibucles), digest vLLM, gpu-utilization, firewall IPv6, secrets, frontend ComfyUI 1.51.9 (requiere restart+ventana, queda propuesto).
+- **Docs**: yes (general + openclaw.md: puente art + topologia 2 netns)
+### [2026-10-04 18:50 EDT] [ensure-loop] auto-deploy: bridges se reinician cuando el md5 difiere
+- **Tipo**: feature (paso #2 de proximos pasos; leccion del deploy a medias de hoy)
+- **Que**: ensure_voice_bridge/ensure_video/ensure_whois/ensure_admin ahora MATAN el proceso del bridge vivo tras docker cp cuando el md5 difiere (helper bridge_pid con ps+grep+awk — pkill -f NO opera en el sandbox) + sleep 1; el flujo existente relanza en el mismo ciclo. Antes: copiaba el archivo pero el proceso vivo seguia con codigo viejo para siempre.
+- **Verificado EN VIVO**: nota de version en video-bridge host -> ciclo del ensure -> journal: "video-bridge: pid 326501 matado por md5 — relanzando con codigo nuevo" + "lanzado" -> proceso nuevo (etime 00:25) + md5 IGUAL + health OK.
+- **Leccion**: el ensure-loop es un proceso LARGO — editar el script NO recarga funciones; systemctl restart victoria-openclaw-bridge para aplicar cambios al script.
+- **Docs**: yes (general + openclaw.md)
+### [2026-10-03 21:35 EDT] [sandbox] Última milla verificada: envío REAL de imagen generada por WhatsApp
+- **Tipo**: verificación E2E (autorización del owner: "procede con todo lo que necesite")
+- **Que**: imagen FLUX (águila) generada por la art API → `docker cp` a `/sandbox/.openclaw/media/` → `openclaw message send --channel whatsapp --target <owner> --message ... --media ...` desde el netns del gateway (uid 998, token de openclaw.json) → **messageId real `3EB05E5D…`**. El pipeline completo que pidió el owner (pedir por voz → Victoria genera → llega por WhatsApp) está cerrado: STT inbound ya funcionaba, art-gen+skill instalados (18:20), envío con media ahora PROBADO en vivo.
+- **Verificado**: messageId devuelto por la CLI en el netns; el owner recibió imagen+mensaje en su DM.
+- **Docs**: yes (general + skill art actualizada con el patrón exacto)
+
+- **Tipo**: feature (pedido del owner; SOLO imágenes — video excluido por peso, política 2026-10-03)
+- **Que**: wrapper `/sandbox/.openclaw/bin/art-gen` (canónico `~/.victoria-custom/bin/art-gen`): `art-gen image "prompt" [--template] [--seed]` → POST `172.18.0.1:8010/v1/images` (llave servicios en `.art-key` 600) → poll `/v1/jobs` → download `/v1/art-files` → `/sandbox/.openclaw/media/`; reintentos automáticos en 429 (art_busy/gpu_busy con Retry-After); `art-gen templates` lista curada. Skill `art` en workspace (cuándo generar, qué template por tipo, cómo enviar con `openclaw message send --media`, límites 1-a-la-vez). `ensure_art()` en el ensure-loop reasegura wrapper+key+skill tras rebuild (patrón ensure_whois). Red verificada LIVE: `172.18.0.1:8010` alcanzable desde el netns del gateway (la nota de 2026-09-16 de que no lo era YA NO APLICA).
+- **Verificado**: ensure_art desplegó wrapper+key+skill en su primer ciclo (journal: "art-gen copiado", "art-key sincronizado", "skill art restaurado"); E2E desde el sandbox: `art-gen image "cozy cyberpunk coffee shop..." --w 896 --h 1152` → `{"ok":true,"path":"/sandbox/.openclaw/media/test-sandbox-cafe.png","elapsed_s":30.3}` con dimensiones 896x1152 verificadas; `art-gen status/templates` OK (gateway alcanzable desde el netns — la nota de 2026-09-16 de que :8010 era inalcanzable YA NO APLICA, verificado con /dev/tcp); `openclaw message send --media --dry-run` OK desde el netns del gateway (token lo lee de openclaw.json); skill re-sincronizada por el ensure-loop tras editarla (md5 host=sandbox).
+- **Docs**: yes (AGENTS.md, openclaw.md, general)
+
+
+> Servicio: sandbox nemoclaw `victoria-armada` + publisher + cadena dashboard
+> Subagente: `OpenClaw` (`~/.config/opencode/agents/openclaw.md`)
+> Script host: `openclaw-bridge-ensure.sh`, `openclaw-persist.sh`, `openclaw-bridge.py`
+> Changelog general: `/home/victoria/CHANGELOG.md` (todas las entradas también se agregan ahí)
+
+---
+
+### [2026-09-29 22:00 EDT] [docs] sandbox-ops: límites 220K/262144 → 120K/160K
+- **Tipo**: docs
+- **Que**: línea de límites del modelo en `nemoclaw-sandbox-ops.md` alineada a la era 160K (context 120000, 120K+32K=152K<160K). Detalle en CHANGELOG general misma fecha.
+- **Verificado**: gateway `MAX_PROMPT_TOKENS=120000`, opencode `context: 120000`.
+- **Docs**: yes
+
+### [2026-09-21 00:25] Dashboard muerto tras reboot: faltaba el relay `openshell forward service` (FIXED + blindado)
+- **Tipo**: fix + blindaje + corrección de modelo
+- **Que**: Tras el reboot del 20-sep, `victoria.local:18789` muerto (publisher UP pero upstream `127.0.0.1:18790` connection refused; curl 000/exit 7). Diagnóstico previo decía "gateway sordo, cero sockets" — erróneo (era `/proc/<pid>/fd` ilegible sin sudo + `ss` del host que no ve el netns interno).
+- **Causa raíz (2 capas)**: (1) El openclaw-gateway (uid 998, pid 14120) está SANO y binda `0.0.0.0:18790` SOLO en su netns interno (verificado LISTEN + HTTP 200 `OpenClaw Control` vía `nsenter -t <pid> -n`); ni `127.0.0.1` ni `172.22.0.10` del host llegan ahí. (2) El eslabón host `127.0.0.1:18790` lo ponía un proceso `openshell forward service` (relay gRPC al loopback interno) que murió con el reboot y NADIE lo recreaba (`openshell forward list` vacío; el ensure-loop solo cuidaba publisher+red). La nota del 18-sep ("el gateway vive en el HOST como proceso openshell") fue una lectura errónea: lo que se vio en el host era este relay, no el gateway.
+- **Fix**: `openshell forward service --target-port 18790 --target-host 127.0.0.1 --local 127.0.0.1:18790 victoria-armada` (como victoria). Tokens OK sin rotar (`dashboard-url` == `openclaw.json` auth token); `channels status` → `Gateway reachable`, Discord+WhatsApp connected; ownership 2770/660 intacto (no se tocó config).
+- **Blindaje**: `ensure_dashboard_forward()` en `openclaw-bridge-ensure.sh` (chequea puerto+HTTP cada 15s; recrea como victoria vía runuser si falta o no responde; mata relay stale). Verificado self-healing real: ciclo 00:11:37 detectó relay ausente y lo recreó solo (journal). Comentarios del script corregidos al modelo real (gateway dentro del sandbox; host = relay+publisher).
+- **Verificado**: `127.0.0.1:18790` → 200, `127.0.0.1:18789` → 200, `victoria.local:18789` → 200, bodies md5 idénticos, `<title>OpenClaw Control</title>`, `ss` ambos LISTEN, service `NRestarts=0`. Backup `persist.sh` previo (128M). vLLM/firewall/GPU no tocados.
+- **Pendiente owner**: (1) WS de browser con pairing de dispositivo no probado a socket crudo (400 esperado sin el protocolo; el check soportado `channels status` dice reachable). (2) `channels status` muestra WhatsApp `dm:allowlist allow:18295468686` — choca con el diseño open+invite del 15-sep; revisar si es display o regresión (no tocado: fuera de scope). (3) Doctor sigue con `[warn] Config permissions ... mutable mode` cosmético (postura 2770/660 correcta y sana; NO correr `--fix`). (4) Actualizar AGENTS.md/victoria.md/subagente `nemoclaw-sandbox-ops.md` §Dashboard bridge al modelo corregido (relay, no gateway-en-host).
+- **Docs**: yes (este + general-resumen)
+
+### [2026-09-20 03:05] Weather por WhatsApp: respondió con reply degenerado — fix de comportamiento
+- **Tipo**: diagnóstico + fix
+- **Que**: Owner reportó "no respondió" — realidad: envió `3EB098CF…` (06:02 UTC, 170ms) con contenido `"...No reply requested."`. Modelo probó tool_call("weather") → Unknown → se rindió sin seguir el skill (que SÍ estaba en su prompt). El runtime auto-resetea sesiones (`.reset.*`) — el fallo era confusión skill↔tool, no contaminación.
+- **Fix**: regla en TOOLS.md del workspace ("weather NO es un tool — web_fetch/exec directo, no reintentar") + transcript actual limpiado (18→6, solo heartbeats). Los 12 delivery failed = cadáveres de ayer.
+- **Falta**: retest del owner.
+- **Docs**: yes (general + este)
+
+### [2026-09-20 01:20] Validación: postura 2770/660 correcta + correcciones al reporte
+- **Tipo**: validación
+- **Que**: Pipeline policies sano (no-ops = subsumición correcta, verificada weather/github/discord + enforcement node 200×4). Postura: runtime 2026.7.1 impone 2770/660 y revierte en <10s → se mantiene; guard CLI 0.0.119 en skew cosmético. Correcciones: HEARTBEAT.md SÍ existe (template sin tasks); "213 ciclos" = 213 líneas (~70+); teoría chown-setgid refutada (el chmod del container preserva setgid); root-adds confirmados inofensivos al doc (cero versiones); wttr.in causa sin determinar. Config live == backup (md5 idéntico). Doctor: device-scope resuelto, queda posture-warn cosmético.
+- **Docs**: yes (general + este)
+
+### [2026-09-19 23:45] Policies de egress restauradas + ensure_policies (rebuild las resetea)
+- **Tipo**: fix + blindaje
+- **Que**: Rebuild 18-sep dejó sin egress al agente (weather/rss-feeds ○, personal-open-internet ausente) → clima, noticias y web_fetch muertos. Re-aplicadas como victoria (weather, rss-feeds --from-file, personal-open-internet). Egress verificado: node→discord/npm/whatsapp/open-meteo 200; curl→example/arstechnica 200; wttr.in timeout (usar open-meteo). Canales vivos.
+- **Lecciones**: (1) `nemoclaw policy` SOLO como victoria — como root el contexto falla y los adds no-opean en silencio (213 ciclos tragados); ensure-loop usa runuser + PATH absoluto. (2) `personal-open-internet` (broad 80/443) SUBSUME las reglas específicas: doc se compacta, subsumidos muestran ○ y sus adds son no-ops silenciosos — por diseño. (3) `policy list` ●/○ no es la verdad cuando hay subsumición; el master es ● de personal-open-internet.
+- **Blindaje**: `ensure_policies()` en ensure-loop (master ● → quieto; falta → set completo). Doctor --fix reparó posture /sandbox/.openclaw (2770). Ensure-loop re-encendido (muerto desde 18-sep 17:45).
+- **Docs**: yes (AGENTS.md §0.1/§3, victoria.md, general)
+
+### [2026-09-19 16:15] WhatsApp LINKED + DM entregado (cierre incidente)
+- **Tipo**: fix-verificado
+- **Que**: QR por UI → pairing 515 → creds en `credentials/whatsapp/default/` (file-based, no sqlite) → restart gateway → `starting provider (+12025000357)` → `Listening (DM + all groups)`. Status: `linked, running, connected, healthy`. Token del config válido tras 2 restarts (first-boot-only ×2). DM de hoy entregado (`3EB02DF3…`). Lección: canal dormido requiere restart (init solo en boot); `channels logs --channel` existe.
+- **Pendiente**: inbound (owner escribe → Victoria responde); confirmar `credentials/` en persist.sh (QR único futuro).
+- **Docs**: yes (CHANGELOG general + este)
+
+### [2026-09-19 12:27] tts-bridge sin admin key (verificado E2E keyless)
+- **Tipo**: security/hygiene
+- **Que**: `tts-bridge.py` (canónico host, se propaga al sandbox por ensure-loop) traía admin key hardcodeada → default `""`, header solo con env. Verificado TTS por el socket: `200 OK`, WAV válido (red docker keyless por `sense_auth.py`). Bridge relaunches con código nuevo (1 proceso).
+- **Docs**: yes (CHANGELOG general + este)
+
+### [2026-09-19 12:00] Intermitencia dashboard: timeout fugado en openclaw-bridge.py (FIXED)
+- **Tipo**: fix
+- **Que**: `create_connection(..., timeout=10)` dejaba el timeout en el socket → el relay mataba todo WS idle >10s (EOF sin close). UI en loop conect/drop ~15s. Fix `upstream.settimeout(None)` + restart publisher. Verificado idle 200s+ por el bridge.
+- **Docs**: yes (CHANGELOG general + este + comentario inline)
+
+### [2026-09-19 02:15] Canales caídos: plugins fantasma + watcher muerto + token desync (reparado, falta QR)
+- **Tipo**: fix (WhatsApp/Discord inbound caídos desde 2026-09-18 16:58)
+- **Que**: (1) `openclaw plugins install <tgz>` NO instala offline: crea esqueleto en `npm/projects/` y aborta en deps (403) → gateway con 1 plugin. Fix: extracción directa del tgz al installPath real + checks/ensure/fix-scripts actualizados al layout `npm/projects/.../node_modules/@openclaw/<canal>/` (glob). Trust records Sep-11 preservados (apuntaban bien; `write_trust_record` ya no toca records buenos). (2) Watcher del gateway muerto por EACCES 22:57 UTC (sin reintentos tras 3/3) → hot-reload imposible; `ensure_plugins_allow` ahora impone 2770 siempre (el early-return lo saltaba). (3) Token: refresh solo-de-primer-arranque confirmado — tras restart el token del config autentica (`channels status` reachable). (4) Policies `discord`+`whatsapp` re-agregadas (el fresh solo traía onboard defaults). Discord `connected @Victoria` ✓. WhatsApp `not linked` (sesión no sobrevivió; tablas creds vacías) → **re-link con QR pendiente** (wrapper `whatsapp-qr.sh`; el login CLI exige `NODE_EXTRA_CA_CERTS` o muere sin QR).
+- **Verificado**: 12 plugins, dist presentes, trust OK, parche media aplicado, watcher sano, WS auth OK, discord connected.
+- **Pendiente**: QR owner → Listening → E2E.
+- **Docs**: yes (CHANGELOG general + este + subagente)
+
+### [2026-09-18 23:50] Higiene: cron auto-apply deshabilitado + publisher alineado + labels de grupo
+- **Tipo**: security/hygiene + docs (OK del owner)
+- **Que**: (1) Cron `auto-apply-openclaw.sh` (*/5) DESHABILITADO — doble escritor de openclaw.json vs customize-apply.sh (ensure-loop 15s); su `.master` no existe → INERTO desde 2026-08-18, pero tierra minada. Script en `~/.hygiene-quarantine-20260918/` con README; crontab respaldado. (2) Publisher recreado alineado: `restart=unless-stopped` (antes `no`), `network=host`, target `127.0.0.1:18790`, labels `victoria.group=openclaw` + `victoria.group-role=dashboard`. (3) `ensure_publisher` reforzado: 5 checks (existencia, cmd→127.0.0.1, network=host, restart=unless-stopped, label victoria.group) → recrea si drift.
+- **Por que**: evaluación del stack por grupos (petición del owner) encontró la tierra minada y la inconsistencia.
+- **Impacto**: crontab, ensure_publisher, publisher container.
+- **Verificado**: publisher con todos los atributos; dashboard live; 8 crons restantes intactos.
+- **Docs**: yes (CHANGELOG general + este)
+
+### [2026-09-18 19:00] Arquitectura nueva: gateway OpenClaw en HOST, publisher con --network host
+- **Tipo**: refactor (cambio arquitectónico)
+- **Que**: El gateway de OpenClaw (puerto 18790) ya NO vive dentro del sandbox — vive en el HOST como proceso `openshell` (~pid 1604795). Cadena nueva: `victoria.local:18789 (publisher, --network host) → 127.0.0.1:18790 (gateway OpenClaw en HOST)`. Cambios en `openclaw-bridge-ensure.sh`: (1) `ensure_inner_proxy()` ELIMINADA (era el proxy interno 18789→10.200.0.2:18790 dentro del container — obsoleto); (2) `ensure_publisher()` reescrita: `--network host` + target `127.0.0.1:18790`, verifica `HostConfig.NetworkMode == host` y que el cmd apunte a `127.0.0.1`; (3) loop principal sin `ensure_inner_proxy`; (4) `$SANDBOX_IP` (172.22.0.10) se mantiene SOLO para bridges voice/video/whois/admin.
+- **Por que**: tras recrear el sandbox con `nemoclaw onboard --fresh`, el dashboard quedó muerto (HTTP 000): el publisher apuntaba a la IP del sandbox (172.22.0.10:18790) pero el gateway vive en el HOST. Diagnóstico: el proceso `openclaw-gateway` dentro del sandbox aparece en logs como "listening" pero NO binda puerto (state S, ep_poll); el puerto 18790 real del host lo sirve el proceso `openshell`.
+- **Impacto**: openclaw-bridge-ensure.sh; publisher container (recreado con network=host); subagent `nemoclaw-sandbox-ops.md` (secciones Dashboard bridge + Post-upgrade actualizadas).
+- **Verificado**: dashboard `localhost:18789` → `{"ok":true,"status":"live"}` + título "OpenClaw Control"; publisher cmd `python3 /openclaw-bridge.py 0.0.0.0 18789 127.0.0.1 18790`, network=host; sandbox healthy con identity/config/plugins; bridges tts/video/whois/admin sockets restaurados por ensure-loop.
+- **Docs**: yes (este changelog + subagente + CHANGELOG general)
+
+### [2026-09-18 18:20] Recreación completa del sandbox tras caída 16:58
+- **Tipo**: infra (rebuild)
+- **Que**: Sandbox destruido (la caída de 16:58 lo dejó fuera del live gateway; `rebuild` falló con "absent from the live OpenShell gateway"). Recreación limpia con `nemoclaw onboard --fresh --profile vllm.dgx-spark-gb10.single.qwen3-6-35b-a3b-nvfp4 --non-interactive --yes --yes-i-accept-third-party-software --sandbox-gpu --name victoria-armada`. Restore manual: identity files (`docker cp {IDENTITY,SOUL,USER}-restore.md`), `openclaw.json` desde persist backup (discord+whatsapp enabled, 5 plugins: discord, whatsapp, active-memory, tts-local-cli, browser).
+- **Por que**: el `rebuild` no puede recuperar un sandbox ausente sin su OpenShell policy autoritativa — solo `destroy + onboard`.
+- **Impacto**: sandbox nuevo (container `openshell-default--victoria-armada-<uuid>`), config restaurada, identidad restaurada.
+- **Verificado**: `nemoclaw victoria-armada status` → Phase Ready, Provider vllm-local, inference healthy; dashboard 200 (tras fix publisher).
+- **Docs**: yes (CHANGELOG general 17:15/17:30 + este)

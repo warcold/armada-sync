@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""video-analyze: analiza un video de YouTube en un solo paso.
+
+Uso:
+  video-analyze <url> [--for <scope>] [--owner]  -> descarga + frames automáticos (5) + transcripción
+  video-analyze <url> --times 00:01:00 00:02:30
+  video-analyze <url> --count 8 --lang en
+
+Devuelve JSON: {title, duration, resolution, video_path, frames[], transcript}
+El agente puede usar los frames como imágenes (VLM) + la transcripción (STT)
+para resumir y entender el video.
+"""
+import argparse
+import json
+import os
+import socket
+import sys
+
+SOCKET_PATH = "/tmp/video-gateway.sock"
+# 2026-10-09: gate de ventanas por grupo/canal y feature (modo creativo, feature
+# "video"). Mismo archivo de estado que art-approve. DM ("dm") y owner
+# (--owner) siempre pasan; grupos/canales exigen ventana vigente del feature video.
+# Scopes: dm | wa:<group-jid> | dc:<guild-id>[:<channel-id>].
+APPROVALS_FILE = os.environ.get("ART_APPROVALS",
+                                "/sandbox/.openclaw/workspace/art-approvals.json")
+FEATURE = "video"
+HOW_OPEN = "ese modo aún no está abierto en este grupo — pídele a Alfredo que lo active 🔓"
+
+
+def _load_state():
+    try:
+        with open(APPROVALS_FILE) as f:
+            d = json.load(f)
+        if not isinstance(d, dict):
+            d = {}
+    except Exception:
+        d = {}
+    d.setdefault("scopes", {})
+    d.setdefault("pending", {})
+    return d
+
+
+def _save_state(d):
+    os.makedirs(os.path.dirname(APPROVALS_FILE), exist_ok=True)
+    tmp = APPROVALS_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(d, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, APPROVALS_FILE)
+
+
+def check_scope(scope, is_owner):
+    """Gate duro de ventanas video por grupo/canal. (scope, owner) -> (ok, info)."""
+    from datetime import datetime, timezone
+    scope = (scope or "dm").strip()
+    if scope == "dm" or is_owner:
+        return True, {"scope": scope, "bypass": "owner" if is_owner else "dm"}
+    d = _load_state()
+    entry = d["scopes"].get(scope)
+    feats = {"imagen": entry} if isinstance(entry, dict) and "expires_at" in entry else (entry or {})
+    e = feats.get(FEATURE) if isinstance(feats, dict) else None
+    if not e:
+        return False, {"error": "scope_not_approved", "scope": scope,
+                       "feature": FEATURE, "how": HOW_OPEN}
+    try:
+        exp = datetime.fromisoformat(e.get("expires_at", ""))
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+    except Exception:
+        return False, {"error": "scope_bad_entry", "scope": scope,
+                       "feature": FEATURE, "how": HOW_OPEN}
+    now = datetime.now(timezone.utc)
+    if now >= exp:
+        return False, {"error": "scope_expired", "scope": scope,
+                       "feature": FEATURE, "expired_at": e.get("expires_at"),
+                       "how": HOW_OPEN}
+    max_n = int(e.get("max", 10))
+    used = int(e.get("used", 0))
+    if used >= max_n:
+        return False, {"error": "scope_quota", "scope": scope,
+                       "feature": FEATURE, "used": used, "max": max_n,
+                       "how": HOW_OPEN}
+    e["used"] = used + 1
+    feats[FEATURE] = e
+    d["scopes"][scope] = feats
+    _save_state(d)
+    return True, {"scope": scope, "feature": FEATURE,
+                  "used": e["used"], "max": max_n,
+                  "expires_at": e.get("expires_at")}
+
+
+def rpc(method, path, body=None, timeout=1800):
+    payload = json.dumps(body).encode("utf-8") if body is not None else b""
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect(SOCKET_PATH)
+        request = (
+            f"{method} {path} HTTP/1.1\r\n"
+            f"Host: localhost\r\n"
+            f"Content-Type: application/json\r\n"
+            f"Content-Length: {len(payload)}\r\n"
+            f"Connection: close\r\n"
+            f"\r\n"
+        ).encode("utf-8") + payload
+        s.sendall(request)
+        response = b""
+        while True:
+            chunk = s.recv(65536)
+            if not chunk:
+                break
+            response += chunk
+        s.close()
+        if response.startswith(b"HTTP/1.1 200"):
+            idx = response.find(b"\r\n\r\n")
+            return json.loads(response[idx+4:].decode("utf-8", "replace"))
+        idx = response.find(b"\r\n\r\n")
+        err = response[idx+4:].decode("utf-8", "replace") if idx > 0 else response.decode("utf-8", "replace")
+        raise RuntimeError(f"error HTTP: {err[:500]}")
+    except RuntimeError:
+        raise
+    except Exception as e:
+        s.close()
+        raise RuntimeError(f"socket error: {e}")
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("url")
+    p.add_argument("--times", nargs="*", default=[], help="timestamps exactos")
+    p.add_argument("--count", type=int, default=5, help="frames automáticos si no hay --times")
+    p.add_argument("--lang", default="es")
+    p.add_argument("--for", dest="for_scope", default="dm",
+                   help="alcance: dm | wa:<group-jid> | dc:<guild-id>[:<channel-id>]")
+    p.add_argument("--owner", action="store_true",
+                   help="el que pide es el owner (bypass del gate, queda auditado)")
+    args = p.parse_args()
+
+    ok, info = check_scope(args.for_scope, args.owner)
+    if not ok:
+        print(json.dumps({"ok": False, **info}, ensure_ascii=False))
+        sys.exit(1)
+
+    if not os.path.exists(SOCKET_PATH):
+        print("error: video-gateway.sock no existe (¿bridge caído?)", file=sys.stderr)
+        sys.exit(2)
+
+    body = {"url": args.url, "frames_times": args.times or None, "lang": args.lang,
+            "describe_frames": True}
+    if not args.times:
+        body["count"] = args.count
+    result = rpc("POST", "/analyze", body)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(1)

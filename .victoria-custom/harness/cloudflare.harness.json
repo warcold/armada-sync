@@ -1,0 +1,130 @@
+{
+  "harness": "CloudFlare",
+  "updated": "2026-10-29",
+  "mode": "subagent",
+  "hidden": false,
+  "temperature": 0.1,
+  "agent_file": "/home/victoria/.config/opencode/agents/cloudflare.md",
+  "scope": "Red y acceso: tunel Cloudflare (victoria.armada.do -> 127.0.0.1:8010) + nginx (victoria.local solo LAN: / /v1/ -> 8010, /n8n/ -> 5678, /liveportrait/ -> 8180, /comfyui/ -> 8188, /openclaw/ -> 18800) + SSH/warcold (puerto 1666, victoria bash sudo + warcold rbash) + RDP (gnome-remote-desktop, sin listener :3389 visible). IPv6: policy DROP total (solo lo/established/icmpv6). Mision: tunel, nginx, SSH, accesos, certificados, proxy.",
+  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. cloudflared 2026.10.0 UP (4 conexiones edge iad21/iad02, 0 reconexiones, 3 ERR streams cancelados por cliente). nginx UP: server_name victoria.local + default_server 404 (Host desconocido). IPv6: policy DROP total (712 pkts dropeados). SSH puerto 1666: victoria bash sudo + warcold rbash (password colador). RDP active sin listener :3389. E2E publico: victoria.armada.do/health 200 (0.16s), /admin 403, readonly key /v1/config-guide 200, /v1/models 403 BY DESIGN. Derivas doc vs live corregidas: shell victoria=/bin/bash (no /bin/bbash), RDP sin listener :3389, ip6tables DROP especificos subsumidos por policy DROP total, nginx /openclaw/ 403 proxy_attribution_required (dashboard directo :18800).",
+
+  "live_check": "systemctl is-active cloudflared nginx && curl -sk -o /dev/null -w '%{http_code}' https://victoria.local/ | grep -q 200 && echo 'CloudFlare:up' || echo 'CloudFlare:down'",
+
+  "checks": [
+    "systemctl is-active cloudflared nginx",
+    "curl -sk -o /dev/null -w '%{http_code}' https://victoria.local/",
+    "curl -s -o /dev/null -w '%{http_code}' --max-time 10 --resolve victoria.armada.do:443:104.21.32.145 https://victoria.armada.do/health",
+    "curl -s -o /dev/null -w '%{http_code}' --resolve victoria.armada.do:443:104.21.32.145 https://victoria.armada.do/admin",
+    "ss -tln | grep -E ':(1666|80|443|8000|8180|8188|18800|18810|18850|5678)'"
+  ],
+
+  "upstream": {
+    "fuente": "cloudflare/cloudflared (GitHub releases, canal deb-directo-github SIN repo apt) + nginx (distro apt) + openssh (distro)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Tunel critico: NO auto-update — solo reportar; update manual con backup binario + E2E.",
+    "version_servida_live": "cloudflared --version",
+    "donde_mirar": [
+      "https://github.com/cloudflare/cloudflared/releases (local 2026.10.0 = latest a 2026-10-08)",
+      "apt list --upgradable (nginx del distro)",
+      "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/",
+      "https://nginx.org/en/docs/"
+    ],
+    "frecuencia": "upstream-sync.py cada 6h (cloudflared binario vs release)",
+    "politica": "Tunel critico: NO auto-update — solo reportar; update manual con backup binario + E2E.",
+    "como_reportar": "entrada en CHANGELOG-infra.md (seccion upstream) + aviso a Victoria en Task"
+  },
+
+  "servicios": [
+    {
+      "name": "cloudflared.service",
+      "puerto": 443,
+      "ruta": "victoria.armada.do -> 127.0.0.1:8010",
+      "token": "/etc/cloudflared/token (NUNCA commitear ni leer en voz alta)",
+      "version": "2026.10.0 (built 2026-10-05-17:37 UTC)",
+      "modo": "token-managed (--token-file /etc/cloudflared/token, --no-autoupdate); ingress vive en dashboard CF (remote-managed, orchestration_config_version 2)"
+    },
+    {
+      "name": "nginx.service",
+      "puertos": "80->443",
+      "config": "/etc/nginx/sites-enabled/gateway.conf",
+      "rutas": "/ (gateway/landing), /n8n/ (5678), /liveportrait/ (8180), /comfyui/ (8188), /openclaw/ (18800) — solo LAN victoria.local",
+      "client_max_body_size": "500M en /n8n/, /liveportrait/, /comfyui/ (fix 413 2026-09-28)"
+    },
+    {
+      "name": "SSH (sshd.service + ssh.socket)",
+      "puerto": 1666,
+      "usuarios": "victoria (bash, sudo) + warcold (rbash, grupo vllm-readers, password colador)",
+      "root": "without-password (solo key)",
+      "wrapper": "sqlite3ro (DB read-only, bloquea key_plaintext/key_hash/SELECT *)"
+    }
+  ],
+
+  "scripts_host": [],
+
+  "docs": [
+    "/home/victoria/.config/opencode/agents/cloudflare.md",
+    "/home/victoria/AGENTS.md §4",
+    "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md"
+  ],
+
+  "docs_oficiales": {
+    "regla": "ANTES de operar/configurar contra el servicio consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (systemctl/curl/logs). NUNCA inventar flags ni usar features de versiones no servidas.",
+    "fuentes": [
+      {
+        "nombre": "Cloudflare Tunnel docs (cloudflared)",
+        "url": "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/",
+        "contenido_clave": "instalacion, tokens, flags, metricas del tunel",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "cloudflared releases (GitHub)",
+        "url": "https://github.com/cloudflare/cloudflared/releases",
+        "contenido_clave": "tags .deb arm64 — canal de instalacion nuestro (deb-directo, SIN repo apt)",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "nginx docs",
+        "url": "https://nginx.org/en/docs/",
+        "contenido_clave": "directivas proxy (proxy_read_timeout, client_max_body_size, default_server)",
+        "verificada": "2026-10-08"
+      }
+    ]
+  },
+
+  "changelog": [
+    { "fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). cloudflared 2026.10.0 UP (4 conexiones edge, 0 reconexiones). nginx UP: victoria.local + default_server 404. IPv6 policy DROP total (712 pkts dropeados). SSH 1666 UP. E2E publico 200. Derivas doc vs live corregidas." },
+    { "fecha": "2026-10-08", "cambio": "Auditoria exposicion completa re-verificada: cloudflared 2026.10.0 UP (4 conexiones iad21/iad02, 0 reconexiones, 3 ERR streams cliente). nginx UP: server_name victoria.local + default_server 404. IPv6 policy DROP total (712 pkts dropeados). SSH 1666: victoria bash sudo + warcold rbash. RDP active sin listener :3389. E2E publico: /health 200, /admin 403, readonly /v1/config-guide 200, /v1/models 403 BY DESIGN. Derivas doc vs live: shell /bin/bash (no /bin/bbash), RDP sin :3389, ip6tables DROP subsumidos, nginx /openclaw/ 403." },
+    { "fecha": "2026-09-05", "cambio": "Admin panel responsive mobile-first (drawer hamburguesa <=860px, anti-zoom, touch >=44px, tablas scroll). Auditoria exposicion: tunel->403, IPv6->DROP, nginx->404; solo LAN. Desktop identico." },
+    { "fecha": "2026-08-29", "cambio": "Hardening IPv6 TOTAL: ip6tables -P INPUT DROP + lo/established/icmpv6 (persistido /etc/iptables/rules.v6 via netfilter-persistent). nginx default_server 404 (Host desconocido). Web UI solo LAN: dashboard 18800 IPv4-only, tunel CF solo a 127.0.0.1:8010. DMs solo owner (Discord allowlist + WhatsApp pairing)." }
+  ],
+
+  "changelogs": [
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-infra.md",
+    "/home/victoria/CHANGELOG.md"
+  ],
+
+  "no_touch": [
+    "Nunca exponer puerto nuevo a Internet sin orden del owner",
+    "/admin siempre LAN-only; Host desconocido siempre 404",
+    "NUNCA reiniciar servicios en tareas de solo-medicion",
+    "Tunel Cloudflare: NO auto-update — solo reportar; update manual con backup binario + E2E",
+    "canal instalacion cloudflared: deb-directo-github (SIN repo apt — no mezclar canales)"
+  ],
+
+  "recovery": "sudo systemctl restart cloudflared / nginx (backup gateway.conf antes). Tras apagon+ISP tardio: cloudflared reintenta ~30 min solo (StartLimitBurst=100/1800s, RestartSec=10s->max 120s).",
+
+  "medicion_live": {
+    "fecha": "2026-10-29T01:55:00Z",
+    "nota": "Harness estandarizado schema unificado. cloudflared 2026.10.0 UP (4 conexiones edge, 0 reconexiones). nginx UP. IPv6 DROP total. SSH 1666 UP. E2E publico 200.",
+    "versiones": {
+      "cloudflared": "2026.10.0",
+      "nginx": "distro",
+      "ssh": "port 1666"
+    }
+  },
+
+  "delegacion": {
+    "cuando_usar": "tunel caido, LAN no abre UIs, certificados/proxy/accesos, SSH/warcold, RDP",
+    "pre_check": "systemctl is-active cloudflared nginx && curl -sk -o /dev/null -w '%{http_code}' https://victoria.local/ | grep -q 200 || echo 'CloudFlare:down'",
+    "post_check": "curl -s -o /dev/null -w '%{http_code}' --max-time 10 --resolve victoria.armada.do:443:104.21.32.145 https://victoria.armada.do/health"
+  }
+}

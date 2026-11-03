@@ -1,0 +1,5 @@
+#!/bin/bash
+# Victoria Video Generator — wrapper CLI (tema → video vertical hablando con labios sincronizados)
+# Uso: victoria-video-gen "Explica qué es MCP y por qué es importante" [duracion]
+#      victoria-video-gen --status
+exec python3 /home/victoria/victoria-video-generator.py "$@"

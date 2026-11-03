@@ -1,0 +1,200 @@
+{
+ "harness": "vLLM",
+ "updated": "2026-11-03",
+ "mode": "subagent",
+ "hidden": false,
+ "temperature": 0.1,
+ "agent_file": "/home/victoria/.config/opencode/agents/vllm.md",
+ "scope": "Inferencia local: contenedor nemoclaw-vllm :8000 + gateway FastAPI :8010 (Qwen3.6-35B-A3B-NVFP4, 256K nativo, seqs 3, KV 12GiB, MTP speculative). Mision: mantener vLLM/gateway sirviendo con parametros medidos; diagnosticar cadena opencode->gateway->vLLM; gestionar llaves/roles/valvulas; programar SOLO segun docs versionadas.",
+ "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado al schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). vLLM vivo: contenedor nemoclaw-vllm UP (digest @sha256:9204569b), gateway :8010 UP (GET /v1/granja + /v1/config-guide expuestos). Flags sagrados confirmados: max-model-len 262144 + max-num-seqs 3 + gpu-mem-util 0.22 + kv-cache-bytes 12884901888 + tool-parser qwen3_xml + thinking OFF default. Admision adaptativa ACTIVA (FRÍO/CALIENTE en /health.engine). Provisioning delegado: POST /v1/provision-key (kalimete crea armada-magantech). Latencia P50 885ms / P95 21248ms (n=1634, 24h).",
+ "live_check": "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health | grep -q 200 && echo 'vLLM:up' || echo 'vLLM:down' ; curl -s http://127.0.0.1:8010/health | python3 -c \"import json,sys; c=json.load(sys.stdin).get('coder',{}); print('coder:', c.get('running'), c.get('healthy'))\"",
+ "checks": [
+  "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health",
+  "curl -s http://127.0.0.1:8010/health | python3 -m json.tool",
+  "docker inspect nemoclaw-vllm --format '{{.State.Status}} restart={{.HostConfig.RestartPolicy.Name}} label={{index .Config.Labels \"com.nvidia.nemoclaw.managed-vllm\"}}'",
+  "curl -s http://127.0.0.1:8000/v1/models | python3 -m json.tool",
+  "nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv",
+  "sqlite3 ~/.victoria-llm/llm-gateway.db \"SELECT COUNT(*) FROM usage_log WHERE timestamp >= datetime('now','-1 hour') AND success=1;\""
+ ],
+ "upstream": {
+  "fuente": "github vllm-project/vllm (release 0.21.x) + NGC nvidia:vllm@sha256:9204569b (26.05.post1) + HF nvidia/Qwen3.6-35B-A3B-NVFP4",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. digest PINNEADO @sha256:9204569b. NUNCA :latest/:tag movil. Upgrades NGC 26.06+ bloqueados (driver >=615.71 inexistente para kernel DGX).",
+  "version_servida_live": "docker inspect nemoclaw-vllm --format '{{.Config.Image}}' + docker exec nemoclaw-vllm python3 -c \"import vllm; print(vllm.__version__)\"",
+  "donde_mirar": [
+   "https://github.com/vllm-project/vllm/releases (known issues 0.21.x, security)",
+   "https://docs.nvidia.com/deeplearning/frameworks/vllm-release-notes/index.html (NGC digest)",
+   "https://huggingface.co/nvidia/Qwen3.6-35B-A3B-NVFP4 (model card updates)",
+   "https://ngc.nvidia.com/catalog/containers/nvidia:vllm (tags 26.06-26.09 disponibles)"
+  ],
+  "frecuencia": "trimestral (politica owner) o ante incidente/CVE",
+  "politica": "Solo REPORTAR hallazgos relevantes (CVE, fixes de bugs que sufrimos, performance). Proponer upgrade = Plan + owner.",
+  "como_reportar": "entrada en CHANGELOG-vllm.md + CHANGELOG.md general + aviso a Victoria en Task"
+ },
+ "servicios": [
+  {
+   "name": "nemoclaw-vllm (Docker)",
+   "puerto": 8000,
+   "imagen": "nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+   "version": "vLLM 0.21.0+2325b6f0 (NGC 26.05.post1, build 329071538)",
+   "modelo": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+   "flags_live": "--max-model-len 262144 --max-num-seqs 3 --gpu-memory-utilization 0.22 --kv-cache-memory-bytes 12884901888 --kv-cache-dtype fp8 --attention-backend flashinfer --moe-backend marlin --max-num-batched-tokens 8192 --tool-call-parser qwen3_xml --reasoning-parser qwen3 --load-format fastsafetensors --quantization modelopt --default-chat-template-kwargs {enable_thinking:false} --speculative-config mtp/3/triton",
+   "kv_cache_tokens": 1012483,
+   "kv_concurrencia_256k": "3.86x",
+   "label": "com.nvidia.nemoclaw.managed-vllm=true",
+   "restart": "unless-stopped"
+  },
+  {
+   "name": "victoria-llm-gateway.service",
+   "puerto": 8010,
+   "codigo": "/home/victoria/llm-gateway.py",
+   "db": "/home/victoria/.victoria-llm/llm-gateway.db",
+   "deps": "FastAPI 0.141.1 + uvicorn 0.52.3 + httpx 0.28.1 (python3 sistema)",
+   "provisioning_delegado_2026-10-20": {
+    "endpoint": "POST /v1/provision-key",
+    "permiso": "rol admin o cap 'provision' en allowed_models (la tiene kalimete)",
+    "fijos": "rol services + caps [llm] + prefijo armada- (cero escalada)",
+    "limites": "PROVISION_HOURLY_LIMIT=10/hora por provisionadora (429 provision_rate_limited); PROVISION_MAX_BUDGET/PROVISION_MAX_EXPIRY_HOURS=0 (sin tope)",
+    "auditoria": "tabla provision_log (provisionadora, llave creada, ip, ts)",
+    "primera_llave": "armada-magantech (2026-10-20 desde kalimete 10.0.0.106)"
+   },
+   "limites_vigentes": {
+    "MAX_PROMPT_TOKENS": 220000,
+    "UPSTREAM_MAX_CONCURRENCY": 3,
+    "UPSTREAM_MAX_PER_KEY": 2,
+    "PER_KEY_QUEUE_TIMEOUT_S": 90,
+    "PREFILL_EN_VUELO": "300K (600K FRIO)",
+    "TOKENS_PER_MIN": "4M (12M FRIO)",
+    "PROMPTS_100K_POR_MIN": "6 (18 FRIO)",
+    "GAP_PREFILLS_40K_S": 15,
+    "SYSTEM_MEM_MIN_GB": 16,
+    "THINKING_TOKEN_BUDGET": 2048,
+    "OUTPUT_MAX": 32000,
+    "RATE_LIMIT_DEFAULT": 120
+   },
+   "latencia_24h_medida_2026-10-08": "P50 885ms / P95 21248ms / avg 4582ms (n=1634)"
+  },
+  {
+   "name": "vLLM-Coder (on-demand)",
+   "puerto": 8001,
+   "url": "http://127.0.0.1:8001",
+   "modelo": "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",
+   "estado_default": "PARADO (on-demand)",
+   "acceso": "solo roles admin/coder",
+   "nota": "gateway lo arranca al 1er request; idle-stop 30/45 min"
+  }
+ ],
+ "scripts_host": [
+  "llm-gateway.py",
+  "vllm-loop-alert.py",
+  "observe-24h.py",
+  "victoria-gpu-saver.py"
+ ],
+ "docs": [
+  "/home/victoria/.config/opencode/agents/vllm.md",
+  "/home/victoria/AGENTS.md §2/§4/§5/§7",
+  "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md"
+ ],
+ "docs_oficiales": {
+  "regla": "ANTES de programar/configurar contra vLLM o el gateway consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (docker exec, /metrics, logs). NUNCA inventar flags ni usar features de versiones no servidas (0.21.0 / NGC 26.05.post1).",
+  "fuentes": [
+   {
+    "nombre": "Model card HuggingFace nvidia/Qwen3.6-35B-A3B-NVFP4",
+    "url": "https://huggingface.co/nvidia/Qwen3.6-35B-A3B-NVFP4",
+    "version": "NVFP4 1.0, modelopt v0.44.0, release 2026-05-28",
+    "contenido_clave": "contexto 262K; VLM nativo (text/image/video); sampling SciCode temp 0.6/top_p 0.95 vs general 1.0/0.95; receta DGX Spark oficial (gpu-mem-util 0.4, seqs 4 — nosotros desviamos deliberado a 0.22+KV-bytes+seqs 3); tool parser qwen3_xml recomendado",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "Help versionado del contenedor (fuente de verdad OFFLINE de nuestra version)",
+    "url": "docker exec nemoclaw-vllm vllm serve --help=<Grupo> (CacheConfig, ModelConfig, Frontend, --help=all)",
+    "version": "vLLM 0.21.0+2325b6f0",
+    "contenido_clave": "kv-cache-memory-bytes: 'By default None and vllm can automatically infer the kv cache size based on gpu_memory_utilization' (por que SIEMPRE va explicito en GB10); choices de tool-call-parser incluyen qwen3_xml",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "vLLM docs (canonica web - OJO: version latest, no la nuestra)",
+    "url": "https://docs.vllm.ai/en/latest/",
+    "version": "latest (upstream 0.31.x)",
+    "contenido_clave": "docs generales vLLM; NO describe nuestra version 0.21.0",
+    "verificada": "2026-10-08: 429 rate-limit en 3 intentos — fallback al help del contenedor"
+   },
+   {
+    "nombre": "NGC container page vLLM",
+    "url": "https://ngc.nvidia.com/catalog/containers/nvidia:vllm",
+    "version": "latest 26.09-py3 (2026-09-28); nuestra 26.05.post1-py3 listada",
+    "contenido_clave": "tags disponibles, firma digital, nota OOM DGX Spark, link a release notes",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "NGC vLLM release notes",
+    "url": "https://docs.nvidia.com/deeplearning/frameworks/vllm-release-notes/index.html",
+    "version": "por tag de container",
+    "contenido_clave": "changelog oficial de cada build NGC (incl. 26.05.post1)",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "vLLM GitHub releases",
+    "url": "https://github.com/vllm-project/vllm/releases",
+    "version": "latest v0.31.0 (2026-10-05)",
+    "contenido_clave": "known issues/security fixes: fix deadlock KV+MTP #57104, fix MTP acceptance collapse #59309, fix livelock chunked-prefill #59494, vllm preload, --max-num-active-seqs",
+    "verificada": "2026-10-08"
+   }
+  ]
+ },
+ "changelog": [
+  {
+   "fecha": "2026-10-29",
+   "cambio": "Harness estandarizado al schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). GET /v1/granja desplegado en gateway (catalogo LIVE 12 servicios). Provisioning delegado activo (armada-magantech). Admision adaptativa FRÍO/CALIENTE en /health.engine."
+  },
+  {
+   "fecha": "2026-10-20",
+   "cambio": "Provisioning delegado: POST /v1/provision-key (rol services + caps [llm] fijos, prefijo armada-*, 10/hora, auditoria provision_log). Primera llave: armada-magantech desde kalimete."
+  },
+  {
+   "fecha": "2026-10-14",
+   "cambio": "Forense freeze 2026-10-13 + triple blindaje: sandbox RestartPolicy=unless-stopped, gpu-saver watchdog carga sostenida (util>=85% 10min -> alerta WA+Discord fallback), gateway valvula 5 (motor sin pausas 10min -> gap 8s)."
+  },
+  {
+   "fecha": "2026-10-01",
+   "cambio": "Contexto nativo 256K + seqs 3 (3x262144=786K <= KV 1,012,483). Canje: 4 seqs -> 3 seqs + contexto nativo completo. 14 dias data: pico real 3 seqs (0.17%), 4 seqs NUNCA usadas."
+  },
+  {
+   "fecha": "2026-09-29",
+   "cambio": "KV cache acotado: --kv-cache-memory-bytes 12884901888 (12GiB ≈ 1,012K tokens) + --max-num-seqs 6->4 + gpu-mem-util 0.22. Libera ~9GiB para Sonic/OS. En GB10 gpu-mem-util NO controla KV (memoria unificada)."
+  }
+ ],
+ "changelogs": [
+  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-vllm.md",
+  "/home/victoria/CHANGELOG.md"
+ ],
+ "no_touch": [
+  "digest @sha256:9204569b siempre (nunca tag movil)",
+  "gpu-memory-utilization 0.22 + kv-cache-memory-bytes 12884901888 + max-num-seqs 3 + max-model-len 262144 (sagrados)",
+  "firewall IPv6 :8000 DROP, NUNCA quitar",
+  "opencode.jsonc sin confirmacion del owner",
+  "key_plaintext: columnas explicitas en la DB, nunca SELECT *"
+ ],
+ "recovery": [
+  "Contenedor ausente: receta canonica docker run en vllm.md (intocable, confirmacion owner primero; carga 5-7min frio / ~1-2min caliente).",
+  "Gateway roto: sudo systemctl restart victoria-llm-gateway.service (stateless salvo SQLite).",
+  "vLLM colgado: victoria-gpu-saver lo detecta (4 probes hung ~4min) y hace docker restart con cooldown 15min.",
+  "QUIRK docker logs: tras corte electrico el json log queda corrupto en el punto del corte -> stream forward se corta y --since devuelve vacio; usar docker logs --tail N o leer $(docker inspect --format '{{.LogPath}}' nemoclaw-vllm) con sudo tail -c; se auto-cura al recrear el contenedor."
+ ],
+ "medicion_live": {
+  "fecha": "2026-10-29T01:55:00Z",
+  "nota": "Harness estandarizado schema unificado. vLLM vivo: contenedor UP, gateway UP, /v1/granja expuesto, provisioning delegado activo, admision adaptativa ACTIVA.",
+  "versiones": {
+   "vLLM": "0.21.0+2325b6f0",
+   "NGC": "26.05.post1",
+   "modelo": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+   "digest": "sha256:9204569b"
+  }
+ },
+ "delegacion": {
+  "cuando_usar": "vLLM cae, hay que rearmarlo, diagnosticar inferencia, reiniciar gateway, gestionar llaves/roles/valvulas, provisioning",
+  "pre_check": "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health | grep -q 200 || echo 'vLLM:down'",
+  "post_check": "curl -s http://127.0.0.1:8010/health | python3 -m json.tool"
+ },
+ "vivo_2026_11_01": "vLLM-Coder desplegado: contenedor nemoclaw-vllm-coder :8001 loopback-only PARADO por defecto, modelo NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4 (18.1G), KV 8GiB=174,752 tokens, ctx 128K, seqs 2, parser qwen3_coder. On-demand: gateway arranca al 1er request (503 warming_up Retry-After 150; ~70-90s con compile cache), idle-stop timer 5min detiene a los 30min (45 con requests en vuelo, anti-zombis). ACCESO solo admin/coder (403 resto). Protecciones: gate arranque (render lock + RAM>=20G), guardia RAM en arbiter check_ready (30G), valvula RAM 16G->10G con coder, valvula 7 coder_busy (prompts>=40K al generalista). Fix colateral: unit gateway fijado a /usr/bin/python3.12 (symlink python3 -> 3.13 sin httpx deriva 29-oct). E2E verificado: 403/200 por tier, opencode agéntico escribió archivo real con 87K prompt, metering por modelo.",
+ "vivo_2026_11_03": "Firewall :8000 LAN IPv4 en DOCKER-USER (unit victoria-firewall-vllm.service, After=docker.service): RETURN 127.0.0.1+172.16.0.0/12, DROP resto. E2E: LAN=000, loopback OK, sandbox 200, :8010 intacto. Gate coder CODER_START_MIN_RAM_GB=28 (drop-in coder-ram-gate.conf; NVRM events nov1-2 con RAM 24-27GB). opencode 1.19.5 ambos hosts."
+}

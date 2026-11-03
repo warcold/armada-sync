@@ -1,0 +1,125 @@
+{
+  "harness": "Liveportrait",
+  "updated": "2026-10-29",
+  "mode": "subagent",
+  "hidden": false,
+  "temperature": 0.1,
+  "agent_file": "/home/victoria/.config/opencode/agents/liveportrait.md",
+  "scope": "Servicio WebUI LivePortrait :8180 (talking-head SOTA + UI ES 3 tabs: Animar/Retoque facial/Retoque video + tab Estudio Podcast) + Animar-chat :18861 (motor thin daemon). UI: 3 tabs (Animar/Retoque facial/Retoque video), fotos Victoria ejemplos 1 clic, opciones avanzadas colapsadas, audio propio (dobla, AUDIO manda duracion), lip-sync real = Sonic. Pesos 2.0G (Humans+Animals, solo Humans probado). Gradio 6.29.1 + fixes 8 (theme/css en launch, root_path, retry 3x5s, guardias ES, uploader audio, duracion mando). Mision: UI no abre, animacion falla, ejemplos 404, actualizar interfaz, lp-animate.",
+  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. LivePortrait UP (systemctl active, 200 en :8180 y via nginx /liveportrait/). Gradio 6.29.1 + 8 fixes (theme/css en launch, root_path='/liveportrait', retry 3x5s, guardias ES, uploader audio, duracion mando). Pesos 2.0G (liveportrait 608M + animals 1.4G + insightface 21M + docs 3.6M). VRAM idle ~3.0G. 3 locks via _arbiter_guard(): liveportrait-animate, liveportrait-retouch, estudio-podcast (re-entrancia a Sonic via gpu_token). Tab Estudio Podcast: pipeline Sonic (TTS->Sonic->whisper->ffmpeg 1080x1920+subs+logo) + audio propio (nota de voz salta TTS, guion opcional, subs via whisper). Animar-chat :18861 UP (lp-animate daemon + presets 01/02/03). Repo HEAD 9b294b3d = origin/master (upstream sin movimiento desde 2026-06-02).",
+
+  "live_check": "systemctl is-active liveportrait && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8180/ | grep -q 200 && echo 'LivePortrait:up' || echo 'LivePortrait:down'",
+
+  "checks": [
+    "systemctl is-active liveportrait",
+    "curl -s http://127.0.0.1:8180/ -o /dev/null -w '%{http_code}'",
+    "curl -sk -o /dev/null -w '%{http_code}' https://victoria.local/liveportrait/",
+    "curl -s http://127.0.0.1:18861/health",
+    "python3 /home/victoria/gpu_arbiter.py status 2>/dev/null | grep -E 'liveportrait|kind'"
+  ],
+
+  "upstream": {
+    "fuente": "github KlingAIResearch/LivePortrait (HEAD 9b294b3d = origin/master, upstream sin movimiento desde 2026-06-02) + Gradio (venv 6.29.1, PyPI)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. app.py custom: NUNCA sobreescribir sin leer §Fixes aplicados (8 fixes: theme/css en launch, root_path, retry 3x5s, guardias ES, uploader audio, duracion mando). Upgrades Gradio caso por caso contra changelog upstream, nunca auto.",
+    "version_servida_live": "cd ~/LivePortrait && git log -1 --oneline",
+    "donde_mirar": [
+      "cd ~/LivePortrait && git fetch && git log HEAD..origin/master --oneline (upstream-sync.py cada 6h)",
+      "https://github.com/KlingAIResearch/LivePortrait (Gradio 6.x API, talking-head SOTA, pesos CC-NC-ND)",
+      "https://www.gradio.app/docs (launch theme/css/root_path, gr.File file_types, API /gradio_api/)",
+      "https://huggingface.co/KlingTeam/LivePortrait (~2GB Humans+Animals)"
+    ],
+    "frecuencia": "upstream-sync.py cada 6h",
+    "politica": "app.py custom: NUNCA sobreescribir sin leer §Fixes aplicados; upgrades Gradio caso por caso contra changelog upstream, nunca auto. Riesgo upgrade bajo (no fusionamos app.py; git pull solo tocaria src/).",
+    "como_reportar": "entrada en CHANGELOG-liveportrait.md (seccion upstream) + aviso a Victoria en Task"
+  },
+
+  "servicios": [
+    {
+      "name": "liveportrait.service",
+      "puerto": 8180,
+      "lan": "victoria.local/liveportrait/",
+      "venv": "/home/victoria/liveportrait-venv (Gradio 6.29.1)",
+      "codigo": "/home/victoria/LivePortrait/app.py (custom; pipeline intacto + 8 fixes)"
+    },
+    {
+      "name": "victoria-lp-animate.service",
+      "puerto": 18861,
+      "lan": "victoria.local/animar/",
+      "daemon": "/home/victoria/lp-animate-server.py (thin, mismo CLI, single-flight, sense_auth)",
+      "wrapper": "/home/victoria/.victoria-custom/bin/lp-animate (dual-mode, gate animar)",
+      "presets": "01-saludo 3.1s, 02-habla 7.2s, 03-energia 8.3s",
+      "desde": "2026-10-09"
+    }
+  ],
+
+  "scripts_host": [],
+
+  "docs": [
+    "/home/victoria/.config/opencode/agents/liveportrait.md",
+    "/home/victoria/AGENTS.md §11",
+    "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md"
+  ],
+
+  "docs_oficiales": {
+    "regla": "ANTES de operar/configurar contra el servicio consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (systemctl/curl/logs). NUNCA inventar flags ni usar features de versiones no servidas.",
+    "fuentes": [
+      {
+        "nombre": "Repo LivePortrait (canonico)",
+        "url": "https://github.com/KlingAIResearch/LivePortrait",
+        "contenido_clave": "19.2k estrellas; nuestro clone HEAD 9b294b3d = origin/master; app.py custom con 8 fixes (backups .bkup-*); upstream sin movimiento desde 2026-06-02",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Gradio docs",
+        "url": "https://www.gradio.app/docs",
+        "contenido_clave": "6.x: launch() (theme/css/root_path), gr.File file_types, API /gradio_api/",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Pesos HuggingFace",
+        "url": "https://huggingface.co/KlingTeam/LivePortrait",
+        "contenido_clave": "~2GB Humans+Animals (solo Humans probado en GB10); du live 2.0G verificado 2026-10-08",
+        "verificada": "2026-10-08"
+      }
+    ]
+  },
+
+  "changelog": [
+    { "fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). LivePortrait UP: Gradio 6.29.1 + 8 fixes, pesos 2.0G, VRAM ~3.0G, 3 locks arbiter (animate/retouch/estudio-podcast). Tab Estudio Podcast: pipeline Sonic + audio propio. Animar-chat :18861 UP (presets 01/02/03). Repo HEAD 9b294b3d = origin/master." },
+    { "fecha": "2026-10-09", "cambio": "Animar-chat :18861 desplegado (lp-animate daemon + presets 01/02/03, single-flight, sense_auth, gpu_arbiter lp-animate kind liveportrait). Kalimete consume via assets-3d skill (E2E verificado: mp4 17s)." },
+    { "fecha": "2026-10-07", "cambio": "Audio propio en Animar paso 3: uploader gr.File [.mp3/.mpeg/.mpg/.oga/.opus/.m4a/.aac/.wav/.ogg/.webm/.flac/.amr/.wma/.aiff/.mid] + audio_own_ok (extension o ffprobe audio-sin-video) + mux_own_audio doblaje con EL AUDIO MANDANDO la duracion (nota mas corta -> video recortado; mas larga -> ultimo frame congelado; +-0.05s -> mux directo). Lip-sync real = Sonic." },
+    { "fecha": "2026-09-28", "cambio": "UI v2 ES: 3 tabs (Animar/Retoque facial/Retoque video), fotos Victoria ejemplos 1 clic, opciones avanzadas colapsadas, CSS propio (max-width 1320px, boton primario grande, aire), guardias ES (gr.Error), retry launch 3x5s (fix bug Gradio 5.x localhost check que causo crash-loop ~100 PIDs). root_path='/liveportrait' en launch() (fix proxy 413/404). client_max_body_size 500M en nginx." },
+    { "fecha": "2026-09-18", "cambio": "LivePortrait movido a grupo Contenido (grupo 4). GPU compartida via gpu_arbiter.py (3 holders via _arbiter_guard: animate/retouch/estudio-podcast). Tab Estudio Podcast: pipeline Sonic (TTS->Sonic->whisper->ffmpeg 1080x1920+subs+logo) + biblioteca-podcast.json + guia movimiento opcional hibridada con LivePortrait region pose." }
+  ],
+
+  "changelogs": [
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-liveportrait.md",
+    "/home/victoria/CHANGELOG.md"
+  ],
+
+  "no_touch": [
+    "src/gradio_pipeline.py intacto",
+    "pesos no se mueven",
+    "NUNCA revertir los 8 fixes sin leer CHANGELOG",
+    "NUNCA tocar src/gradio_pipeline.py",
+    "renders ComfyUI grandes JAMAS a la vez (OOMs 09-27/28)"
+  ],
+
+  "recovery": "sudo systemctl restart liveportrait (refrescar pagina: ejemplos en /tmp/gradio/<hash>/ cambian). Fixes no revertir: theme/css en launch(), root_path, retry 3x5s, guardias ES.",
+
+  "medicion_live": {
+    "fecha": "2026-10-29T01:55:00Z",
+    "nota": "Harness estandarizado schema unificado. LivePortrait UP: Gradio 6.29.1 + 8 fixes, pesos 2.0G, VRAM ~3.0G, 3 locks arbiter. Animar-chat :18861 UP (presets 01/02/03). Repo HEAD 9b294b3d = origin/master.",
+    "versiones": {
+      "repo": "KlingAIResearch/LivePortrait @ 9b294b3d = origin/master",
+      "venv": "gradio 6.29.1, torch 2.14.0+cu130",
+      "app_py_custom": "90,898 bytes, 1574 lineas, 8 fixes (backups .bkup-*)"
+    }
+  },
+
+  "delegacion": {
+    "cuando_usar": "UI no abre, animacion falla, ejemplos 404, actualizar interfaz, lp-animate, tab Estudio Podcast",
+    "pre_check": "systemctl is-active liveportrait && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8180/ | grep -q 200 || echo 'LivePortrait:down'",
+    "post_check": "curl -s http://127.0.0.1:8180/health 2>/dev/null | head -c 100"
+  }
+}

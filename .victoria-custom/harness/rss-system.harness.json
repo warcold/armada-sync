@@ -1,0 +1,108 @@
+{
+  "harness": "RSS System",
+  "updated": "2026-10-29",
+  "mode": "subagent",
+  "hidden": false,
+  "temperature": 0.1,
+  "agent_file": "/home/victoria/.config/opencode/agents/rss-system.md",
+  "scope": "Agregacion RSS/Atom: blogwatcher Go ARM64 (13 feeds activos) + enriquecimiento article_extracts (1500-2500 chars) para distribucion sin alucinacion. DB primaria HOST + copia sandbox via docker cp. Scan cron */2h. Mision: gestionar feeds, monitorizar blogs, diagnosticar blogwatcher/enrichment.",
+  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. blogwatcher v0.0.4 UP (binario 13.9MB Go ARM64 estatico). 13 feeds activos (Wired 1075, CoinDesk 1067, Cointelegraph 1058, Hipertextual 797, Xataka 730, ArsTechnica 689, Hackernoon 541, XatakaMX 488, TheRegister 303, GamerLinux 173, K8s 51, TechCrunch 21, Docker 19). DevTo REMOVIDO 2026-10-26 (firehose 141/dia). DB primaria HOST 5.7MB (7012 articles, 772 extracts). Scan cron */2h + enrich cap 40/corrida (4x headroom). UA override Chrome 126 para 4 feeds. Remove falla con FK (bug upstream).",
+
+  "live_check": "ls -lh ~/.victoria-custom/bin/blogwatcher && sqlite3 ~/.victoria-custom/blogwatcher/blogwatcher.db 'SELECT count(*) FROM article_extracts' | grep -q '^[0-9]\\+$' && echo 'RSS:up' || echo 'RSS:down'",
+
+  "checks": [
+    "ls -lh ~/.victoria-custom/bin/blogwatcher",
+    "sqlite3 ~/.victoria-custom/blogwatcher/blogwatcher.db 'SELECT count(*) FROM article_extracts'",
+    "cat ~/.victoria-custom/state/news-central.json | head -c 300",
+    "grep enrich /home/victoria/logs/rss-broadcast.log | tail -3"
+  ],
+
+  "upstream": {
+    "fuente": "github Hyaxia/blogwatcher (v0.0.4 = upstream actual; repo sin docs web, README+codigo son canonicos)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Si sale v0.0.5+: rebuild Go estatico + propagar con openclaw-rss-install.sh.",
+    "version_servida_live": "~/.victoria-custom/bin/blogwatcher --version 2>/dev/null || echo 'v0.0.4-dev'",
+    "donde_mirar": [
+      "https://github.com/Hyaxia/blogwatcher/releases (upstream-sync.py cada 6h)"
+    ],
+    "frecuencia": "upstream-sync.py cada 6h",
+    "politica": "Rebuild Go estatico si nueva version; propagar con openclaw-rss-install.sh ensure.",
+    "como_reportar": "entrada en CHANGELOG-rss.md (seccion upstream) + aviso a Victoria en Task"
+  },
+
+  "servicios": [
+    {
+      "name": "blogwatcher (Go ARM64, fuente v0.0.4)",
+      "bin_host": "/home/victoria/.victoria-custom/bin/blogwatcher",
+      "bin_sandbox": "/sandbox/.openclaw/bin/blogwatcher",
+      "db_primaria": "/home/victoria/.victoria-custom/blogwatcher/blogwatcher.db (HOST, scan cron */2h)",
+      "db_copia_sandbox": "/sandbox/.openclaw/blogwatcher/blogwatcher.db (docker cp cada 2h)",
+      "enrichment": "~/.victoria-custom/bin/enrich-articles.py -> tabla article_extracts (extractos 1500-2500 chars; interfaz Meta Business)"
+    }
+  ],
+
+  "scripts_host": [
+    "openclaw-rss-install.sh",
+    "rss-broadcast.sh",
+    "news-central-scan.py",
+    "~/.victoria-custom/bin/enrich-articles.py"
+  ],
+
+  "docs": [
+    "/home/victoria/.config/opencode/agents/rss-system.md",
+    "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md"
+  ],
+
+  "docs_oficiales": {
+    "regla": "ANTES de operar/configurar contra el servicio consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (systemctl/curl/logs). NUNCA inventar flags ni usar features de versiones no servidas.",
+    "fuentes": [
+      {
+        "nombre": "Repo blogwatcher (canonico)",
+        "url": "https://github.com/Hyaxia/blogwatcher",
+        "contenido_clave": "repo chico SIN docs web: README + codigo son la fuente canonica; nuestro binario v0.0.4 Go ARM64 estatico compilado local",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Flags del CLI (fuente offline)",
+        "url": "blogwatcher --help",
+        "contenido_clave": "verdad de NUESTRA version compilada",
+        "verificada": "2026-10-08"
+      }
+    ]
+  },
+
+  "changelog": [
+    { "fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). 13 feeds activos, DevTo removido, 7012 articles, 772 extracts, scan */2h + enrich cap 40." },
+    { "fecha": "2026-10-26", "cambio": "DevTo REMOVIDO (firehose 141/dia inundaba pool IG). DB primaria 5.7MB (7012 articles, 772 extracts). 13 feeds: Wired 1075, CoinDesk 1067, Cointelegraph 1058, Hipertextual 797, Xataka 730, ArsTechnica 689, Hackernoon 541, XatakaMX 488, TheRegister 303, GamerLinux 173, K8s 51, TechCrunch 21, Docker 19. UA override Chrome 126 para 4 feeds." },
+    { "fecha": "2026-10-08", "cambio": "blogwatcher v0.0.4 Go ARM64 estatico 13.9MB compilado local (CGO_ENABLED=0). DB primaria HOST + copia sandbox. Enrichment article_extracts 1500-2500 chars para distribucion sin alucinacion. Remove falla con FK (bug upstream)." }
+  ],
+
+  "changelogs": [
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-rss.md",
+    "/home/victoria/CHANGELOG.md"
+  ],
+
+  "no_touch": [
+    "blogwatcher remove FALLA con FK si el blog tiene articles (bug upstream v0.0.4) — receta SQL manual en rss-system.md §11",
+    "UA override Chrome 126 aarch64 en K8s/Hackernoon/GamerLinux/Docker/TheRegister (los 403 eran JA3 de Go sin UA)",
+    "Scan cron */2h via rss-broadcast.sh (scan + enrich + sync sandbox + news-central + resumen)",
+    "Enrich: unread 72h, mas recientes primero, cap 40/corrida, retry fallos tras 6h (max 2)"
+  ],
+
+  "recovery": "openclaw-rss-install.sh ensure (reinstala binario) + persist.sh restaura DB. Scan via nsenter + proxy L7 + CA openshell-tls.",
+
+  "medicion_live": {
+    "fecha": "2026-10-29T01:55:00Z",
+    "nota": "Harness estandarizado schema unificado. blogwatcher v0.0.4 UP. 13 feeds, 7012 articles, 772 extracts, scan */2h + enrich cap 40.",
+    "versiones": {
+      "blogwatcher": "v0.0.4 (Go ARM64 estatico 13.9MB)",
+      "db_host": "5.7MB (7012 articles, 772 extracts)",
+      "feeds_activos": 13
+    }
+  },
+
+  "delegacion": {
+    "cuando_usar": "gestionar feeds RSS, monitorizar blogs, diagnosticar blogwatcher/enrichment, DevTo removal",
+    "pre_check": "ls -lh ~/.victoria-custom/bin/blogwatcher && sqlite3 ~/.victoria-custom/blogwatcher/blogwatcher.db 'SELECT count(*) FROM article_extracts' | grep -q '^[0-9]\\+$' || echo 'RSS:down'",
+    "post_check": "sqlite3 ~/.victoria-custom/blogwatcher/blogwatcher.db 'SELECT count(*) FROM article_extracts'"
+  }
+}

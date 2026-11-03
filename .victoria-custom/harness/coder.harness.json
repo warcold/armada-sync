@@ -1,0 +1,22 @@
+{
+ "harness": "coder",
+ "updated": "2026-11-02",
+ "mode": "subagent",
+ "hidden": false,
+ "agent_file": "/home/victoria/.config/opencode/agents/coder.md",
+ "model": "vllm/NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",
+ "model_display_name": "Coding con Victoria",
+ "scope": "Ejecutor de código pesado: corre pineado al modelo Coding con Victoria (Qwen3-Coder-30B, on-demand :8001, texto only). La sesión primaria planea (todowrite) y delega implementación vía Task. NO toca servicios del stack (eso es de vLLM/OpenClaw/Comfyui/etc) — escribe código de proyecto.",
+ "temperature": 0.6,
+ "top_p": 0.95,
+ "context_limit": 96000,
+ "output_limit": 22000,
+ "on_demand": "503 warming_up la 1ª vez (~90s con compile cache); idle auto-stop 30 min (0 RAM)",
+ "roles": [
+  "admin",
+  "coder"
+ ],
+ "live_check": "cat ~/.victoria-llm/coder-state 2>/dev/null; curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8001/health",
+ "changelog": "general (no tiene servicio propio)",
+ "created": "2026-11-02 — decisión owner: flota Using/Thinking/Coding + subagente ejecutor"
+}

@@ -1,0 +1,671 @@
+#!/usr/bin/env python3
+"""art-approve — ventanas por grupo/canal y por FEATURE (modo creativo 2026-10-09 v3).
+
+SOLO el owner manda aquí (vía DM o en el mismo grupo: senderIsOwner). El agente
+JAMÁS ejecuta approve/deny/revoke por petición de un no-owner.
+
+Scopes (string libre, 2 plataformas):
+  wa:<group-jid> ......... ej. wa:120363429817888300@g.us (grupo WhatsApp)
+  dc:<guild-id> ........... ej. dc:1365731253629751406 (servidor Discord Tech Hub)
+  dc:<guild>:<channel> .... ej. dc:1365731253629751406:123456789012345678 (canal dentro del guild)
+Features: imagen | 3d | video | animar (PESADOS, ventana obligatoria) | busqueda | voz (LIBRES, siempre-open).
+Archivo: /sandbox/.openclaw/workspace/art-approvals.json (respaldado por
+persist.sh; sobrevive rebuilds). Ventanas: máx 4 horas (default 4, cap duro),
+cuota default 10 usos por ventana. Solicitudes: UNA pendiente por (scope+feature),
+expiran en 24h, sin re-notificar si ya hay una vigente.
+
+Estado v3: {"scopes": {scope: {feature: {ventana}}}, "pending": {"scope||feature": {...}}}.
+Compatible hacia atrás: ventanas v1 planas (sin feature = imagen) se migran en
+lectura; `approve <scope> <horas>` sigue significando imagen; pendientes v1/v2
+(clave = scope solo) se migran a clave compuesta scope||feature en lectura.
+
+Uso:
+  art-approve request <scope> [--feature F] --prompt "..." --requester "nombre" [--note TXT]
+      # registra UNA solicitud (scope+feature); si ya hay una vigente (<24h)
+      # NO duplica ni re-notifica (dedup:true, notified:false). Novedad => notified:true + dm.
+  art-approve approve <scope> [feature] [horas] [--max N] [--note TXT]
+      # abre/renueva ventana del feature (cap 4h); sin feature = imagen (v1).
+      # Si hay solicitud pendiente la devuelve en "pending_request" y la limpia.
+  art-approve deny <scope> [feature]    # rechaza la solicitud pendiente
+  art-approve revoke <scope> [feature]  # cierra la ventana YA (sin feature = TODO el scope)
+  art-approve status [--scope S] [--feature F]
+  art-approve flow <scope> <feature> [--requester N] [--prompt P] [--owner]
+      # DECISIÓN completa en seco (ligero/pesado/bypass/ventana/solicitud+DM). NUNCA envía nada.
+  art-approve natural "<texto>" --scope <scope>
+      # Comandos del owner EN EL GRUPO: abro/abre <feature> [horas] | modo creativo [horas]
+      # | cierro <feature> | cierra todo | sí <feature> [horas] (DM). Ejecuta + anuncio.
+"""
+import argparse
+import json
+import os
+import re
+import sys
+from datetime import datetime, timedelta, timezone
+
+APPROVALS_FILE = os.environ.get("ART_APPROVALS",
+                                "/sandbox/.openclaw/workspace/art-approvals.json")
+MAX_HOURS = 4          # cap duro del owner (2026-10-05: "no más de 4")
+DEFAULT_HOURS = 4
+DEFAULT_MAX_USES = 10
+REQUEST_TTL_H = 24     # la solicitud al owner expira en 24h (2026-10-09)
+PSEP = "||"            # separador de la clave compuesta pending scope||feature
+
+# Features del modo creativo (2026-10-09). "imagen" es la original (v1).
+# "animar" (2026-10-09): videito LivePortrait por chat (foto+preset/guia).
+FEATURES = ("imagen", "3d", "video", "animar", "busqueda", "voz")
+# Doctrina LIGERO vs PESADO (orden del owner 2026-10-09): busqueda y voz son
+# LIBRES (siempre-open, informativos); imagen/3d/video/animar son PESADOS (ventana obligatoria).
+HEAVY = ("imagen", "3d", "video", "animar")
+LIGHT = ("busqueda", "voz")
+
+GUIDE = ("ese modo aún no está abierto en este grupo — "
+         "pídele a Alfredo que lo active 🔓")
+OWNER_WA = "18295468686"
+OWNER_DC = "693703068461826110"
+
+
+def _now():
+    return datetime.now(timezone.utc)
+
+
+def _migrate_scope_entry(e):
+    """v1 plano {expires_at,...} -> v2 {imagen: {...}}. v2 se deja igual."""
+    if not isinstance(e, dict):
+        return {}
+    if "expires_at" in e:
+        return {"imagen": e}
+    return {k: v for k, v in e.items() if k in FEATURES and isinstance(v, dict)}
+
+
+def _pending_key(scope, feature):
+    return f"{scope}{PSEP}{feature}"
+
+
+def _split_pending_key(k, v=None):
+    """(scope, feature) desde clave nueva o vieja (scope solo + feature del valor)."""
+    if PSEP in (k or ""):
+        s, _, f = k.partition(PSEP)
+        return s, (f or "imagen")
+    feat = "imagen"
+    if isinstance(v, dict) and isinstance(v.get("feature"), str) and v["feature"] in FEATURES:
+        feat = v["feature"]
+    return k, feat
+
+
+def load_state():
+    try:
+        with open(APPROVALS_FILE) as f:
+            d = json.load(f)
+        if not isinstance(d, dict):
+            d = {}
+    except Exception:
+        d = {}
+    d.setdefault("scopes", {})
+    d.setdefault("pending", {})
+    # Migración v1->v2 de ventanas en lectura (semántica idéntica: plano = imagen).
+    for scope, entry in list(d["scopes"].items()):
+        d["scopes"][scope] = _migrate_scope_entry(entry)
+    # Migración de pendientes v1/v2 (clave scope) -> v3 (clave scope||feature).
+    migrated = {}
+    for k, p in list(d["pending"].items()):
+        if not isinstance(p, dict):
+            continue
+        scope, feat = _split_pending_key(k, p)
+        if not _valid_feature(feat):
+            feat = "imagen"
+        p.setdefault("feature", feat)
+        p.setdefault("scope", scope)
+        p.setdefault("requester", p.get("requester") or p.get("requested_by") or "alguien")
+        if not p.get("requested_at"):
+            p["requested_at"] = _now().isoformat()
+        if not p.get("expires_at"):
+            try:
+                req = datetime.fromisoformat(p["requested_at"])
+                if req.tzinfo is None:
+                    req = req.replace(tzinfo=timezone.utc)
+                p["expires_at"] = (req + timedelta(hours=REQUEST_TTL_H)).isoformat()
+            except Exception:
+                p["expires_at"] = (_now() + timedelta(hours=REQUEST_TTL_H)).isoformat()
+        migrated[_pending_key(scope, feat)] = p
+    d["pending"] = migrated
+    return d
+
+
+def save_state(d):
+    os.makedirs(os.path.dirname(APPROVALS_FILE), exist_ok=True)
+    tmp = APPROVALS_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(d, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, APPROVALS_FILE)
+
+
+def _valid_scope(s):
+    # wa:<jid> | dc:<guild> | dc:<guild>:<channel> (scope = string libre por plataforma).
+    return bool(re.fullmatch(r"(wa:[0-9]+@g\.us|dc:[0-9]+(?::[0-9]+)?)", s or ""))
+
+
+def _scope_platform(scope):
+    s = (scope or "").strip()
+    if s == "dm" or not s:
+        return "dm"
+    if s.startswith("wa:"):
+        return "whatsapp"
+    if s.startswith("dc:"):
+        return "discord"
+    return "desconocida"
+
+
+def _scope_label(scope):
+    s = (scope or "").strip()
+    if s == "dm" or not s:
+        return "DM"
+    if s.startswith("wa:"):
+        return f"grupo WhatsApp {s[3:]}"
+    if s.startswith("dc:"):
+        parts = s[3:].split(":")
+        if len(parts) == 2:
+            return f"canal {parts[1]} del servidor Discord {parts[0]}"
+        return f"servidor Discord {parts[0]}"
+    return s
+
+
+def _valid_feature(f):
+    return f in FEATURES
+
+
+def _is_request_vigente(p):
+    try:
+        req = datetime.fromisoformat(p.get("requested_at", ""))
+        if req.tzinfo is None:
+            req = req.replace(tzinfo=timezone.utc)
+        return (_now() - req) < timedelta(hours=REQUEST_TTL_H)
+    except Exception:
+        return False
+
+
+def _dm_payloads(scope, feature, requester, prompt):
+    """Payload EXACTO del DM al owner (NO se envía aquí; el agente lo envía)."""
+    plat = _scope_platform(scope)
+    where = _scope_label(scope)
+    who = (requester or "un miembro").strip()[:120]
+    snippet = (prompt or "").strip()[:140]
+    approve_cmd = f"art-approve approve {scope} {feature} 4"
+    deny_cmd = f"art-approve deny {scope} {feature}"
+    body = (f"🎨 {who} pidió {feature} en {where} ({scope}): '{snippet}'. "
+            f"Para aprobar en 1 paso: `{approve_cmd}` "
+            f"(o responde `sí {feature} 4`). Para denegar: `{deny_cmd}`.")
+    wa_msg = body
+    dc_msg = body
+    return {
+        "approve_cmd": approve_cmd,
+        "deny_cmd": deny_cmd,
+        "alt_natural": f"sí {feature} 4",
+        "whatsapp": {"target": OWNER_WA, "message": wa_msg,
+                     "send_cmd": ("openclaw message send --channel whatsapp "
+                                  f"--target {OWNER_WA} --message {json.dumps(wa_msg, ensure_ascii=False)} --json")},
+        "discord": {"target": OWNER_DC, "message": dc_msg,
+                    "send_cmd": ("openclaw message send --channel discord "
+                                 f"--target {OWNER_DC} --message {json.dumps(dc_msg, ensure_ascii=False)} --json")},
+    }
+
+
+def _pop_pending(d, scope, feature):
+    """Saca y devuelve el pendiente de (scope+feature), probando clave nueva y vieja."""
+    key = _pending_key(scope, feature)
+    if isinstance(d.get("pending"), dict) and key in d["pending"]:
+        return d["pending"].pop(key)
+    # Compat: pendiente v1/v2 con clave = scope solo y mismo feature.
+    old = d.get("pending", {}).pop(scope, None)
+    if isinstance(old, dict):
+        if old.get("feature", "imagen") == feature:
+            return old
+        # Era de otro feature: devolverlo a su clave nueva y seguir.
+        oscope, ofeat = _split_pending_key(scope, old)
+        d["pending"][_pending_key(oscope, ofeat)] = old
+    return None
+
+
+def _window_check(d, scope, feature):
+    """Lectura de ventana SIN consumir cuota. -> (status, entry|None)."""
+    feats = _migrate_scope_entry(d.get("scopes", {}).get(scope))
+    e = feats.get(feature)
+    if not e:
+        return "missing", None
+    try:
+        exp = datetime.fromisoformat(e.get("expires_at", ""))
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+    except Exception:
+        return "bad_entry", e
+    if _now() >= exp:
+        return "expired", e
+    try:
+        max_n = int(e.get("max", DEFAULT_MAX_USES))
+        used = int(e.get("used", 0))
+    except Exception:
+        return "bad_entry", e
+    if used >= max_n:
+        return "quota", e
+    return "ok", e
+
+
+def cmd_request(a):
+    if not _valid_scope(a.scope):
+        raise SystemExit(json.dumps({"ok": False, "error": "bad_scope",
+                                     "hint": "usa wa:<group-jid> | dc:<guild-id>[:<channel-id>]"}))
+    feature = (a.feature or "imagen").strip()
+    if not _valid_feature(feature):
+        raise SystemExit(json.dumps({"ok": False, "error": "bad_feature",
+                                     "hint": f"features: {'|'.join(FEATURES)}"}))
+    d = load_state()
+    key = _pending_key(a.scope, feature)
+    old = d["pending"].get(key)
+    if isinstance(old, dict) and _is_request_vigente(old):
+        # Anti-spam: UNA pendiente por (scope+feature); vigente => NO re-notificar.
+        print(json.dumps({"ok": True, "scope": a.scope, "feature": feature,
+                          "dedup": True, "notified": False,
+                          "pending": old}, ensure_ascii=False))
+        return
+    now = _now()
+    entry = {
+        "scope": a.scope,
+        "feature": feature,
+        "prompt": (a.prompt or "")[:600],
+        "requester": (a.requester or "alguien")[:120],
+        "requested_at": now.isoformat(),
+        "expires_at": (now + timedelta(hours=REQUEST_TTL_H)).isoformat(),
+        "note": a.note or "",
+    }
+    d["pending"][key] = entry
+    save_state(d)
+    dm = _dm_payloads(a.scope, feature, entry["requester"], entry["prompt"])
+    print(json.dumps({"ok": True, "scope": a.scope, "feature": feature,
+                      "dedup": False, "notified": True,
+                      "pending": entry, "dm": dm,
+                      "approve_cmd": dm["approve_cmd"]}, ensure_ascii=False))
+
+
+def _parse_approve_args(a):
+    """Backward-compat: approve S [4] (v1, imagen) | approve S <feature> [horas] (v2/v3)."""
+    f1 = (a.feature_or_hours or "imagen").strip()
+    if _valid_feature(f1):
+        feature = f1
+        asked = int(a.hours or DEFAULT_HOURS)
+    else:
+        try:
+            asked = int(f1)
+        except (TypeError, ValueError):
+            raise SystemExit(json.dumps(
+                {"ok": False, "error": "bad_feature",
+                 "hint": f"usa feature ({'|'.join(FEATURES)}) u horas (1-{MAX_HOURS})"}))
+        feature = "imagen"
+        # `approve S 4 <ignorado>`: el 2do posicional sobra en forma v1.
+    hours = min(max(asked, 1), MAX_HOURS)
+    return feature, asked, hours
+
+
+def cmd_approve(a):
+    if not _valid_scope(a.scope):
+        raise SystemExit(json.dumps({"ok": False, "error": "bad_scope",
+                                     "hint": "usa wa:<group-jid> | dc:<guild-id>[:<channel-id>]"}))
+    feature, asked, hours = _parse_approve_args(a)
+    now = _now()
+    d = load_state()
+    feats = d["scopes"].get(a.scope) or {}
+    feats = _migrate_scope_entry(feats)
+    feats[feature] = {
+        "expires_at": (now + timedelta(hours=hours)).isoformat(),
+        "max": int(a.max or DEFAULT_MAX_USES),
+        "used": 0,
+        "approved_at": now.isoformat(),
+        "approved_by": "owner",
+        "note": a.note or "",
+    }
+    d["scopes"][a.scope] = feats
+    out = {"ok": True, "scope": a.scope, "feature": feature,
+           "expires_at": feats[feature]["expires_at"],
+           "max": feats[feature]["max"],
+           "capped": hours != asked}
+    pend = _pop_pending(d, a.scope, feature)
+    if isinstance(pend, dict):
+        out["pending_request"] = pend
+    save_state(d)
+    print(json.dumps(out, ensure_ascii=False))
+
+
+def cmd_deny(a):
+    d = load_state()
+    feature = (a.feature or "").strip() or None
+    if feature is not None and not _valid_feature(feature):
+        raise SystemExit(json.dumps({"ok": False, "error": "bad_feature",
+                                     "hint": f"features: {'|'.join(FEATURES)}"}))
+    had = None
+    if feature is None:
+        # Sin feature: borra TODOS los pendientes de ese scope (todas las features).
+        for k in [k for k in list(d["pending"]) if _split_pending_key(k, d["pending"][k])[0] == a.scope]:
+            had = d["pending"].pop(k, None) or had
+    else:
+        had = _pop_pending(d, a.scope, feature)
+    save_state(d)
+    print(json.dumps({"ok": True, "scope": a.scope,
+                      "feature": feature or "all",
+                      "denied": had is not None,
+                      "request": had}, ensure_ascii=False))
+
+
+def cmd_revoke(a):
+    d = load_state()
+    feature = (a.feature or "").strip() or None
+    if feature is not None and not _valid_feature(feature):
+        raise SystemExit(json.dumps({"ok": False, "error": "bad_feature",
+                                     "hint": f"features: {'|'.join(FEATURES)}"}))
+    if feature is None:
+        # Forma v1: revoca TODO el scope (todas las features).
+        had = d["scopes"].pop(a.scope, None) is not None
+    else:
+        feats = _migrate_scope_entry(d["scopes"].get(a.scope))
+        had = feats.pop(feature, None) is not None
+        if feats:
+            d["scopes"][a.scope] = feats
+        else:
+            d["scopes"].pop(a.scope, None)
+    save_state(d)
+    print(json.dumps({"ok": True, "scope": a.scope,
+                      "feature": feature or "all",
+                      "revoked": had}, ensure_ascii=False))
+
+
+def _state(e):
+    try:
+        exp = datetime.fromisoformat(e.get("expires_at", ""))
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        live = _now() < exp
+    except Exception:
+        live = False
+    return "vigente" if live else "vencida"
+
+
+def cmd_status(a):
+    d = load_state()
+    feat_filter = (a.feature or "").strip() or None
+    out = {"ok": True, "now": _now().isoformat(),
+           "scopes": {}, "pending": d["pending"]}
+    for k, v in d["scopes"].items():
+        if a.scope and k != a.scope:
+            continue
+        feats = _migrate_scope_entry(v)
+        shown = {}
+        for fk, fv in feats.items():
+            if feat_filter and fk != feat_filter:
+                continue
+            shown[fk] = {**fv, "state": _state(fv)}
+        if shown or not feat_filter:
+            out["scopes"][k] = shown
+    print(json.dumps(out, ensure_ascii=False))
+
+
+def cmd_flow(a):
+    """Decisión completa en seco: ligero/pesado + bypass owner + ventana + solicitud/DM."""
+    feature = (a.feature or "").strip()
+    scope = (a.scope or "dm").strip() or "dm"
+    if not _valid_feature(feature):
+        raise SystemExit(json.dumps({"ok": False, "error": "bad_feature",
+                                     "hint": f"features: {'|'.join(FEATURES)}"}))
+    if scope != "dm" and not _valid_scope(scope):
+        raise SystemExit(json.dumps({"ok": False, "error": "bad_scope",
+                                     "hint": "usa dm | wa:<group-jid> | dc:<guild-id>[:<channel-id>]"}))
+    plat = _scope_platform(scope)
+    # 1. LIBRES: busqueda/voz NUNCA deniegan, NUNCA piden ventana, NUNCA solicitan.
+    if feature in LIGHT:
+        print(json.dumps({"ok": True, "action": "allow-free", "scope": scope,
+                          "feature": feature, "platform": plat,
+                          "reason": "ligero-siempre-open",
+                          "pending": None, "dm": None, "notified": False}, ensure_ascii=False))
+        return
+    # 2. BYPASS TOTAL DEL OWNER: ejecuta directo, sin ventana y sin solicitud.
+    if bool(getattr(a, "owner", False)) or scope == "dm":
+        print(json.dumps({"ok": True,
+                          "action": "owner-bypass" if getattr(a, "owner", False) else "allow-dm",
+                          "scope": scope, "feature": feature, "platform": plat,
+                          "reason": "owner-ejecuta-directo" if getattr(a, "owner", False) else "dm-siempre-si",
+                          "pending": None, "dm": None, "notified": False}, ensure_ascii=False))
+        return
+    # 3. PESADO de no-owner en grupo/canal: exige ventana vigente de ESE feature.
+    d = load_state()
+    st, e = _window_check(d, scope, feature)
+    if st == "ok":
+        print(json.dumps({"ok": True, "action": "allow-window", "scope": scope,
+                          "feature": feature, "platform": plat,
+                          "window": {"used": e.get("used", 0), "max": e.get("max", 10),
+                                     "expires_at": e.get("expires_at"), "state": "vigente"},
+                          "pending": None, "dm": None, "notified": False}, ensure_ascii=False))
+        return
+    errmap = {"missing": "scope_not_approved", "expired": "scope_expired",
+              "quota": "scope_quota", "bad_entry": "scope_bad_entry"}
+    # 4. Sin ventana: denegar + frase guía + UNA solicitud (scope+feature) + DM (solo si es nueva).
+    key = _pending_key(scope, feature)
+    old = d["pending"].get(key)
+    notified = False
+    dm = None
+    if isinstance(old, dict) and _is_request_vigente(old):
+        pend = old
+    else:
+        now = _now()
+        pend = {"scope": scope, "feature": feature,
+                "prompt": (getattr(a, "prompt", "") or "")[:600],
+                "requester": (getattr(a, "requester", "") or "alguien")[:120],
+                "requested_at": now.isoformat(),
+                "expires_at": (now + timedelta(hours=REQUEST_TTL_H)).isoformat(),
+                "note": ""}
+        d["pending"][key] = pend
+        save_state(d)
+        notified = True
+        dm = _dm_payloads(scope, feature, pend["requester"], pend["prompt"])
+    print(json.dumps({"ok": False, "action": "deny-needs-window", "scope": scope,
+                      "feature": feature, "platform": plat,
+                      "error": errmap.get(st, "scope_not_approved"),
+                      "guide": GUIDE, "pending": pend, "notified": notified,
+                      "dm": dm,
+                      "approve_cmd": (dm["approve_cmd"] if dm else None)}, ensure_ascii=False))
+    raise SystemExit(1)
+
+
+def _norm_feature_word(w):
+    t = (w or "").strip().lower().replace("á", "a").replace("é", "e").replace("í", "i")
+    if t in ("imagen", "imagenes", "foto", "fotos", "dibujo", "dibujos", "image"):
+        return "imagen"
+    if t in ("3d", "3-d", "tresd", "tresde", "modelo", "modelos", "glb", "busto"):
+        return "3d"
+    if t in ("video", "videos", "youtube", "yt"):
+        return "video"
+    if t in ("animar", "animacion", "animación", "anima", "animado", "animada",
+             "liveportrait", "lipsync", "lip-sync", "lip_sync"):
+        return "animar"
+    if t in ("busqueda", "buscar", "navega", "navegar", "web", "noticia", "noticias",
+             "precio", "precios", "clima", "weather"):
+        return "busqueda"
+    if t in ("voz", "audio", "tts", "nota", "habla"):
+        return "voz"
+    if t in ("todo", "todos", "todas", "all", "creativo"):
+        return "all"
+    return None
+
+
+def _parse_natural(text):
+    """Español del owner -> {kind, features, hours, asked}. kind: approve|approve-all|revoke|revoke-all|unknown."""
+    t = (text or "").strip()
+    tl = t.lower()
+    # Horas: ÚLTIMO número SUELTO (con bordes de palabra) — así "abro 3d 1"
+    # da 1 (el "3" de "3d" no es suelto y no cuenta). Sin número => default 4.
+    loose = re.findall(r"(?<!\w)(\d{1,2})(?!\w)", tl)
+    asked = int(loose[-1]) if loose else DEFAULT_HOURS
+    hours = min(max(asked, 1), MAX_HOURS)
+    # Cierres primero (para que "cierra todo" no caiga en approve).
+    if (re.search(r"\b(cierro|cierra|cerra|apaga|desactiva|desactivo|quito)\b", tl)
+            or re.search(r"\bcierra\s+todo\b", tl)):
+        if re.search(r"\btodo\b", tl):
+            return {"kind": "revoke-all", "features": [], "hours": 0, "asked": 0}
+        for w in re.findall(r"[A-Za-záéíóúñÁÉÍÓÚÑ0-9]+", tl):
+            f = _norm_feature_word(w)
+            if f and f != "all":
+                return {"kind": "revoke", "features": [f], "hours": 0, "asked": 0}
+        return {"kind": "revoke-all", "features": [], "hours": 0, "asked": 0}
+    # "modo creativo [horas]" => abre los 4 PESADOS.
+    if re.search(r"\bmodo\s+creativo\b", tl):
+        return {"kind": "approve-all", "features": list(HEAVY),
+                "hours": hours, "asked": asked}
+    # "sí <feature> [horas]" (aprobación por DM).
+    m_si = re.match(r"^\s*s[ií]\s+([A-Za-záéíóúñÁÉÍÓÚÑ0-9]+)?\s*(\d{1,2})?.*$", tl)
+    if m_si and re.match(r"^\s*s[ií]\b", tl):
+        w = (m_si.group(1) or "imagen").strip()
+        f = _norm_feature_word(w) or "imagen"
+        if f == "all":
+            return {"kind": "approve-all", "features": list(HEAVY),
+                    "hours": hours, "asked": asked}
+        h2 = int(m_si.group(2)) if m_si.group(2) else asked
+        h2 = min(max(h2, 1), MAX_HOURS)
+        return {"kind": "approve", "features": [f], "hours": h2, "asked": (int(m_si.group(2)) if m_si.group(2) else asked)}
+    # "abro/abre/activa ..." + feature.
+    if re.search(r"\b(abro|abre|abrir|activa|activo|activar|prende|enciende|enciendo|open)\b", tl):
+        feats = []
+        for w in re.findall(r"[A-Za-záéíóúñÁÉÍÓÚÑ0-9]+", tl):
+            f = _norm_feature_word(w)
+            if f == "all":
+                return {"kind": "approve-all", "features": list(HEAVY),
+                        "hours": hours, "asked": asked}
+            if f and f not in feats:
+                feats.append(f)
+        if not feats:
+            feats = ["imagen"]
+        return {"kind": "approve", "features": feats, "hours": hours, "asked": asked}
+    return {"kind": "unknown", "features": [], "hours": hours, "asked": asked}
+
+
+def cmd_natural(a):
+    scope = (a.scope or "").strip()
+    text = a.text or ""
+    parsed = _parse_natural(text)
+    if parsed["kind"] == "unknown":
+        raise SystemExit(json.dumps({"ok": False, "error": "unknown_command",
+                                     "hint": ("usa: abro <feature> [horas] | modo creativo [horas] | "
+                                              "cierro <feature> | cierra todo | sí <feature> [horas]")}))
+    # "sí ..." por DM sin --scope: si hay UN solo pendiente, se usa su scope.
+    if not scope and text.strip().lower().startswith(("sí", "si ")):
+        d0 = load_state()
+        keys = list(d0["pending"].keys())
+        if len(keys) == 1:
+            scope, _ = _split_pending_key(keys[0], d0["pending"][keys[0]])
+        else:
+            raise SystemExit(json.dumps({"ok": False, "error": "need_scope",
+                                         "hint": "el `sí` por DM necesita --scope (hay 0 o varios pendientes)"}))
+    if not scope or not _valid_scope(scope):
+        raise SystemExit(json.dumps({"ok": False, "error": "bad_scope",
+                                     "hint": "usa --scope wa:<group-jid> | dc:<guild-id>[:<channel-id>]"}))
+    now = _now()
+    d = load_state()
+    if parsed["kind"] in ("approve", "approve-all"):
+        opened = []
+        pending_req = None
+        for feat in parsed["features"]:
+            if not _valid_feature(feat):
+                continue
+            feats = _migrate_scope_entry(d["scopes"].get(scope))
+            feats[feat] = {"expires_at": (now + timedelta(hours=parsed["hours"])).isoformat(),
+                           "max": DEFAULT_MAX_USES, "used": 0,
+                           "approved_at": now.isoformat(), "approved_by": "owner-natural",
+                           "note": f"natural: {text[:120]}"}
+            d["scopes"][scope] = feats
+            opened.append({"feature": feat, "expires_at": feats[feat]["expires_at"]})
+            pr = _pop_pending(d, scope, feat)
+            if pr is not None and pending_req is None:
+                pending_req = pr
+        save_state(d)
+        ends = opened[0]["expires_at"] if opened else ""
+        if parsed["kind"] == "approve-all":
+            ann = (f"🎨 Modo creativo abierto en este grupo hasta {ends} "
+                   f"({parsed['hours']}h: imagen+3d+video+animar, cuota {DEFAULT_MAX_USES} c/u). ¡Pidan! 🌟")
+        else:
+            ann = (f"🎨 Modo {opened[0]['feature']} abierto en este grupo hasta {ends} "
+                   f"({parsed['hours']}h, cuota {DEFAULT_MAX_USES}). ¡Pidan! 🌟")
+        out = {"ok": True, "scope": scope, "action": "opened",
+               "parsed": text, "hours": parsed["hours"], "capped": parsed["hours"] != parsed["asked"],
+               "opened": opened, "announcement": ann}
+        if pending_req is not None:
+            out["pending_request"] = pending_req
+        print(json.dumps(out, ensure_ascii=False))
+        return
+    # Revokes.
+    if parsed["kind"] == "revoke-all":
+        had = d["scopes"].pop(scope, None) is not None
+        save_state(d)
+        print(json.dumps({"ok": True, "scope": scope, "action": "closed-all",
+                          "revoked": had,
+                          "announcement": "🔒 Modo creativo cerrado en este grupo. ¡Gracias por crear! 🌟"},
+                         ensure_ascii=False))
+        return
+    feat = parsed["features"][0]
+    feats = _migrate_scope_entry(d["scopes"].get(scope))
+    had = feats.pop(feat, None) is not None
+    if feats:
+        d["scopes"][scope] = feats
+    else:
+        d["scopes"].pop(scope, None)
+    save_state(d)
+    print(json.dumps({"ok": True, "scope": scope, "action": "closed",
+                      "feature": feat, "revoked": had,
+                      "announcement": f"🔒 Modo {feat} cerrado en este grupo. ¡Gracias por crear! 🌟"},
+                     ensure_ascii=False))
+
+
+def main():
+    p = argparse.ArgumentParser(prog="art-approve")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    pq = sub.add_parser("request")
+    pq.add_argument("scope")
+    pq.add_argument("--feature", default="imagen",
+                    help=f"feature: {'|'.join(FEATURES)} (default imagen)")
+    pq.add_argument("--prompt", default="")
+    pq.add_argument("--requester", default="")
+    pq.add_argument("--note", default="")
+    pq.set_defaults(fn=cmd_request)
+    pa = sub.add_parser("approve")
+    pa.add_argument("scope")
+    pa.add_argument("feature_or_hours", nargs="?", default="imagen",
+                    help="feature (imagen|3d|video|animar|busqueda|voz) u horas (v1: solo horas = imagen)")
+    pa.add_argument("hours", nargs="?", default=None,
+                    help="horas (1-4, cap duro 4)")
+    pa.add_argument("--max", default=str(DEFAULT_MAX_USES))
+    pa.add_argument("--note", default="")
+    pa.set_defaults(fn=cmd_approve)
+    pd = sub.add_parser("deny")
+    pd.add_argument("scope")
+    pd.add_argument("feature", nargs="?", default=None)
+    pd.set_defaults(fn=cmd_deny)
+    pr = sub.add_parser("revoke")
+    pr.add_argument("scope")
+    pr.add_argument("feature", nargs="?", default=None)
+    pr.set_defaults(fn=cmd_revoke)
+    ps = sub.add_parser("status")
+    ps.add_argument("--scope", default="")
+    ps.add_argument("--feature", default="")
+    ps.set_defaults(fn=cmd_status)
+    pf = sub.add_parser("flow")
+    pf.add_argument("scope")
+    pf.add_argument("feature")
+    pf.add_argument("--requester", default="")
+    pf.add_argument("--prompt", default="")
+    pf.add_argument("--owner", action="store_true",
+                    help="el que pide es el owner (bypass total: ejecuta directo, sin solicitud)")
+    pf.set_defaults(fn=cmd_flow)
+    pn = sub.add_parser("natural")
+    pn.add_argument("text", help='comando en español: "abro 3d 1" | "modo creativo 2" | "cierra todo" | "sí 3d 2"')
+    pn.add_argument("--scope", default="",
+                    help="scope del grupo: wa:<jid> | dc:<guild>[:<channel>] (el `sí` por DM lo infiere si hay 1 pendiente)")
+    pn.set_defaults(fn=cmd_natural)
+    a = p.parse_args()
+    a.fn(a)
+
+
+if __name__ == "__main__":
+    main()

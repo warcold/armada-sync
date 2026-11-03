@@ -1,0 +1,707 @@
+#!/usr/bin/env bash
+# webanalyze — Análisis de version/tech stack/headers/SSL + PHP/versions + security passive recon
+# CLI 100% local (curl + grep + awk + sed + openssl + jq + admin-cli opcional)
+# PASSIVE recon ONLY: sin brute-force, sin wordlists, sin escaneo de puertos, sin login attempts.
+# Uso: webanalyze <url|domain> [--json] [--full] [--no-sec] [--timeout=N]
+#
+# Módulos:
+#   (1) PHP/tech versions: X-Powered-By, WordPress (/feed/, meta generator, readme.html),
+#       wp-json namespaces (plugins) + site description.
+#   (2) Security Analysis (passive): score de headers 0-100, cookies flags, TLS
+#       (protocolos débiles + expiración de cert), archivos expuestos (~12 rutas con
+#       control de soft-404), DNS de seguridad (SPF/DMARC/DNSSEC via admin-cli),
+#       directory listing, risk flags por versión.
+# Presupuesto: ~15 requests HTTP extra (timeouts 4-6s). --no-sec salta el módulo 2.
+
+URL=""
+FORMAT="text"
+FULL=false
+DO_SEC=true
+TIMEOUT=15
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --json) FORMAT="json"; shift ;;
+    --full) FULL=true; shift ;;
+    --no-sec) DO_SEC=false; shift ;;
+    --timeout=*) TIMEOUT="${1#--timeout=}"; shift ;;
+    -h|--help)
+      echo "Usage: webanalyze <url|domain> [--json] [--full] [--no-sec] [--timeout=N]"
+      echo "  --json       Output en formato JSON"
+      echo "  --full       Analisis profundo (fingerprinting JS extra)"
+      echo "  --no-sec     Salta el modulo de seguridad pasivo (rapido, ~2-4 requests)"
+      echo "  --timeout=N  Timeout en segundos para requests principales (default: 15)"
+      exit 0 ;;
+    *) URL="$1"; shift ;;
+  esac
+done
+
+if [[ -z "$URL" ]]; then
+  echo "ERROR: URL required. Usage: webanalyze <url|domain>" >&2
+  exit 1
+fi
+
+# Normalize URL
+case "$URL" in
+  https://*|http://*) ;;
+  *) URL="https://$URL" ;;
+esac
+
+DOMAIN=$(echo "$URL" | sed 's|https\?://||' | sed 's|/.*||' | sed 's|:.*||')
+SCHEME=$(echo "$URL" | sed 's|://.*||')
+BASE="${SCHEME}://${DOMAIN}"
+
+# Escape helper para JSON (backslash, quote, newline, tab)
+json_escape() {
+  printf '%s' "$1" | tr -d '\r' | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' ' | tr '\t' ' '
+}
+
+# === HTTP Headers (headers-only: -o /dev/null evita mezclar body; FIX 2026-10-22) ===
+HEADERS_RAW=$(curl -sL -o /dev/null -D- --max-time "$TIMEOUT" "$URL" 2>/dev/null || echo "")
+# Deduplicate and keep last occurrence of each header line
+HEADERS=$(echo "$HEADERS_RAW" | awk '{gsub(/\r$/,"")} !seen[tolower($0)]++' | sort -u)
+
+# === Body (first 6KB for meta/tech detection, follow redirects) ===
+BODY=$(curl -sL --compressed --max-time "$TIMEOUT" "$URL" 2>/dev/null | head -2000 || echo "")
+
+# === SSL/TLS check ===
+SSL_INFO=$(echo | openssl s_client -servername "$DOMAIN" -connect "$DOMAIN:443" 2>/dev/null | openssl x509 -noout -dates -subject -issuer 2>/dev/null)
+if [[ $? -ne 0 || -z "$SSL_INFO" ]]; then
+  SSL_DATE_START=""
+  SSL_DATE_END=""
+  SSL_SUBJECT="unavailable"
+  SSL_ISSUER="unavailable"
+else
+  SSL_DATE_START=$(echo "$SSL_INFO" | grep -i "notBefore" | cut -d= -f2- || echo "")
+  SSL_DATE_END=$(echo "$SSL_INFO" | grep -i "notAfter" | cut -d= -f2- || echo "")
+  SSL_SUBJECT=$(echo "$SSL_INFO" | grep -i "subject=" | sed 's/subject= *//' || echo "")
+  SSL_ISSUER=$(echo "$SSL_INFO" | grep -i "issuer=" | sed 's/issuer= *//' || echo "")
+fi
+
+# === Detect Server ===
+SERVER_SOFTWARE=$(echo "$HEADERS_RAW" | awk -F: '/^[Ss]erver:/{gsub(/^[Ss]erver:[ ]*/,"",$0); gsub(/^[ ]+|[ ]+$/,"",$0); gsub(/\r$/,"",$0); print; exit}' 2>/dev/null || true)
+SERVER_SOFTWARE="${SERVER_SOFTWARE:-unknown}"
+
+# === Detect CMS ===
+CMS=""
+CMS_VER=""
+CMS_VER_SOURCE=""
+
+if echo "$BODY" | grep -qiE 'wp-content|wp-includes|wordpress' 2>/dev/null; then
+  CMS="WordPress"
+  # Vector 1 (gratis): meta generator en el BODY ya descargado
+  # FIX 2026-10-22: el regex viejo cortaba en "WordPress" y perdía el número que va DESPUÉS
+  CMS_VER=$(echo "$BODY" | grep -oiE 'WordPress [0-9]+(\.[0-9]+)*' | head -1 | grep -oE '[0-9]+(\.[0-9]+)*' | head -1 || true)
+  [[ -n "$CMS_VER" ]] && CMS_VER_SOURCE="meta generator"
+fi
+
+if echo "$BODY" | grep -qiE 'myshopify\.|cdn\.shopify\.|shopify\.cdn|Shopify\.theme|shopify\.io' 2>/dev/null; then
+  # FIX 2026-10-22: solo markers estructurales (el "Shopify" pelado daba falso
+  # positivo en sitios que lo mencionan como cliente, ej. github.com)
+  CMS="Shopify"
+fi
+
+if echo "$BODY" | grep -qiE 'Joomla' 2>/dev/null; then
+  CMS="Joomla"
+fi
+
+if echo "$BODY" | grep -qiE 'Drupal' 2>/dev/null; then
+  CMS="Drupal"
+fi
+
+if echo "$BODY" | grep -qiE 'Wix\.' 2>/dev/null; then
+  CMS="Wix"
+fi
+[[ -z "$CMS" ]] && CMS="none"
+
+# === Detect JS Frameworks ===
+FRAMEWORK="none"
+FRAG=""
+if echo "$BODY" | grep -qi '__NEXT_DATA__' 2>/dev/null; then
+  FRAG="Next.js"
+fi
+if echo "$BODY" | grep -qi '__NUXT__' 2>/dev/null; then
+  [[ -n "$FRAG" ]] && FRAG="$FRAG, " || FRAG=""
+  FRAG="${FRAG}Nuxt.js"
+fi
+if echo "$BODY" | grep -qiE 'react\.js|react\.production|__react' 2>/dev/null; then
+  [[ -n "$FRAG" ]] && FRAG="$FRAG, " || FRAG=""
+  FRAG="${FRAG}React"
+fi
+if echo "$BODY" | grep -qiE 'vue\.js|vue\.production' 2>/dev/null; then
+  [[ -n "$FRAG" ]] && FRAG="$FRAG, " || FRAG=""
+  FRAG="${FRAG}Vue.js"
+fi
+if echo "$BODY" | grep -qiE 'angular\.js|ng-app|ng-controller' 2>/dev/null; then
+  [[ -n "$FRAG" ]] && FRAG="$FRAG, " || FRAG=""
+  FRAG="${FRAG}Angular"
+fi
+[[ -n "$FRAG" ]] && FRAMEWORK="$FRAG"
+
+# === Detect Analytics ===
+ANALYTICS="none"
+if echo "$BODY" | grep -qiE 'google-analytics\.com|gtag\.js|googletagmanager\.com' 2>/dev/null; then
+  ANALYTICS="Google Analytics/GTM"
+fi
+if echo "$BODY" | grep -qiE 'facebook.*pixel|fb\.pixel' 2>/dev/null; then
+  ANALYTICS="${ANALYTICS:+$ANALYTICS, }Facebook Pixel"
+fi
+if echo "$BODY" | grep -qiE 'segment\.com' 2>/dev/null; then
+  ANALYTICS="${ANALYTICS:+$ANALYTICS, }Segment"
+fi
+
+# === Detect CDNs ===
+CDN=""
+if echo "$HEADERS_RAW" | grep -qiE '^(cf-ray:|cf-cache-status|Server:.*[Cc]loudFlare)' 2>/dev/null; then
+  CDN="CloudFlare"
+fi
+if echo "$HEADERS_RAW" | grep -qiE '^(x-amz-cf-|x-amz-id-|Server:.*[Cc]loudfront)' 2>/dev/null; then
+  [[ -n "$CDN" ]] && CDN="$CDN, " || CDN=""
+  CDN="${CDN}Amazon CloudFront"
+fi
+if echo "$HEADERS_RAW" | grep -qiE '^(x-ms-|Server:.*[Aa]zure)' 2>/dev/null; then
+  [[ -n "$CDN" ]] && CDN="$CDN, " || CDN=""
+  CDN="${CDN}Azure"
+fi
+[[ -z "$CDN" ]] && CDN="none"
+
+# ============================================================
+# MODULO 1: PHP / tech versions (passive fingerprinting)
+# ============================================================
+PHP_VER=""
+PHP_SOURCE=""
+
+# Vector A: X-Powered-By (PHP/x.y.z, ASP.NET, Express, etc.)
+POWERED_BY=$(echo "$HEADERS_RAW" | awk -F: 'tolower($1)=="x-powered-by"{sub(/^ */,"",$2); sub(/[[:space:]]*$/,"",$2); gsub(/\r$/,"",$0); print $2; exit}' 2>/dev/null || true)
+if [[ -n "$POWERED_BY" ]]; then
+  PHP_VER=$(echo "$POWERED_BY" | grep -oE 'PHP/[0-9]+(\.[0-9]+)*' | head -1 | cut -d/ -f2 || true)
+  if [[ -n "$PHP_VER" ]]; then
+    PHP_SOURCE="X-Powered-By"
+  else
+    PHP_SOURCE="X-Powered-By presente sin version PHP (${POWERED_BY})"
+  fi
+fi
+
+# Vector B (WordPress): /feed/ generator -> wordpress.org/?v=X.Y.Z
+# Vector D (fix 2026-10-22): si el homepage esta bloqueado por WAF/challenge o el
+# CMS es desconocido, /wp-json/ y /feed/ suelen seguir accesibles y delatan
+# WordPress (namespaces + generator) — deteccion de CMS via API.
+WP_FEED_VER=""
+WPJSON_PLUGINS=""
+WPJSON_DESC=""
+WPJSON_STATUS=""
+if [[ "$CMS" == "WordPress" || "$CMS" == "none" ]]; then
+  WAS_NONE=$([[ "$CMS" == "none" ]] && echo yes || echo no)
+  # wp-json: namespaces (plugins) + description del sitio
+  # FIX 2026-10-22: extraccion grep/sed tolerante a truncado (jq exige JSON completo
+  # y el root de wp-json puede ser >100KB; namespaces/description viven al inicio)
+  WPJSON=$(curl -sL --compressed --max-time 8 "${BASE}/wp-json/" 2>/dev/null | head -c 60000 || echo "")
+  if echo "$WPJSON" | grep -q '"namespaces"'; then
+    CMS="WordPress"
+    WPJSON_STATUS="expuesto"
+    [[ "$WAS_NONE" == "yes" && -z "$CMS_VER_SOURCE" ]] && CMS_VER_SOURCE="wp-json (CMS detectado via API)"
+    NS_BLOCK=$(echo "$WPJSON" | grep -oE '"namespaces":\[[^]]*' | head -1 | sed 's/"namespaces":\[//')
+    WPJSON_PLUGINS=$(echo "$NS_BLOCK" | tr ',' '\n' | tr -d '"' | sed 's/\\//g' \
+      | grep -vE '^(wp/|oembed)' | awk -F/ '{print $1}' \
+      | sed -E 's/^wc.*/woocommerce/; s/^elementor.*/elementor/' \
+      | sort -u | head -10)
+    WPJSON_DESC=$(echo "$WPJSON" | grep -o '"description":"[^"]*"' | head -1 | sed 's/"description":"//; s/"$//')
+  else
+    WPJSON_STATUS="no accesible (hardened o bloqueado)"
+  fi
+
+  if [[ "$CMS" == "WordPress" ]]; then
+    # /feed/: version exacta del generator (vector mas confiable)
+    if [[ -z "$CMS_VER" ]]; then
+      WP_FEED=$(curl -sL --compressed --max-time 8 "${BASE}/feed/" 2>/dev/null | head -c 30000 || echo "")
+      WP_FEED_VER=$(echo "$WP_FEED" | grep -oE 'wordpress\.org/\?v=[0-9]+(\.[0-9]+)*' | head -1 | grep -oE '[0-9]+(\.[0-9]+)*' | head -1 || true)
+      if [[ -n "$WP_FEED_VER" ]]; then
+        CMS_VER="$WP_FEED_VER"
+        CMS_VER_SOURCE="/feed/ generator"
+      else
+        # Vector C: readme.html en la raiz de WP
+        README_HTML=$(curl -sL --compressed --max-time 6 "${BASE}/readme.html" 2>/dev/null | head -c 20000 || echo "")
+        README_VER=$(echo "$README_HTML" | grep -oiE 'Version [0-9]+(\.[0-9]+)*' | head -1 | grep -oE '[0-9]+(\.[0-9]+)*' | head -1 || true)
+        if [[ -n "$README_VER" ]]; then
+          CMS_VER="$README_VER"
+          CMS_VER_SOURCE="readme.html"
+        fi
+      fi
+    fi
+    [[ -z "$CMS_VER" ]] && CMS_VER="unknown"
+  fi
+elif [[ "$CMS" != "none" ]]; then
+  # Otro CMS: meta generator generico
+  GEN_META=$(echo "$BODY" | grep -oiE '<meta name="generator" content="[^"]*"' | head -1 | sed 's/.*content="//; s/"$//' || true)
+  [[ -n "$GEN_META" ]] && CMS_VER_SOURCE="meta generator: ${GEN_META}"
+fi
+
+# PHP honesto: si no hay vector, decirlo (no adivinar)
+if [[ -z "$PHP_VER" ]]; then
+  if [[ -n "$POWERED_BY" ]]; then
+    PHP_DISPLAY="no version PHP declarada (${POWERED_BY})"
+  else
+    PHP_DISPLAY="no expuesto (hardened)"
+    PHP_SOURCE="X-Powered-By ausente"
+  fi
+else
+  PHP_DISPLAY="${PHP_VER} (via ${PHP_SOURCE})"
+fi
+
+# ============================================================
+# MODULO 2: Security Analysis (passive)
+# ============================================================
+SEC_SKIPPED=false
+SCORE=0
+GRADE="N/A"
+HAS_HSTS="no"; HAS_CSP="no"; HAS_XFR="no"; HAS_NOSNIFF="no"; HAS_REFERRER="no"; HAS_PERMS="no"
+COOKIE_SCORE=0
+COOKIE_DETAIL=""
+TLS_NEG=""
+TLS10_STATE="skipped"
+TLS11_STATE="skipped"
+CERT_DAYS=""
+EXPOSED_LIST=""
+PROTECTED_LIST=""
+PANEL_LIST=""
+SOFT404_NOTE=""
+WAF_NOTE=""
+DIR_LISTING="no"
+DNS_SOURCE="unavailable"
+HAS_SPF=""
+HAS_DMARC=""
+HAS_DNSSEC=""
+RISK_FLAGS=""
+
+has_header() {
+  echo "$HEADERS_RAW" | grep -qi "^${1}:" 2>/dev/null && echo "yes" || echo "no"
+}
+
+if [[ "$DO_SEC" == true ]]; then
+  # --- Security headers ---
+  HAS_HSTS=$(has_header "strict-transport-security")
+  HAS_CSP=$(has_header "content-security-policy")
+  HAS_XFR=$(has_header "x-frame-options")
+  HAS_REFERRER=$(has_header "referrer-policy")
+  HAS_PERMS=$(has_header "permissions-policy")
+  XCTO_VAL=$(echo "$HEADERS_RAW" | awk -F: 'tolower($1)=="x-content-type-options"{sub(/^ */,"",$2); print tolower($2); exit}' 2>/dev/null || true)
+  echo "$XCTO_VAL" | grep -qi "nosniff" && HAS_NOSNIFF="yes" || HAS_NOSNIFF="no"
+
+  # --- Cookies: flags por cookie (Secure/HttpOnly/SameSite) ---
+  COOKIE_COUNT=$(echo "$HEADERS_RAW" | grep -ci '^set-cookie:' 2>/dev/null)
+  COOKIE_COUNT=${COOKIE_COUNT:-0}
+  COOKIE_LINES=$(echo "$HEADERS_RAW" | grep -i '^set-cookie:' | sed 's/^[Ss]et-[Cc]ookie: *//' || true)
+  COOKIE_FLAGS_SUMMARY=""
+  if [[ "$COOKIE_COUNT" -gt 0 ]]; then
+    GOOD_COOKIES=0
+    while IFS= read -r cline; do
+      [[ -z "$cline" ]] && continue
+      cname=$(echo "$cline" | sed 's/=.*//' | tr -d ' ')
+      cattrs=$(echo "$cline" | cut -s -d';' -f2-)
+      csecure=$(echo "$cattrs" | tr ';' '\n' | grep -qiE '^ *secure *$' && echo yes || echo no)
+      chttponly=$(echo "$cattrs" | tr ';' '\n' | grep -qiE '^ *httponly *$' && echo yes || echo no)
+      csamesite=$(echo "$cattrs" | tr ';' '\n' | grep -iE '^ *samesite *=' | head -1 | sed 's/^[Ss]ame[Ss]ite *= *//' | tr -d ' ' )
+      [[ -z "$csamesite" ]] && csamesite="none"
+      COOKIE_FLAGS_SUMMARY="${COOKIE_FLAGS_SUMMARY}${cname}: Secure=${csecure} HttpOnly=${chttponly} SameSite=${csamesite}; "
+      if [[ "$csecure" == "yes" && "$chttponly" == "yes" && -n "$csamesite" && "$csamesite" != "none" ]]; then
+        GOOD_COOKIES=$((GOOD_COOKIES+1))
+      fi
+    done <<< "$COOKIE_LINES"
+    if [[ "$GOOD_COOKIES" -eq "$COOKIE_COUNT" ]]; then
+      COOKIE_SCORE=10
+    elif [[ "$GOOD_COOKIES" -gt 0 ]]; then
+      COOKIE_SCORE=5
+    else
+      COOKIE_SCORE=0
+    fi
+  else
+    COOKIE_SCORE=10
+    COOKIE_FLAGS_SUMMARY="sin cookies (nada que proteger); "
+  fi
+  COOKIE_DETAIL="${COOKIE_FLAGS_SUMMARY%; }"
+
+  # --- Score de headers (0-100) ---
+  [[ "$HAS_HSTS" == "yes" ]] && SCORE=$((SCORE+20))
+  [[ "$HAS_CSP" == "yes" ]] && SCORE=$((SCORE+20))
+  [[ "$HAS_XFR" == "yes" ]] && SCORE=$((SCORE+15))
+  [[ "$HAS_NOSNIFF" == "yes" ]] && SCORE=$((SCORE+15))
+  [[ "$HAS_REFERRER" == "yes" ]] && SCORE=$((SCORE+10))
+  [[ "$HAS_PERMS" == "yes" ]] && SCORE=$((SCORE+10))
+  SCORE=$((SCORE+COOKIE_SCORE))
+  if [[ "$SCORE" -ge 80 ]]; then
+    GRADE="BUENO"
+  elif [[ "$SCORE" -ge 50 ]]; then
+    GRADE="MEJORABLE"
+  else
+    GRADE="DEBIL"
+  fi
+
+  # --- TLS: version negociada + expiracion de cert ---
+  TLS_NEG=$(echo | timeout 6 openssl s_client -brief -servername "$DOMAIN" -connect "$DOMAIN:443" 2>&1 | grep -i "Protocol version" | awk '{print $3}' | head -1 || true)
+  [[ -z "$TLS_NEG" ]] && TLS_NEG="unknown"
+  if [[ -n "$SSL_DATE_END" ]]; then
+    END_EPOCH=$(date -d "$SSL_DATE_END" +%s 2>/dev/null || echo 0)
+    NOW_EPOCH=$(date +%s)
+    if [[ "$END_EPOCH" -gt 0 ]]; then
+      CERT_DAYS=$(( (END_EPOCH - NOW_EPOCH) / 86400 ))
+    fi
+  fi
+
+  # --- TLS protocolos debiles (tls1_0 / tls1_1) ---
+  # Nota honesta: OpenSSL 3.5.x del sandbox tiene TLS<1.2 deshabilitado a nivel
+  # CLIENTE ("no protocols available") — se reporta como untestable, no como seguro.
+  tls_probe() {
+    local flag="$1"
+    local out
+    out=$(echo | timeout 6 openssl s_client $flag -servername "$DOMAIN" -connect "$DOMAIN:443" 2>&1 || true)
+    if echo "$out" | grep -q "no protocols available"; then
+      echo "untestable (cliente OpenSSL sin soporte legacy)"
+    elif echo "$out" | grep -qE "New, TLSv1\.[01],"; then
+      echo "ACEPTADO (protocolo debil!)"
+    elif echo "$out" | grep -qiE "alert|handshake failure|protocol version|wrong version"; then
+      echo "rechazado (bien)"
+    else
+      echo "unknown"
+    fi
+  }
+  TLS10_STATE=$(tls_probe "-tls1")
+  TLS11_STATE=$(tls_probe "-tls1_1")
+
+  # --- Archivos expuestos (12 rutas + baseline anti soft-404) ---
+  PROBE_TIMEOUT=5
+  BASELINE=$(curl -s -o /dev/null -w "%{http_code} %{size_download}" --max-time "$PROBE_TIMEOUT" "${BASE}/victoria-random-xyz-123" 2>/dev/null || echo "000 0")
+  BASELINE_CODE=${BASELINE%% *}
+  if [[ "$BASELINE_CODE" == "200" ]]; then
+    SOFT404_NOTE="sitio responde 200 a rutas random (soft-404): deteccion de archivos indeterminada"
+  fi
+
+  PROBE_PATHS="/.env /.git/config /phpinfo.php /info.php /.DS_Store /wp-config.php.bak /backup.zip /composer.json /package.json /.htaccess /wp-admin/ /administrator/"
+  PROBE_OUT=""
+  if command -v curl >/dev/null 2>&1 && curl --version 2>/dev/null | grep -q -- "--parallel"; then
+    # curl moderno: probes en paralelo (1 proceso, 12 requests, ~5s total)
+    PROBE_ARGS=()
+    for p in $PROBE_PATHS; do
+      PROBE_ARGS+=(-o /dev/null "${BASE}${p}")
+    done
+    PROBE_OUT=$(curl -s --parallel --parallel-max 6 --max-time "$PROBE_TIMEOUT" \
+      -w "%{http_code} %{size_download} %{url_effective}\n" "${PROBE_ARGS[@]}" 2>/dev/null || true)
+  else
+    # fallback secuencial
+    for p in $PROBE_PATHS; do
+      r=$(curl -s -o /dev/null -w "%{http_code} %{size_download}" --max-time "$PROBE_TIMEOUT" "${BASE}${p}" 2>/dev/null || echo "000 0")
+      PROBE_OUT="${PROBE_OUT}${r} ${BASE}${p}
+"
+    done
+  fi
+
+  while IFS= read -r pline; do
+    [[ -z "$pline" ]] && continue
+    pcode=$(echo "$pline" | awk '{print $1}')
+    ppath=$(echo "$pline" | awk '{print $3}' | sed "s|${BASE}||")
+    [[ -z "$ppath" ]] && continue
+    case "$ppath" in
+      /wp-admin/|/administrator/) IS_PANEL=true ;;
+      *) IS_PANEL=false ;;
+    esac
+    if [[ "$pcode" == "200" && "$BASELINE_CODE" != "200" ]]; then
+      # Guardia anti soft-404 por CONTENIDO (fix 2026-10-22): algunos servidores
+      # sirven su pagina de error con status 200 (y cambian de conducta entre
+      # requests). Verificar el body antes de marcar. --compressed por si el
+      # server fuerza gzip.
+      probe_body=$(curl -s --compressed --max-time 4 -r 0-16384 "${BASE}${ppath}" 2>/dev/null | head -c 16384 || true)
+      if echo "$probe_body" | grep -qiE '<title>[^<]*404|not found|no encontrad|nothing here|does not exist|no existe|página no encontrada'; then
+        : # soft-404 disfrazado de 200: no marcar
+      elif [[ "$IS_PANEL" == true ]]; then
+        # Panel-200 solo cuenta si parece login real (github.com sirve 200
+        # generico para cualquier path: title "<path> · GitHub")
+        if echo "$probe_body" | grep -qiE 'user_login|wp-submit|wp-admin/css/login|com_login|mod_login|Joomla!?'; then
+          PANEL_LIST="${PANEL_LIST}${ppath} (panel presente, informativo); "
+        fi
+      else
+        EXPOSED_LIST="${EXPOSED_LIST}${ppath} (200, contenido servido!); "
+      fi
+    elif [[ "$pcode" == "200" && "$BASELINE_CODE" == "200" ]]; then
+      : # soft-404 site: no marcar nada
+    elif [[ "$pcode" == "403" ]]; then
+      PROTECTED_LIST="${PROTECTED_LIST}${ppath} (403, bloqueado); "
+    elif [[ "$pcode" == "301" || "$pcode" == "302" || "$pcode" == "307" || "$pcode" == "308" ]]; then
+      if [[ "$IS_PANEL" == true ]]; then
+        PANEL_LIST="${PANEL_LIST}${ppath} (panel presente, redirect a login); "
+      fi
+    fi
+  done <<< "$PROBE_OUT"
+  EXPOSED_LIST="${EXPOSED_LIST%; }"
+  PROTECTED_LIST="${PROTECTED_LIST%; }"
+  PANEL_LIST="${PANEL_LIST%; }"
+
+  # --- Directory listing (en el body de / ya descargado) ---
+  echo "$BODY" | grep -q "Index of /" && DIR_LISTING="yes" || DIR_LISTING="no"
+
+  # --- WAF/anti-bot challenge (resultados parciales) ---
+  WAF_NOTE=""
+  echo "$BODY" | grep -qiE 'one moment, please|just a moment|challenge-platform|cf-chl|cf-browser-verification' && WAF_NOTE="WAF/anti-bot challenge detectado en /: el body real no fue servido, resultados parciales"
+
+  # --- DNS de seguridad (via admin-cli -> bridge host-admin :18840) ---
+  ADMIN_CLI="/sandbox/.openclaw/bin/admin-cli"
+  if [[ -x "$ADMIN_CLI" ]] && "$ADMIN_CLI" status 2>/dev/null | grep -q '"dig": true'; then
+    DNS_SOURCE="admin-cli (host-admin bridge)"
+    SPF_RAW=$("$ADMIN_CLI" exec dig "$DOMAIN" TXT +short 2>/dev/null | tr -d '"' || true)
+    echo "$SPF_RAW" | grep -qi 'v=spf1' && HAS_SPF="yes" || HAS_SPF="no"
+    DMARC_RAW=$("$ADMIN_CLI" exec dig "_dmarc.$DOMAIN" TXT +short 2>/dev/null | tr -d '"' || true)
+    echo "$DMARC_RAW" | grep -qi 'v=dmarc1' && HAS_DMARC="yes" || HAS_DMARC="no"
+    DNSSEC_RAW=$("$ADMIN_CLI" exec dig "$DOMAIN" DNSKEY +short 2>/dev/null | tr -d '"' || true)
+    [[ -n "$DNSSEC_RAW" ]] && HAS_DNSSEC="yes" || HAS_DNSSEC="no"
+  else
+    DNS_SOURCE="omitido (admin-cli no disponible en este entorno)"
+    HAS_SPF="unknown"; HAS_DMARC="unknown"; HAS_DNSSEC="unknown"
+  fi
+
+  # --- Risk flags ---
+  if [[ "$CMS" == "WordPress" && "$CMS_VER" != "unknown" && -n "$CMS_VER" ]]; then
+    WP_MAJOR=$(echo "$CMS_VER" | cut -d. -f1)
+    WP_MINOR=$(echo "$CMS_VER" | cut -d. -f2)
+    if [[ "$WP_MAJOR" -lt 6 ]] 2>/dev/null; then
+      RISK_FLAGS="${RISK_FLAGS}WordPress ${CMS_VER}: version antigua, CVEs probables; "
+    fi
+  fi
+  if [[ -n "$PHP_VER" ]]; then
+    PHP_MAJOR=$(echo "$PHP_VER" | cut -d. -f1)
+    if [[ "$PHP_MAJOR" -lt 8 ]] 2>/dev/null; then
+      RISK_FLAGS="${RISK_FLAGS}PHP ${PHP_VER}: EOL/riesgo (PHP <8.0 sin soporte); "
+    fi
+  fi
+  echo "$TLS10_STATE" | grep -q "ACEPTADO" && RISK_FLAGS="${RISK_FLAGS}TLS 1.0 aceptado por el servidor; "
+  echo "$TLS11_STATE" | grep -q "ACEPTADO" && RISK_FLAGS="${RISK_FLAGS}TLS 1.1 aceptado por el servidor; "
+  if [[ -n "$CERT_DAYS" && "$CERT_DAYS" -le 15 ]] 2>/dev/null; then
+    RISK_FLAGS="${RISK_FLAGS}Certificado TLS expira en ${CERT_DAYS} dias; "
+  fi
+  [[ -n "$EXPOSED_LIST" ]] && RISK_FLAGS="${RISK_FLAGS}Archivos sensibles expuestos: ${EXPOSED_LIST}; "
+  [[ "$DIR_LISTING" == "yes" ]] && RISK_FLAGS="${RISK_FLAGS}Directory listing activo en /; "
+  if [[ "$HAS_SPF" == "no" ]]; then
+    RISK_FLAGS="${RISK_FLAGS}Sin registro SPF (spoofing de email posible); "
+  fi
+  if [[ "$HAS_DMARC" == "no" ]]; then
+    RISK_FLAGS="${RISK_FLAGS}Sin registro DMARC; "
+  fi
+  RISK_FLAGS="${RISK_FLAGS%; }"
+  [[ -z "$RISK_FLAGS" ]] && RISK_FLAGS="ninguno detectado"
+else
+  SEC_SKIPPED=true
+  COOKIE_COUNT=$(echo "$HEADERS_RAW" | grep -ci '^set-cookie:' 2>/dev/null)
+  COOKIE_COUNT=${COOKIE_COUNT:-0}
+fi
+
+# === Meta ===
+META_TITLE=$(echo "$BODY" | grep -oi '<title>[^<]*</title>' | head -1 | sed 's/<[^>]*>//g' 2>/dev/null || true)
+[[ -z "$META_TITLE" ]] && META_TITLE="none"
+META_DESC=$(echo "$BODY" | grep -oi '<meta[^>]*description[^>]*>' | head -1 | grep -oi 'content="[^"]*"' | sed 's/content="//;s/"$//' 2>/dev/null || true)
+[[ -z "$META_DESC" ]] && META_DESC="none"
+META_CHARSET=$(echo "$BODY" | grep -oi 'charset=[^ >"]*' | head -1 | sed 's/charset=//' 2>/dev/null || true)
+[[ -z "$META_CHARSET" ]] && META_CHARSET="utf-8"
+
+# === JS Fingerprinting (deep, --full) ===
+JS_SCRIPTS="none"
+if [[ "$FULL" == true ]]; then
+  SRC=$(echo "$BODY" | grep -oi 'src="[^"]*\.\(js\|ts\|mjs\|es6\)' | sed 's/src="//;s/\.\(js\|ts\|mjs\|es6\)$//' | sort -u | head -15 2>/dev/null || true)
+  [[ -n "$SRC" ]] && JS_SCRIPTS="$SRC"
+
+  if echo "$BODY" | grep -qiE 'cdn\.jsdelivr\.net.*jquery|unpkg\.com.*jquery' 2>/dev/null; then
+    [[ "$JS_SCRIPTS" == "none" ]] && JS_SCRIPTS="" || JS_SCRIPTS="$JS_SCRIPTS, "
+    JS_SCRIPTS="${JS_SCRIPTS}jQuery"
+  fi
+  if echo "$BODY" | grep -qiE 'tailwind|tailwindcss' 2>/dev/null; then
+    [[ "$JS_SCRIPTS" == "none" ]] && JS_SCRIPTS="" || JS_SCRIPTS="$JS_SCRIPTS, "
+    JS_SCRIPTS="${JS_SCRIPTS}Tailwind CSS"
+  fi
+fi
+
+# === OUTPUT ===
+if [[ "$FORMAT" == "json" ]]; then
+  # plugins como array JSON
+  PLUGINS_JSON="[]"
+  if [[ -n "$WPJSON_PLUGINS" ]]; then
+    PLUGINS_JSON=$(echo "$WPJSON_PLUGINS" | sed 's/"/\\"/g' | awk '{printf "%s\"%s\"", (NR>1?",":""), $0}' | awk '{print "["$0"]"}')
+  fi
+  # exposed_files como array JSON (solo hallazgos interesantes)
+  EXPOSED_JSON="[]"
+  if [[ -n "$EXPOSED_LIST" || -n "$PANEL_LIST" || -n "$PROTECTED_LIST" ]]; then
+    EXPOSED_JSON="["
+    first=true
+    if [[ -n "$EXPOSED_LIST" ]]; then
+      IFS=';' ; for item in $EXPOSED_LIST; do
+        item=$(echo "$item" | sed 's/^ *//; s/ *$//')
+        [[ -z "$item" ]] && continue
+        $first && first=false || EXPOSED_JSON="${EXPOSED_JSON},"
+        EXPOSED_JSON="${EXPOSED_JSON}{\"path\":\"$(echo "$item" | awk '{print $1}')\",\"verdict\":\"EXPOSED\",\"detail\":\"$(echo "$item" | cut -d' ' -f2- | sed 's/"/\\"/g')\"}"
+      done; unset IFS
+    fi
+    if [[ -n "$PANEL_LIST" ]]; then
+      IFS=';' ; for item in $PANEL_LIST; do
+        item=$(echo "$item" | sed 's/^ *//; s/ *$//')
+        [[ -z "$item" ]] && continue
+        $first && first=false || EXPOSED_JSON="${EXPOSED_JSON},"
+        EXPOSED_JSON="${EXPOSED_JSON}{\"path\":\"$(echo "$item" | awk '{print $1}')\",\"verdict\":\"panel\",\"detail\":\"$(echo "$item" | cut -d' ' -f2- | sed 's/"/\\"/g')\"}"
+      done; unset IFS
+    fi
+    if [[ -n "$PROTECTED_LIST" ]]; then
+      IFS=';' ; for item in $PROTECTED_LIST; do
+        item=$(echo "$item" | sed 's/^ *//; s/ *$//')
+        [[ -z "$item" ]] && continue
+        $first && first=false || EXPOSED_JSON="${EXPOSED_JSON},"
+        EXPOSED_JSON="${EXPOSED_JSON}{\"path\":\"$(echo "$item" | awk '{print $1}')\",\"verdict\":\"protected\",\"detail\":\"$(echo "$item" | cut -d' ' -f2- | sed 's/"/\\"/g')\"}"
+      done; unset IFS
+    fi
+    EXPOSED_JSON="${EXPOSED_JSON}]"
+  fi
+  # risk_flags como array JSON
+  RISK_JSON="[]"
+  if [[ -n "$RISK_FLAGS" && "$RISK_FLAGS" != "ninguno detectado" ]]; then
+    RISK_JSON=$(echo "$RISK_FLAGS" | tr ';' '\n' | sed 's/^ *//; s/ *$//; s/"/\\"/g' | awk 'NF{printf "%s\"%s\"", (NR>1?",":""), $0}' | awk '{print "["$0"]"}')
+  fi
+  # score/grade nulls si --no-sec
+  SCORE_JSON="null"; GRADE_JSON="null"
+  if [[ "$DO_SEC" == true ]]; then
+    SCORE_JSON="$SCORE"; GRADE_JSON="\"$GRADE\""
+  fi
+  printf '{\n'
+  printf '  "url": "%s",\n' "$(json_escape "$URL")"
+  printf '  "domain": "%s",\n' "$(json_escape "$DOMAIN")"
+  printf '  "server": {\n'
+  printf '    "software": "%s",\n' "$(json_escape "$SERVER_SOFTWARE")"
+  printf '    "cdn": "%s"\n' "$(json_escape "$CDN")"
+  printf '  },\n'
+  printf '  "cms": {\n'
+  printf '    "detected": "%s",\n' "$(json_escape "$CMS")"
+  printf '    "version": "%s",\n' "$(json_escape "$CMS_VER")"
+  printf '    "version_source": "%s"\n' "$(json_escape "$CMS_VER_SOURCE")"
+  printf '  },\n'
+  printf '  "php": {\n'
+  printf '    "version": %s,\n' "$([[ -n "$PHP_VER" ]] && printf '"%s"' "$PHP_VER" || printf 'null')"
+  printf '    "display": "%s",\n' "$(json_escape "$PHP_DISPLAY")"
+  printf '    "powered_by": "%s"\n' "$(json_escape "$POWERED_BY")"
+  printf '  },\n'
+  printf '  "plugins": %s,\n' "$PLUGINS_JSON"
+  printf '  "wpjson": {\n'
+  printf '    "status": "%s",\n' "$(json_escape "$WPJSON_STATUS")"
+  printf '    "site_description": "%s"\n' "$(json_escape "$WPJSON_DESC")"
+  printf '  },\n'
+  printf '  "framework": "%s",\n' "$(json_escape "$FRAMEWORK")"
+  printf '  "analytics": "%s",\n' "$(json_escape "$ANALYTICS")"
+  printf '  "security_score": %s,\n' "$SCORE_JSON"
+  printf '  "score_grade": %s,\n' "$GRADE_JSON"
+  printf '  "security_headers": {\n'
+  printf '    "hsts": "%s",\n' "$HAS_HSTS"
+  printf '    "content_security_policy": "%s",\n' "$HAS_CSP"
+  printf '    "x_frame_options": "%s",\n' "$HAS_XFR"
+  printf '    "x_content_type_options_nosniff": "%s",\n' "$HAS_NOSNIFF"
+  printf '    "referrer_policy": "%s",\n' "$HAS_REFERRER"
+  printf '    "permissions_policy": "%s"\n' "$HAS_PERMS"
+  printf '  },\n'
+  printf '  "cookies": {\n'
+  printf '    "count": %s,\n' "$COOKIE_COUNT"
+  printf '    "detail": "%s",\n' "$(json_escape "$COOKIE_DETAIL")"
+  printf '    "score_points": %s\n' "$([[ "$DO_SEC" == true ]] && echo "$COOKIE_SCORE" || echo null)"
+  printf '  },\n'
+  printf '  "tls_protocols": {\n'
+  printf '    "negotiated": "%s",\n' "$(json_escape "$TLS_NEG")"
+  printf '    "tls1_0": "%s",\n' "$(json_escape "$TLS10_STATE")"
+  printf '    "tls1_1": "%s",\n' "$(json_escape "$TLS11_STATE")"
+  printf '    "cert_days_left": %s\n' "$([[ -n "$CERT_DAYS" ]] && echo "$CERT_DAYS" || echo null)"
+  printf '  },\n'
+  printf '  "exposed_files": %s,\n' "$EXPOSED_JSON"
+  printf '  "soft404_note": "%s",\n' "$(json_escape "$SOFT404_NOTE")"
+  printf '  "waf_note": "%s",\n' "$(json_escape "$WAF_NOTE")"
+  printf '  "directory_listing": "%s",\n' "$DIR_LISTING"
+  printf '  "dns_security": {\n'
+  printf '    "source": "%s",\n' "$(json_escape "$DNS_SOURCE")"
+  printf '    "spf": "%s",\n' "$HAS_SPF"
+  printf '    "dmarc": "%s",\n' "$HAS_DMARC"
+  printf '    "dnssec": "%s"\n' "$HAS_DNSSEC"
+  printf '  },\n'
+  printf '  "risk_flags": %s,\n' "$RISK_JSON"
+  printf '  "meta": {\n'
+  printf '    "title": "%s",\n' "$(json_escape "$META_TITLE")"
+  printf '    "description": "%s",\n' "$(json_escape "$META_DESC")"
+  printf '    "charset": "%s"\n' "$(json_escape "$META_CHARSET")"
+  printf '  },\n'
+  printf '  "ssl": {\n'
+  printf '    "subject": "%s",\n' "$(json_escape "$SSL_SUBJECT")"
+  printf '    "issuer": "%s",\n' "$(json_escape "$SSL_ISSUER")"
+  printf '    "valid_from": "%s",\n' "$(json_escape "$SSL_DATE_START")"
+  printf '    "valid_to": "%s"\n' "$(json_escape "$SSL_DATE_END")"
+  printf '  }\n'
+  printf '}\n'
+else
+  echo "=== Web Analysis: $URL ==="
+  echo ""
+  echo "Server: ${SERVER_SOFTWARE}"
+  echo "CDN: ${CDN}"
+  echo "Cookies set: ${COOKIE_COUNT}"
+  echo ""
+  if [[ "$CMS" != "none" ]]; then
+    echo "CMS: ${CMS}${CMS_VER:+ (version ${CMS_VER}${CMS_VER_SOURCE:+, via ${CMS_VER_SOURCE}})}"
+  else
+    echo "CMS: none"
+  fi
+  echo ""
+  echo "PHP/Tech Versions:"
+  echo "  PHP: ${PHP_DISPLAY}"
+  [[ -n "$POWERED_BY" && -z "$PHP_VER" ]] && echo "  X-Powered-By: ${POWERED_BY}"
+  if [[ "$CMS" == "WordPress" ]]; then
+    echo "  wp-json: ${WPJSON_STATUS}"
+    if [[ -n "$WPJSON_PLUGINS" ]]; then
+      echo "  Plugins detectados (wp-json namespaces, max 10):"
+      echo "$WPJSON_PLUGINS" | sed 's/^/    - /'
+    fi
+    [[ -n "$WPJSON_DESC" ]] && echo "  Site description: ${WPJSON_DESC}"
+  fi
+  echo ""
+  echo "Framework: ${FRAMEWORK}"
+  echo "Analytics: ${ANALYTICS}"
+  echo ""
+  if [[ "$DO_SEC" == true ]]; then
+    echo "Security Analysis:"
+    echo "  Score: ${SCORE}/100 (${GRADE})"
+    echo "  Headers: HSTS=${HAS_HSTS} CSP=${HAS_CSP} X-Frame-Options=${HAS_XFR} nosniff=${HAS_NOSNIFF} Referrer-Policy=${HAS_REFERRER} Permissions-Policy=${HAS_PERMS}"
+    echo "  Cookies: ${COOKIE_DETAIL:-ninguna}"
+    echo "  TLS: negociado ${TLS_NEG}; TLS1.0: ${TLS10_STATE}; TLS1.1: ${TLS11_STATE}"
+    [[ -n "$CERT_DAYS" ]] && echo "  Certificado: expira en ${CERT_DAYS} dias$([[ "$CERT_DAYS" -le 15 ]] 2>/dev/null && echo '  <<< ALERTA: <=15 dias!')"
+    if [[ -n "$EXPOSED_LIST" ]]; then
+      echo "  Archivos expuestos: ${EXPOSED_LIST}"
+    else
+      echo "  Archivos expuestos: ninguno"
+    fi
+    [[ -n "$PANEL_LIST" ]] && echo "  Paneles admin (informativo): ${PANEL_LIST}"
+    [[ -n "$PROTECTED_LIST" ]] && echo "  Bloqueados (403, defensa OK): ${PROTECTED_LIST}"
+    [[ -n "$SOFT404_NOTE" ]] && echo "  Nota soft-404: ${SOFT404_NOTE}"
+    [[ -n "$WAF_NOTE" ]] && echo "  Nota WAF: ${WAF_NOTE}"
+    echo "  Directory listing: ${DIR_LISTING}"
+    echo "  DNS: SPF=${HAS_SPF} DMARC=${HAS_DMARC} DNSSEC=${HAS_DNSSEC} (via ${DNS_SOURCE})"
+    echo "  Riesgos: ${RISK_FLAGS}"
+    echo ""
+  else
+    echo "Security (modo rapido --no-sec):"
+    echo "  HSTS: $(has_header "strict-transport-security")"
+    echo "  Content-Security-Policy: $(has_header "content-security-policy")"
+    echo "  X-Frame-Options: $(has_header "x-frame-options")"
+    echo "  Referrer-Policy: $(has_header "referrer-policy")"
+    echo ""
+  fi
+  echo "Meta:"
+  echo "  Title: ${META_TITLE}"
+  echo "  Description: ${META_DESC}"
+  echo "  Charset: ${META_CHARSET}"
+  echo ""
+  if [[ "$FULL" == true ]]; then
+    echo "JavaScript Sources (fingerprinting):"
+    echo "$JS_SCRIPTS"
+    echo ""
+  fi
+  echo "SSL/TLS:"
+  echo "  Subject: ${SSL_SUBJECT}"
+  echo "  Issuer: ${SSL_ISSUER}"
+  echo "  Valid: ${SSL_DATE_START} -> ${SSL_DATE_END}"
+  echo ""
+  echo "--- Full Headers ---"
+  echo "$HEADERS"
+fi

@@ -1,0 +1,416 @@
+#!/usr/bin/env python3
+"""art-gen — wrapper de generación de IMÁGENES para OpenClaw (Victoria Armada).
+
+Habla con la art API del gateway (:8010) vía art-bridge (socket UNIX
+/tmp/art-gateway.sock, sin pasar por proxy/policy) con fallback a TCP directo:
+submit -> poll -> download. SOLO IMÁGENES (política del owner 2026-10-03:
+nada de video por peso de GPU).
+
+Uso:
+  art-gen image "PROMPT" [--template z-image-turbo] [--negative TEXT]
+             [--seed N] [--w W] [--h H] [--out NOMBRE] [--retries N] [--timeout S]
+  art-gen templates      # lista de templates curados
+  art-gen status         # salud del gateway
+
+Ejemplos:
+  art-gen image "un gato astronauta estilo caricatura"
+  art-gen image "retrato fotografico de una mujer en neón" --template sd15-realistic --w 512 --h 768
+  art-gen image "post cuadrado de ciberseguridad" --w 1024 --h 1024 --out post-cyber
+
+Salida: una línea JSON {"ok":true,"path":"...","file":"...","elapsed_s":N}
+La imagen queda en /sandbox/.openclaw/media/outbound/ lista para enviar con
+`openclaw message send --media <path> --json` (verificar messageId: sin
+messageId NO fue enviada, no decir "listo").
+
+Colas: si la GPU está ocupada (Sonic renderizando, ComfyUI con cola, o
+temperatura alta) el gateway responde 429 y este wrapper espera
+Retry-After y reintenta solo — la cola es automática, no insistas a mano.
+"""
+import argparse
+import json
+import os
+import re
+import sys
+import time
+import urllib.request
+import urllib.error
+import http.client
+import socket
+
+GATEWAY = os.environ.get("ART_GATEWAY", "http://172.18.0.1:8010")
+# 2026-10-05: el netns del gateway sale SOLO por proxy L7 y el motor de policies
+# no deja a presets de usuario destinos privados (:8010 = policy_denied). El
+# art-bridge (socket UNIX en /tmp, patron voz/video/whois/admin) forwardea al
+# :8010 directo; si el socket existe se usa SIEMPRE (no toca red/policy).
+ART_SOCKET = os.environ.get("ART_SOCKET", "/tmp/art-gateway.sock")
+KEY_FILE = "/sandbox/.openclaw/bin/.art-key"
+# 2026-10-05: descarga a media/outbound/ (NO a media/): es el ÚNICO dir local
+# que el gateway acepta en TODOS los contextos (LocalMediaAccessError en
+# 2026.9.x: remitentes restringidos — CLI, broadcasts — solo pueden leer la
+# managed root <config>/media/outbound; con tools plenas vale cualquier subdir
+# de media/, y outbound lo es). Enviar SIEMPRE con --json y verificar messageId.
+MEDIA_DIR = os.environ.get("MEDIA_DIR", "/sandbox/.openclaw/media/outbound")
+# 2026-10-05: aprobaciones por grupo/canal (feature owner). Archivo de ventanas:
+# {"scopes": {"wa:<jid>|dc:<guild>[:<channel>]": {feature: {...}}}, "pending": {...}}.
+# Scopes: dm | wa:<group-jid> (ej. wa:120363429817888300@g.us) |
+# dc:<guild-id> (ej. dc:1365731253629751406) | dc:<guild>:<channel> (canal Discord).
+# DM ("dm") y owner (--owner) siempre pasan; grupos/canales solo con ventana vigente.
+# Lo escribe art-approve (solo owner vía DM o en el grupo); lo lee este gate (duro, no prompt).
+APPROVALS_FILE = os.environ.get("ART_APPROVALS",
+                                "/sandbox/.openclaw/workspace/art-approvals.json")
+
+TEMPLATES = {
+    "z-image-turbo": "RÁPIDO (8 steps, ~15-60s). Generalista de calidad, prompts en es/en. 1024x1024 nativo (acepta 640-1344). Ideal por defecto.",
+    "flux-schnell": "CALIDAD ALTA FLUX (4 steps, ~30-90s). Más detalle y fotorrealismo que Z-Image. 1024x1024 nativo (acepta 768-1344).",
+    "sd15-realistic": "FOTORREALISMO (30 steps, más lento). Realistic Vision V5.1. Retratos y escenas realistas. 512x768 nativo (no pasar de 768).",
+}
+
+
+def _key():
+    k = os.environ.get("ART_KEY", "").strip()
+    if k:
+        return k
+    try:
+        with open(KEY_FILE) as f:
+            return f.read().strip()
+    except Exception:
+        return ""
+
+
+class _UnixHTTP(http.client.HTTPConnection):
+    """HTTP sobre socket UNIX (habla con art-bridge sin pasar por proxy/policy)."""
+    def __init__(self, path, timeout=30):
+        super().__init__("localhost", timeout=timeout)
+        self._unix_path = path
+
+    def connect(self):
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.settimeout(self.timeout)
+        self.sock.connect(self._unix_path)
+
+
+def _urlopen(req_or_url, timeout=30):
+    """urlopen dual: socket UNIX si existe, TCP directo si no."""
+    if isinstance(req_or_url, str):
+        from urllib.parse import urlsplit
+        parts = urlsplit(req_or_url)
+        path = parts.path or "/"
+        if parts.query:
+            path += "?" + parts.query
+        req = urllib.request.Request(req_or_url, method="GET")
+    else:
+        req = req_or_url
+        from urllib.parse import urlsplit
+        parts = urlsplit(req.full_url)
+        path = parts.path or "/"
+        if parts.query:
+            path += "?" + parts.query
+    if os.path.exists(ART_SOCKET):
+        method = req.get_method()
+        data = req.data
+        headers = dict(req.header_items())
+        conn = _UnixHTTP(ART_SOCKET, timeout=timeout)
+        try:
+            conn.request(method, path, body=data, headers=headers)
+            resp = conn.getresponse()
+            body = resp.read()
+            status = resp.status
+            rheaders = dict(resp.getheaders())
+            conn.close()
+        except Exception as e:
+            raise urllib.error.URLError(f"socket {ART_SOCKET}: {e}")
+
+        class _R:
+            def __init__(self, status, body, headers):
+                self.status = status
+                self._body = body
+                self.headers = headers
+
+            def read(self, *a):
+                return self._body
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        if status >= 400:
+            raise urllib.error.HTTPError(req.full_url, status, "socket", rheaders,
+                                         _R(status, body, rheaders))
+        return _R(status, body, rheaders)
+    return urllib.request.urlopen(req_or_url, timeout=timeout)
+
+
+def _req(method, path, body=None, timeout=30):
+    key = _key()
+    if not key:
+        raise SystemExit('{"ok":false,"error":"no_key","detail":"falta .art-key o env ART_KEY"}')
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(GATEWAY + path, data=data, method=method,
+                                 headers={"Content-Type": "application/json",
+                                          "Authorization": "Bearer " + key})
+    try:
+        with _urlopen(req, timeout=timeout) as r:
+            return r.status, json.loads(r.read() or b"{}"), dict(r.headers)
+    except urllib.error.HTTPError as e:
+        try:
+            payload = json.loads(e.read() or b"{}")
+        except Exception:
+            payload = {}
+        return e.code, payload, dict(e.headers)
+
+
+def cmd_templates(_):
+    print(json.dumps({"ok": True, "templates": TEMPLATES}, ensure_ascii=False, indent=2))
+
+
+def _load_state():
+    """Estado completo {scopes, pending} — NUNCA guardar solo scopes
+    (borraría las solicitudes pendientes que art-approve registró)."""
+    try:
+        with open(APPROVALS_FILE) as f:
+            d = json.load(f)
+        if not isinstance(d, dict):
+            d = {}
+    except Exception:
+        d = {}
+    d.setdefault("scopes", {})
+    d.setdefault("pending", {})
+    return d
+
+
+def _save_state(d):
+    os.makedirs(os.path.dirname(APPROVALS_FILE), exist_ok=True)
+    tmp = APPROVALS_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(d, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, APPROVALS_FILE)
+
+
+def _scope_features(scope_entry):
+    """Normaliza entrada de scope v1 (plana = imagen) o v2 ({feature: {...}})."""
+    if not isinstance(scope_entry, dict):
+        return {}
+    if "expires_at" in scope_entry:
+        return {"imagen": scope_entry}
+    return scope_entry
+
+
+def ensure_owner_window(scope, feature="imagen"):
+    """Owner generó en un grupo → abre ventana 4h de ESE feature para los
+    demás si no hay una vigente (feature 2026-10-05: 'si yo pedí, el grupo
+    queda autorizado 4 horas'; multi-feature 2026-10-09: solo toca el feature
+    pedido, preserva las ventanas de los demás). No toca ventanas vigentes
+    ni cuenta el uso del owner."""
+    from datetime import datetime, timedelta, timezone
+    d = _load_state()
+    feats = _scope_features(d["scopes"].get(scope))
+    e = feats.get(feature)
+    now = datetime.now(timezone.utc)
+    if isinstance(e, dict):
+        try:
+            exp = datetime.fromisoformat(e.get("expires_at", ""))
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if now < exp:
+                return {"window": "existing", "expires_at": e.get("expires_at")}
+        except Exception:
+            pass
+    feats[feature] = {
+        "expires_at": (now + timedelta(hours=4)).isoformat(),
+        "max": 10, "used": 0,
+        "approved_at": now.isoformat(),
+        "approved_by": "owner-auto",
+        "note": "auto: owner generó en el grupo",
+    }
+    d["scopes"][scope] = feats
+    _save_state(d)
+    return {"window": "opened", "expires_at": feats[feature]["expires_at"]}
+
+
+def check_scope(scope, is_owner, feature="imagen"):
+    """Gate duro de ventanas por grupo y feature. (scope, owner, feature) ->
+    (ok, info). 'dm'/vacío u owner pasan siempre; grupos exigen ventana
+    vigente del feature + cuota."""
+    scope = (scope or "dm").strip()
+    if scope == "dm" or is_owner:
+        return True, {"scope": scope, "bypass": "owner" if is_owner else "dm"}
+    from datetime import datetime, timezone
+    d = _load_state()
+    scopes = d["scopes"]
+    feats = _scope_features(scopes.get(scope))
+    e = feats.get(feature)
+    if not e:
+        return False, {"error": "scope_not_approved", "scope": scope,
+                       "feature": feature,
+                       "hint": "grupo sin ventana: pide aprobación al owner por DM"}
+    try:
+        exp = datetime.fromisoformat(e.get("expires_at", ""))
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+    except Exception:
+        return False, {"error": "scope_bad_entry", "scope": scope,
+                       "feature": feature}
+    now = datetime.now(timezone.utc)
+    if now >= exp:
+        return False, {"error": "scope_expired", "scope": scope,
+                       "feature": feature,
+                       "expired_at": e.get("expires_at"),
+                       "hint": "ventana vencida: pide renovación al owner por DM"}
+    max_n = int(e.get("max", 10))
+    used = int(e.get("used", 0))
+    if used >= max_n:
+        return False, {"error": "scope_quota", "scope": scope,
+                       "feature": feature,
+                       "used": used, "max": max_n,
+                       "hint": "cuota de la ventana agotada: el owner puede ampliarla"}
+    e["used"] = used + 1
+    feats[feature] = e
+    d["scopes"][scope] = feats
+    _save_state(d)
+    return True, {"scope": scope, "feature": feature,
+                  "used": e["used"], "max": max_n,
+                  "expires_at": e.get("expires_at")}
+
+
+def cmd_status(_):
+    try:
+        with _urlopen(GATEWAY + "/health", timeout=8) as r:
+            h = json.loads(r.read())
+        print(json.dumps({"ok": True, "gateway": h.get("status"),
+                          "engine_down": h.get("engine", {}).get("down", False)}, ensure_ascii=False))
+    except Exception as e:
+        print(json.dumps({"ok": False, "error": str(e)[:120]}))
+
+
+def cmd_image(a):
+    if not a.prompt:
+        raise SystemExit('{"ok":false,"error":"no_prompt"}')
+    ok, info = check_scope(getattr(a, "for_scope", "dm"), getattr(a, "owner", False))
+    if not ok:
+        raise SystemExit(json.dumps({"ok": False, **info}, ensure_ascii=False))
+    body = {"template": a.template, "prompt": a.prompt}
+    if a.negative:
+        body["negative_prompt"] = a.negative
+    if a.seed is not None:
+        body["seed"] = a.seed
+    if a.w:
+        body["width"] = a.w
+    if a.h:
+        body["height"] = a.h
+    t0 = time.time()
+    job = None
+    for attempt in range(1, a.retries + 1):
+        code, resp, headers = _req("POST", "/v1/images", body, timeout=30)
+        if code == 202:
+            job = resp
+            break
+        if code == 429:
+            wait = min(90, int(headers.get("retry-after") or resp.get("retry_after_s") or 30))
+            print(json.dumps({"ok": False, "waiting": True, "reason": resp.get("error", "busy"),
+                              "retry_in_s": wait, "attempt": attempt}), flush=True)
+            time.sleep(wait)
+            continue
+        raise SystemExit(json.dumps({"ok": False, "http": code, "error": resp}))
+    if not job:
+        raise SystemExit(json.dumps({"ok": False, "error": "queue_timeout",
+                                     "detail": f"la GPU siguió ocupada {a.retries} reintentos; dale un rato"}))
+    job_id = job.get("job_id")
+    # poll
+    while time.time() - t0 < a.timeout:
+        code, st, _ = _req("GET", f"/v1/jobs/{job_id}", None, timeout=20)
+        if code == 200 and st.get("status") == "done":
+            files = st.get("files") or []
+            if not files:
+                raise SystemExit(json.dumps({"ok": False, "error": "done_sin_archivos", "job": st}))
+            os.makedirs(MEDIA_DIR, exist_ok=True)
+            fname = files[0]
+            out = a.out or ("art-" + time.strftime("%Y%m%d-%H%M%S"))
+            if not out.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                out += os.path.splitext(fname)[1] or ".png"
+            dest = os.path.join(MEDIA_DIR, out)
+            key = _key()
+            req = urllib.request.Request(GATEWAY + "/v1/art-files/" + fname,
+                                         headers={"Authorization": "Bearer " + key})
+            with _urlopen(req, timeout=60) as r, open(dest, "wb") as f:
+                f.write(r.read())
+            auto_window = None
+            if getattr(a, "owner", False) and (getattr(a, "for_scope", "dm") or "dm") != "dm":
+                auto_window = ensure_owner_window(a.for_scope, feature="imagen")
+            sent = None
+            if getattr(a, "send_to", ""):
+                # generate+send ATOMICO (2026-10-05): el modelo no puede
+                # "olvidar" el envio — sale todo de este mismo comando.
+                import subprocess
+                cmd = ["env", "HOME=/sandbox", "OPENCLAW_HOME=/sandbox",
+                       "openclaw", "message", "send",
+                       "--channel", getattr(a, "channel", "whatsapp"),
+                       "--target", a.send_to,
+                       "--message", getattr(a, "caption", "") or "🌟",
+                       "--media", dest, "--json"]
+                try:
+                    r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                    out = r.stdout.strip()
+                    mid = None
+                    for line in out.splitlines():
+                        try:
+                            j = json.loads(line)
+                            mid = (j.get("result") or {}).get("messageId") or j.get("messageId") or mid
+                        except Exception:
+                            m2 = re.search(r'"messageId"\s*:\s*"([^"]+)"', line)
+                            if m2:
+                                mid = m2.group(1)
+                    sent = {"ok": bool(mid), "messageId": mid,
+                            "to": a.send_to,
+                            "raw": (out or r.stderr or "")[-400:]}
+                except Exception as ex:
+                    sent = {"ok": False, "error": str(ex)[:300], "to": a.send_to}
+            print(json.dumps({"ok": True, "path": dest, "file": fname,
+                              "elapsed_s": round(time.time() - t0, 1),
+                              "scope": info,
+                              "auto_window": auto_window,
+                              "sent": sent,
+                              "seed": (job.get("patched") or {}).get("seed")}, ensure_ascii=False))
+            return
+        if code == 200 and st.get("status") == "failed":
+            raise SystemExit(json.dumps({"ok": False, "error": "job_failed", "job": st}))
+        time.sleep(5)
+    raise SystemExit(json.dumps({"ok": False, "error": "timeout",
+                                 "detail": f"el job no terminó en {a.timeout}s; poll /v1/jobs/{job_id}"}))
+
+
+def main():
+    p = argparse.ArgumentParser(prog="art-gen")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    pi = sub.add_parser("image")
+    pi.add_argument("prompt")
+    pi.add_argument("--template", default="z-image-turbo")
+    pi.add_argument("--negative", default="")
+    pi.add_argument("--seed", type=int, default=None)
+    pi.add_argument("--w", type=int, default=0)
+    pi.add_argument("--h", type=int, default=0)
+    pi.add_argument("--out", default="")
+    pi.add_argument("--retries", type=int, default=12)
+    pi.add_argument("--timeout", type=int, default=900)
+    pi.add_argument("--for", dest="for_scope", default="dm",
+                    help="alcance: dm | wa:<group-jid> | dc:<guild-id>[:<channel-id>]")
+    pi.add_argument("--owner", action="store_true",
+                    help="el que pide es el owner (bypass del gate, queda auditado)")
+    pi.add_argument("--send-to", dest="send_to", default="",
+                    help="target para ENVIAR la imagen tras generar (jid de grupo o numero DM) — generate+send atomico")
+    pi.add_argument("--caption", default="",
+                    help="caption del envio (requerido con --send-to)")
+    pi.add_argument("--channel", default="whatsapp",
+                    help="canal del envio: whatsapp | discord (default whatsapp)")
+    pi.set_defaults(fn=cmd_image)
+    pt = sub.add_parser("templates")
+    pt.set_defaults(fn=cmd_templates)
+    ps = sub.add_parser("status")
+    ps.set_defaults(fn=cmd_status)
+    a = p.parse_args()
+    a.fn(a)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,142 @@
+{
+ "harness": "Meta Business",
+ "updated": "2026-11-03",
+ "mode": "subagent",
+ "hidden": false,
+ "temperature": 0.6,
+ "top_p": 0.95,
+ "agent_file": "/home/victoria/.config/opencode/agents/meta-business.md",
+ "scope": "Distribucion a Instagram + Discord + WhatsApp (broadcasts RSS aprobados). IG: @victoria.armada.do (feed 3-4/sem + stories 1-2/dia, cron */20 9-21 EDT). Discord: #ethical-hackers TH (cron mar 12:30, jue 19:30, dom 19:00). WhatsApp: 3 grupos TH (cron mar 13:00, jue 20:00, dom 19:30). Token IG refresh lunes 04:00. Reporte owner 4h. Mision: salud broadcasts, tokens, webhooks, logs, anti-dup.",
+ "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. IG token renovado 2026-10-05 (exp ~2026-12-04); feed 12:20 id=17906959431592292, story 09:56; 212 IDs sent. Discord HOY 19:30: 2 articulos #ethical-hackers, 52 IDs sent. WhatsApp ultimo OK 2026-10-06 13:00 (3/3 grupos), proximo 20:00. Daily report OKs 16:00 (1 FAIL transitorio post-reboot nsenter sandbox Exited 255 -> auto-recuperado). Anti-dup states: instagram-sent.json 212, discord-sent.json 52, whatsapp-sent.json. Branding: logo-inverted.png inf-der lw=230 (-30%). Regla owner: NUNCA publicar por cuenta propia — solo broadcasts RSS + UIs nativas.",
+ "live_check": "tail -n 1 ~/logs/instagram-broadcast.log | grep -q 'OK\\|id=' && echo 'Meta:up' || echo 'Meta:down'",
+ "checks": [
+  "tail -n 20 ~/logs/instagram-broadcast.log",
+  "tail -n 20 ~/logs/discord-broadcast.log",
+  "tail -n 20 ~/logs/whatsapp-broadcast.log",
+  "cat ~/.victoria-custom/state/instagram-sent.json | python3 -c \"import json,sys; print(len(json.load(sys.stdin)))\"",
+  "cat ~/.victoria-custom/state/discord-sent.json | python3 -c \"import json,sys; print(len(json.load(sys.stdin)))\"",
+  "cat ~/.victoria-custom/state/whatsapp-sent.json | python3 -c \"import json,sys; print(len(json.load(sys.stdin)))\"",
+  "python3 /home/victoria/instagram-token-refresh.py --status 2>/dev/null | head -3"
+ ],
+ "upstream": {
+  "fuente": "Meta Graph API (Instagram) + Discord webhooks + WhatsApp Business Cloud API (APIs administradas por vendor)",
+  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Token IG refresh semanal automatico; token muerto -> re-OAuth manual (/ig-callback) y reportar.",
+  "version_servida_live": "python3 /home/victoria/instagram-token-refresh.py --status 2>/dev/null | head -3",
+  "donde_mirar": [
+   "https://developers.facebook.com/docs/instagram-platform/instagram-graph-api",
+   "https://discord.com/developers/docs/resources/webhook",
+   "https://developers.facebook.com/docs/whatsapp/cloud-api",
+   "sintoma temprano: 429/errores nuevos en ~/logs/*-broadcast.log"
+  ],
+  "frecuencia": "ante error nuevo en broadcasts",
+  "politica": "Tokens IG: refresh semanal automatico (cron lunes 04:00). Token muerto -> re-OAuth manual + reportar.",
+  "como_reportar": "entrada en CHANGELOG-social.md (seccion upstream) + aviso a Victoria en Task"
+ },
+ "servicios": [
+  {
+   "name": "instagram-broadcast.py",
+   "cuenta": "@victoria.armada.do",
+   "ritmo": "feed 3-4/sem + stories 1-2/dia (gaps por script; ventana cron 09:00-21:00 EDT, */20)",
+   "cron": "*/20 9-21 * * *"
+  },
+  {
+   "name": "discord-broadcast.py",
+   "destino": "#ethical-hackers TH (1 webhook; penetration-testers retirado)",
+   "cron": "mar 12:30, jue 19:30, dom 19:00"
+  },
+  {
+   "name": "whatsapp-broadcast.py",
+   "destino": "3 grupos TH: Zona Automotriz, Internacionales, Programadores",
+   "cron": "mar 13:00, jue 20:00, dom 19:30"
+  },
+  {
+   "name": "instagram-token-refresh.py",
+   "token_file": "/home/victoria/.victoria-custom/secrets/instagram.env (NUNCA exponer)",
+   "cron": "lunes 04:00"
+  },
+  {
+   "name": "victoria-daily-report.py",
+   "destino": "DM owner +18295468686 (WhatsApp)",
+   "cron": "0,8,12,16,20 * * * *"
+  }
+ ],
+ "scripts_host": [
+  "instagram-broadcast.py",
+  "discord-broadcast.py",
+  "whatsapp-broadcast.py",
+  "instagram-token-refresh.py",
+  "victoria-daily-report.py",
+  "instagram-reels.py"
+ ],
+ "docs": [
+  "/home/victoria/.config/opencode/agents/meta-business.md",
+  "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md"
+ ],
+ "docs_oficiales": {
+  "regla": "ANTES de operar/configurar contra el servicio consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (systemctl/curl/logs). NUNCA inventar flags ni usar features de versiones no servidas.",
+  "fuentes": [
+   {
+    "nombre": "Instagram Graph API (Meta)",
+    "url": "https://developers.facebook.com/docs/instagram-platform/instagram-graph-api",
+    "contenido_clave": "publish content feed/stories, containers, limite 100 posts/24h",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "Discord webhooks",
+    "url": "https://discord.com/developers/docs/resources/webhook",
+    "contenido_clave": "execute webhook: embeds, rate limits",
+    "verificada": "2026-10-08"
+   },
+   {
+    "nombre": "WhatsApp Business Cloud API",
+    "url": "https://developers.facebook.com/docs/whatsapp/cloud-api",
+    "contenido_clave": "send messages (media, grupos)",
+    "verificada": "2026-10-08"
+   }
+  ]
+ },
+ "changelog": [
+  {
+   "fecha": "2026-10-29",
+   "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). IG token OK (exp ~2026-12-04), Discord/WhatsApp broadcasts vivos, daily report OK. Branding logo-inverted.png lw=230. Regla owner: NUNCA publicar por cuenta propia."
+  },
+  {
+   "fecha": "2026-10-08",
+   "cambio": "Medicion LIVE: IG token renovado 2026-10-05 (exp ~2026-12-04); feed 12:20, story 09:56, 212 IDs sent. Discord 2 articulos #ethical-hackers, 52 IDs. WhatsApp 3/3 grupos OK. Daily report OK (1 FAIL transitorio post-reboot nsenter sandbox). Anti-dup states: 212/52/52 IDs. Branding -30%."
+  },
+  {
+   "fecha": "2026-09-07",
+   "cambio": "Instagram publisher ACTIVO en @victoria.armada.do (cuenta real marca). OAuth via /ig-callback. Formato: imagen original articulo (og:image -> RSS -> fallback card marca) SIN link dibujado, logo marca inf-der feed / sup-izq stories. Cron */20 08:00-23:30 (gaps feed ~190-230min, story ~70-110min + jitter). Refresh lunes 04:00."
+  },
+  {
+   "fecha": "2026-09-06",
+   "cambio": "Instagram auto-publisher desplegado (pendiente credenciales Meta owner). Feed 2/dia (10:00/18:00 EDT) + stories 4/dia (09/13/17/21) con link sticker www.alfredo.pro. 100% gratis. Guia owner: instagram-SETUP.md (10 min)."
+  }
+ ],
+ "changelogs": [
+  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-social.md",
+  "/home/victoria/CHANGELOG.md"
+ ],
+ "no_touch": [
+  "No borrar webhooks (~/.discord-webhooks)",
+  "NUNCA publicar por cuenta propia (solo broadcasts RSS aprobados + UIs nativas; el chat solo aconseja)",
+  "Token IG en secrets/instagram.env (NUNCA exponer)"
+ ],
+ "recovery": "Todo en HOST, sobrevive reboot/rebuild. Webhooks en ~/.discord-webhooks, anti-dup en state/whatsapp-sent.json. Token IG refresh automatico lunes 04:00.",
+ "medicion_live": {
+  "fecha": "2026-10-29T01:55:00Z",
+  "nota": "Harness estandarizado schema unificado. IG token OK, Discord/WhatsApp broadcasts vivos, daily report OK, branding -30%.",
+  "versiones": {
+   "instagram_token_exp": "~2026-12-04",
+   "ig_sent_ids": 212,
+   "discord_sent_ids": 52,
+   "whatsapp_sent_ids": 52
+  }
+ },
+ "delegacion": {
+  "cuando_usar": "revisar salud broadcast, reiniciar scripts, ver logs IG/Discord/WhatsApp, refresh token IG, branding",
+  "pre_check": "tail -n 1 ~/logs/instagram-broadcast.log | grep -q 'OK\\|id=' || echo 'Meta:down'",
+  "post_check": "python3 /home/victoria/instagram-token-refresh.py --status 2>/dev/null | head -3"
+ },
+ "vivo_2026_11_03": "python3 revertido a 3.12 (flip 3.13 rompió PIL _imaging → imágenes de broadcasts fallaban en silencio). update-alternatives prioridad durable 2>1. Story IG E2E OK tras fix. Si imágenes fallan: check python3 --version + import PIL."
+}

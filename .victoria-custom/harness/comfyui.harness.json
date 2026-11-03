@@ -1,0 +1,166 @@
+{
+  "harness": "Comfyui",
+  "updated": "2026-10-29",
+  "mode": "subagent",
+  "hidden": false,
+  "temperature": 0.1,
+  "agent_file": "/home/victoria/.config/opencode/agents/comfyui.md",
+  "scope": "Contenido visual: ComfyUI imagenes :8188 + LivePortrait :8180 (WebUI ES + tab Estudio Podcast) + n8n orquestacion :5678 + Hunyuan3D-2 :18860 (image->3D GLB) + Animar-chat :18861 (foto->mp4). GPU compartida con vLLM via gpu_arbiter.py. Mision: generar contenido visual, mover/bajar modelos a mano, diagnosticar ComfyUI/LivePortrait/n8n/Hunyuan3D/lp-animate.",
+  "vivo_2026_10_29": "Auditoria post-evaluacion Ecco Suite: harness estandarizado schema unificado. ComfyUI v0.42.0 (2026-10-26) + comfy-aimdo 0.6.0 + comfy-kitchen 0.2.40 UP; LivePortrait Gradio 6.29.0 UP; n8n 2.42.5 UP; Hunyuan3D-2 :18860 UP (single-flight, gpu_arbiter hunyuan3d-standalone); Animar-chat :18861 UP (lp-animate daemon + presets 01/02/03). Modelos ~109G solo imagen (FLUX, Z-Image, SD1.5, SDXL, ControlNet x7, InstantID, CLIP-Vision, VAE). GPU compartida vLLM via gpu_arbiter.py (un pesado a la vez). Mover/downloader ELIMINADOS 2026-09-28 -> a mano.",
+
+  "live_check": "systemctl is-active comfyui liveportrait && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8188/ | grep -q 200 && echo 'ComfyUI:up' || echo 'ComfyUI:down'",
+
+  "checks": [
+    "systemctl is-active comfyui liveportrait",
+    "curl -s http://127.0.0.1:8188/ | head -c 100",
+    "curl -s http://127.0.0.1:8180/ -o /dev/null -w '%{http_code}'",
+    "docker ps --format '{{.Names}} | {{.Status}}' | grep n8n",
+    "curl -s http://127.0.0.1:18860/health",
+    "curl -s http://127.0.0.1:18861/health",
+    "python3 /home/victoria/gpu_arbiter.py status 2>/dev/null | head -5"
+  ],
+
+  "upstream": {
+    "fuente": "github comfyanonymous/ComfyUI (master) + comfy-aimdo/comfy-kitchen (pip) + n8n (docker) + tencent/Hunyuan3D-2 (HF) + KlingAIResearch/LivePortrait (HF)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Upgrades = Plan + owner (custom nodes + comfy-aimdo pueden romper).",
+    "version_servida_live": "cd ~/ComfyUI && git log -1 --oneline + pip show comfy-aimdo comfy-kitchen + docker inspect n8n --format '{{.Config.Image}}'",
+    "donde_mirar": [
+      "cd ~/ComfyUI && git fetch && git log HEAD..origin/master --oneline (upstream-sync.py cada 6h)",
+      "comfy-aimdo en pip (version que main.py exige al actualizar)",
+      "n8n: contenedor 2.42.5, docker pull solo con orden del owner",
+      "https://github.com/KlingAIResearch/LivePortrait (Gradio 6.x)",
+      "https://github.com/tencent/Hunyuan3D-2 (HF)"
+    ],
+    "frecuencia": "upstream-sync.py cada 6h; estado en ~/.victoria-custom/state/upstream.json",
+    "politica": "Upgrades ComfyUI/LivePortrait/n8n/Hunyuan3D = Plan + owner. Custom nodes + comfy-aimdo pueden romper.",
+    "como_reportar": "entrada en CHANGELOG-comfyui.md (seccion upstream) + aviso a Victoria en Task"
+  },
+
+  "servicios": [
+    {
+      "name": "comfyui.service",
+      "puerto": 8188,
+      "bind": "127.0.0.1 solo loopback, LAN via nginx /comfyui/",
+      "venv": "/home/victoria/comfy-venv (cu130)"
+    },
+    {
+      "name": "liveportrait.service",
+      "puerto": 8180,
+      "lan": "victoria.local/liveportrait/",
+      "venv": "/home/victoria/liveportrait-venv (Gradio 6.29.0)"
+    },
+    {
+      "name": "n8n (Docker)",
+      "puerto": 5678,
+      "lan": "victoria.local/n8n/",
+      "datos": "/home/victoria/n8n-data/"
+    },
+    {
+      "name": "victoria-hunyuan3d.service",
+      "puerto": 18860,
+      "lan": "victoria.local/hunyuan3d/",
+      "venv": "/home/victoria/hunyuan-venv (py3.12, torch 2.14+cu130, transformers 4.57.1 + diffusers 0.32.2 pineados)",
+      "daemon": "/home/victoria/hunyuan-server.py (single-flight, sense_auth, gpu_arbiter hunyuan3d-standalone)",
+      "pesos": "HF tencent/Hunyuan3D-2mini (shape turbo 0.6B) + tencent/Hunyuan3D-2 (paint-turbo 1.3B)",
+      "desde": "2026-10-09"
+    },
+    {
+      "name": "victoria-lp-animate.service",
+      "puerto": 18861,
+      "lan": "victoria.local/animar/",
+      "daemon": "/home/victoria/lp-animate-server.py (single-flight, sense_auth, gpu_arbiter lp-animate kind liveportrait)",
+      "presets": "01-saludo 3.1s, 02-habla 7.2s, 03-energia 8.3s",
+      "desde": "2026-10-09"
+    }
+  ],
+
+  "scripts_host": [
+    "comfyui-monitor.py"
+  ],
+
+  "docs": [
+    "/home/victoria/.config/opencode/agents/comfyui.md",
+    "/home/victoria/AGENTS.md §11",
+    "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md",
+    "/home/victoria/ComfyUI/README.md"
+  ],
+
+  "docs_oficiales": {
+    "regla": "ANTES de operar/configurar contra el servicio consultar estas fuentes; si no cubren el caso, verificar contra el LIVE (systemctl/curl/logs). NUNCA inventar flags ni usar features de versiones no servidas.",
+    "fuentes": [
+      {
+        "nombre": "ComfyUI docs oficiales",
+        "url": "https://docs.comfy.org/",
+        "contenido_clave": "instalacion, API (POST /prompt con envoltura \"prompt\" desde 0.33.0), custom nodes",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Repo ComfyUI (clone local)",
+        "url": "/home/victoria/ComfyUI (git log -1)",
+        "contenido_clave": "v0.42.0 (2026-10-26), comfy-aimdo 0.6.0 + comfy-kitchen 0.2.40 requeridos por main.py",
+        "verificada": "2026-10-26"
+      },
+      {
+        "nombre": "n8n docs",
+        "url": "https://docs.n8n.io/",
+        "contenido_clave": "orquestador :5678 (contenedor Docker 2.42.5)",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "LivePortrait GitHub",
+        "url": "https://github.com/KlingAIResearch/LivePortrait",
+        "contenido_clave": "Gradio 6.x API, talking-head SOTA, pesos CC-NC-ND",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Hunyuan3D-2 GitHub",
+        "url": "https://github.com/tencent/Hunyuan3D-2",
+        "contenido_clave": "image-to-3D, DiT-mini-turbo + Paint-turbo, pesos CC-NC-ND (comercial hasta 1M MAU)",
+        "verificada": "2026-10-09"
+      }
+    ]
+  },
+
+  "changelog": [
+    { "fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente, docs, changelog[]). ComfyUI v0.42.0 + aimdo 0.6.0 + kitchen 0.2.40; LivePortrait 6.29.0; n8n 2.42.5; Hunyuan3D-2 + Animar-chat activos. GPU compartida via gpu_arbiter." },
+    { "fecha": "2026-10-26", "cambio": "ComfyUI v0.42.0 + comfy-aimdo 0.6.0 + comfy-kitchen 0.2.40 (actualizacion conjunta requerida; crash-loop si solo uno). Reqs.txt lista AMBOS paquetes." },
+    { "fecha": "2026-10-09", "cambio": "Hunyuan3D-2 :18860 + Animar-chat :18861 desplegados (single-flight, gpu_arbiter, sense_auth). Kalimete consume via art-3d + assets-3d skills (E2E verificado: GLB 3.5MB/46s + mp4 17s)." },
+    { "fecha": "2026-09-28", "cambio": "Pipeline video LTX-2.5 ELIMINADO (modelos, scripts, servicios). Nuevo stack: LivePortrait talking-head + ComfyUI imagenes + n8n orquestacion. InvokeAI NO compatible ARM64." },
+    { "fecha": "2026-09-18", "cambio": "Grupos del stack definidos (5 grupos). Docs por servicio en changelogs/. Dockers por labels victoria.group= (no compose). Modelos/configs/venvs FUERA de Docker (~377G total)." }
+  ],
+
+  "changelogs": [
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-comfyui.md",
+    "/home/victoria/CHANGELOG.md"
+  ],
+
+  "no_touch": [
+    "GPU compartida con vLLM: no renders gigantes con Sonic a la vez (OOMs 09-27/28)",
+    "gpu_arbiter.py: un pesado a la vez",
+    "Mover/bajar modelos a mano (mover/downloader ELIMINADOS 2026-09-28)",
+    "nginx client_max_body_size 500M en /comfyui/ /liveportrait/ /n8n/ (default 1MB -> 413 en uploads)"
+  ],
+
+  "recovery": "systemd units + venvs cu130 (AGENTS.md §11). Mover/bajar modelos a mano. gpu_arbiter.py libera GPU si hay conflicto. LivePortrait: retry launch() 3x (bug Gradio 5.x localhost check). n8n: docker restart n8n.",
+
+  "medicion_live": {
+    "fecha": "2026-10-29T01:55:00Z",
+    "nota": "Harness estandarizado schema unificado. ComfyUI v0.42.0 + aimdo 0.6.0 + kitchen 0.2.40; LivePortrait 6.29.0; n8n 2.42.5; Hunyuan3D-2 + Animar-chat activos. GPU compartida via gpu_arbiter.",
+    "versiones": {
+      "comfyui": "v0.42.0 (2026-10-26)",
+      "comfy-aimdo": "0.6.0",
+      "comfy-kitchen": "0.2.40",
+      "torch": "2.11.0+cu130",
+      "n8n": "2.42.5",
+      "LivePortrait": "Gradio 6.29.0",
+      "Hunyuan3D-2": "tencent/Hunyuan3D-2mini",
+      "Animar-chat": "lp-animate daemon + presets 01/02/03"
+    }
+  },
+
+  "delegacion": {
+    "cuando_usar": "generar contenido visual, mover modelos, diagnosticar ComfyUI/LivePortrait/n8n/Hunyuan3D/lp-animate, templates Victoria",
+    "pre_check": "systemctl is-active comfyui liveportrait && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8188/ | grep -q 200 || echo 'ComfyUI:down'",
+    "post_check": "curl -s http://127.0.0.1:8188/system_stats | python3 -m json.tool"
+  }
+}

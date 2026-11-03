@@ -1,0 +1,631 @@
+#!/usr/bin/env python3
+"""lp-animate — Animar (LivePortrait tab Animar) headless para el chat de Victoria.
+
+Flujo: foto (+ video-guia o preset) -> mp4 H.264 yuv420p listo para WhatsApp/Discord.
+Todo en seco: archivos + exit codes, NUNCA envia nada salvo --send-to explícito.
+
+Interfaz elegida (2026-10-09, causa en R1 del changelog liveportrait): CLI
+`inference.py` con el python del liveportrait-venv, NO la API Gradio del :8180.
+  - Igual calidad pixel a pixel: el endpoint Gradio `/gpu_wrapped_execute_video`
+    solo envuelve `LivePortraitPipeline.execute()` (guardias ES + mux de audio
+    propio + lock); aqui se replica guardias + lock, y el audio propio no
+    aplica al flujo chat (el mp4 conserva el audio del guia, igual que la UI).
+  - No depende del server Gradio (restarts cambian el hash /tmp/gradio, la
+    queue es fragil ante upgrades, y si el :8180 esta caido el chat igual
+    funciona). Defaults identicos a la UI (verificados en ArgumentConfig).
+  - Contrato simple: archivos locales in -> mp4 local out (sin upload FileData
+    ni download dance). Costo: cold-load de modelos por llamada (~17s medidos).
+
+GATE (2026-10-09, feature `animar` PESADO, modo creativo v3): ventana obligatoria
+por grupo/canal, igual que art-3d (feature "3d"). DM ("dm") y owner (--owner)
+siempre pasan; grupos/canales exigen ventana vigente del feature `animar` en
+`art-approvals.json` (el mismo archivo de art-approve/art-gen). Sin ventana:
+JSON de guía + exit 1 (el agente registra la solicitud con `art-approve flow`
+y avisa al owner por DM — este wrapper NUNCA solicita ni envía DMs solo).
+
+DOBLE MODO (patrón art-3d, 2026-10-09 — espejo del patrón art-gen sin canal
+nuevo): el MISMO script corre en host y en sandbox (md5 idénticos).
+  - En HOST (sin /sandbox/.openclaw): renderiza local (venv+pesos+presets del
+    host) y sirve de backend al daemon :18861.
+  - En SANDBOX (con /sandbox/.openclaw): opera como CLIENTE — sube la foto
+    (+guia opcional) en base64 al daemon host `http://172.18.0.1:18861`
+    (TCP directo trusted, igual que art-3d a :18860) y descarga el mp4.
+    Los presets (mp4s) viven SOLO en el host y se resuelven allá (el sandbox
+    manda el número/nombre, nunca el mp4). El gate se evalúa en el sandbox
+    (su art-approvals.json es la fuente de verdad respaldada); el daemon NO
+    gatea (confía en la red, igual que el daemon :18860) e invoca este mismo
+    CLI en modo dm (bypass, sin doble conteo de cuota).
+Transporte: stdlib solamente (urllib + base64 + socket).
+
+Uso:
+  lp-animate <foto> [--guia <video>] [--preset N|lista] [--out <f.mp4>]
+             [--timeout S] [--for <scope>] [--owner]
+             [--send-to <target> --caption "..." [--channel wa|dc]]
+  lp-animate health
+
+Salida: UNA linea JSON. Exito:
+  {"ok":true,"mp4":"...","seconds_taken":N,"seconds_video":D,"bytes":B,...}
+Fallo:
+  {"ok":false,"error":"..."} (exit 1)
+
+GPU: toma turno con gpu_arbiter.py (kind="liveportrait", holder "lp-animate",
+mismo patron que liveportrait-animate/retouch/podcast). Si esta ocupada,
+espera Retry-After y reintenta solo hasta --timeout (como art-3d).
+Stdlib solamente (el render lo hace el venv via subprocess, sin tocarlo).
+"""
+import argparse
+import base64
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+import urllib.request
+import urllib.error
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, "/home/victoria")
+
+LP_DIR = "/home/victoria/LivePortrait"
+VENV_PY = "/home/victoria/liveportrait-venv/bin/python"
+WEIGHTS_DIR = "/home/victoria/LivePortrait/pretrained_weights"
+GRADIO_BASE = "http://127.0.0.1:8180"
+PRESETS_DIR = "/home/victoria/.victoria-custom/lp-presets"
+OUT_DIR = "/home/victoria/.victoria-custom/lp-out"
+HOLDER = "lp-animate"
+KIND = "liveportrait"
+
+# --- Doble modo + gate (2026-10-09, patrón art-3d) ---
+SANDBOX = os.path.isdir("/sandbox/.openclaw")
+DAEMON_BASE = os.environ.get("LP_ANIMATE_BASE",
+                             "http://172.18.0.1:18861" if SANDBOX else "http://127.0.0.1:18861")
+APPROVALS_FILE = os.environ.get("ART_APPROVALS",
+                                "/sandbox/.openclaw/workspace/art-approvals.json")
+FEATURE = "animar"
+HOW_OPEN = "pídele a Alfredo que abra el modo animar 🔓"
+# En sandbox el mp4 debe caer en la managed root (único dir que el gateway
+# acepta en todos los contextos — igual que art-gen).
+MEDIA_SANDBOX = os.environ.get("MEDIA_DIR", "/sandbox/.openclaw/media/outbound")
+
+try:
+    import gpu_arbiter as arbiter
+except Exception:
+    arbiter = None
+
+IMG_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+VID_EXTS = {".mp4", ".mov", ".webm", ".avi", ".mkv", ".m4v"}
+
+
+def jexit(obj, code=0):
+    print(json.dumps(obj, ensure_ascii=False))
+    sys.exit(code)
+
+
+def fail(msg, **extra):
+    jexit({"ok": False, "error": msg, **extra}, 1)
+
+
+def list_presets():
+    out = []
+    if os.path.isdir(PRESETS_DIR):
+        for f in sorted(os.listdir(PRESETS_DIR)):
+            if os.path.splitext(f)[1].lower() in VID_EXTS:
+                p = os.path.join(PRESETS_DIR, f)
+                out.append({"n": len(out) + 1, "name": f, "path": p,
+                            "bytes": os.path.getsize(p)})
+    return out
+
+
+def ffprobe_video_ok(path):
+    """¿ffprobe ve stream de video? (foto o video valido)."""
+    try:
+        r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0",
+                            "-show_entries", "stream=codec_type",
+                            "-of", "default=noprint_wrappers=1:nokey=1", path],
+                           capture_output=True, text=True, timeout=20)
+        return "video" in (r.stdout or "")
+    except Exception:
+        return False
+
+
+def probe_seconds(path):
+    try:
+        r = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                            "format=duration", "-of",
+                            "default=noprint_wrappers=1:nokey=1", path],
+                           capture_output=True, text=True, timeout=20)
+        return float((r.stdout or "").strip())
+    except Exception:
+        return 0.0
+
+
+# --- Gate de ventanas (feature animar, espejo de art-3d) ---
+
+def _load_state():
+    try:
+        with open(APPROVALS_FILE) as f:
+            d = json.load(f)
+        if not isinstance(d, dict):
+            d = {}
+    except Exception:
+        d = {}
+    d.setdefault("scopes", {})
+    d.setdefault("pending", {})
+    return d
+
+
+def _save_state(d):
+    os.makedirs(os.path.dirname(APPROVALS_FILE), exist_ok=True)
+    tmp = APPROVALS_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(d, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, APPROVALS_FILE)
+
+
+def _scope_features(scope_entry):
+    if not isinstance(scope_entry, dict):
+        return {}
+    if "expires_at" in scope_entry:
+        return {"imagen": scope_entry}  # v1 plano = imagen, NO animar
+    return scope_entry
+
+
+def ensure_owner_window(scope):
+    """Owner animó en un grupo → abre ventana animar 4h para los demás si no
+    hay una vigente (igual que art-gen/art-3d). Solo toca el feature animar."""
+    from datetime import datetime, timedelta, timezone
+    d = _load_state()
+    feats = _scope_features(d["scopes"].get(scope))
+    e = feats.get(FEATURE)
+    now = datetime.now(timezone.utc)
+    if isinstance(e, dict):
+        try:
+            exp = datetime.fromisoformat(e.get("expires_at", ""))
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if now < exp:
+                return {"window": "existing", "expires_at": e.get("expires_at")}
+        except Exception:
+            pass
+    feats[FEATURE] = {
+        "expires_at": (now + timedelta(hours=4)).isoformat(),
+        "max": 10, "used": 0,
+        "approved_at": now.isoformat(),
+        "approved_by": "owner-auto",
+        "note": "auto: owner animó en el grupo",
+    }
+    d["scopes"][scope] = feats
+    _save_state(d)
+    return {"window": "opened", "expires_at": feats[FEATURE]["expires_at"]}
+
+
+def check_scope(scope, is_owner):
+    """Gate duro de ventanas animar por grupo/canal. (scope, owner) -> (ok, info)."""
+    scope = (scope or "dm").strip()
+    if scope == "dm" or is_owner:
+        return True, {"scope": scope, "bypass": "owner" if is_owner else "dm"}
+    from datetime import datetime, timezone
+    d = _load_state()
+    feats = _scope_features(d["scopes"].get(scope))
+    e = feats.get(FEATURE)
+    if not e:
+        return False, {"error": "scope_not_approved", "scope": scope,
+                       "feature": FEATURE,
+                       "how": HOW_OPEN}
+    try:
+        exp = datetime.fromisoformat(e.get("expires_at", ""))
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+    except Exception:
+        return False, {"error": "scope_bad_entry", "scope": scope,
+                       "feature": FEATURE, "how": HOW_OPEN}
+    now = datetime.now(timezone.utc)
+    if now >= exp:
+        return False, {"error": "scope_expired", "scope": scope,
+                       "feature": FEATURE,
+                       "expired_at": e.get("expires_at"),
+                       "how": HOW_OPEN}
+    max_n = int(e.get("max", 10))
+    used = int(e.get("used", 0))
+    if used >= max_n:
+        return False, {"error": "scope_quota", "scope": scope,
+                       "feature": FEATURE,
+                       "used": used, "max": max_n,
+                       "how": HOW_OPEN}
+    e["used"] = used + 1
+    feats[FEATURE] = e
+    d["scopes"][scope] = feats
+    _save_state(d)
+    return True, {"scope": scope, "feature": FEATURE,
+                  "used": e["used"], "max": max_n,
+                  "expires_at": e.get("expires_at")}
+
+
+# --- Cliente sandbox → daemon host (modo SANDBOX) ---
+
+def _daemon_call(path, body=None, timeout=30):
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(DAEMON_BASE + path, data=data,
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read() or b"{}"), r.status
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read() or b"{}"), e.code
+        except Exception:
+            return {"error": f"http {e.code}"}, e.code
+
+
+def client_animate(a, t0):
+    """Modo SANDBOX: sube foto (+guia) en base64 al daemon host y descarga el mp4."""
+    if not os.path.isfile(a.foto or ""):
+        fail("📷 Falta la fuente: pasa una foto valida (jpg/png/webp).")
+    _, fext = os.path.splitext(a.foto)
+    if fext.lower() not in IMG_EXTS:
+        fail("📷 La fuente no parece una imagen valida (usa jpg/png/webp con una cara visible).")
+    try:
+        with open(a.foto, "rb") as f:
+            foto_b64 = base64.b64encode(f.read()).decode()
+    except Exception as e:
+        fail(f"📷 No se pudo leer la foto: {e}")
+    if not foto_b64:
+        fail("📷 La foto está vacía.")
+    guia_b64 = None
+    if a.guia:
+        if not os.path.isfile(a.guia):
+            fail("🎞️ Falta el guia: el video custom no existe o no se puede leer.")
+        _, gext = os.path.splitext(a.guia)
+        if gext.lower() not in VID_EXTS:
+            fail("🎞️ El guia no parece un video valido (usa mp4/mov/webm con una cara visible).")
+        try:
+            with open(a.guia, "rb") as f:
+                guia_b64 = base64.b64encode(f.read()).decode()
+        except Exception as e:
+            fail(f"🎞️ No se pudo leer el guia: {e}")
+    body = {"foto_b64": foto_b64, "timeout_s": a.timeout}
+    if guia_b64:
+        body["guia_b64"] = guia_b64
+    else:
+        body["preset"] = (a.preset or "1")
+    if a.out:
+        body["out_name"] = os.path.basename(a.out)
+    # POST con reintento en GPU ocupada (503/429 + retry_after_s, como art-3d).
+    deadline = t0 + a.timeout
+    resp, code = _daemon_call("/animate", body, timeout=60)
+    while code in (503, 429) and "retry_after_s" in resp:
+        wait = int(resp.get("retry_after_s", 30))
+        if time.time() + wait >= deadline:
+            fail(f"⏳ Sin turno GPU en {a.timeout}s ({resp.get('error', 'ocupada')}). Reintenta mas tarde.",
+                 waited_s=round(time.time() - t0, 1))
+        time.sleep(min(wait, 30))
+        resp, code = _daemon_call("/animate", body, timeout=60)
+    if not resp.get("ok"):
+        jexit({"ok": False, **{k: v for k, v in resp.items() if k != "ok"}}, 1)
+    name = resp.get("mp4_name") or "lp-animate.mp4"
+    out_path = a.out
+    if not out_path:
+        os.makedirs(MEDIA_SANDBOX, exist_ok=True)
+        out_path = os.path.join(MEDIA_SANDBOX, f"lp-{int(time.time())}.mp4")
+    else:
+        od = os.path.dirname(os.path.abspath(out_path))
+        if od:
+            os.makedirs(od, exist_ok=True)
+    try:
+        req = urllib.request.Request(DAEMON_BASE + "/file/" + name)
+        with urllib.request.urlopen(req, timeout=300) as r, open(out_path, "wb") as f:
+            f.write(r.read())
+    except Exception as e:
+        fail(f"No se pudo descargar el mp4: {e}")
+    if not os.path.isfile(out_path) or os.path.getsize(out_path) < 1024:
+        fail("El mp4 descargado quedo vacio o corrupto (fallo interno).")
+    return {"mp4": os.path.abspath(out_path),
+            "seconds_taken": round(time.time() - t0, 1) + float(resp.get("seconds_taken") or 0),
+            "seconds_video": resp.get("seconds_video", 0),
+            "bytes": os.path.getsize(out_path),
+            **({"preset": resp["preset"]} if resp.get("preset") else {})}
+
+
+def send_media(mp4_path, send_to, caption, channel):
+    """Envío atómico generate+send (espejo de art-gen): devuelve sent.* con messageId."""
+    cmd = ["env", "HOME=/sandbox", "OPENCLAW_HOME=/sandbox",
+           "openclaw", "message", "send",
+           "--channel", channel,
+           "--target", send_to,
+           "--message", caption or "🌟",
+           "--media", mp4_path, "--json"]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        out = r.stdout.strip()
+        mid = None
+        for line in out.splitlines():
+            try:
+                j = json.loads(line)
+                mid = (j.get("result") or {}).get("messageId") or j.get("messageId") or mid
+            except Exception:
+                m2 = re.search(r'"messageId"\s*:\s*"([^"]+)"', line)
+                if m2:
+                    mid = m2.group(1)
+        return {"ok": bool(mid), "messageId": mid,
+                "to": send_to,
+                "raw": (out or r.stderr or "")[-400:]}
+    except Exception as ex:
+        return {"ok": False, "error": str(ex)[:300], "to": send_to}
+
+
+def do_health():
+    if SANDBOX:
+        # En sandbox no hay venv/pesos locales: la salud es la del daemon host.
+        try:
+            body, code = _daemon_call("/health", timeout=10)
+            body["via"] = "daemon-host"
+            jexit(body, 0 if (code == 200 and body.get("ok")) else 1)
+        except Exception as e:
+            fail(f"daemon animar no responde: {e}")
+    info = {"ok": True}
+    # 1. server Gradio (referencia; el render NO depende de el)
+    try:
+        with urllib.request.urlopen(GRADIO_BASE + "/", timeout=10) as r:
+            info["gradio_8180"] = r.status
+            if r.status != 200:
+                info["ok"] = False
+    except Exception as e:
+        info["gradio_8180"] = f"caido: {e}"
+        info["ok"] = False
+    # 2. venv + pesos (lo que SI usa el render)
+    info["venv_python"] = os.path.isfile(VENV_PY)
+    info["pesos"] = os.path.isdir(WEIGHTS_DIR)
+    if not (info["venv_python"] and info["pesos"]):
+        info["ok"] = False
+    # 3. arbitro GPU
+    if arbiter is None:
+        info["arbiter"] = "no importable"
+        info["ok"] = False
+    else:
+        try:
+            ok, reason, retry = arbiter.check_ready(KIND)
+            info["gpu_libre"] = ok
+            info["gpu_detalle"] = reason
+            if not ok:
+                info["retry_after_s"] = retry
+        except Exception as e:
+            info["gpu_libre"] = f"desconocido: {e}"
+    info["presets"] = len(list_presets())
+    # 4. daemon :18861 (puerta del sandbox; informativo en host)
+    try:
+        body, code = _daemon_call("/health", timeout=8)
+        info["daemon_18861"] = "ok" if (code == 200 and body.get("ok")) else f"http {code}: {body.get('error', '?')}"
+    except Exception as e:
+        info["daemon_18861"] = f"caido: {e}"
+    jexit(info, 0 if info["ok"] else 1)
+
+
+def acquire_turn(timeout_s):
+    """Espera turno GPU (check_ready + acquire), reintentando hasta timeout_s.
+    Devuelve token. Falla con SystemExit JSON si se agota el tiempo."""
+    if arbiter is None:
+        fail("no se pudo importar gpu_arbiter (¿se movio /home/victoria/gpu_arbiter.py?)")
+    try:
+        arbiter.free_comfy()
+    except Exception:
+        pass
+    t0 = time.time()
+    deadline = t0 + timeout_s
+    last_reason = "GPU ocupada"
+    while True:
+        try:
+            ok, reason, retry = arbiter.check_ready(KIND)
+        except Exception as e:
+            ok, reason, retry = False, f"arbitro no responde: {e}", 30
+        if ok:
+            try:
+                ok2, data = arbiter.acquire(HOLDER, kind=KIND)
+            except Exception as e:
+                ok2, data = False, {"reason": f"acquire fallo: {e}", "retry_after": 30}
+            if ok2:
+                return data.get("token")
+            last_reason = data.get("reason", "GPU ocupada")
+            retry = int(data.get("retry_after", 30))
+        else:
+            last_reason = reason
+        remaining = deadline - time.time()
+        if remaining <= 0:
+            fail(f"⏳ Sin turno GPU en {timeout_s}s ({last_reason}). Reintenta mas tarde.",
+                 waited_s=round(time.time() - t0, 1))
+        # Rebanada corta y re-chequear: un turno ajeno corto no debe costar
+        # los 120s enteros del Retry-After (cada vuelta re-evalua el lock).
+        time.sleep(min(30, max(1, int(retry or 30)), int(remaining)))
+
+
+def release_turn(token):
+    if arbiter is not None and token:
+        try:
+            arbiter.release(token)
+        except Exception:
+            pass
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="lp-animate")
+    ap.add_argument("foto", nargs="?", help="foto fuente (jpg/png/webp)")
+    ap.add_argument("--guia", default=None, help="video-guia custom (si no, --preset)")
+    ap.add_argument("--preset", default="1",
+                    help="N (1-based, default 1), nombre, o 'lista'")
+    ap.add_argument("--out", default=None, help="mp4 destino (default lp-out/lp-<ts>.mp4)")
+    ap.add_argument("--timeout", type=int, default=600,
+                    help="segundos maximos totales incl. espera GPU (default 600)")
+    ap.add_argument("--for", dest="for_scope", default="dm",
+                    help="alcance: dm | wa:<group-jid> | dc:<guild-id>[:<channel-id>]")
+    ap.add_argument("--owner", action="store_true",
+                    help="el que pide es el owner (bypass del gate, queda auditado)")
+    ap.add_argument("--send-to", dest="send_to", default="",
+                    help="target para ENVIAR el mp4 tras animar (jid de grupo o numero DM) — generate+send atomico")
+    ap.add_argument("--caption", default="",
+                    help="caption del envio (requerido con --send-to)")
+    ap.add_argument("--channel", default="whatsapp",
+                    help="canal del envio: whatsapp | discord (default whatsapp)")
+    a = ap.parse_args()
+
+    if a.foto == "health" or (a.foto is None and (a.preset or "").strip().lower() != "lista"):
+        do_health()
+
+    t0 = time.time()
+
+    if (a.foto is None and (a.preset or "").strip().lower() == "lista") or \
+       ((a.preset or "").strip().lower() == "lista" and not a.guia):
+        if SANDBOX:
+            body, code = _daemon_call("/presets", timeout=15)
+            jexit(body, 0 if body.get("ok") else 1)
+        jexit({"ok": True, "presets": list_presets()})
+
+    # --- Gate duro (feature animar): ANTES de leer archivos o tocar GPU ---
+    ok, info = check_scope(a.for_scope, a.owner)
+    if not ok:
+        print(json.dumps({"ok": False, **info}, ensure_ascii=False))
+        sys.exit(1)
+
+    # --- Modo SANDBOX: cliente del daemon host ---
+    if SANDBOX:
+        res = client_animate(a, t0)
+        auto_window = None
+        if a.owner and (a.for_scope or "dm") != "dm":
+            auto_window = ensure_owner_window(a.for_scope)
+        sent = None
+        if a.send_to:
+            sent = send_media(res["mp4"], a.send_to, a.caption, a.channel)
+        jexit({"ok": True, **res,
+               "scope": info,
+               "auto_window": auto_window,
+               "sent": sent})
+
+    # --- Modo HOST: render local (motor verificado) ---
+    # --- Guardias ES (espejo de app.py gpu_wrapped_execute_video) ---
+    if not os.path.isfile(a.foto or ""):
+        fail("📷 Falta la fuente: pasa una foto valida (jpg/png/webp).")
+    _, fext = os.path.splitext(a.foto)
+    if fext.lower() not in IMG_EXTS or not ffprobe_video_ok(a.foto):
+        fail("📷 La fuente no parece una imagen valida (usa jpg/png/webp con una cara visible).")
+
+    guia_path = None
+    preset_used = None
+    if a.guia:
+        if not os.path.isfile(a.guia):
+            fail("🎞️ Falta el guia: el video custom no existe o no se puede leer.")
+        _, gext = os.path.splitext(a.guia)
+        if gext.lower() not in VID_EXTS or not ffprobe_video_ok(a.guia):
+            fail("🎞️ El guia no parece un video valido (usa mp4/mov/webm con una cara visible).")
+        guia_path = a.guia
+    else:
+        if (a.preset or "").strip().lower() == "lista":
+            jexit({"ok": True, "presets": list_presets()})
+        presets = list_presets()
+        if not presets:
+            fail("🎞️ No hay presets instalados en lp-presets/ (avisa al admin).")
+        sel = (a.preset or "1").strip()
+        pick = None
+        if sel.isdigit():
+            i = int(sel) - 1
+            if 0 <= i < len(presets):
+                pick = presets[i]
+        else:
+            for p in presets:
+                if sel.lower() in p["name"].lower():
+                    pick = p
+                    break
+        if pick is None:
+            fail(f"🎞️ Preset '{sel}' no existe. Usa --preset lista para verlos.",
+                 presets=[p["name"] for p in presets])
+        guia_path = pick["path"]
+        preset_used = pick["name"]
+
+    out_path = a.out
+    if not out_path:
+        os.makedirs(OUT_DIR, exist_ok=True)
+        out_path = os.path.join(OUT_DIR, f"lp-{int(time.time())}.mp4")
+    else:
+        od = os.path.dirname(os.path.abspath(out_path))
+        if od:
+            os.makedirs(od, exist_ok=True)
+
+    # --- Turno GPU (espera + reintenta solo, como art-3d) ---
+    token = acquire_turn(a.timeout)
+
+    # --- Workdir: copiar foto+guia (evita .pkl ajeno junto a archivos del usuario
+    #     y nombres con espacios/raros; el execute() escribe <src>--<drv>.mp4 ahi) ---
+    work = os.path.join(OUT_DIR, f".work-{int(time.time())}-{os.getpid()}")
+    raw_out = None
+    try:
+        os.makedirs(work, exist_ok=True)
+        foto_w = os.path.join(work, "foto" + os.path.splitext(a.foto)[1].lower())
+        guia_w = os.path.join(work, "guia" + os.path.splitext(guia_path)[1].lower())
+        shutil.copyfile(a.foto, foto_w)
+        shutil.copyfile(guia_path, guia_w)
+        # basename() del pipeline quita la extension: <stem-src>--<stem-drv>.mp4
+        expected = os.path.join(
+            work, f"{os.path.splitext(os.path.basename(foto_w))[0]}--"
+                  f"{os.path.splitext(os.path.basename(guia_w))[0]}.mp4")
+
+        cmd = [VENV_PY, os.path.join(LP_DIR, "inference.py"),
+               "-s", foto_w, "-d", guia_w, "-o", work]
+        remaining = (t0 + a.timeout) - time.time()
+        if remaining <= 30:
+            fail("⏳ Se agoto el timeout esperando turno GPU antes de renderizar.",
+                 waited_s=round(time.time() - t0, 1))
+        try:
+            r = subprocess.run(cmd, cwd=LP_DIR, capture_output=True, text=True,
+                               timeout=remaining)
+        except subprocess.TimeoutExpired:
+            fail(f"⏳ El render supero el timeout de {a.timeout}s (clip largo o GPU lenta).",
+                 waited_s=round(time.time() - t0, 1))
+        if r.returncode != 0 or not os.path.isfile(expected):
+            tail = ((r.stderr or "") + "\n" + (r.stdout or "")).strip()[-1500:]
+            hint = ""
+            if "No face detected" in tail:
+                hint = " 📷 No se detecto cara en la foto fuente: usa una foto frontal con la cara visible."
+            fail(f"El render fallo (exit {r.returncode}).{hint}",
+                 log_tail=tail)
+        raw_out = expected
+
+        # --- Normalizar a mp4 WhatsApp/Discord (H.264 yuv420p + aac + faststart) ---
+        remaining = (t0 + a.timeout) - time.time()
+        if remaining <= 20:
+            fail("⏳ Sin tiempo para normalizar el mp4 (sube --timeout).",
+                 waited_s=round(time.time() - t0, 1))
+        try:
+            subprocess.run(["ffmpeg", "-y", "-v", "error",
+                            "-i", raw_out,
+                            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+                            "-pix_fmt", "yuv420p",
+                            "-c:a", "aac", "-b:a", "128k",
+                            "-movflags", "+faststart",
+                            out_path],
+                           check=True, capture_output=True, timeout=remaining)
+        except Exception as e:
+            fail(f"No se pudo normalizar el mp4: {e}")
+        if not os.path.isfile(out_path) or os.path.getsize(out_path) < 1024:
+            fail("El mp4 normalizado quedo vacio o corrupto (fallo interno de ffmpeg).")
+
+        dur = probe_seconds(out_path)
+        auto_window = None
+        if a.owner and (a.for_scope or "dm") != "dm":
+            auto_window = ensure_owner_window(a.for_scope)
+        sent = None
+        if a.send_to:
+            sent = send_media(out_path, a.send_to, a.caption, a.channel)
+        jexit({"ok": True, "mp4": os.path.abspath(out_path),
+               "seconds_taken": round(time.time() - t0, 1),
+               "seconds_video": round(dur, 2),
+               "bytes": os.path.getsize(out_path),
+               "scope": info,
+               "auto_window": auto_window,
+               "sent": sent,
+               **({"preset": preset_used} if preset_used else {"guia": a.guia})})
+    finally:
+        release_turn(token)
+        shutil.rmtree(work, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,63 @@
+// opencode.jsonc — Template para conectar a Victoria Armada (www.alfredo.pro)
+//
+// Este archivo es PUBLICO y seguro de compartir: NO contiene llaves ni secretos.
+//
+// COMO USARLO (el cliente SOLO cambia 2 cosas):
+//   1. baseURL  -> la URL por la que alcanza el gateway (ver opciones abajo)
+//   2. apiKey   -> su llave (la obtiene del admin)
+// TODO lo demás (límites, costo, modelos) ya viene dictado por el servidor.
+//
+// NO edites "limit", "cost" ni "models": el servidor los impone y clampea.
+// Si pones context > 220K el gateway rechaza con 400 prompt_tokens_exceeded.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "vllm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "· www.alfredo.pro (Victoria)",
+      "options": {
+        // ELIGE UNA (descomenta la que uses y borra la otra):
+        // A) Host publico (Internet, tunel Cloudflare HTTPS — recomendado):
+        // "baseURL": "https://victoria.armada.do/v1",
+        // B) LAN (misma red local, sin TLS):
+        // "baseURL": "http://victoria.local:8010/v1",
+        "baseURL": "http://victoria.local:8010/v1",
+
+        // Pon AQUI tu llave:
+        "apiKey": "REPLACE_APIKEY"
+      },
+      "models": {
+        "nvidia/Qwen3.6-35B-A3B-NVFP4-normal": {
+          "name": "Coding con Victoria",
+          "id": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+          "limit": {
+            "context": 220000,
+            "output": 32000
+          },
+          "attachment": true,
+          "tool_call": true,
+          "reasoning": false,
+          "modalities": {
+            "input": ["text", "image", "video"],
+            "output": ["text"]
+          }
+        },
+        "nvidia/Qwen3.6-35B-A3B-NVFP4": {
+          "name": "Thinking · Coding con Victoria",
+          "id": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+          "limit": {
+            "context": 220000,
+            "output": 32000
+          },
+          "attachment": true,
+          "tool_call": true,
+          "reasoning": true,
+          "modalities": {
+            "input": ["text", "image", "video"],
+            "output": ["text"]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,881 @@
+{
+  "_managed": [
+    [
+      "channels",
+      "discord",
+      "streaming",
+      "mode"
+    ],
+    [
+      "channels",
+      "discord",
+      "streaming",
+      "progress",
+      "label"
+    ],
+    [
+      "channels",
+      "discord",
+      "streaming",
+      "progress",
+      "labels"
+    ],
+    [
+      "channels",
+      "discord",
+      "streaming",
+      "progress",
+      "toolProgress"
+    ],
+    [
+      "channels",
+      "discord",
+      "streaming",
+      "progress",
+      "commentary"
+    ],
+    [
+      "channels",
+      "discord",
+      "streaming",
+      "progress",
+      "commandText"
+    ],
+    [
+      "channels",
+      "discord",
+      "streaming",
+      "progress",
+      "maxLines"
+    ],
+    [
+      "channels",
+      "discord",
+      "streaming",
+      "progress",
+      "maxLineChars"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "1365731253629751406",
+      "reactionNotifications"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "233040661492924418",
+      "reactionNotifications"
+    ],
+    [
+      "channels",
+      "discord",
+      "groupPolicy"
+    ],
+    [
+      "channels",
+      "discord",
+      "voice"
+    ],
+    [
+      "channels",
+      "discord",
+      "voice",
+      "enabled"
+    ],
+    [
+      "channels",
+      "discord",
+      "voice",
+      "mode"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "1365731253629751406",
+      "tools"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "1365731253629751406",
+      "toolsBySender"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "reactionLevel"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groupPolicy"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "120363428629110824@g.us",
+      "tools"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "120363429817888300@g.us",
+      "tools"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "groupPolicy"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "dmPolicy"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "allowFrom"
+    ],
+    [
+      "channels",
+      "discord",
+      "allowFrom"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "1365731253629751406",
+      "requireMention"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "233040661492924418",
+      "requireMention"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "233040661492924418",
+      "toolsBySender"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "120363428629110824@g.us",
+      "requireMention"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "120363429817888300@g.us",
+      "requireMention"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "*",
+      "requireMention"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "*",
+      "toolsBySender"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "120363428629110824@g.us",
+      "toolsBySender"
+    ],
+    [
+      "channels",
+      "whatsapp",
+      "groups",
+      "120363429817888300@g.us",
+      "toolsBySender"
+    ],
+    [
+      "plugins",
+      "allow"
+    ],
+    [
+      "plugins",
+      "entries",
+      "active-memory"
+    ],
+    [
+      "plugins",
+      "entries",
+      "active-memory",
+      "enabled"
+    ],
+    [
+      "plugins",
+      "entries",
+      "active-memory",
+      "config"
+    ],
+    [
+      "session",
+      "identityLinks"
+    ],
+    [
+      "agents",
+      "defaults",
+      "typingMode"
+    ],
+    [
+      "commands",
+      "ownerAllowFrom"
+    ],
+    [
+      "tools",
+      "toolsBySender"
+    ],
+    [
+      "tools",
+      "media",
+      "video"
+    ],
+    [
+      "tools",
+      "media",
+      "video",
+      "enabled"
+    ],
+    [
+      "tts"
+    ],
+    [
+      "messages",
+      "tts",
+      "provider"
+    ],
+    [
+      "messages",
+      "tts",
+      "auto"
+    ],
+    [
+      "messages",
+      "tts",
+      "providers"
+    ],
+    [
+      "messages",
+      "tts",
+      "providers",
+      "tts-local-cli"
+    ],
+    [
+      "talk"
+    ],
+    [
+      "talk",
+      "provider"
+    ],
+    [
+      "talk",
+      "providers"
+    ],
+    [
+      "talk",
+      "providers",
+      "tts-local-cli"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "*"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "*",
+      "requireMention"
+    ],
+    [
+      "channels",
+      "discord",
+      "guilds",
+      "*",
+      "toolsBySender"
+    ],
+    [
+      "tools",
+      "media"
+    ],
+    [
+      "tools",
+      "media",
+      "models"
+    ],
+    [
+      "tools",
+      "media",
+      "audio"
+    ],
+    [
+      "tools",
+      "media",
+      "audio",
+      "enabled"
+    ],
+    [
+      "agents",
+      "defaults",
+      "heartbeat",
+      "every"
+    ],
+    [
+      "models",
+      "mode"
+    ],
+    [
+      "models",
+      "providers",
+      "inference",
+      "models"
+    ]
+  ],
+  "channels": {
+    "discord": {
+      "streaming": {
+        "mode": "progress",
+        "progress": {
+          "label": "auto",
+          "labels": [
+            "Thinking",
+            "Pensando",
+            "Dandole vueltas",
+            "Meditandolo",
+            "Revisando",
+            "Reflexionando",
+            "Working",
+            "En ello",
+            "Puliendolo",
+            "Dandole forma",
+            "Recapitulando",
+            "Cerrando ideas",
+            "Un momento",
+            "Dejame ver",
+            "A ver",
+            "Pensandolo bien",
+            "Dale, dejame ver",
+            "Procesandolo"
+          ],
+          "toolProgress": false,
+          "commentary": true,
+          "commandText": "status",
+          "maxLines": 4,
+          "maxLineChars": 140
+        }
+      },
+      "voice": {
+        "enabled": true,
+        "mode": "stt-tts"
+      },
+      "guilds": {
+        "1365731253629751406": {
+          "reactionNotifications": "own",
+          "toolsBySender": {
+            "id:693703068461826110": {
+              "alsoAllow": [
+                "exec",
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            },
+            "*": {
+              "deny": [
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            }
+          },
+          "requireMention": true
+        },
+        "233040661492924418": {
+          "reactionNotifications": "own",
+          "requireMention": true,
+          "toolsBySender": {
+            "id:693703068461826110": {
+              "alsoAllow": [
+                "exec",
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            },
+            "*": {
+              "deny": [
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            }
+          }
+        },
+        "*": {
+          "requireMention": true,
+          "toolsBySender": {
+            "id:693703068461826110": {
+              "alsoAllow": [
+                "exec",
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            },
+            "*": {
+              "deny": [
+                "exec",
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            }
+          }
+        }
+      },
+      "groupPolicy": "open",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "693703068461826110"
+      ]
+    },
+    "whatsapp": {
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "18295468686"
+      ],
+      "groupPolicy": "open",
+      "reactionLevel": "ack",
+      "groups": {
+        "*": {
+          "requireMention": true,
+          "toolsBySender": {
+            "e164:+18295468686": {
+              "alsoAllow": [
+                "exec",
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            },
+            "*": {
+              "deny": [
+                "exec",
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            }
+          }
+        },
+        "120363428629110824@g.us": {
+          "toolsBySender": {
+            "e164:+18295468686": {
+              "alsoAllow": [
+                "exec",
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            },
+            "*": {
+              "deny": [
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            }
+          },
+          "requireMention": true
+        },
+        "120363429817888300@g.us": {
+          "toolsBySender": {
+            "e164:+18295468686": {
+              "alsoAllow": [
+                "exec",
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            },
+            "*": {
+              "deny": [
+                "browser",
+                "web_fetch",
+                "web_search",
+                "read",
+                "write",
+                "applyPatch",
+                "process",
+                "cron",
+                "gateway",
+                "nodes",
+                "sessions_spawn",
+                "weather",
+                "tool_search",
+                "tool_describe"
+              ]
+            }
+          },
+          "requireMention": true
+        }
+      }
+    }
+  },
+  "messages": {},
+  "plugins": {
+    "allow": [
+      "active-memory",
+      "browser",
+      "canvas",
+      "device-pair",
+      "discord",
+      "file-transfer",
+      "memory-core",
+      "ollama",
+      "phone-control",
+      "talk-voice",
+      "tts-local-cli",
+      "whatsapp"
+    ],
+    "entries": {
+      "active-memory": {
+        "enabled": true,
+        "config": {
+          "queryMode": "recent",
+          "promptStyle": "balanced",
+          "timeoutMs": 15000,
+          "allowedChatTypes": [
+            "direct",
+            "group"
+          ]
+        }
+      }
+    }
+  },
+  "session": {
+    "identityLinks": {
+      "alfredo": [
+        "discord:693703068461826110",
+        "whatsapp:18295468686"
+      ]
+    }
+  },
+  "commands": {
+    "ownerAllowFrom": [
+      "discord:693703068461826110",
+      "whatsapp:18295468686"
+    ]
+  },
+  "tools": {
+    "media": {
+      "video": {
+        "enabled": true
+      },
+      "models": [
+        {
+          "type": "cli",
+          "command": "/sandbox/.openclaw/bin/video-analyze-local",
+          "args": [
+            "{{MediaPath}}"
+          ],
+          "capabilities": [
+            "video"
+          ]
+        },
+        {
+          "type": "cli",
+          "command": "/sandbox/.openclaw/bin/whisper-cli",
+          "args": [
+            "{{MediaPath}}"
+          ],
+          "capabilities": [
+            "audio"
+          ]
+        }
+      ],
+      "audio": {
+        "enabled": true
+      }
+    },
+    "toolsBySender": {
+      "e164:+18295468686": {
+        "alsoAllow": [
+          "exec",
+          "browser",
+          "web_fetch",
+          "web_search",
+          "read",
+          "write",
+          "applyPatch",
+          "process",
+          "cron",
+          "gateway",
+          "nodes",
+          "sessions_spawn",
+          "weather",
+          "tool_search",
+          "tool_describe"
+        ]
+      },
+      "id:693703068461826110": {
+        "alsoAllow": [
+          "exec",
+          "browser",
+          "web_fetch",
+          "web_search",
+          "read",
+          "write",
+          "applyPatch",
+          "process",
+          "cron",
+          "gateway",
+          "nodes",
+          "sessions_spawn",
+          "weather",
+          "tool_search",
+          "tool_describe"
+        ]
+      },
+      "*": {
+        "deny": [
+          "browser",
+          "web_fetch",
+          "web_search",
+          "read",
+          "write",
+          "applyPatch",
+          "process",
+          "cron",
+          "gateway",
+          "nodes",
+          "sessions_spawn",
+          "weather",
+          "tool_search",
+          "tool_describe"
+        ]
+      }
+    }
+  },
+  "talk": {
+    "provider": "tts-local-cli",
+    "providers": {
+      "tts-local-cli": {
+        "command": "/sandbox/.openclaw/bin/victoria-tts",
+        "args": [
+          "--text",
+          "{{Text}}",
+          "--out",
+          "{{OutputPath}}",
+          "--voice",
+          "victoria"
+        ],
+        "outputFormat": "wav",
+        "timeoutMs": 420000,
+        "enabled": true
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "typingMode": "instant",
+      "heartbeat": {
+        "every": ""
+      }
+    }
+  },
+  "tts": {
+    "provider": "tts-local-cli",
+    "auto": "inbound",
+    "providers": {
+      "tts-local-cli": {
+        "command": "/sandbox/.openclaw/bin/victoria-tts",
+        "args": [
+          "--text",
+          "{{Text}}",
+          "--out",
+          "{{OutputPath}}",
+          "--voice",
+          "victoria"
+        ],
+        "outputFormat": "wav",
+        "timeoutMs": 420000
+      }
+    }
+  },
+  "models": {
+    "mode": "replace",
+    "providers": {
+      "inference": {
+        "models": [
+          {
+            "id": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+            "name": "inference/nvidia/Qwen3.6-35B-A3B-NVFP4",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 220000,
+            "maxTokens": 32000
+          }
+        ]
+      }
+    }
+  }
+}
