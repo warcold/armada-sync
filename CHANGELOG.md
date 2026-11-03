@@ -5954,3 +5954,6 @@ EOF又是
 - Agentes live: 28 subagentes + kalimete (primary) + victoria-voz (mode: all, válido) — la doc interna que dice "18" quedó corta; actualizar en el próximo mantenimiento de kalimete.
 - Higiene: eliminados victoria-voz.md.bkup-20261027 y wordpress-dev.md.bkup-20260926 (stale). bkup-agents/ estructural 20261001 se conserva.
 - ydotoold OK, sync GitHub OK, disco 75% (108G libres).
+
+## 2026-11-03 — Off-site de Victoria UNIFICADO en este hub (decisión owner)
+- Los snapshots de victoria (139 archivos, cada 6h) pushean a la rama aislada victoria-offsite de ESTE repo (warcold/armada-sync). Victoria NO toca master; su sync.sh solo opera master (pull/push refspec limitado, verificado) — interferencia cero. Deploy key de victoria pendiente de agregar al repo (write). El contrato "no mezclar scopes" se revisa: un repo, dos flujos aislados por rama.
