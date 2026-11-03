@@ -9505,3 +9505,20 @@ error: Please commit or stash them.
 To ssh://github.com/warcold/armada-sync.git
    b843e6c..3638b24  master -> master
 [13:10:06] Push OK
+[13:20:01] Sync bidireccional...
+[13:20:01] Pull GitHub → local...
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+[13:20:01] Pull FALLÓ
+[13:20:01] Push local → GitHub...
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   changelog-sync.log
+
+no changes added to commit (use "git add" and/or "git commit -a")
+[13:20:01] Push FALLÓ
