@@ -1,3 +1,10 @@
+### [2026-11-03 13:10 EDT] [infra] Off-site UNIFICADO en el hub existente warcold/armada-sync (decisión owner)
+- **Tipo**: infra + docs
+- **Qué**: el owner cuestionó crear un segundo repo (victoria-sync) teniendo el hub armada-sync. Evaluado y UNIFICADO: los snapshots de Victoria pushean a la **rama aislada `victoria-offsite`** del hub existente `warcold/armada-sync`. Base de la decisión (verificada live): el sync.sh de kalimete solo opera `master` (`git pull origin master` + `git add -A` + `git push origin master` — sin force/--all/--delete, refspec limitado) → la rama de Victoria es invisible para su sync y viceversa; el hub solo tenía `master` (7.5MB, sin colisión). Historia huérfana (sin commits compartidos). Repo con nombre del SISTEMA (armada-sync), no de la máquina — semánticamente coherente: un repo, dos flujos aislados por rama.
+- **Cambios**: rama del worktree renombrada main→victoria-offsite; `do_offsite` con `OFFSITE_BRANCH` (default victoria-offsite) y remote apuntando al hub (`git@github-victoria:warcold/armada-sync.git`); contrato "NO usar el hub de kalimete" REVISADO por directiva owner (documentado en kalimete también). Push mecánico probado con bare local (139 archivos a victoria-offsite OK).
+- **Owner (1 min)**: agregar deploy key `~/.ssh/id_github_victoria.pub` (write) al repo `warcold/armada-sync` — el primer push sale solo en el próximo ciclo.
+- **Verificado**: sintaxis bash, push a rama aislada OK, remote restaurado al hub, fallo graceful intacto.
+- **Docs**: yes (AGENTS.md §8, AGENTS-summary topología, changelog kalimete, general + infra).
 ### [2026-11-03 10:45 EDT] [gateway+infra] Pendientes #2 y #3 del owner: TTS fuera de LAN + off-site armada-sync
 - **Tipo**: feature + infra + security
 - **#2 TTS fuera de LAN (RESUELTO)**: proxy `/voice/{tts,stt,health}` en el gateway → 127.0.0.1:18810. **Corrección de diseño**: la receta original (ruta cloudflared directa) era INSEGURA — el túnel llega como 127.0.0.1 y sense_auth confía en localhost sin llave = TTS público. El proxy exige llave SIEMPRE (validate_key + caps tts/whisper por rol o allowed_models; readonly→403). Metering en usage_log (rate limit aplica). E2E: local (WAV 142KB / 401 / 403) + REAL desde kalimete por el túnel (TTS WAV 219KB + STT roundtrip exacto). `VICTORIA_TTS_URL=https://victoria.armada.do/voice/tts` en ~/.bashrc de kalimete (bkup-20261103-tts-tunnel). Backup gateway: llm-gateway.py.bkup-20261103-voice-proxy.
@@ -5954,6 +5961,3 @@ EOF又是
 - Agentes live: 28 subagentes + kalimete (primary) + victoria-voz (mode: all, válido) — la doc interna que dice "18" quedó corta; actualizar en el próximo mantenimiento de kalimete.
 - Higiene: eliminados victoria-voz.md.bkup-20261027 y wordpress-dev.md.bkup-20260926 (stale). bkup-agents/ estructural 20261001 se conserva.
 - ydotoold OK, sync GitHub OK, disco 75% (108G libres).
-
-## 2026-11-03 — Off-site de Victoria UNIFICADO en este hub (decisión owner)
-- Los snapshots de victoria (139 archivos, cada 6h) pushean a la rama aislada victoria-offsite de ESTE repo (warcold/armada-sync). Victoria NO toca master; su sync.sh solo opera master (pull/push refspec limitado, verificado) — interferencia cero. Deploy key de victoria pendiente de agregar al repo (write). El contrato "no mezclar scopes" se revisa: un repo, dos flujos aislados por rama.
