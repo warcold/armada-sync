@@ -261,14 +261,18 @@ do_docsync() {
 }
 
 do_offsite() {
-    # Off-site push (2026-11-03, pendiente #3 owner "procede"): espeja latest/
-    # en ~/.armada-sync/offsite/ (worktree git dedicado) y hace push al repo
-    # privado warcold/victoria-sync. NO-FATAL: sin remote/key salta en silencio.
-    # El repo lo crea el owner (GitHub UI) + deploy key id_github_victoria.
+    # Off-site push (2026-11-03, UNIFICADO por decisión del owner): espeja
+    # latest/ en ~/.armada-sync/offsite/ (worktree git, rama huérfana
+    # victoria-offsite) y pushea al hub EXISTENTE warcold/armada-sync.
+    # Aislamiento: kalimete solo opera master (pull/push refspec limitado,
+    # sin force) — esta rama es invisible para su sync. NO-FATAL: sin
+    # remote/key salta o reintenta el próximo ciclo. Deploy key:
+    # id_github_victoria (agregar al repo como write).
     local wt="/home/victoria/.armada-sync/offsite"
+    local br="${OFFSITE_BRANCH:-victoria-offsite}"
     [ -d "$wt/.git" ] || { log "offsite: worktree sin .git, skip"; return 0; }
     if ! git -C "$wt" remote get-url origin >/dev/null 2>&1; then
-        log "offsite: sin remote origin (repo pendiente del owner), skip"
+        log "offsite: sin remote origin (deploy key pendiente del owner), skip"
         return 0
     fi
     rsync -a --delete --exclude .git "$LATEST_DIR/" "$wt/" 2>/dev/null || { log "offsite: rsync fallo, skip"; return 0; }
@@ -278,10 +282,10 @@ do_offsite() {
         return 0
     fi
     git -C "$wt" commit -q -m "snapshot $(date +%Y%m%d-%H%M%S) ($(hostname))" >/dev/null 2>&1
-    if timeout 60 git -C "$wt" push -q origin main >/dev/null 2>&1; then
-        log "offsite: push OK a $(git -C "$wt" remote get-url origin 2>/dev/null)"
+    if timeout 60 git -C "$wt" push -q origin "$br" >/dev/null 2>&1; then
+        log "offsite: push OK ($br -> $(git -C "$wt" remote get-url origin 2>/dev/null))"
     else
-        log "offsite: push FALLO (remote/key?) — el commit local queda, reintenta el proximo ciclo"
+        log "offsite: push FALLO ($br — deploy key agregada al repo?) — el commit local queda, reintenta el proximo ciclo"
         return 1
     fi
 }

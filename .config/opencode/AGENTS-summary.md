@@ -74,8 +74,10 @@ TODO en CHANGELOG, no dañar lo que funciona.
 - Victoria = snapshots LOCALES: `armada-sync.sh` cada 6h (timer) en
   `~/.armada-sync/` (opencode.jsonc REDACTADO, verify anti-secretos).
   Victoria NO es follower del repo GitHub: el deploy destructivo borraría los
-  agentes del stack (vllm/sandbox/comfyui). Conexión off-site pendiente (nuevo
-  repo + credenciales, decisión del owner).
+  agentes del stack (vllm/sandbox/comfyui). **Off-site UNIFICADO (11-03,
+  decisión owner: un solo repo)**: rama aislada `victoria-offsite` en el MISMO
+  hub `warcold/armada-sync` (kalimete solo opera `master` refspec limitado —
+  interferencia cero). Deploy key `id_github_victoria` (pendiente agregar).
 
 ## Health rápido
 `systemctl is-active victoria-llm-gateway victoria-voice-server comfyui liveportrait victoria-sonic-server`
