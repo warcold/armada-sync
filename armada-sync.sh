@@ -426,14 +426,14 @@ print(n)
 [print(s["name"]) for s in d.get("subagents",[])]' "$central")
     [ -e "/home/victoria/.config/opencode/agent" ] && { echo "FALLA: symlink agent→agents prohibido existe"; fail=1; }
     [ -d "/home/victoria/agent" ] && { echo "FALLA: dir ~/agent singular en victoria (convención kalimete)"; fail=1; }
-    local want="victoria.md vllm.md openclaw.md comfyui.md sonic.md rss-system.md meta-business.md weather.md cloudflare.md liveportrait.md gpu.md coder.md"
+    local want="victoria.md vllm.md openclaw.md comfyui.md sonic.md rss-system.md meta-business.md weather.md cloudflare.md liveportrait.md gpu.md coder.md thinker.md"
     local have extra missing
     have=$(ls "$agents_dir" 2>/dev/null | grep "\.md$" | grep -v "bkup" | sort || true)
     extra=$(comm -13 <(printf "%s\n" $want | sort) <(printf "%s\n" "$have") || true)
     missing=$(comm -23 <(printf "%s\n" $want | sort) <(printf "%s\n" "$have") || true)
     [ -n "$extra" ] && { echo "FALLA: .md inesperados en agents/: $extra"; fail=1; }
     [ -n "$missing" ] && { echo "FALLA: .md esperados faltantes: $missing"; fail=1; }
-    if [ "$fail" -eq 0 ]; then echo "fleet OK: scaffold de la flota consistente (12 agentes)"; else echo "fleet: HAY FALLAS (ver arriba)"; fi
+    if [ "$fail" -eq 0 ]; then echo "fleet OK: scaffold de la flota consistente (13 agentes)"; else echo "fleet: HAY FALLAS (ver arriba)"; fi
     return "$fail"
 }
 

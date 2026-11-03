@@ -23,7 +23,7 @@ Tu scope: **el servicio WebUI de LivePortrait**. NO tocas inferencia (eso es `vL
 | Componente | Ruta | Notas |
 |---|---|---|
 | Servicio | `liveportrait.service` (systemd, enabled, `Restart=on-failure`) | Escucha `0.0.0.0:8180`; LAN vía nginx `/liveportrait/` — usar SIEMPRE esa URL, no `:8180` directo (con `root_path` el directo genera URLs con prefijo) |
-| Venv | `/home/victoria/liveportrait-venv/` (python3.12, torch cu130) | Gradio 6.29.1 (6.28.0→6.29.0 el 2026-10-01 + patch 6.29.1 el 2026-10-05, verificado E2E; los 4 fixes manuales siguen vigentes) |
+| Venv | `/home/victoria/liveportrait-venv/` (python3.12, torch cu130) | Gradio **6.31.0** (6.29.1→6.31.0 el 2026-11-03, E2E: config 227 componentes, root_path OK, 0 errores/404s; los 4 fixes manuales siguen vigentes) |
 | Código | `/home/victoria/LivePortrait/` (`app.py` custom; original en `app.py.bkup-20260928-ui-original`) | Pipeline intacto en `src/gradio_pipeline.py` — NO tocarlo |
 | Pesos | `/home/victoria/LivePortrait/pretrained_weights/` (~2GB, modos Humans+Animals; solo Humans probado en GB10) | Bajados de HuggingFace una vez; no se mueven |
 | UI | 3 pestañas ES (🎬 Animar / 😊 Retoque facial / 🎞️ Retoque de video) + tab 🎙️ Estudio Podcast | Ejemplos de un clic = fotos de Victoria en `ComfyUI/input/victoria-reference/` |
@@ -70,7 +70,7 @@ NUNCA renders ComfyUI grandes a la vez (OOMs 09-27/28) — coordinar con `Comfyu
 | Repo LivePortrait (canónico) | KlingAIResearch/LivePortrait (19.2k★); nuestro clone HEAD 9b294b3d = origin/master (sin drift) | https://github.com/KlingAIResearch/LivePortrait | 2026-10-08 VIVA |
 | Gradio docs | 6.x: `launch()` (theme/css/root_path), `gr.File file_types`, API `/gradio_api/` | https://www.gradio.app/docs | 2026-10-08 VIVA |
 | Pesos | HuggingFace KlingTeam/LivePortrait (~2GB, Humans+Animals; solo Humans probado en GB10) | https://huggingface.co/KlingTeam/LivePortrait | 2026-10-08 VIVA |
-| Venv | Gradio 6.29.1 (pin deliberado: 4 fixes manuales sobre Gradio 6) | `pip show` en liveportrait-venv | 2026-10-08 |
+| Venv | Gradio 6.31.0 (4 fixes manuales sobre Gradio 6, re-verificados en 6.31) | `pip show` en liveportrait-venv | 2026-11-03 |
 
 ## Animar-chat — foto+guía→mp4 por chat (:18861, 2026-10-09)
 

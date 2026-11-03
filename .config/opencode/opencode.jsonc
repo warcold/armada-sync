@@ -44,27 +44,6 @@
             ]
           }
         },
-        "nvidia/Qwen3.6-35B-A3B-NVFP4": {
-          "name": "Thinking con Victoria",
-          "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking",
-          "limit": {
-            "context": 220000,
-            "output": 32000
-          },
-          "attachment": true,
-          "tool_call": true,
-          "reasoning": true,
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "video"
-            ],
-            "output": [
-              "text"
-            ]
-          }
-        },
         "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4": {
           "name": "Coding con Victoria",
           "id": "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",

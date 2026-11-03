@@ -1,3 +1,8 @@
+### [2026-11-03 15:10 EDT] [comfyui] ComfyUI v0.42.0 -> v0.44.0 (44 commits, ventana de mantenimiento autorizada por owner)
+- **Tipo**: refactor (upgrade)
+- **Que**: git pull v0.42.0 -> v0.44.0 (2fb8cabd -> 2c75dc1b). requirements tras el pull: aimdo 0.6.0 + kitchen 0.2.40 SIN CAMBIOS (sin riesgo crash-loop). Deps actualizadas: comfyui-frontend-package 1.55.14->1.57.6, workflow-templates 0.11.78->0.11.101, embedded-docs 0.5.10->0.5.16.
+- **Verificado E2E**: service active, journal limpio (8 errores RMBG hydra/iopath/segment_anything = PRE-EXISTENTES desde el boot 24-oct, verificado con journalctl -b -1 — sub-features SAM opcionales, core RMBG OK, NO regresión), generación de imagen z-image-turbo via API = status success (art-zimage_00100_.png). Rollback: git checkout 2fb8cabd + pip freeze snapshot /tmp/comfy-venv-antes-20261103.txt.
+- **Docs**: yes (AGENTS.md §11 + tabla pendientes #5, harness).
 # CHANGELOG — Contenido visual (ComfyUI :8188 + n8n :5678)
 
 ### [2026-10-26 18:40 EDT] [comfyui+n8n] ComfyUI 0.39.1→0.42.0 (114 commits, dep nueva comfy-kitchen) + n8n 2.42.5→2.44.7

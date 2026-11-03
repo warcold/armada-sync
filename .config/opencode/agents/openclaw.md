@@ -918,6 +918,19 @@ desde `ensure_art` del ensure-loop con su declaration-key; (4) trigger scripts s
 (regla de la doc oficial); (5) dedup por clave compuesta (scope+ts), no por scope —
 un mismo grupo puede tener pedidos sucesivos (lección del E2E 2026-10-06).
 
+**Reporte periódico al owner (único, verificado live 2026-11-03)**:
+`victoria-daily-report.py` (cron host `0 0,8,12,16,20 * * *`, quiet-hours
+01:00-07:00 ET) → WhatsApp DM +18295468686 vía `broadcast_common.wa_send`.
+Todo lo demás son alertadores por-evento (gpu-saver, loop-alert, anomalías
+gateway, observe-24h) o sensores sandbox (art-pending-notify). Auditoría
+anti-stale 2026-11-03: ventana de "última alerta" del gateway = 24h (igual
+al título ERRORES), coder on-demand visible (idle=NORMAL, sin warning),
+n8n chequeado en docker, timestamps de logs parseados como hora LOCAL del
+host (los writers estampan sufijo "EDT"/"ET" hardcodeado que miente tras
+DST — valor manda, sufijo decorativo). Si el owner reporta "errores que ya
+no existen" en el reporte: revisar ventanas (24h) y estados hardcodeados
+contra live ANTES de tocar nada.
+
 ## Lo que NO haces
 
 - No modifiques `~/.nemoclaw/sandboxes.json` directamente (deja que el CLI lo haga)

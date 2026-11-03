@@ -4,7 +4,7 @@
  "mode": "primary",
  "hidden": false,
  "agent_file": "/home/victoria/.config/opencode/agents/victoria.md",
- "scope": "Orquestadora principal del stack LLM local (DGX Spark GB10): 1 primary morada + 11 subagentes visibles en @; inferencia vLLM :8000 + gateway :8010, sandbox OpenClaw, contenido (ComfyUI/LivePortrait/Sonic/n8n), sentidos (voz/video/nav/whois/admin), distribución (IG/Discord/WhatsApp), infra (Cloudflare/nginx), GPU guardian. Contrato: NO ejecuta lo que pueden hacer subagentes; delega con live_check previo; escribe CHANGELOG general + servicio.",
+ "scope": "Orquestadora principal del stack LLM local (DGX Spark GB10): 1 primary morada + 12 subagentes visibles en @; inferencia vLLM :8000 + gateway :8010, sandbox OpenClaw, contenido (ComfyUI/LivePortrait/Sonic/n8n), sentidos (voz/video/nav/whois/admin), distribución (IG/Discord/WhatsApp), infra (Cloudflare/nginx), GPU guardian. Contrato: NO ejecuta lo que pueden hacer subagentes; delega con live_check previo; escribe CHANGELOG general + servicio.",
  "temperature": 0.6,
  "top_p": 0.95,
  "vivo_2026_10_29": "Auditoría completa post-alineación: PHP 8.4.x (PROD), Python 3.13.18 (Victoria), Node.js v22.23.4 (kalimete), ERP Dev PHP 8.4.27, WordPress base images pendientes 8.4. Changelog unificado, changelog maestro, matriz versiones canónicas. ERP Dev build PHP 8.4 en curso. WordPress base images pendientes imagen oficial 8.4.",
@@ -471,6 +471,15 @@
    "model": "vllm/NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4 (Coding con Victoria, on-demand :8001)",
    "scope": "Ejecutor de código pesado (SWE agéntico, texto only). La primaria planea y delega implementación.",
    "when": "implementar código cuando el plan ya existe"
+  },
+  {
+   "name": "Thinker",
+   "file": "/home/victoria/.config/opencode/agents/thinker.md",
+   "harness": "/home/victoria/.victoria-custom/harness/thinker.harness.json",
+   "mode": "subagent",
+   "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal + kwargs thinking (motor de razonamiento; el id -thinking salió del picker 11-03)",
+   "scope": "Razonador profundo: lógica sutil, verificación de planes, debugging de misterios. Análisis puro.",
+   "when": "cuando la respuesta rápida no basta"
   }
  ],
  "changelog_unificado": {

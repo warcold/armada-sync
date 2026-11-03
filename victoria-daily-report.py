@@ -3,14 +3,25 @@
 victoria-daily-report.py — Reporte de estado via WhatsApp DM a papa.
 Plan Victoria 2.0 (2026-09-15). Un solo sistema de reporteria (no hay otro).
 
-Revisa: systemd (15), docker (4), vLLM/gateway, dashboard, voz/video/nav/
-whois/admin/sonic/hunyuan/animate, UPSTREAM (versiones local vs loopstream desde
-state/upstream.json del Armada Sync), DOCS (frescura del sync: ultimo
-snapshot, edad del chequeo upstream, docs validadas FRESH vs resto ok),
-feed central, restarts del gpu-saver, ultimo estado de broadcasts, disco.
+Revisa: systemd (15), docker (4), vLLM/gateway (+coder on-demand :8001),
+dashboard, voz/video/nav/whois/admin/sonic/hunyuan/animate, UPSTREAM
+(versiones local vs loopstream desde state/upstream.json del Armada Sync),
+DOCS (frescura del sync: ultimo snapshot, edad del chequeo upstream, docs
+validadas FRESH vs resto ok), feed central, restarts del gpu-saver, ultimo
+estado de broadcasts, disco.
 Manda resumen corto e informativo: todo ✅ salvo anomalias, que van
 con ⚠️. Picos/errores tambien se reportan aunque el resto este verde.
 Solo las docs actualizadas se listan; las no tocadas salen como "resto ok".
+
+FIX 2026-11-03 (auditoria anti-stale, owner: "vemos errores que ya no
+existen"): (1) la "ultima alerta" del gateway se mostraba con ventana 48h
+bajo el titulo "ERRORES (24h)" — una tormenta resuelta del 01-nov seguia
+saliendo 2 dias como si fuera reciente; ahora la ventana es 24h (igual al
+titulo). (2) El coder on-demand :8001 (nuevo 2026-11-01) no aparecia — se
+muestra su estado real (idle = NORMAL, sin warning). (3) n8n no se
+chequeaba en docker (el comentario decia 4 contenedores, el codigo 3).
+(4) Los timestamps de logs con sufijo EDT/EST se parseaban como UTC
+(ventana 24h desalineada 4h — sub-reportaba errores recientes).
 
 CADENCIA (2026-09-16, directiva del owner): cada 4h dentro del horario
 permitido 08:00-01:00 ET (cron: 0 0,8,12,16,20 * * *). QUIET HOURS 01:00-07:00
@@ -23,6 +34,7 @@ Uso:
 """
 import json
 import os
+import re as _re
 import subprocess
 import sys
 import time
@@ -89,11 +101,14 @@ def main() -> int:
         warns.append("caidos: " + ",".join(s.replace("victoria-", "") for s in down_real))
 
     # --- 2. docker (4: vllm + n8n + publisher + sandbox) ---
+    # Fix 2026-11-03: n8n NO se chequeaba (el comentario decia 4 contenedores,
+    # el codigo solo 3) — un n8n caido no avisaba.
     dps = sh("docker ps --format '{{.Names}} {{.Status}}'")
     vllm_up = "nemoclaw-vllm" in dps and "Up" in dps
     sb_ok = "healthy" in dps
     pub_up = "openclaw-publisher" in dps and "Up" in dps
-    if not (vllm_up and sb_ok and pub_up):
+    n8n_up = _re.search(r"^n8n \S*Up", dps, _re.M) is not None
+    if not (vllm_up and sb_ok and pub_up and n8n_up):
         warns.append("docker: " + dps.replace("\n", " ")[:100] or "vacío")
     else:
         ok_n += 1
@@ -118,6 +133,15 @@ def main() -> int:
         warns.append("vLLM no responde 200")
     else:
         ok_n += 1
+    # Coder on-demand :8001 (2026-11-01): idle = NORMAL (0 RAM, arranca solo
+    # al 1er request). Informativo, SIN warning (un probe a :8001 en idle
+    # daria 000 = falso positivo). Estado real desde /health del gateway.
+    coder_running = None
+    if gw:
+        _coder = gw.get("coder", {}) or {}
+        coder_running = bool(_coder.get("running"))
+    coder_txt = ("?" if not gw else
+                 ("activo" if coder_running else "on-demand · idle"))
 
     # --- 4. dashboard + sentidos (voz/video/nav/whois/admin/sonic) ---
     # :18840 /health exige auth SIEMPRE (401 sin llave = NORMAL, no caida)
@@ -189,7 +213,13 @@ def main() -> int:
     # Antes: grep sin filtro de fecha → un error viejo (ej. rss 2026-09-18)
     # salía ETERNAMENTE en cada reporte. Ahora: solo líneas con timestamp
     # dentro de 24h; líneas sin fecha se ignoran (evita fósiles).
-    import re as _re
+    # Fix 2026-11-03: los writers de logs estampan hora LOCAL del host
+    # (datetime.now().astimezone()) con sufijo hardcodeado ("EDT"/"ET" —
+    # instagram-broadcast.py:196, discord/whatsapp "ET") que queda MAL tras
+    # el cambio DST (host en EST desde el 02-nov). El VALOR es local; el
+    # sufijo es decorativo → se parsea como hora local del host (DST-proof)
+    # y se convierte a UTC. Antes se parseaba como UTC puro (ventana 24h
+    # desalineada 4-5h: sub-reportaba errores de hace 20-24h reales).
     _cutoff_utc = (NOW - timedelta(hours=24)).astimezone(timezone.utc)
     err_hist: list[str] = []  # líneas crudas (ya traen su fecha/hora)
     for _lp in ("discord-broadcast.log", "whatsapp-broadcast.log",
@@ -206,9 +236,12 @@ def main() -> int:
             if not _m:
                 continue
             try:
+                # Valor = hora local del host (el sufijo del writer es
+                # hardcodeado y miente tras el DST): local → UTC.
                 _ts = datetime.strptime(
                     _m.group(1) + " " + _m.group(2),
-                    "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                    "%Y-%m-%d %H:%M:%S").replace(tzinfo=NOW.tzinfo)
+                _ts = _ts.astimezone(timezone.utc)
             except Exception:
                 continue
             if _ts < _cutoff_utc:
@@ -242,7 +275,11 @@ def main() -> int:
         _ua = _anom.get("ultima_alerta") or {}
         # Fix 2026-10-14: la "ultima alerta" del gateway es la ultima HISTORICA
         # (ej. 2026-09-20) y salia en TODOS los reportes como si fuera nueva.
-        # Ahora solo se muestra si es reciente (<48h); si no, "ninguna reciente".
+        # Ahora solo se muestra si es reciente; si no, "ninguna reciente".
+        # Fix 2026-11-03: ventana 48h → 24h — bajo el titulo "ERRORES (24h)"
+        # una alerta de hace 44h (tormenta ya resuelta del 01-nov) seguia
+        # saliendo como "reciente" durante ~9 reportes = el owner veia
+        # errores que ya no existen. Alineada al titulo: 24h.
         _ua_txt = "ninguna"
         if _ua:
             _ua_ts = str(_ua.get("timestamp", ""))
@@ -251,12 +288,12 @@ def main() -> int:
                 _ua_dt = datetime.strptime(_ua_ts, "%Y-%m-%d %H:%M:%S"
                                            ).replace(tzinfo=timezone.utc)
                 _ua_recent = (NOW.astimezone(timezone.utc) - _ua_dt
-                              ) < timedelta(hours=48)
+                              ) < timedelta(hours=24)
             except Exception:
                 pass
             _ua_txt = (f"{_ua.get('descripcion') or _ua.get('detail') or '?'}"
                        f" [{_ua_ts}]" if _ua_recent
-                       else "ninguna reciente (>48h)")
+                       else "ninguna reciente (>24h)")
         gw_anom_txt = f"hoy {_an_n} · rep {_ts_rep} · ult: {_ua_txt}"
         if _an_n > 0:
             warns.append(f"gateway: {_an_n} anomalías hoy (rep {_ts_rep})")
@@ -375,6 +412,7 @@ def main() -> int:
         f"┌─ SERVICIOS {up_n}/{len(svcs)} {svc_state}",
         f"│ vLLM ........ {vllm_txt}",
         f"│ Gateway ..... OK ({gw_req} peticiones hoy)",
+        f"│ Coder ....... {coder_txt}",
         f"│ Sandbox ..... {'saludable' if sb_ok else 'MAL'}",
         f"│ Panel web ... {dash_txt}",
         f"│ Voz·Vid·Nav . {'OK' if _vvv_ok else 'revisar'}",

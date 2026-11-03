@@ -1,3 +1,8 @@
+### [2026-11-03 15:20 EDT] [liveportrait] Gradio 6.29.1 -> 6.31.0 (ventana de mantenimiento autorizada por owner)
+- **Tipo**: refactor (upgrade dependencia)
+- **Que**: upgrade de Gradio en liveportrait-venv (6.29.1 -> 6.31.0, última de PyPI). UI custom intacta: theme-in-launch, root_path /liveportrait, custom_css, retry de launch() — los 4 fixes manuales siguen vigentes.
+- **Verificado E2E**: service active, UI 200 via nginx root_path, /config con 227 componentes y version 6.31.0, journal 0 errores/0 404s, gradio_client 2.7.2 sin cambios. Rollback: pip install gradio==6.29.1 (snapshot /tmp/liveportrait-venv-antes-20261103.txt).
+- **Docs**: yes (AGENTS.md §11 + tabla, liveportrait.md, harness).
 # CHANGELOG — LivePortrait (:8180 talking-head + UI ES)
 ### [2026-10-19 00:45 EDT] [lp-animate] Consumo externo documentado: kalimete puede animar foto→mp4 por HTTP (foto_b64) — cutscenes del Game Studio
 - **Tipo**: docs/verificación (cero cambios al daemon; autorización owner 2026-10-19)

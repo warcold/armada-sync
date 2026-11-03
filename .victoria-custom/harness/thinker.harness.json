@@ -1,0 +1,21 @@
+{
+ "harness": "thinker",
+ "name": "Thinker",
+ "updated": "2026-11-03",
+ "mode": "subagent",
+ "hidden": false,
+ "agent_file": "/home/victoria/.config/opencode/agents/thinker.md",
+ "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal + request.body chat_template_kwargs {enable_thinking: true} (thinking ON budget 2048 — el id -thinking se REMOVO del picker 11-03; el truco kwargs evita necesitarlo en config)",
+ "model_display_name": "Using a Victoria + thinking via kwargs",
+ "scope": "Razonador profundo de la flota: lógica sutil, verificación de planes, debugging de misterios, decisiones de arquitectura. Análisis puro — sin tools pesadas.",
+ "when": "cuando la respuesta rápida no basta; NO para coding (ese es Coder) ni chat diario (Using)",
+ "temperature": 0.6,
+ "top_p": 0.95,
+ "costo": "5-6x más lento que Using (~20s vs ~3-4s, validado 11-01); MISMA memoria (mismos pesos, flag por-request) — cero costo de VRAM",
+ "live_check": "opencode agent list | grep -q Thinker && echo thinker:registered || echo thinker:missing",
+ "changelog": [
+  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-vllm.md"
+ ],
+ "created": "2026-11-03",
+ "vivo_2026_11_03": "Pin al id NORMAL + kwargs (E2E: 26s, traza correcta). opencode NO hace passthrough de ids fuera de config (UnknownError verificado) — por eso el pin es el id normal. El gateway detecta kwargs.enable_thinking=true e inyecta thinking_token_budget 2048."
+}

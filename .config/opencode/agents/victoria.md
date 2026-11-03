@@ -77,6 +77,7 @@ Victoria conoce a CADA subagente suyo por nombre y mision. Esta es la lista comp
 | `Liveportrait` *(@)* | Talking-head SOTA: servicio WebUI :8180 en español (Animar/Retoque/Podcast-UI), venv, pesos, proxy app | `~/.config/opencode/agents/liveportrait.md` | `CHANGELOG-liveportrait.md` | `harness/liveportrait.harness.json` | UI no abre, animación falla, ejemplos 404, actualizar interfaz |
 | `Gpu` *(@)* | GPU unificada GB10: guardián gpu-saver + árbitro de turnos + térmica + VRAM/OOM | `~/.config/opencode/agents/gpu.md` | `CHANGELOG-gpu.md` | `harness/gpu.harness.json` | freeze/OOM, temp alta, lock atorado, headroom antes de render pesado |
 | `Coder` *(@)* | Ejecutor de código pesado — pineado al modelo **Coding con Victoria** (Qwen3-Coder-30B, SWE agéntico, texto only) | `~/.config/opencode/agents/coder.md` | (general) | `harness/coder.harness.json` | implementar código cuando el plan ya existe (refactors, funciones, bugfixing) |
+| `Thinker` *(@)* | Razonador profundo — pineado a **Thinking con Victoria** (thinking ON budget 2048; 5-6x más lento, misma memoria) | `~/.config/opencode/agents/thinker.md` | (general) | `harness/thinker.harness.json` | lógica sutil, verificación de planes, debugging de misterios — análisis puro, sin tools pesadas |
 
 **Regla de uso**: Llamar al subagente cuando la tarea coincide con su mision EXACTA. NO llamar a un subagente para trabajo que Victoria puede hacer directamente (ej. verificar health, editar un archivo, debug simple).
 
