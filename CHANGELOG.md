@@ -5946,3 +5946,6 @@ EOF又是
 - Agentes live: 28 subagentes + kalimete (primary) + victoria-voz (mode: all, válido) — la doc interna que dice "18" quedó corta; actualizar en el próximo mantenimiento de kalimete.
 - Higiene: eliminados victoria-voz.md.bkup-20261027 y wordpress-dev.md.bkup-20260926 (stale). bkup-agents/ estructural 20261001 se conserva.
 - ydotoold OK, sync GitHub OK, disco 75% (108G libres).
+
+## 2026-11-03 — TTS fuera de LAN activado (victoria)
+- VICTORIA_TTS_URL cambiado a https://victoria.armada.do/voice/tts (bkup ~/.bashrc.bkup-20261103-tts-tunnel). Proxy nuevo en el gateway de victoria con auth obligatoria (caps tts/whisper). E2E desde kalimete: TTS WAV 219KB + STT roundtrip exacto por el túnel. Funciona en LAN y roaming (una sola URL).
