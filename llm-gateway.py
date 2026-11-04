@@ -2805,24 +2805,12 @@ async def v1_config_guide(request: Request):
                 },
                 "models": {
                     "nvidia/Qwen3.6-35B-A3B-NVFP4-normal": {
-                        "name": "Coding con Victoria",
+                        "name": "Using a Victoria",
                         "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
                         "limit": {"context": OPENCODE_CONTEXT, "output": 32000},
                         "attachment": True,
                         "tool_call": True,
                         "reasoning": False,
-                        "modalities": {
-                            "input": ["text", "image", "video"],
-                            "output": ["text"]
-                        }
-                    },
-                    "nvidia/Qwen3.6-35B-A3B-NVFP4": {
-                        "name": "Thinking · Coding con Victoria",
-                        "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking",
-                        "limit": {"context": OPENCODE_CONTEXT, "output": 32000},
-                        "attachment": True,
-                        "tool_call": True,
-                        "reasoning": True,
                         "modalities": {
                             "input": ["text", "image", "video"],
                             "output": ["text"]
@@ -2939,9 +2927,11 @@ async def v1_config_guide(request: Request):
         },
         "models": [
             {"alias": "nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
-             "thinking": False, "use": "coding rapido (DEFAULT recomendado; sin thinking)"},
+             "name": "Using a Victoria",
+             "thinking": False, "use": "DEFAULT unico del template; rapido; VLM (ve imagenes/video)"},
             {"alias": "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking",
-             "thinking": True, "use": "tareas complejas (thinking acotado a " + str(THINKING_TOKEN_BUDGET) + " tokens)"}
+             "name": "(avanzado, fuera del template)",
+             "thinking": True, "use": "tareas complejas; thinking acotado a " + str(THINKING_TOKEN_BUDGET) + " tokens; para agentes propios tambien sirve el id normal + request.body.chat_template_kwargs {enable_thinking:true} (el gateway inyecta el budget)"},
         ],
         "connection": {
             "local": "http://127.0.0.1:8010/v1 (mismo host que el gateway)",

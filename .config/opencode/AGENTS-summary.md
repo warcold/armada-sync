@@ -16,7 +16,7 @@ TODO en CHANGELOG, no dañar lo que funciona.
 
 ## Stack (detalle en ~/AGENTS.md)
 - `opencode → :8010 gateway → :8000 vLLM` (Qwen3.6-35B, 256K nativo, prompt 220K, output 32K, seqs 3)
-- **Flota con nombre (11-01, picker /models)**: "Using a Victoria" (default, generalista VLM) · "Thinking con Victoria" (razonar) · "Coding con Victoria" (on-demand :8001, especialista código, texto only, admin/coder) · nube NIM sin marca (nombres naturales del catálogo, whitelist 3 de 52; último recurso: ctx >220K o stack caído). Política: LOCAL primero. kimi muerto en NIM — no usar.
+- **Flota con nombre (11-03, picker simplificado)**: "Using a Victoria" (DEFAULT, generalista VLM) · "Coding con Victoria" (on-demand :8001, motor de @Coder, texto only, admin/coder) · nube NIM sin marca (whitelist 3; último recurso: ctx >220K o stack caído). **"Thinking" salió del picker 11-03** (decisión owner): razonar = @Thinker (id normal + kwargs thinking). Política: LOCAL primero. kimi muerto en NIM — no usar.
 - Sandbox nemoclaw `victoria-armada` (Discord/WhatsApp/voz) + dashboard `:18800`
 - OpenClaw genera IMÁGENES vía `art-gen` (solo imágenes, política 10-03; templates API z-image-turbo/flux-schnell/sd15 en `~/.victoria-custom/comfyui-templates-api/`; skill `art` en opencode skills de ambos hosts; art API del gateway con cola gpu_arbiter → 429 gpu_busy = reintentar)
 - Multi-tier por llave (10-03): panel con checkboxes de 8 capacidades; kalimete = llm+art+tts(=voz TTS Qwen3)+whisper+provision (10-20: crea llaves de negocio armada-* vía POST /v1/provision-key — rol services+caps [llm] fijos, auditoría provision_log); sense_auth honra allowed_models
@@ -42,7 +42,7 @@ TODO en CHANGELOG, no dañar lo que funciona.
 - `Liveportrait` → LivePortrait :8180/UI-animación (servicio; pipeline = Sonic)
 - `Gpu` → GPU/VRAM/térmica/freeze/OOM/turnos
 - `Coder` → ejecutor de código (pineado al modelo Coding con Victoria; delegar implementación tras el plan)
-- `Thinker` → razonador profundo (pineado a Thinking con Victoria; lógica sutil/verificación de planes; análisis puro)
+- `Thinker` → razonador profundo (id normal + kwargs thinking ON budget 2048; lógica sutil/verificación de planes; análisis puro)
 - Doctrina ruteo (11-02, ampliada 11-03 con Thinker): Using = ÚNICO modelo de sesión; código sustancial → Task Coder (edit chico → directo); razonamiento profundo → Task Thinker (sin cambiar la sesión de modelo); imágenes/3D/animar/podcast = skills/wrappers (NO agentes); nube SOLO manual (owner decide, jamás auto-ruteo); capacidad faltante = modelo local nuevo; contextos calibrados NO tocar (generalista 220K / coder 128K / nube 1M).
 - Regla: llamar SOLO si coincide misión exacta (Task directo o `@Nombre` — salen todos en el autocomplete `@`; Tab solo lista primaries: Plan/Build/Victoria). Si el subagente edita, él escribe su CHANGELOG + Victoria escribe el general.
 - Sampling por rol (2026-10-03, doctrina flota espejo kalimete; model card NVFP4: coding 0.6/0.95, general 1.0/0.95): Victoria + creativos (Meta Business, Sonic) `temperature 0.6 + top_p 0.95`; infra (vLLM, OpenClaw, Comfyui, RSS, Weather, CloudFlare, Liveportrait, Gpu) `temperature 0.1`. Sin frontmatter vLLM usa default 1.0.
@@ -87,5 +87,5 @@ TODO en CHANGELOG, no dañar lo que funciona.
 
 ## Uso de la flota (owner, 2026-11-03)
 - Owner SIEMPRE en "Using a Victoria" (default). Nunca toca el picker en día a día.
-- Thinking con Victoria (picker) = solo si owner quiere sesión de razonamiento manual. Coding con Victoria (picker) = NO como sesión (es el motor de @Coder; texto only, sin visión). Nube = solo >220K o stack caído (manual).
+- Picker (11-03): victoria = Using + Coding (motor @Coder); kalimete = solo Using. Razonar = @Thinker en AMBOS hosts (kalimete lo tiene instalado desde 11-03). Nube = solo >220K o stack caído (manual).
 - Trío delegable sin salir de Using: @Coder (código) + @Thinker (razonar) + skills (art/3d/animar/podcast).

@@ -22,7 +22,7 @@ planea y te delega la implementación.
 | Etapa | Quién | Modelo |
 |---|---|---|
 | Iniciar/explorar/chat | Victoria primaria | Using a Victoria (generalista VLM) |
-| Plan completo + todowrite | Victoria primaria (o switch manual a Thinking) | Thinking con Victoria (razonamiento) |
+| Plan completo + todowrite | Victoria primaria (o delegar a @Thinker) | Thinker (razonamiento; el id -thinking salió del picker 11-03) |
 | **Implementar código** | **tú (este subagente, vía Task)** | **Coding con Victoria (especialista)** |
 
 ## Reglas de trabajo

@@ -539,12 +539,16 @@ branding es solo presentación en `opencode.jsonc` (AMBOS hosts, backups
 
 **Política de flota (decisión owner)**: LOCAL primero; la nube SOLO como último
 recurso (sesiones >220K de contexto, tareas que desbordan la GPU, o caída del
-stack local).
+stack local). **Picker simplificado (2026-11-03, decisión owner)**: victoria =
+Using + Coding (Coding es el motor de @Coder — modelo distinto, DEBE estar en
+config: opencode no resuelve pins fuera de config, verificado); kalimete = solo
+Using (+ @Thinker instalado con el truco kwargs). El config-guide da a los
+amigos SOLO "Using a Victoria".
 
 | Nombre en picker | Provider | Model id real | Qué es | Cuándo usar |
 |---|---|---|---|---|
 | **Using a Victoria** | vllm (local) | `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` | Generalista VLM 35B, thinking OFF | DEFAULT — chat, coding diario, visión (imágenes/video), agentes |
-| **Thinking con Victoria** | vllm (local) | `nvidia/Qwen3.6-35B-A3B-NVFP4-thinking` | Mismo modelo, thinking ON (budget 2048) | Lógica sutil/planificación que requiere razonar. **5-6x más lento (~20s vs ~3-4s, validado 11-01)**; el thinking quema ~2048 tokens ANTES de responder → necesita headroom de output (opencode: 32000 OK). MISMA memoria que Coding (mismos pesos, solo flag por-request) |
+| ~~Thinking con Victoria~~ **fuera del picker (11-03)** | vllm (local) | `nvidia/Qwen3.6-35B-A3B-NVFP4-thinking` | Mismo modelo, thinking ON (budget 2048) | **REMOVIDA del picker 2026-11-03** (decisión owner: picker simple). El razonamiento profundo va por `@Thinker`, que pinea el id NORMAL + `request.body.chat_template_kwargs {enable_thinking:true}` (el gateway detecta los kwargs e inyecta el budget — no necesita la entrada en config; opencode NO hace passthrough de ids fuera de config, verificado). El id sigue válido a nivel gateway para power users. **5-6x más lento (~20s vs ~3-4s)**; MISMA memoria (mismos pesos, flag por-request) |
 | **Coding con Victoria** | vllm (local, on-demand :8001) | `NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4` | Experto en código 30B (texto only, NO ve imágenes) | Coding pesado/especializado (refactors, SWE agéntico); non-thinking POR DISEÑO (entrenado para actuar, no delibrar); arranca solo (503 warming_up ~90s la 1ª vez); roles admin/coder; **idle = 0 RAM** (auto-stop 30 min) |
 | `deepseek-ai/deepseek-v4.1-flash` (nombre natural) | nvidia (NIM) | ídem | Nube 1M ctx, reasoning | Último recurso: contexto >220K o stack local caído |
 | `z-ai/glm-5.3-flash` (nombre natural) | nvidia (NIM) | ídem | Nube 1M ctx, reasoning | Ídem (alternativa — redundancia gratis: si una falla, la otra) |
@@ -762,7 +766,7 @@ a los 100K — fix 2026-09-30). El manual completo se lee con Read bajo demanda.
 | `Liveportrait` | LivePortrait talking-head :8180 (WebUI ES + tab Podcast-UI). | `agents/liveportrait.md` |
 | `Gpu` | GPU GB10 (guardián + árbitro + térmica + VRAM/OOM). | `agents/gpu.md` |
 | `Coder` | Ejecutor de código pesado — corre pineado al modelo Coding con Victoria (Qwen3-Coder-30B, SWE agéntico). Delegar implementación cuando la sesión primaria ya tiene el plan/todowrite. | `agents/coder.md` |
-| `Thinker` | Razonador profundo — pineado a Thinking con Victoria (thinking ON, budget 2048). Lógica sutil, verificación de planes, debugging de misterios. Análisis puro (5-6x más lento que Using; misma memoria). | `agents/thinker.md` |
+| `Thinker` | Razonador profundo — pineado al id normal + kwargs thinking ON (budget 2048; el id -thinking salió del picker 11-03). Lógica sutil, verificación de planes, debugging de misterios. Análisis puro (5-6x más lento que Using; misma memoria). | `agents/thinker.md` |
 
 Cualquier cambio en la arquitectura debe reflejarse en este `AGENTS.md` y en el
 subagente correspondiente. **No duplicar**: el subagente provee el prompt
