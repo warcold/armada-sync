@@ -204,11 +204,12 @@ tr:hover td { background: #1a1a2a; }
         <h3>Crear nueva llave</h3>
         <div class="field"><label class="f">Nombre *</label><br><input id="k-owner" placeholder="ej. Alfredo Armada"></div>
         <div class="field"><label class="f">Tier (rol)</label><br>
-           <select id="k-role"><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="readonly">readonly</option><option value="admin">admin</option></select>
+           <select id="k-role"><option value="llm">llm (solo chat)</option><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="readonly">readonly</option><option value="admin">admin</option></select>
         </div>
         <div class="field"><label class="f">Capacidades (multi-tier) — sin marcar = default del rol</label><br>
           <span id="k-caps" style="display:inline-flex;flex-wrap:wrap;gap:10px;align-items:center">
-            <label><input type="checkbox" id="k-cap-llm"> LLM (chat)</label>
+            <label><input type="checkbox" id="k-cap-llm" checked disabled title="Base universal: siempre incluida"> LLM (chat, base)</label>
+            <label><input type="checkbox" id="k-cap-coder"> 💻 Motor de código</label>
             <label><input type="checkbox" id="k-cap-art"> 🎨 Imágenes</label>
             <label><input type="checkbox" id="k-cap-tts"> 🔊 Voz TTS</label>
             <label><input type="checkbox" id="k-cap-whisper"> 👂 Voz STT</label>
@@ -221,11 +222,13 @@ tr:hover td { background: #1a1a2a; }
         <div style="margin:6px 0 10px">
           Presets: 
           <button class="small ghost" type="button" onclick="presetCaps('k','default')">Default del rol</button>
-          <button class="small ghost" type="button" onclick="presetCaps('k',['llm'])">Solo LLM</button>
-          <button class="small ghost" type="button" onclick="presetCaps('k',['llm','art','tts','whisper'])">LLM+Arte+Voz</button>
-          <button class="small ghost" type="button" onclick="presetCaps('k',['llm','art','liveportrait','comfyui','tts','whisper','n8n'])">Todo</button>
+          <button class="small ghost" type="button" onclick="presetCaps('k',['llm'])">💬 Conversación</button>
+          <button class="small ghost" type="button" onclick="presetCaps('k',['llm','coder'])">💻 Desarrollo</button>
+          <button class="small ghost" type="button" onclick="presetCaps('k',['llm','art','liveportrait','comfyui','tts','whisper'])">🎨 Estudio Creativo</button>
+          <button class="small ghost" type="button" onclick="presetCaps('k',['llm','tts','whisper'])">🔊 Voz</button>
+          <button class="small ghost" type="button" onclick="presetCaps('k',['llm','coder','art','liveportrait','comfyui','tts','whisper','n8n'])">Todo</button>
         </div>
-        <div class="muted" style="margin-bottom:10px">Los límites técnicos (tokens, presupuesto, precio) se asignan con valores por defecto y se pueden ajustar después en <b>Editar</b>.<br>Matriz: <b>admin</b>=todo · <b>coder</b>=chat LLM · <b>services</b>=chat+arte+voz · <b>art</b>=solo arte · <b>readonly</b>=solo guía. Las capacidades marcadas <b>añaden</b> a la matriz del rol (ej. coder + 🎨 + 🔊 = chat + imágenes + voz).</div>
+        <div class="muted" style="margin-bottom:10px">Los límites técnicos (tokens, presupuesto, precio) se asignan con valores por defecto y se pueden ajustar después en <b>Editar</b>.<br>Modelo <b>base+add-ons</b>: <b>LLM (chat)</b> va SIEMPRE incluido (base universal, bloqueado arriba). Los demás caps se SUMAN por llave: 💻 motor de código · 🎨 imágenes/3D · 🔊 voz · 👂 STT · LP/CF · n8n · 🛠️ provisionar. El <b>rol</b> es solo el preset inicial; los checkboxes mandan. <b>readonly</b>=solo guía (sin inferencia). Las capacidades marcadas <b>añaden</b> a la matriz del rol (ej. coder + 🎨 + 🔊 = chat + imágenes + voz).</div>
         <br><button class="success" onclick="createKey()">Crear llave</button>
         <div id="new-key-result"></div>
       </div>
@@ -264,10 +267,11 @@ tr:hover td { background: #1a1a2a; }
     <button class="close" onclick="closeModal('editModal')">&times;</button>
     <h3>Editar llave: <span id="edit-name" class="mono"></span></h3>
     <div class="field"><label class="f">Owner</label><br><input id="e-owner"></div>
-    <div class="field"><label class="f">Rol</label><br>           <select id="e-role" onchange="onEditRoleChange()"><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="readonly">readonly</option><option value="admin">admin</option></select></div>
+    <div class="field"><label class="f">Rol</label><br>           <select id="e-role" onchange="onEditRoleChange()"><option value="llm">llm (solo chat)</option><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="readonly">readonly</option><option value="admin">admin</option></select></div>
     <div class="field"><label class="f">Capacidades (multi-tier) — desmarcar todas = default del rol</label><br>
       <span id="e-caps" style="display:inline-flex;flex-wrap:wrap;gap:10px;align-items:center">
-        <label><input type="checkbox" id="e-cap-llm"> LLM (chat)</label>
+        <label><input type="checkbox" id="e-cap-llm" checked disabled title="Base universal: siempre incluida"> LLM (chat, base)</label>
+        <label><input type="checkbox" id="e-cap-coder"> 💻 Motor de código</label>
         <label><input type="checkbox" id="e-cap-art"> 🎨 Imágenes</label>
         <label><input type="checkbox" id="e-cap-tts"> 🔊 Voz TTS</label>
         <label><input type="checkbox" id="e-cap-whisper"> 👂 Voz STT</label>
@@ -415,13 +419,14 @@ function budgetCell(k) {
 }
 
 // ---- Capacidades multi-tier (2026-10-03) ----
-const CAPS = ['llm','art','liveportrait','comfyui','tts','whisper','n8n','provision'];
-const CAP_LABELS = {llm:'LLM', art:'🎨', liveportrait:'LP', comfyui:'CF', tts:'🔊', whisper:'👂', n8n:'n8n', provision:'🛠️Prov'};
+const CAPS = ['llm','coder','art','liveportrait','comfyui','tts','whisper','n8n','provision'];
+const CAP_LABELS = {llm:'LLM', coder:'💻', art:'🎨', liveportrait:'LP', comfyui:'CF', tts:'🔊', whisper:'👂', n8n:'n8n', provision:'🛠️Prov'};
 const ROLE_DEFAULTS = {
-  admin: ['llm','art','liveportrait','comfyui','tts','whisper','n8n'],
-  coder: ['llm'],
+  admin: ['llm','coder','art','liveportrait','comfyui','tts','whisper','n8n'],
+  llm: ['llm'],
+  coder: ['llm','coder'],
   services: ['llm','art','tts','whisper'],
-  art: ['art','liveportrait','comfyui','tts','whisper','n8n'],
+  art: ['llm','art','liveportrait','comfyui','tts','whisper','n8n'],
   liveportrait: ['liveportrait'], comfyui: ['comfyui','art'], tts: ['tts'],
   whisper: ['whisper'], n8n: ['n8n'], readonly: []
 };
@@ -436,10 +441,17 @@ function capsBadges(k) {
   return caps.map(c => `<span class="badge" title="${c}${custom ? ' (multi-tier)' : ' (default del rol)'}" style="${custom ? 'background:#8b5cf622;border:1px solid #8b5cf655' : ''}">${CAP_LABELS[c] || c}</span>`).join(' ');
 }
 function readCaps(prefix) {
-  return CAPS.filter(c => { const el = document.getElementById(prefix + '-cap-' + c); return el && el.checked; });
+  // llm es BASE universal (2026-11-04): siempre incluido, venga o no del checkbox
+  const caps = CAPS.filter(c => { const el = document.getElementById(prefix + '-cap-' + c); return el && el.checked; });
+  if (!caps.includes('llm')) caps.unshift('llm');
+  return caps;
 }
 function setCaps(prefix, caps) {
-  CAPS.forEach(c => { const el = document.getElementById(prefix + '-cap-' + c); if (el) el.checked = (caps || []).includes(c); });
+  CAPS.forEach(c => {
+    const el = document.getElementById(prefix + '-cap-' + c);
+    if (!el || c === 'llm') return;  // llm: base universal, siempre checked+disabled
+    el.checked = (caps || []).includes(c);
+  });
 }
 function presetCaps(prefix, which) {
   if (which === 'default') { setCaps(prefix, []); return; }
