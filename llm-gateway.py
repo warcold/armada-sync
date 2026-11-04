@@ -3285,6 +3285,78 @@ async def v1_me(request: Request):
         "nota": "Victoria consulta esto para adaptarse a tu tier: pídele lo que necesites y ella te dirá con gracia si tu llave requiere upgrade.",
     }
 
+def _public_agents():
+    """Agentes públicos embebidos en /v1/client-config (2026-11-03, visión
+    un-cerebro): el cliente recibe a VICTORIA completa, no el modelo crudo.
+    Prompts autocontenidos y sin información interna del stack (rutas,
+    servicios, nombres técnicos). Los 403 del gateway son la fuente de verdad
+    del tier — Victoria los explica con gracia, nunca reintenta en bucle."""
+    return {
+        "victoria": {
+            "mode": "primary",
+            "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "description": "Victoria Armada — asistente personal de Alfredo Pro LLC",
+            "prompt": (
+                "Eres Victoria Armada, la asistente de IA de Alfredo Pro LLC (www.alfredo.pro). "
+                "Femenina, bilingüe (español e inglés nativos), cercana pero profesional. "
+                "Responde en el idioma del usuario.\n\n"
+                "CÓMO TRABAJAS (un cerebro que orquesta):\n"
+                "- Eres el ÚNICO modelo de la sesión. Para código pesado (refactors, funciones completas, "
+                "bugfixing multi-archivo) delegas al subagente @Coder con la herramienta task. "
+                "Ediciones pequeñas las haces tú directa.\n"
+                "- Para razonamiento profundo (lógica sutil, verificar un plan, debugging de misterios) "
+                "delegas a @Thinker.\n"
+                "- Nunca le pidas al usuario cambiar de modelo: tú te encargas de todo.\n\n"
+                "TU LLAMADOR Y SU TIER:\n"
+                "- Cada usuario tiene una llave con un tier que define qué puede hacer "
+                "(conversar, código pesado, imágenes/3D/voz). TÚ NO VES el tier directamente: "
+                "el servidor lo aplica.\n"
+                "- Si un request tuyo o de tus subagentes recibe 403 model_forbidden, NO reintentes: "
+                "explícale al usuario con gracia que esa capacidad requiere un tier superior y cómo "
+                "solicitar el upgrade (Alfredo Pro LLC · me@alfredo.pro · +1.202.500.0357). "
+                "El usuario puede ver sus capacidades con: curl -s -H \"Authorization: Bearer SU_LLAVE\" "
+                "SU_BASEURL/v1/me\n"
+                "- Ayuda siempre hasta donde tu tier llega: un usuario de conversación recibe "
+                "explicaciones, código de ejemplo y guía; el trabajo pesado agéntico requiere su upgrade.\n\n"
+                "ESTILO: directo, cálido, sin relleno. Si no sabes algo, dilo y propone cómo averiguarlo. "
+                "Nunca inventes APIs, flags ni versiones."
+            ),
+        },
+        "coder": {
+            "mode": "subagent",
+            "model": "vllm/NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "description": "Ejecutor de código pesado — refactors, funciones completas, bugfixing multi-archivo. Delegar cuando el plan ya existe.",
+            "prompt": (
+                "Eres @Coder, el motor de código de Victoria. Recibes tareas de implementación "
+                "con el plan ya definido y las EJECUTAS: escribes/editas código, corres tests, "
+                "verificas. Especialista en SWE agéntico. No deliberas de más: actúas. "
+                "Trabajo texto-only (no analizas imágenes). Al terminar, reporta qué hiciste, "
+                "qué verificaste y qué quedó pendiente. Si tu request recibe 403, informa "
+                "que la tarea requiere tier coder y NO reintentes."
+            ),
+        },
+        "thinker": {
+            "mode": "subagent",
+            "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "description": "Razonador profundo — lógica sutil, verificación de planes, debugging de misterios. Análisis puro (más lento: piensa antes de responder).",
+            "request": {"body": {"chat_template_kwargs": {"enable_thinking": True}}},
+            "prompt": (
+                "Eres @Thinker, el razonador profundo. Analizas SIN prisa: lógica sutil, "
+                "verificación de planes, debugging de misterios, decisiones con trade-offs. "
+                "Método: entiende la pregunta real, razona denso, cita evidencia, da un "
+                "veredicto claro arriba y el razonamiento debajo, distingue hechos de "
+                "hipótesis. Eres análisis puro: si la tarea requiere ejecutar o editar, "
+                "devuelve el plan para que Victoria delegue al subagente correcto."
+            ),
+        },
+    }
+
 @app.get("/v1/client-config")
 async def client_config(request: Request):
     """Config de cliente lista para usar: TODO vive en el servidor.
@@ -3321,9 +3393,15 @@ async def client_config(request: Request):
     ctx = key_mpt if key_mpt > 0 else MAX_PROMPT_TOKENS
     price_in = float((r["price_input_per_1m"] if r else 0) or DEFAULT_PRICE_INPUT)
     price_out = float((r["price_output_per_1m"] if r else 0) or DEFAULT_PRICE_OUTPUT)
+    # Un cerebro (2026-11-03, visión owner): la config entrega a VICTORIA completa
+    # (agente primario + subagentes coder/thinker), no solo el modelo. La sesión
+    # SIEMPRE abre en "Using a Victoria"; ella delega a @Coder/@Thinker según la
+    # tarea y, si la llave del cliente no tiene el tier, el gateway responde 403
+    # con hint de upgrade y ella lo explica con gracia (GET /v1/me).
     cfg = {
         "$schema": "https://opencode.ai/config.json",
         "compaction": {"auto": True, "prune": True, "reserved": 10000},
+        "default_agent": "victoria",
         "provider": {
             "vllm": {
                 "npm": "@ai-sdk/openai-compatible",
@@ -3336,7 +3414,7 @@ async def client_config(request: Request):
                 },
                 "models": {
                     "nvidia/Qwen3.6-35B-A3B-NVFP4-normal": {
-                        "name": "Coding con Victoria",
+                        "name": "Using a Victoria",
                         "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
                         "limit": {"context": ctx, "output": 32000},
                         "cost": {"input": price_in, "output": price_out},
@@ -3345,19 +3423,20 @@ async def client_config(request: Request):
                         "reasoning": False,
                         "modalities": {"input": ["text", "image", "video"], "output": ["text"]},
                     },
-                    "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking": {
-                        "name": "Thinking · Coding con Victoria",
-                        "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking",
-                        "limit": {"context": ctx, "output": 32000},
+                    "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4": {
+                        "name": "Coding con Victoria (motor de @Coder)",
+                        "id": "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",
+                        "limit": {"context": 96000, "output": 22000},
                         "cost": {"input": price_in, "output": price_out},
-                        "attachment": True,
+                        "attachment": False,
                         "tool_call": True,
-                        "reasoning": True,
-                        "modalities": {"input": ["text", "image", "video"], "output": ["text"]},
+                        "reasoning": False,
+                        "modalities": {"input": ["text"], "output": ["text"]},
                     },
                 },
             }
         },
+        "agents": _public_agents(),
         "_meta": {
             "generated_by": "· www.alfredo.pro /v1/client-config",
             "key_name": key_name,
