@@ -944,17 +944,20 @@ def _row_to_dict(row):
 # ---------------------------------------------------------------------------
 # KEY HELPERS
 # ---------------------------------------------------------------------------
-VALID_ROLES = ("admin", "coder", "services", "art", "readonly",
+VALID_ROLES = ("admin", "coder", "services", "art", "readonly", "llm",
                "liveportrait", "comfyui", "tts", "whisper", "n8n")
 # Matriz rol x capacidad (router unico 2026-09-16): "llm" = chat/completions
 # en Qwen35B; "art" = endpoints de generacion via ComfyUI. "" (vacio en DB) =
-# default del rol. admin ve todo y gestiona; coder programa; services vive
-# (chat+arte); art solo genera; readonly solo lee la guia.
+# default del rol. admin ve todo y gestiona; llm SOLO conversa (tier basico,
+# 2026-11-03 vision un-cerebro: si necesita el motor coder -> 403 con hint de
+# upgrade); coder programa (chat + motor coder); services vive (chat+arte);
+# art genera Y conversa (un cerebro para todos); readonly solo lee la guia.
 ROLE_DEFAULT_MODELS = {
     "admin": ["llm", "art", "liveportrait", "comfyui", "tts", "whisper", "n8n"],
+    "llm": ["llm"],
     "coder": ["llm"],
     "services": ["llm", "art", "tts", "whisper"],
-    "art": ["art", "liveportrait", "comfyui", "tts", "whisper", "n8n"],
+    "art": ["llm", "art", "liveportrait", "comfyui", "tts", "whisper", "n8n"],
     "liveportrait": ["liveportrait"],
     "comfyui": ["comfyui", "art"],
     "tts": ["tts"],
@@ -970,6 +973,7 @@ ROLE_DEFAULT_MODELS = {
 # irrelevante). Siempre editable por llave vía PUT /admin/keys/{name}.
 ROLE_DEFAULT_RATE_LIMIT = {
     "admin": 120,
+    "llm": 120,
     "coder": 120,
     "services": 120,
     "art": 120,
@@ -1537,11 +1541,14 @@ async def auth_middleware(request: Request, call_next):
             need = None  # config-guide, usage, etc.: reglas propias abajo
         if need and not _key_allows(info, need):
             mine = info.get("allowed_models") or f"default({info['role']})"
-            return JSONResponse(status_code=403, content={"error": "model_forbidden", "detail": f"role '{info['role']}' cannot use '{need}' endpoints (allowed: {mine})"})
+            return JSONResponse(status_code=403, content={"error": "model_forbidden", "detail": (
+                f"Tu llave (rol '{info['role']}'; permitido: {mine}) no puede usar '{need}'. "
+                f"Consulta GET /v1/me con tu llave para ver tus capacidades. "
+                f"Para ampliar tu tier solicita el upgrade al admin (Alfredo Pro: me@alfredo.pro).")})
         # Rol readonly: SOLO puede leer la guia de configuracion, catalogo y su client-config.
         # No chat, no completions, no usage, no arte. Eso evita que consuma GPU.
-        if info["role"] == "readonly" and path not in ("/v1/config-guide", "/v1/client-config", "/v1/catalog", "/v1/granja"):
-            return JSONResponse(status_code=403, content={"error": "forbidden", "detail": "readonly key can only access /v1/config-guide, /v1/catalog, /v1/client-config, /v1/granja and /health"})
+        if info["role"] == "readonly" and path not in ("/v1/config-guide", "/v1/client-config", "/v1/catalog", "/v1/granja", "/v1/me"):
+            return JSONResponse(status_code=403, content={"error": "forbidden", "detail": "readonly key can only access /v1/config-guide, /v1/catalog, /v1/client-config, /v1/granja, /v1/me and /health"})
         request.state.key = info
         return await call_next(request)
 
@@ -1683,9 +1690,11 @@ async def _proxy(request: Request, path: str, key_row: dict):
             pass
         return JSONResponse(status_code=403, content={
             "error": "model_forbidden",
-            "detail": (f"El modelo coder (Qwen3-Coder-30B) requiere tier admin/coder. "
+            "detail": (f"El motor de código requiere tier coder o superior. "
                        f"Tu key '{key_name}' tiene rol '{key_row.get('role')}'. "
-                       "El generalista (Qwen3.6-35B) sigue disponible para tu rol."),
+                       "El generalista sigue disponible para tu rol — pídeselo a Victoria y ella te ayudará hasta donde tu tier llega. "
+                       "Para código pesado solicita el upgrade a tier coder al admin (Alfredo Pro: me@alfredo.pro). "
+                       "Tus capacidades: GET /v1/me con tu llave."),
         })
 
     # Gate del coder: salud → auto-start on-demand → 503 warming_up honesto.
@@ -3232,6 +3241,48 @@ async def v1_catalog(request: Request):
             "canales": "WhatsApp hub https://chat.whatsapp.com/B9AzmnSpXVsFckz6Fh0ADa · Instagram @victoria.armada.do · me@alfredo.pro · www.alfredo.pro (+1.202.500.0357)",
             "tiers": "coder = chat LLM · art = generar · services = agentes · desde $100/mo (Alfredo Pro LLC)",
         },
+    }
+
+@app.get("/v1/me")
+async def v1_me(request: Request):
+    """Introspección de tier (2026-11-03, visión un-cerebro): qué puede hacer
+    ESTA llave. Victoria (y cualquier cliente) lo consulta para saber hasta
+    dónde llega el usuario y explicarle upgrades con gracia en vez de fallar
+    en seco. Auth: cualquier llave válida (readonly incluido)."""
+    info = request.state.key
+    role = info["role"]
+    raw = (info.get("allowed_models") or "").strip()
+    try:
+        caps = json.loads(raw) if raw else list(ROLE_DEFAULT_MODELS.get(role, []))
+    except Exception:
+        caps = list(ROLE_DEFAULT_MODELS.get(role, []))
+    friendly = {
+        "llm": "Conversar con Victoria (chat, visión de imágenes/video, preguntas)",
+        "coder": "Todo lo anterior + motor de código pesado (@Coder: refactors, SWE agéntico)",
+        "art": "Generar imágenes, 3D (foto→GLB), animación de fotos, voz y podcast",
+        "tts": "Texto a voz con la voz de Victoria",
+        "whisper": "Transcribir audio (STT)",
+        "liveportrait": "Animar retratos (talking-head)",
+        "comfyui": "Generación de imágenes vía ComfyUI",
+        "n8n": "Disparar workflows de orquestación",
+        "n8n ": "",
+    }
+    puede = [friendly.get(c, c) for c in caps if c in friendly or True]
+    puede = [p for p in puede if p]
+    upgrades = {
+        "llm": "tier coder (motor de código) o tier art (imágenes/3D/voz)",
+        "coder": "tier art (imágenes/3D/voz) — el motor de código ya lo tienes",
+        "art": "ya incluye conversación + creatividad; admin solo para gestión",
+        "readonly": "tier llm (inferencia básica)",
+    }
+    return {
+        "key": info["name"],
+        "role": role,
+        "caps": caps,
+        "puedes": puede,
+        "upgrade_para": upgrades.get(role, "consulta al admin"),
+        "contacto": "Alfredo Pro LLC · me@alfredo.pro · +1.202.500.0357",
+        "nota": "Victoria consulta esto para adaptarse a tu tier: pídele lo que necesites y ella te dirá con gracia si tu llave requiere upgrade.",
     }
 
 @app.get("/v1/client-config")
