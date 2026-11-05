@@ -1,4 +1,11 @@
-### [2026-11-05 00:40 EDT] [gateway] /v1/setup ya NO instala opencode (decisión owner): requisito + pre-flight + merge intacto
+### [2026-11-05 08:45 AST] [micaserogou] Validación flujo compra: bug add-to-cart confirmado (connector.js 404) + orden prueba 293 OK en ERP
+- **Tipo**: diagnóstico (sin cambios de código)
+- **Modificado**: nada en código; datos de prueba creados (cliente ERP id 214 test-compra@micaserogou-test.com + venta 293 en erpipo-preprod tenant 3, email_verified_at seteado a mano — mail de verificación del registro NO llegó al Mailpit del ERP)
+- **Afecta a**: micaserogou preprod (:8094) + erpipo-preprod (datos prueba)
+- **Causa**: owner reportó botones add-to-cart sin efecto
+- **Hallazgos**: (1) RAÍZ — `Commerce/Core/Main.php:632` encola `Modules/Commerce/assets/js/connector.js` que NO existe (404 verificado HTTP + CDP: 6 errores 404 en consola, click en botón → localStorage sin cambio, badge 0); el real vive en `Modules/ArmadaSuite/assets/js/connector.js` (200) y consume `erpc_cfg` (nonce coherente). Botones del home viven vía datos-reales.js. (2) Chatbot Carlos vivo pero alucina acciones de carrito (responde "agregando..." sin ejecutar — por diseño las acciones son client-side vía connector.js muerto). (3) Backend 100% funcional: simulación server-side completa → checkout OK, venta 293 (prod 323 ×2, subtotal 150, ITBIS 18%, total 177, pendiente) propagada al ERP. (4) Registro de cliente no envía password (flujo real: reset por email OK vía Mailpit ERP :8025).
+- **Estado**: ✅ diagnóstico completo; fix propuesto NO aplicado (1 línea en Main.php:632 — upstream agente Armada Suite)
+- **Notas**: evidencia en /tmp/opencode/ (HTMLs, cdp-final.py, checkout.json). Fix pendiente de autorización del owner.
 - **Tipo**: refactor (política)
 - **Qué**: el owner indicó que NO debemos instalar opencode a nadie — es requisito del cliente. El configurador ahora hace pre-flight: si opencode falta (revisando también ~/.opencode/bin, /usr/local/bin, /usr/bin, /opt/homebrew/bin por si está fuera del PATH), imprime el requisito con los métodos oficiales de instalación y **sale sin tocar NADA** (sin backup, sin merge). Si existe: respaldo + merge no destructivo + verificación como antes.
 - **E2E**: (1) sin opencode → mensaje de requisito, exit 1, config del cliente intacta (sin backup creado) ✓; (2) con opencode (fuera de PATH, en ~/.opencode/bin simulado) → detectado, merge correcto (tema+anthropic intactos, default_agent victoria), inferencia OK ✓.
