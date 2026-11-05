@@ -196,8 +196,7 @@ Acceso SSH a victoria SOLO es de lectura (monitorización). NUNCA intentes escri
 | DocuSeal | Proyecto DocuSeal | ✅ |
 | Scriberr | Proyecto Scriberr | ✅ |
 | wordpress-dev | SISTEMA WordPress (umbrella de plugins): stack :8091/:3307, compose, certs, secrets, DB | ✅ |
-| armada-suite | Plugin WP Armada Suite 5.4.2 (multitenant WP↔ERP, magantech/micaserogou/futuros) — NUEVO (2026-10-15) | ✅ |
-| zionv-crm | Plugin ZionV CRM 1.56.3 (stack propio :8092, GitHub warcold/zionv-crm) — NUEVO en registro (2026-10-15) | ✅ |
+| zionv-crm | Plugin unificado Zion CRM 2.0.0 (fusión ZionV CRM + ex-Armada Suite 2026-10-28; CRM + ecomm multitenant WP↔ERP, stack propio :8092, GitHub warcold/zionv-crm) | ✅ |
 | magantech | Website cliente MaganTech (magantech.com.do): preprod :8093 + dominio local; prod cPanel vía erpsuite/v1/ops (local-first) — NUEVO (2026-10-17) | ✅ |
 | micaserogou | Website cliente Micaserogou (micaserogou.com): preprod :8094 + dominio local; prod cPanel hosting externo (deploy pendiente) — NUEVO (2026-10-20) | ✅ |
 | erp-dev | Preprod ERP erpipo (kalimete docker) | ✅ |
