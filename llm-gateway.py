@@ -2981,14 +2981,14 @@ async def v1_config_guide(request: Request):
             "REPLACE_APIKEY": "Tu API key del gateway (la que usaste para leer esto)"
         },
         "client_config_recomendado": (
-            "VIA CANONICA (2026-11-03): UN comando hace todo (instala opencode si falta, "
-            "RESPALDA tu config anterior sin perderla, descarga tu config con el cerebro incluido y verifica): "
+            "REQUISITO: opencode instalado (https://opencode.ai — el configurador NO lo instala por ti). "
+            "VIA CANONICA (2026-11-04): UN comando suma Victoria a tu config SIN tocar lo tuyo "
+            "(respalda tu config anterior y hace merge: tus providers/modelos/temas quedan intactos): "
             "curl -fsSL -H 'Authorization: Bearer TU_KEY' TU_BASEURL/v1/setup | bash . "
             "Luego corre 'opencode': la sesion abre con VICTORIA como agente primario "
             "(te atiende, delega a coder/thinker segun la tarea) y tus limites ya configurados. "
             "Tus modelos anteriores (OpenCode Zen, etc.) siguen disponibles en el picker. "
-            "Alternativa manual (2 comandos): (1) curl -fsSL https://opencode.ai/install | bash "
-            "(2) mkdir -p ~/.config/opencode && curl -s -H 'Authorization: Bearer TU_KEY' "
+            "Alternativa manual: mkdir -p ~/.config/opencode && curl -s -H 'Authorization: Bearer TU_KEY' "
             "TU_BASEURL/v1/client-config -o ~/.config/opencode/opencode.jsonc . "
             "El template manual de abajo es el fallback minimo (solo el modelo, sin agentes)."),
         "validation": {
@@ -3405,11 +3405,12 @@ def _public_agents():
 
 @app.get("/v1/setup")
 async def v1_setup(request: Request):
-    """Instalador de 1 comando para clientes (2026-11-03): genera un script
-    bash PERSONALIZADO con la llave y baseURL del que llama. El script:
-    instala opencode si falta, RESPALDA la config existente del cliente
-    (no toca lo que tiene sin copia), descarga la config con el cerebro
-    embebido y verifica. Uso:
+    """Configurador de 1 comando para clientes (2026-11-04): genera un script
+    bash PERSONALIZADO con la llave y baseURL del que llama. NO instala
+    opencode (decisión owner: instalar software ajeno es invasivo) — si falta,
+    indica el requisito y sale sin tocar nada. Si existe: RESPALDA la config
+    del cliente, hace MERGE no destructivo (Victoria se suma, lo suyo queda)
+    y verifica. Uso:
       curl -fsSL -H "Authorization: Bearer TU_LLAVE" <gateway>/v1/setup | bash
     Auth: cualquier llave válida. La llave viaja en el script por el mismo
     canal TLS que el comando manual — sin diferencia de exposición."""
@@ -3436,12 +3437,23 @@ OC_FILE="$OC_DIR/opencode.jsonc"
 
 echo "==> Victoria Armada · instalador (llave: {info['name']}, rol: {info['role']})"
 
-# 1) opencode presente? si no, instalarlo
+# 1) opencode es REQUISITO (no lo instalamos por ti — decisión owner)
 if ! command -v opencode >/dev/null 2>&1; then
-  echo "==> opencode no está instalado — instalando..."
-  curl -fsSL https://opencode.ai/install | bash
-  export PATH="$HOME/.opencode/bin:$PATH"
+  for CAND in "$HOME/.opencode/bin" /usr/local/bin /usr/bin /opt/homebrew/bin; do
+    if [ -x "$CAND/opencode" ]; then export PATH="$CAND:$PATH"; break; fi
+  done
 fi
+if ! command -v opencode >/dev/null 2>&1; then
+  echo ""
+  echo "⚠️  opencode no está instalado — es el requisito para usar Victoria."
+  echo "    Nada fue modificado en tu computadora."
+  echo "    Instálalo primero con el método oficial:"
+  echo "      curl -fsSL https://opencode.ai/install | bash"
+  echo "      (o npm i -g opencode-ai  ·  docs: https://opencode.ai/docs)"
+  echo "    Y luego vuelve a correr este comando."
+  exit 1
+fi
+echo "==> opencode detectado: $(command -v opencode)"
 
 # 2) RESPALDO de la config existente (no tocamos lo que tienes sin copia)
 mkdir -p "$OC_DIR"

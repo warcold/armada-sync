@@ -1,3 +1,8 @@
+### [2026-11-05 00:40 EDT] [gateway] /v1/setup ya NO instala opencode (decisión owner): requisito + pre-flight + merge intacto
+- **Tipo**: refactor (política)
+- **Qué**: el owner indicó que NO debemos instalar opencode a nadie — es requisito del cliente. El configurador ahora hace pre-flight: si opencode falta (revisando también ~/.opencode/bin, /usr/local/bin, /usr/bin, /opt/homebrew/bin por si está fuera del PATH), imprime el requisito con los métodos oficiales de instalación y **sale sin tocar NADA** (sin backup, sin merge). Si existe: respaldo + merge no destructivo + verificación como antes.
+- **E2E**: (1) sin opencode → mensaje de requisito, exit 1, config del cliente intacta (sin backup creado) ✓; (2) con opencode (fuera de PATH, en ~/.opencode/bin simulado) → detectado, merge correcto (tema+anthropic intactos, default_agent victoria), inferencia OK ✓.
+- **Docs**: config-guide (client_config_recomendado), AGENTS.md §7.2, changelogs. Backup: llm-gateway.py.bkup-20261104-precios.
 ### [2026-11-04 22:40 EDT] [gateway] Instalador /v1/setup ahora MERGE no destructivo (petición owner: amigos con config propia)
 - **Tipo**: feature
 - **Qué**: el owner preguntó cómo indicarle a un amigo que use Victoria SIN afectar su configuración existente. El instalador antes respaldaba pero REEMPLAZABA la config (otros providers custom del cliente quedaban fuera de la activa). Ahora hace MERGE: descarga la config de Victoria y la fusiona — reemplaza SOLO nuestras llaves (provider.vllm, agents, default_agent, compaction, _meta) y PRESERVA todo lo demás del cliente (otros providers como anthropic, temas, permisos, keybinds). Fallback a reemplazo directo solo si python3 no existe (backup igualmente creado). Zen y demás modelos auto-cargados nunca se tocan.
