@@ -61,11 +61,13 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 TEMPLATE_PATH = pathlib.Path(__file__).parent / "admin_template.html"
 SERVED_MODEL = os.environ.get("SERVED_MODEL", "nvidia/Qwen3.6-35B-A3B-NVFP4")
 # Precio separado input/output por 1M tokens (estandar industria).
-# v3 (2026-08-30): recalibrado al costo real de produccion + margen razonable.
-#   Costo real: ~$0.0253/1M (hw $2.40/dia + elec $0.86/dia, 129M tok/dia).
-#   Defaults: input $0.10/1M, output $0.30/1M (output 3x, es el estandar: genera mas computo).
-DEFAULT_PRICE_INPUT = float(os.environ.get("DEFAULT_PRICE_INPUT_PER_1M", "0.10"))   # USD / 1M input tokens
-DEFAULT_PRICE_OUTPUT = float(os.environ.get("DEFAULT_PRICE_OUTPUT_PER_1M", "0.30")) # USD / 1M output tokens
+# v4 (2026-11-04): alineado al mercado online de la clase comparable (35B MoE VLM,
+# contexto gigante) — GLM 5.3 FlashX $0.37/$1.25, Ripple-65B $0.20/$0.60, coding
+# barato $0.05/$0.50 (OpenRouter, nov 2026). Nuestro v3 ($0.10/$0.30) estaba 60-70%
+# bajo el mercado. Costo real propio: ~$0.0253/1M -> margen ~10-30x (servicio
+# premium local: privado, dedicado, sin logs de terceros).
+DEFAULT_PRICE_INPUT = float(os.environ.get("DEFAULT_PRICE_INPUT_PER_1M", "0.25"))   # USD / 1M input tokens
+DEFAULT_PRICE_OUTPUT = float(os.environ.get("DEFAULT_PRICE_OUTPUT_PER_1M", "0.75")) # USD / 1M output tokens
 
 ADMIN_PASS_HASH = hashlib.sha256(
     os.environ.get("ADMIN_PASS", "victoria-admin").encode()
@@ -902,7 +904,7 @@ def init_db():
     _ensure_column(conn, "usage_log", "eng_kv", "REAL DEFAULT 0")
     # Router unico + arte (2026-09-16): capacidades por llave y precios art.
     _ensure_column(conn, "api_keys", "allowed_models", "TEXT DEFAULT ''")
-    _ensure_column(conn, "api_keys", "price_per_image", "REAL DEFAULT 0.10")
+    _ensure_column(conn, "api_keys", "price_per_image", "REAL DEFAULT 0.25")
     _ensure_column(conn, "api_keys", "price_per_video_sec", "REAL DEFAULT 0.02")
     # Flight recorder + anomalías (2026-09-20): head_hash del prompt (el mismo
     # hash del costo-efectivo, ahora persistido para forense), flag stream y
@@ -2574,7 +2576,7 @@ async def _art_submit(request: Request, kind: str):
                 pass
         return JSONResponse(status_code=502, content={"error": "comfyui_rejected", "detail": "sin prompt_id"})
     job_id = "art-" + secrets.token_hex(8)
-    price = float(key.get("price_per_image") or 0.10) if kind == "image" else float(key.get("price_per_video_sec") or 0.02) * float(body.get("duration_sec") or 8)
+    price = float(key.get("price_per_image") or 0.25) if kind == "image" else float(key.get("price_per_video_sec") or 0.05) * float(body.get("duration_sec") or 8)
     with _art_lock:
         _art_jobs[job_id] = {"prompt_id": prompt_id, "key_name": key_name, "kind": kind, "template": template or "custom", "t0": time.time(), "status": "queued", "arbiter": _arb_tok, "patched": patched}
     try:
@@ -3449,9 +3451,34 @@ if [ -f "$OC_FILE" ]; then
   echo "==> Respaldo de tu config anterior: $BAK"
 fi
 
-# 3) Descargar tu config lista (con Victoria como cerebro incluido)
-curl -s -H "Authorization: Bearer {api_key}" {base}/v1/client-config -o "$OC_FILE"
-echo "==> Config instalada en $OC_FILE"
+# 3) Descargar tu config y SUMARLA a la tuya (merge: no destructivo)
+TMP_CFG="$(mktemp)"
+curl -s -H "Authorization: Bearer {api_key}" {base}/v1/client-config -o "$TMP_CFG"
+if command -v python3 >/dev/null 2>&1; then
+  python3 - "$TMP_CFG" <<'PYMERGE'
+import json, sys, os
+ours = json.load(open(sys.argv[1]))
+p = os.path.expanduser("~/.config/opencode/opencode.jsonc")
+try:
+    cur = json.load(open(p))
+    if not isinstance(cur, dict): cur = {{}}
+except Exception:
+    cur = {{}}
+# Lo nuestro reemplaza SOLO nuestras llaves; todo lo demás del cliente se preserva
+prov = cur.get("provider") if isinstance(cur.get("provider"), dict) else {{}}
+for k, v in (ours.get("provider") or {{}}).items():
+    prov[k] = v
+cur["provider"] = prov
+for k in ("$schema", "compaction", "default_agent", "agents", "_meta"):
+    if k in ours: cur[k] = ours[k]
+json.dump(cur, open(p, "w"), indent=2, ensure_ascii=False)
+print("==> Config fusionada: Victoria sumada, tu configuración anterior intacta")
+PYMERGE
+else
+  mv "$TMP_CFG" "$OC_FILE"
+  echo "==> Config instalada (python3 no encontrado: reemplazo directo, tu backup tiene la anterior)"
+fi
+rm -f "$TMP_CFG"
 
 # 4) Verificar que el cerebro quedó registrado
 if command -v opencode >/dev/null 2>&1; then
@@ -3469,7 +3496,7 @@ cat <<'MSG'
   - Ella se encarga de todo (conversar, codear, crear).
   - Tus capacidades: curl -s -H "Authorization: Bearer TU_LLAVE" {base}/v1/me
   - ¿Necesitas más nivel? Alfredo Pro LLC · me@alfredo.pro · +1.202.500.0357
-  - Tus modelos anteriores (OpenCode Zen, etc.) siguen en el picker.
+  - Tus modelos y providers anteriores siguen intactos (Victoria se SUMA).
 ==============================================
 MSG
 """

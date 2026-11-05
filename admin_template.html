@@ -430,6 +430,22 @@ const ROLE_DEFAULTS = {
   liveportrait: ['liveportrait'], comfyui: ['comfyui','art'], tts: ['tts'],
   whisper: ['whisper'], n8n: ['n8n'], readonly: []
 };
+function keyCategory(k) {
+  if (!k.active) return '⏸ Inactivas';
+  if (k.name === 'alfredo' || k.name === 'victoria') return '👑 Owner';
+  if (k.name.startsWith('armada-')) return '🏢 Negocios';
+  if (['coder','llm','art'].includes(k.role) && !k.name.startsWith('kalimete') && k.name !== 'victoria-openclaw-sandbox') return '👥 Clientes';
+  return '🏭 Sistemas e Infra';
+}
+function tierLabel(k) {
+  const caps = effectiveCaps(k);
+  if (k.role === 'readonly') return 'Solo lectura';
+  if (caps.includes('coder') && caps.includes('art')) return 'Full';
+  if (caps.includes('coder')) return '💻 Desarrollo';
+  if (caps.includes('art') || caps.includes('liveportrait') || caps.includes('comfyui')) return '🎨 Estudio Creativo';
+  if (caps.includes('tts') || caps.includes('whisper')) return '🔊 Voz';
+  return '💬 Conversación';
+}
 function effectiveCaps(k) {
   try { const a = (k.allowed_models || '').trim(); if (a) return JSON.parse(a); } catch (e) {}
   return ROLE_DEFAULTS[k.role] || [];
@@ -467,11 +483,24 @@ function onEditRoleChange() {
 async function loadKeys() {
   const { data } = await api('/admin/keys');
   if (!data) return;
-  document.getElementById('keys-table').innerHTML = data.map(k => `
+  const ORDER = ['👑 Owner', '👥 Clientes', '🏢 Negocios', '🏭 Sistemas e Infra', '⏸ Inactivas'];
+  const groups = {};
+  data.forEach(k => { const c = keyCategory(k); (groups[c] = groups[c] || []).push(k); });
+  let html = '';
+  ORDER.forEach(cat => {
+    if (!groups[cat]) return;
+    html += `<tr><td colspan="13" style="background:#8b5cf622;font-weight:700;padding:6px 10px;border-top:2px solid #8b5cf655">${cat} (${groups[cat].length})</td></tr>`;
+    html += groups[cat].map(rowHtml).join('');
+  });
+  document.getElementById('keys-table').innerHTML = html || '<tr><td colspan="13" class="empty">No hay llaves todavía. Crea la primera arriba.</td></tr>';
+}
+
+function rowHtml(k) {
+  return `
     <tr>
       <td><strong>${esc(k.owner) || '—'}</strong><br><small class="muted mono">id: ${esc(k.name)}</small></td>
       <td class="key-col"><code class="key-val mono" data-full="${esc(k.key_plaintext || '')}">vllm-key-••••••••••••••••••••••••••••••••••••••••••</code> <button class="small ghost" onclick="toggleKeyVisible(this)" title="Mostrar/ocultar valor real">Ver</button> <button class="small ghost" onclick="copyKeyVal(this)" title="Copiar valor real">Copiar</button></td>
-      <td><span class="badge ${k.role}">${esc(k.role)}</span></td>
+      <td><span class="badge ${k.role}">${esc(k.role)}</span><br><small style="color:#a78bfa">${tierLabel(k)}</small></td>
       <td>${capsBadges(k)}</td>
       <td><span class="badge ${k.active ? 'active' : 'inactive'}">${k.active ? 'activa' : 'inactiva'}</span></td>
       <td class="num">${fmtMoney(k.price_input_per_1m != null ? k.price_input_per_1m : '')}</td>
@@ -489,7 +518,7 @@ async function loadKeys() {
           : `<button class="small success" onclick="toggleKey('${esc(k.name)}', true)">Activar</button>`}
         <button class="small danger" onclick="deleteKey('${esc(k.name)}')">Borrar</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="12" class="empty">No hay llaves todavía. Crea la primera arriba.</td></tr>';
+    </tr>`;
 }
 
 function toggleKeyVisible(btn) {
