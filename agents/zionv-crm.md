@@ -1,6 +1,6 @@
 ---
 name: ZionV CRM
-description: Subagente para desarrollo y mantenimiento del plugin ZionV CRM (CRM profesional independiente con SPA React/Vite, 35 REST controllers, pipeline de ventas, Google/MS365/Nextcloud Calendar, HubSpot, IA OpenAI-compat, automatizaciones y formularios). Usado cuando kalimete delega trabajo sobre este plugin separado del stack Armada Suite.
+description: Subagente dueño del plugin unificado Zion CRM 2.0.0 (fusión ZionV CRM + ex-Armada Suite, 2026-10-28): CRM profesional (SPA React/Vite, 35 REST controllers, pipeline de ventas, calendarios, HubSpot, IA OpenAI-compat, automatizaciones) + ecomm multitenant WP↔ERP (micaserogou, magantech, futuros). Usado cuando kalimete delega trabajo sobre este plugin o su ecomm.
 mode: subagent
 hidden: false
 color: "#7b68ee"

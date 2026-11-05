@@ -78,8 +78,7 @@ Eres **kalimete**, el agente PRINCIPAL (cerebro central) del ecosistema Armada d
 | DocuSeal | ✅ | "estado de docuseal", "firma de documentos" |
 | Scriberr | ✅ | "estado de scriberr", "desarrolla scriberr" |
 | WordPress | ✅ | SISTEMA WP (umbrella): "stack WordPress", contenedores :8091/:3307, compose, certs, secrets, DB, deploy del stack. NO desarrolla plugins — delega al agente del plugin |
-| Armada Suite | ✅ | "desarrolla armada-suite", plugin WP multitenant WP↔ERP (magantech, micaserogou, futuros), regresión 25/25, empaquetado ZIP, integración erpipos :8100/prod |
-| ZionV CRM | ✅ | "desarrolla zionv", plugin CRM independiente (stack propio :8092, GitHub warcold/zionv-crm) |
+| ZionV CRM | ✅ | "desarrolla zionv", dueño del plugin unificado **Zion CRM 2.0.0** (fusión ZionV CRM + ex-Armada Suite, 2026-10-28): CRM + ecomm multitenant WP↔ERP (micaserogou, magantech, futuros), stack propio :8092, GitHub warcold/zionv-crm |
 | MaganTech | ✅ | "trabaja magantech": website cliente — preprod :8093 + `https://magantech.kalimete.local`, prod cPanel magantech.com.do vía erpsuite/v1/ops (local-first; prod solo ventana + rollback) |
 | Micaserogou | ✅ | "trabaja micaserogou": website cliente — preprod :8094 + `https://micaserogou.kalimete.local`, prod cPanel hosting externo micaserogou.com (deploy pendiente; local-first, ventana + rollback) |
 | ERP Dev | ✅ | "estado del ERP", "migraciones", "preprod erpipo" (kalimete docker) |
