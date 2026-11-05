@@ -964,7 +964,7 @@ ensure_web_nav() {
         log "wrapper web-utils restaurado en sandbox"
     fi
     # Wrappers individuales
-    for wrapper in web-navigate web-scrape webanalyze; do
+    for wrapper in web-navigate web-scrape; do
         local wb="/home/victoria/.victoria-custom/bin/$wrapper"
         [ -f "$wb" ] || continue
         local lw2 rw2
@@ -977,21 +977,6 @@ ensure_web_nav() {
             log "wrapper $wrapper restaurado en sandbox"
         fi
     done
-
-    # Skill webanalyze (tech stack analysis)
-    local skill_src="/home/victoria/.victoria-custom/skills/webanalyze/SKILL.md"
-    if [ -f "$skill_src" ]; then
-        local skill_dst="/sandbox/.openclaw/workspace/skills/webanalyze/SKILL.md"
-        docker exec -u root "$cid" mkdir -p /sandbox/.openclaw/workspace/skills/webanalyze 2>/dev/null
-        local lw3 rw3
-        rw3=$(docker exec "$cid" md5sum "$skill_dst" 2>/dev/null | cut -d' ' -f1)
-        lw3=$(md5sum "$skill_src" 2>/dev/null | cut -d' ' -f1)
-        if [ "$lw3" != "$rw3" ] || [ -z "$rw3" ]; then
-            docker cp "$skill_src" "$cid:$skill_dst" 2>/dev/null
-            docker exec -u root "$cid" chown sandbox:sandbox "$skill_dst" 2>/dev/null
-            log "skill webanalyze restaurada en sandbox"
-        fi
-    fi
 }
 
 ensure_ownership_fix() {
