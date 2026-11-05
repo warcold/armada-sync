@@ -21,7 +21,6 @@ permission:
     "DocuSeal": allow
     "Scriberr": allow
     "WordPress": allow
-    "Armada Suite": allow
     "Armada Templates": allow
     "ZionV CRM": allow
     "ERP Dev": allow
