@@ -5,7 +5,7 @@
   "mode": "subagent",
   "hidden": false,
   "scope": "Servidor de Assetto Corsa para la comunidad dominicana en vps-preprod: Server Manager (seejy/assetto-server-manager en Docker), lifecycle de acServer v1.15 (Steam App 302550), races/championships, tracks/cars, Sol Weather y despliegue seguro de contenido branded (KN5 con texturas DDS + ZIP de Content Manager) con gates anti-regresión.",
-  "vivo_2026_11_06": "Modo B activo: contenedor assetto-corsa-server Up sirviendo SM :8772 y CM wrapper :8773; acServer.real lanzado por el SM con UDP/TCP 9600 y HTTP :8082; cloudflared activo; assetto-acserver (systemd standalone) inactivo. Race viva 371cd0f4-3e56-416f-8e1f-235d2b9b336f (vr506_dominicana_2_0 layout circu, practice, pass=false, pickup=true, maxclients=6). Branding alfredo.pro desplegado y verificado: KN5 local == KN5 server == KN5 dentro del ZIP == a2c39948ebd26204a44577cd69e5e8fe. Deriva conocida: autostart-race.sh del VPS apunta a fd8236dc-1871-41e7-90f4-c35b5b686308 (race vieja, ya no está en /custom; log 'carrera 500').",
+  "vivo_2026_11_06": "Modo B activo: contenedor assetto-corsa-server Up sirviendo SM :8772 y CM wrapper :8773; acServer.real lanzado por el SM con UDP/TCP 9600 y HTTP :8082; cloudflared activo; assetto-acserver (systemd standalone) inactivo. Race viva 371cd0f4-3e56-416f-8e1f-235d2b9b336f (vr506_dominicana_2_0 layout circu, practice, pass=false, pickup=true, maxclients=6). Branding alfredo.pro desplegado y verificado: KN5 local == KN5 server == KN5 dentro del ZIP == a2c39948ebd26204a44577cd69e5e8fe. Auto Loop NATIVO del SM activo para la race (el SM la relanza solo en <=30s, verificado tras recreate 2026-11-06); cron watchdog y config-patcher ELIMINADOS (backups .bkup-20261106-native); REGISTER_TO_LOBBY=0 / SLEEP_TIME=1 / HTTP_PORT=8082 ahora nativos en Server Options (ini escrito por SM sin seds).",
   "live_check": "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'hostname; docker ps --format \"{{.Names}} {{.Status}}\" | grep assetto; md5sum /srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5; curl -s -o /dev/null -w \"details:%{http_code}\\n\" http://127.0.0.1:8773/api/details'",
   "hosts": {
     "vps-preprod": {
@@ -123,7 +123,6 @@
   ],
   "scripts_host": [
     "~/dev/games/assetto-corsa/scripts/deploy-track.sh (deploy seguro con gates anti-regresión; NO cron)",
-    "~/dev/games/assetto-corsa/scripts/autostart-race.sh (watchdog local del proyecto)",
     "~/dev/games/assetto-corsa/scripts/switch-zone.sh (4 zonas: drift/touge/trackday/race)",
     "~/dev/games/assetto-corsa/scripts/deploy.sh",
     "~/dev/games/assetto-corsa/scripts/backup.sh"
@@ -224,6 +223,10 @@
     {
       "fecha": "2026-10-28",
       "cambio": "Proyecto creado: estructura, agente, harness, PROJECT.md, CHANGELOG.md, scripts, docker-compose."
+    },
+    {
+      "fecha": "2026-11-06 18:40 EST",
+      "cambio": "Migracion a gestion 100% nativa del SM: Auto Loop verificado (la race ya estaba en loop; el ciclo ~31.5min era LoopRaces nativo), cron autostart-race.sh y config-patcher.sh eliminados con backups, seds de REGISTER_TO_LOBBY/SLEEP_TIME/HTTP_PORT removidos de entrypoint-wrapper y acServer wrapper (valores ahora nativos en Server Options; POST requiere RegisterToLobby=0 explicito por formulate.BoolNumber). Contenedor recreado: solo PID1 + acServer.real, race auto-arrancada por LoopRaces, ini escrito por SM con valores correctos, /api/details 200 local y externo IP:8773."
     }
   ],
   "changelogs": [
@@ -235,7 +238,7 @@
     "DB Server Manager (BoltDB) — solo backup",
     "Archivos generados por SM en /srv/assetto-corsa/assetto/content/config/ (server_cfg.ini, entry_list.ini)",
     "KN5 live sin backup .bkup previo",
-    "autostart-race.sh del VPS (UUID viejo) sin autorización del owner"
+    "Wrappers entrypoint/acServer: solo shims [LAUNCHER]/[WEATHER_0]/symlink/nurburgring - NO re-anadir seds de REGISTER_TO_LOBBY/SLEEP_TIME/HTTP_PORT (ya nativos en Server Options)"
   ],
   "recovery": "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod. Si el SM no responde: docker ps | grep assetto; docker logs --tail 100 assetto-corsa-server; docker restart assetto-corsa-server (boot ~90s). Si se perdió el KN5 branded: restaurar desde el backup local/remoto .bkup o regenerar con ac_replacer.py y desplegar con scripts/deploy-track.sh. Si la race no arranca: verificar /custom/load/<uuid> y /api/details en 8773.",
   "delegacion": {
@@ -272,24 +275,47 @@
       "layout": "circu",
       "relanzar": "GET /custom/load/371cd0f4-3e56-416f-8e1f-235d2b9b336f con cookie admin"
     },
-    "watchdog_deriva": {
-      "script": "/srv/assetto-corsa/autostart-race.sh",
-      "uuid_actual_en_script": "fd8236dc-1871-41e7-90f4-c35b5b686308",
-      "estado": "race vieja, ya no aparece en /custom; pendiente actualizar con autorización del owner"
-    },
     "track_branded": {
       "slug": "vr506_dominicana_2_0",
       "kn5_original_md5": "3b72f19dcfb42b4e9641d6bbf528cc04",
       "kn5_branded_md5": "a2c39948ebd26204a44577cd69e5e8fe",
-      "texturas": ["BANNER01.DDS (256x128 DXT1)", "sponsor_h1_ovrhd.dds (512x256 DXT5)"],
+      "texturas": [
+        "BANNER01.DDS (256x128 DXT1)",
+        "sponsor_h1_ovrhd.dds (512x256 DXT5)"
+      ],
       "zip": "download/vr506_dominicana_2_0.zip",
       "zip_nota": "Excluye *.bkup* y vao-patch.zip; el KN5 interno debe ser el branded."
     },
     "zonas_tematicas": {
-      "drift": {"track": "drift", "cars": "bmw_m3_e30_drift;bmw_m3_e92_drift;bmw_z4_drift;bmw_m3_e30;bmw_z4;ks_mazda_rx7_tuned", "sessions": "Practice 1440"},
-      "touge": {"track": "ks_highlands", "config_track": "long", "cars": "bmw_m3_e30;bmw_m3_e92;bmw_z4;alfa_romeo_giulietta_qv;abarth500;bmw_1m;ks_mazda_rx7_spirit_r", "sessions": "Practice 1440"},
-      "trackday": {"track": "spa", "cars": "ks_ferrari_488_gt3;ks_lamborghini_huracan_gt3;ks_audi_r8_lms;ks_mclaren_650_gt3;ks_mercedes_amg_gt3;ks_nissan_gtr_gt3;ks_porsche_911_gt3_r_2016;bmw_m3_e92;bmw_z4;ks_mazda_rx7_spirit_r", "sessions": "Practice 1440"},
-      "race": {"track": "ks_nurburgring", "config_track": "gp_a", "cars": "ks_ferrari_488_gt3;ks_lamborghini_huracan_gt3;ks_audi_r8_lms;ks_mclaren_650_gt3;ks_mercedes_amg_gt3;ks_nissan_gtr_gt3;ks_porsche_911_gt3_r_2016;ks_mazda_rx7_spirit_r;bmw_m3_e30", "sessions": "Practice 30 / Qualify 15 / Race 5 laps"}
+      "drift": {
+        "track": "drift",
+        "cars": "bmw_m3_e30_drift;bmw_m3_e92_drift;bmw_z4_drift;bmw_m3_e30;bmw_z4;ks_mazda_rx7_tuned",
+        "sessions": "Practice 1440"
+      },
+      "touge": {
+        "track": "ks_highlands",
+        "config_track": "long",
+        "cars": "bmw_m3_e30;bmw_m3_e92;bmw_z4;alfa_romeo_giulietta_qv;abarth500;bmw_1m;ks_mazda_rx7_spirit_r",
+        "sessions": "Practice 1440"
+      },
+      "trackday": {
+        "track": "spa",
+        "cars": "ks_ferrari_488_gt3;ks_lamborghini_huracan_gt3;ks_audi_r8_lms;ks_mclaren_650_gt3;ks_mercedes_amg_gt3;ks_nissan_gtr_gt3;ks_porsche_911_gt3_r_2016;bmw_m3_e92;bmw_z4;ks_mazda_rx7_spirit_r",
+        "sessions": "Practice 1440"
+      },
+      "race": {
+        "track": "ks_nurburgring",
+        "config_track": "gp_a",
+        "cars": "ks_ferrari_488_gt3;ks_lamborghini_huracan_gt3;ks_audi_r8_lms;ks_mclaren_650_gt3;ks_mercedes_amg_gt3;ks_nissan_gtr_gt3;ks_porsche_911_gt3_r_2016;ks_mazda_rx7_spirit_r;bmw_m3_e30",
+        "sessions": "Practice 30 / Qualify 15 / Race 5 laps"
+      }
+    },
+    "auto_loop": {
+      "mecanismo": "Nativo Server Manager: RaceManager.LoopRaces (ticker 30s) + toggle GET /custom/loop/<uuid>",
+      "race_uuid": "371cd0f4-3e56-416f-8e1f-235d2b9b336f",
+      "estado": "activo (tab autoloop en /custom); auto-arranque verificado tras recreate 2026-11-06",
+      "watchdog_cron": "ELIMINADO 2026-11-06 (backups: /srv/assetto-corsa/autostart-race.sh.bkup-20261106-native, /root/crontab.bkup-20261106-assetto)",
+      "server_options_nativas": "RegisterToLobby unchecked, SleepTime=1, HTTPPort=8082, CM wrapper 8773 (POST con RegisterToLobby=0 explicito)"
     }
   }
 }

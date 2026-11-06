@@ -96,7 +96,7 @@ ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod
 | Config que escribe el SM | `/srv/assetto-corsa/assetto/content/config/server_cfg.ini` |
 | Entry list | `/srv/assetto-corsa/assetto/content/config/entry_list.ini` (symlink en `cfg/`) |
 | Credenciales SM | `/srv/assetto-corsa/.sm-admin-credentials` (600, root-only, NUNCA al chat) |
-| Log del watchdog | `/srv/assetto-corsa/autostart.log` |
+| Auto-arranque de race | **Nativo SM**: Auto Loop (custom race en loop). Sin cron ni watchdog desde 2026-11-06 |
 
 ### Paths dentro del contenedor
 
@@ -156,7 +156,7 @@ acServer.real
 | Track | `vr506_dominicana_2_0` layout `circu` |
 | Sesión | Practice, `pass=false`, `pickup=true`, `maxclients=6`, `port=9600`, `cport=8082` |
 | Relanzar | `GET /custom/load/371cd0f4-3e56-416f-8e1f-235d2b9b336f` con cookie admin |
-| **Deriva conocida** | `autostart-race.sh` del VPS todavía apunta a `fd8236dc-1871-41e7-90f4-c35b5b686308` (race vieja, ya no aparece en `/custom`). NO tocar ahora; el script de deploy usa el UUID correcto. Pendiente: actualizar el watchdog con autorización del owner. |
+| **Auto Loop nativo** | La race está en el Auto Loop del SM (tab `autoloop` en `/custom`; toggle `GET /custom/loop/<uuid>`). El SM la relanza solo (≤30s) cuando no hay race activa, incluido tras reinicio del contenedor. Verificado 2026-11-06 tras recreate. El cron watchdog fue ELIMINADO (backup `.bkup-20261106-native`). |
 
 ## Flujo de despliegue de contenido (tracks + texturas branded)
 
@@ -214,7 +214,7 @@ ALLOW_UNKNOWN_KN5=1 bash scripts/deploy-track.sh
 
 El script hace, en orden: pre-flight de identidad/host/IP + gate de md5 → backup local `.bkup-<timestamp>` → backup remoto `.bkup-<timestamp>` ANTES del rsync → rsync sin `--delete` (excluye `*.bkup*`, `download/`, `vao-patch.zip`) → verificación md5 remoto == local → ZIP nuevo (excluye backups y `vao-patch.zip`) → verificación del KN5 dentro del ZIP (local y remoto) → upload atómico del ZIP → `chown assetto:assetto` → relanzar la race vía SM → verificación `/api/details` (200, `pass=false`, track presente).
 
-> **No ejecutarlo desde cron.** Es una operación manual con gates; el watchdog solo relanza la race.
+> **No ejecutarlo desde cron.** Es una operación manual con gates; el relanzamiento automático lo hace el Auto Loop nativo del SM.
 
 ## CHECKLIST ANTI-REGRESIÓN (obligatorio en cada deploy de track)
 
@@ -299,7 +299,7 @@ dig +short srv00.assetto.armada.do @1.1.1.1   # → 154.53.35.102
 2. Entrar a `https://assetto.armada.do` con usuario `admin`; la password está en `/srv/assetto-corsa/.sm-admin-credentials` (NUNCA copiarla al chat).
 3. `Custom` → la race se lista; **Start** = `GET /custom/load/<uuid>` → el SM lanza su `acServer`.
 4. El SM genera `server_cfg.ini` + `entry_list.ini` al vuelo. **No editar `cfg/` a mano en Modo B.**
-5. Para automatizar el relanzamiento sin la UI: login con cookie + `GET /custom/load/<uuid>` (lo hace `scripts/deploy-track.sh` y `autostart-race.sh`).
+5. Para automatizar el relanzamiento sin la UI: login con cookie + `GET /custom/load/<uuid>` (lo hace `scripts/deploy-track.sh`). El auto-arranque tras caída/reinicio es del **Auto Loop nativo del SM** (toggle: `GET /custom/loop/<uuid>`).
 
 ### Endpoints útiles
 
@@ -325,7 +325,7 @@ dig +short srv00.assetto.armada.do @1.1.1.1   # → 154.53.35.102
 4. **Admin del SM**: el flujo NO es “primer login crea cuenta” — la imagen trae credenciales de fábrica → 302 a `/accounts/new-password` → setear password permanente. Las credenciales reales viven en `/srv/assetto-corsa/.sm-admin-credentials` (600, root-only).
 5. **Boot del SM tarda ~90s** (escaneo de contenido) — 8772 no escucha inmediatamente tras `docker restart`; no matar el contenedor.
 6. **acServer manual muere fácil** (probes UDP basura lo crashearon) — no enviar paquetes malformados en pruebas. El SM es el dueño del proceso en Modo B.
-7. **Lobby Kunos**: `ERROR,INVALID SERVER` si el puerto no es alcanzable desde internet; para server privado RD usar `REGISTER_TO_LOBBY=0` (el entrypoint lo fuerza).
+7. **Lobby Kunos**: `ERROR,INVALID SERVER` si el puerto no es alcanzable desde internet; para server privado RD usar `REGISTER_TO_LOBBY=0` — **nativo en Server Options del SM** desde 2026-11-06 (antes lo forzaba un sed del entrypoint).
 8. **docker-compose usa `network_mode: host`** — sin publishing de puertos; los puertos salen directos al host.
 9. **Dos rutas de config, hoy symlink (2026-11-06)**: `cfg/server_cfg.ini` es symlink a `content/config/server_cfg.ini` (lo crea el entrypoint). acServer lee `cfg/...`; el SM escribe `content/config/...`. Si el symlink se rompe, acServer lee un archivo viejo. No editar a mano en Modo B.
 10. **`entry_list.ini` debe ser subconjunto de `CARS=`**: si un `MODEL=` del entry list no está en `CARS=`, acServer aborta con `Error, entry list CAR_N car <modelo> is illegal` (y bajo systemd entra en loop de restart cada 10s).
@@ -337,8 +337,9 @@ dig +short srv00.assetto.armada.do @1.1.1.1   # → 154.53.35.102
 16. **ZIP CM desactualizado**: si se cambia el KN5 y no se regenera `download/<slug>.zip`, los clientes de Content Manager descargan el viejo y entran en loop de mismatch de checksum. Regenerar y verificar el KN5 **dentro** del ZIP.
 17. **`download/` es público**: el SM está en modo open/read-access; el ZIP se sirve en `https://assetto.armada.do/content/tracks/<slug>/download/<slug>.zip` y `ui/meta_data.json` lo referencia. No poner nada sensible ahí.
 18. **8081 es Adminer, 8082 es AC**: el `HTTP_PORT` de acServer es 8082 (el 8081 lo ocupa `staging-adminer-1`). Verificar con `/api/details` en 8082/8773, no en 8081.
-19. **Deriva del watchdog (2026-11-06)**: `autostart-race.sh` usa `fd8236dc-...` (race eliminada; el log da `carrera 500`). La race viva es `371cd0f4-...`. Si el server se cae, el watchdog no la levantará hasta corregir el UUID (pendiente de autorización del owner). El deploy script usa el UUID correcto.
+19. **Watchdog y patcher ELIMINADOS (2026-11-06)**: el cron `autostart-race.sh` (apuntaba al UUID viejo `fd8236dc-...`) y `config-patcher.sh` fueron removidos con backups `.bkup-20261106-native` (crontab backup: `/root/crontab.bkup-20261106-assetto`). El auto-arranque es el **Auto Loop nativo del SM** — de hecho ya estaba activo: el ciclo ~31.5 min de los logs era `LoopRaces`, no el cron. Los valores `REGISTER_TO_LOBBY=0`, `SLEEP_TIME=1`, `HTTP_PORT=8082` se gestionan en **Server Options** del SM (nativo, verificado en el ini tras recreate). Truco API: para desmarcar un checkbox de Server Options vía POST hay que enviar el campo con valor `0` explícito (`formulate.BoolNumber` decodifica `on`/`1`→1 y cualquier otra cosa→0; en la práctica omitir el campo no cambió el valor, enviar `0` sí). Los wrappers (`entrypoint-wrapper.sh`, `assetto/acServer`) conservan SOLO los shims de compatibilidad: `[LAUNCHER]`, `[WEATHER_0]`, symlinks `cfg/` y el hack de Nürburgring — no re-añadir seds.
 20. **Checksums tras cambiar el KN5**: acServer calcula checksums al arrancar. Después de desplegar un KN5 nuevo hay que **relanzar la race** (no basta con copiar el archivo) o los clientes verán mismatch.
+21. **La física del track es server-side (2026-11-06)**: en AC el **server** calcula la física; el KN5 local del cliente solo afecta su render. El KN5 branded es byte-idéntico al original salvo las 2 texturas (diff binario: 2 clusters, 147,455 de 220,863,735 bytes = 0.067%). Si un jugador reporta "flotar": (a) verificar md5 de su KN5 local vs `a2c39948...` (instalación corrupta/mezclada es lo más común), (b) recordar que `vr506_dominicana_2_0` no tenía NINGÚN result antes del 2026-11-06 — nadie había completado una sesión, así que un bug de física de la conversión de VR506 es posible y no lo causó el branding.
 
 ## Fases del proyecto
 
