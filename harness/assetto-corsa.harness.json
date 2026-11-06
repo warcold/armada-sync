@@ -5,7 +5,7 @@
   "mode": "subagent",
   "hidden": false,
   "scope": "Servidor de Assetto Corsa para la comunidad dominicana en vps-preprod: Server Manager (seejy/assetto-server-manager en Docker), lifecycle de acServer v1.15 (Steam App 302550), races/championships, tracks/cars, Sol Weather y despliegue seguro de contenido branded (KN5 con texturas DDS + ZIP de Content Manager) con gates anti-regresión.",
-  "vivo_2026_11_06": "Modo B activo: contenedor assetto-corsa-server Up sirviendo SM :8772 y CM wrapper :8773; acServer.real lanzado por el SM con UDP/TCP 9600 y HTTP :8082; cloudflared activo; assetto-acserver (systemd standalone) inactivo. Race viva 371cd0f4-3e56-416f-8e1f-235d2b9b336f (vr506_dominicana_2_0 layout circu, practice, pass=false, pickup=true, maxclients=6). Branding alfredo.pro desplegado y verificado: KN5 local == KN5 server == KN5 dentro del ZIP == a2c39948ebd26204a44577cd69e5e8fe. Auto Loop NATIVO del SM activo para la race (el SM la relanza solo en <=30s, verificado tras recreate 2026-11-06); cron watchdog y config-patcher ELIMINADOS (backups .bkup-20261106-native); REGISTER_TO_LOBBY=0 / SLEEP_TIME=1 / HTTP_PORT=8082 ahora nativos en Server Options (ini escrito por SM sin seds).",
+  "vivo_2026_11_06": "Modo B activo: contenedor assetto-corsa-server Up sirviendo SM :8772 y CM wrapper :8773; acServer.real lanzado por el SM con UDP/TCP 9600 y HTTP :8082; cloudflared activo; assetto-acserver (systemd standalone) inactivo. Race viva 371cd0f4-3e56-416f-8e1f-235d2b9b336f (vr506_dominicana_2_0 layout circu, practice, pass=false, pickup=true, maxclients=6). Branding alfredo.pro desplegado y verificado: KN5 local == KN5 server == KN5 dentro del ZIP == 53f0b00bf3d656d976ad58cf7a0f5aca (fixed post-incidente kn5 corrupto, ver changelog). Auto Loop NATIVO del SM activo para la race (el SM la relanza solo en <=30s, verificado tras recreate 2026-11-06); cron watchdog y config-patcher ELIMINADOS (backups .bkup-20261106-native); REGISTER_TO_LOBBY=0 / SLEEP_TIME=1 / HTTP_PORT=8082 ahora nativos en Server Options (ini escrito por SM sin seds).",
   "live_check": "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'hostname; docker ps --format \"{{.Names}} {{.Status}}\" | grep assetto; md5sum /srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5; curl -s -o /dev/null -w \"details:%{http_code}\\n\" http://127.0.0.1:8773/api/details'",
   "hosts": {
     "vps-preprod": {
@@ -137,7 +137,7 @@
     "resolucion": "Se recuperó/regeneró el KN5 branded, se copió a la carpeta del track, se desplegó con backup y verificación md5, se regeneró el ZIP de Content Manager y se relanzó la race.",
     "md5": {
       "original": "3b72f19dcfb42b4e9641d6bbf528cc04",
-      "branded": "a2c39948ebd26204a44577cd69e5e8fe"
+      "branded": "53f0b00bf3d656d976ad58cf7a0f5aca"
     },
     "texturas_branded_verificadas": [
       "BANNER01.DDS (256x128 DXT1)",
@@ -151,7 +151,7 @@
   },
   "checklist_anti_regresion": [
     "Gate de original: md5 local != 3b72f19dcfb42b4e9641d6bbf528cc04 (y != md5 del KN5 dentro del tar original). Si es original, abortar.",
-    "Gate de branded: md5 local == a2c39948ebd26204a44577cd69e5e8fe (o ALLOW_UNKNOWN_KN5=1 registrando el md5 nuevo).",
+    "Gate de branded: md5 local == 53f0b00bf3d656d976ad58cf7a0f5aca (o ALLOW_UNKNOWN_KN5=1 registrando el md5 nuevo).",
     "Backup local .bkup-<timestamp> antes de tocar el KN5.",
     "Backup remoto .bkup-<timestamp> ANTES del rsync (preserva el live anterior).",
     "Rsync sin --delete, excluyendo *.bkup*, download/ y *vao-patch.zip; target vps-preprod/154.53.35.102 verificado por IP.",
@@ -227,6 +227,11 @@
     {
       "fecha": "2026-11-06 18:40 EST",
       "cambio": "Migracion a gestion 100% nativa del SM: Auto Loop verificado (la race ya estaba en loop; el ciclo ~31.5min era LoopRaces nativo), cron autostart-race.sh y config-patcher.sh eliminados con backups, seds de REGISTER_TO_LOBBY/SLEEP_TIME/HTTP_PORT removidos de entrypoint-wrapper y acServer wrapper (valores ahora nativos en Server Options; POST requiere RegisterToLobby=0 explicito por formulate.BoolNumber). Contenedor recreado: solo PID1 + acServer.real, race auto-arrancada por LoopRaces, ini escrito por SM con valores correctos, /api/details 200 local y externo IP:8773."
+    },
+    {
+      "fecha": "2026-11-06 22:45 EST",
+      "cambio": "FIX CRITICO: el KN5 branded de VR506 estaba CORRUPTO (causa del 'track sin suelo'). ac_replacer v1 calculaba el fin del DXT con 'proxima ocurrencia de DDS ' y piso los registros estructurales de las texturas siguientes (lights4.dds 23B; Fencing_Wood_Old.jpg + registro 22,753B) — el loader de AC lee nameLen=0xAAAAAA y trunca el kn5. Reconstruido desde el original + DXT nuevos en la cola de cada data field (md5 53f0b00b, sha1 12b978df); vao-patch Manifest.json actualizado al SHA-1 nuevo; ZIP CM regenerado (python3, el server no tiene zip); sesion del loop 21:18:59Z ya corre con el kn5 fixed. ac_replacer.py v2 en el repo: parsea el kn5 (magic sc6969), reemplaza solo la cola del data field y verifica EOF antes/despues. Usuario debe reinstalar limpio (borrar carpeta local + re-descargar por CM).",
+      "verificado": "parse EOF exacto 162 texturas/155 materiales/966 meshes; diff vs original = 2 clusters dentro de data fields; md5 local==server==ZIP; CRC ZIP OK"
     }
   ],
   "changelogs": [

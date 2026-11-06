@@ -183,17 +183,18 @@ acServer.real
    cp /tmp/ac_track_pipeline/vr506_dominicana_2_0_replaced.kn5 \
       tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5
    md5sum tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5
-   # Debe dar el md5 branded esperado (hoy a2c39948ebd26204a44577cd69e5e8fe)
+   # Debe dar el md5 branded esperado (hoy 53f0b00bf3d656d976ad58cf7a0f5aca, el fixed post-incidente)
    ```
 5. **Desplegar con el script** (ver abajo) — nunca rsync manual.
 
 ### Pitfalls del pipeline DDS (obligatorio leer antes de tocar texturas)
 
-- El header DDS que lee `ac_replacer.py` está **invertido**: `height=u32@+12`, `width=u32@+16`, `fourCC@+84`. El script los usa como `w`/`h` al revés; por eso las dimensiones "de parser" no son las reales.
-- El offset correcto de reemplazo es **`dxt_start = next_dds - expected`**, con `expected = (w/4)*(h/4)*(8 si DXT1, 16 si DXT5)`.
-- **NO** escribir desde `dds_pos + 128 + sc6` usando las dims invertidas: corrompe el atlas.
-- Texturas brandeadas verificadas byte-exactas (2026-11-06): **`BANNER01.DDS` (256×128 DXT1)** y **`sponsor_h1_ovrhd.dds` (512×256 DXT5)**. `FENCE_MARSHALL.DDS` y `marshall_buildings_dif.dds` quedaron originales (no se tocaron).
-- El pipeline solo reemplaza texturas, no geometría. Mantener el mismo tamaño de KN5 y el header SC6 intacto.
+- ⚠️ **INCIDENTE 2026-11-06**: la v1 del pipeline calculaba el fin del DXT como "la próxima ocurrencia de `DDS `" y **pisó los campos del registro de la textura siguiente** (`[active][nameLen][nombre][length]`) — el loader de AC lee `nameLen=0xAAAAAA` y **trunca el kn5 → pista sin suelo**. NUNCA usar `next_dds` como límite.
+- **Regla correcta**: el DXT vive en la **COLA del data field** del registro de la textura: `dxt_start = data_start + length - expected`, con `expected = (w/4)*(h/4)*(8 si DXT1, 16 si DXT5)`. `data_start`/`length` salen de PARSEAR el kn5 (magic `sc6969`, registros de textura), nunca de buscar magics.
+- `tools/ac_replacer.py` **v2** hace esto correcto y **verifica re-parseando el kn5 completo hasta EOF antes y después de escribir** — usarlo siempre; no escribir kn5 a mano.
+- El header DDS embebido está **invertido**: `height=u32@+12`, `width=u32@+16`. Dimensiones REALES verificadas: **`BANNER01.DDS` 256×128 DXT1** y **`sponsor_h1_ovrhd.dds` 512×256 DXT5**.
+- El pipeline solo reemplaza texturas, no geometría. Un kn5 válido SIEMPRE parsea hasta EOF exacto (VR506: 162 texturas / 155 materiales / 966 meshes / 1,366,079 verts).
+- **El `.vao-patch` lleva en su `Manifest.json` el SHA-1 del kn5 al que aplica** — si el kn5 cambia, actualizar el checksum (los vértices no cambian al re-texturizar; el dato AO sigue válido).
 
 ### Despliegue seguro con `scripts/deploy-track.sh`
 
@@ -339,7 +340,8 @@ dig +short srv00.assetto.armada.do @1.1.1.1   # → 154.53.35.102
 18. **8081 es Adminer, 8082 es AC**: el `HTTP_PORT` de acServer es 8082 (el 8081 lo ocupa `staging-adminer-1`). Verificar con `/api/details` en 8082/8773, no en 8081.
 19. **Watchdog y patcher ELIMINADOS (2026-11-06)**: el cron `autostart-race.sh` (apuntaba al UUID viejo `fd8236dc-...`) y `config-patcher.sh` fueron removidos con backups `.bkup-20261106-native` (crontab backup: `/root/crontab.bkup-20261106-assetto`). El auto-arranque es el **Auto Loop nativo del SM** — de hecho ya estaba activo: el ciclo ~31.5 min de los logs era `LoopRaces`, no el cron. Los valores `REGISTER_TO_LOBBY=0`, `SLEEP_TIME=1`, `HTTP_PORT=8082` se gestionan en **Server Options** del SM (nativo, verificado en el ini tras recreate). Truco API: para desmarcar un checkbox de Server Options vía POST hay que enviar el campo con valor `0` explícito (`formulate.BoolNumber` decodifica `on`/`1`→1 y cualquier otra cosa→0; en la práctica omitir el campo no cambió el valor, enviar `0` sí). Los wrappers (`entrypoint-wrapper.sh`, `assetto/acServer`) conservan SOLO los shims de compatibilidad: `[LAUNCHER]`, `[WEATHER_0]`, symlinks `cfg/` y el hack de Nürburgring — no re-añadir seds.
 20. **Checksums tras cambiar el KN5**: acServer calcula checksums al arrancar. Después de desplegar un KN5 nuevo hay que **relanzar la race** (no basta con copiar el archivo) o los clientes verán mismatch.
-21. **La física del track es server-side (2026-11-06)**: en AC el **server** calcula la física; el KN5 local del cliente solo afecta su render. El KN5 branded es byte-idéntico al original salvo las 2 texturas (diff binario: 2 clusters, 147,455 de 220,863,735 bytes = 0.067%). Si un jugador reporta "flotar": (a) verificar md5 de su KN5 local vs `a2c39948...` (instalación corrupta/mezclada es lo más común), (b) recordar que `vr506_dominicana_2_0` no tenía NINGÚN result antes del 2026-11-06 — nadie había completado una sesión, así que un bug de física de la conversión de VR506 es posible y no lo causó el branding.
+21. **La física del track es server-side (2026-11-06)**: en AC el **server** calcula la física; el KN5 local del cliente solo afecta su render. Si un jugador reporta "flotar/sin suelo": (a) verificar md5 de su KN5 local vs el del server (`53f0b00b…` hoy) — instalación corrupta/mezclada es lo más común, (b) verificar que el KN5 del server parsea hasta EOF (ver gotcha 22).
+22. **KN5 CORRUPTO por branding v1 (2026-11-06, RESUELTO)**: el "track sin suelo" de VR506 fue causado por `ac_replacer.py` v1 — el write del DXT terminaba en "próximo `DDS `" y pisó los registros estructurales de las texturas siguientes (`lights4.dds` 23 bytes; `Fencing_Wood_Old.jpg` + registro siguiente 22,753 bytes). El loader trunca el kn5 al leer `nameLen=0xAAAAAA`. Reconstruido desde el original + DXT nuevos en la cola de cada data field; md5 fixed `53f0b00bf3d656d976ad58cf7a0f5aca`, sha1 `12b978df…` (actualizado también en el `Manifest.json` del vao-patch). Pipeline v2 en el repo con verificación EOF obligatoria. Backups del corrupto: `*.bkup-corrupto-20261106` (local y server).
 
 ## Fases del proyecto
 
