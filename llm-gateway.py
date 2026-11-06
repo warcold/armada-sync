@@ -364,6 +364,13 @@ _sustained_idle_since = 0.0
 _sustained_active = False
 _sustained_alert_ts = 0.0      # monotonic ts última alerta WA (anti-spam 30 min)
 _key_sustained_gap: dict = {}  # key -> monotonic ts del último request admitido
+# Válvula 5 para el CODER (2026-11-06): el coder :8001 tiene su propio motor
+# y NO depende del poller del principal (línea ~1805) — sin esto, un bucle
+# agéntico en el coder corre a 96% GPU sin gap (incidente 2026-11-06: 2146
+# requests / 97M tokens / 80°C en 8h). Mismo ciclo, estado separado.
+_coder_sustained_busy_since = 0.0
+_coder_sustained_idle_since = 0.0
+_coder_sustained_active = False
 
 def _engine_mark_down():
     """C4: marca vLLM caído (arranque/crash). El _proxy responde 503
@@ -413,6 +420,7 @@ async def _engine_poller() -> None:
     histéresis (evita flapping). Nunca toca el camino del request."""
     global _engine_hot_streak, _engine_cold_streak, _engine_down_streak
     global _sustained_busy_since, _sustained_idle_since, _sustained_active
+    global _coder_sustained_busy_since, _coder_sustained_idle_since, _coder_sustained_active
     while True:
         try:
             await asyncio.sleep(ENGINE_POLL_INTERVAL)
@@ -515,6 +523,57 @@ async def _engine_poller() -> None:
                             f"{SUSTAINED_LOAD_IDLE_RELEASE:.0f}s continuos — válvula 5 OFF")
                     except Exception:
                         pass
+            # Válvula 5 del CODER (2026-11-06): mismo ciclo sobre :8001 cuando
+            # está arriba. Un poll fallido (coder parado/arrancando) resetea su
+            # sustained (fail-safe: sin coder no hay carga que espaciar).
+            if CODER_ENABLED:
+                try:
+                    async with httpx.AsyncClient(timeout=httpx.Timeout(
+                            connect=1.0, read=1.5, write=1.5, pool=1)) as cc:
+                        rc = await cc.get(f"{CODER_URL}/metrics")
+                    _coder_running = None
+                    if rc.status_code == 200:
+                        for line in rc.text.splitlines():
+                            if line.startswith("vllm:num_requests_running{"):
+                                try:
+                                    _coder_running = float(line.rsplit(" ", 1)[1])
+                                except Exception:
+                                    pass
+                                break
+                    if _coder_running is None:
+                        raise ValueError("sin muestra coder")
+                    if _coder_running >= 1.0:
+                        _coder_sustained_idle_since = 0.0
+                        if _coder_sustained_busy_since == 0.0:
+                            _coder_sustained_busy_since = _mono
+                        if (not _coder_sustained_active) and SUSTAINED_LOAD_GUARD and \
+                                (_mono - _coder_sustained_busy_since) >= SUSTAINED_LOAD_MINUTES * 60.0:
+                            _coder_sustained_active = True
+                            try:
+                                log(f"CARGA SOSTENIDA (CODER): engine :8001 running>=1 "
+                                    f"durante {SUSTAINED_LOAD_MINUTES:.0f}+ min seguidos "
+                                    f"(bucle agéntico, incidente 2026-11-06). Válvula 5 "
+                                    f"ACTIVA en coder: gap {SUSTAINED_LOAD_MIN_GAP:.0f}s.")
+                            except Exception:
+                                pass
+                            threading.Thread(target=_sustained_wa_alert, daemon=True).start()
+                    else:
+                        _coder_sustained_busy_since = 0.0
+                        if _coder_sustained_idle_since == 0.0:
+                            _coder_sustained_idle_since = _mono
+                        elif _coder_sustained_active and \
+                                (_mono - _coder_sustained_idle_since) >= SUSTAINED_LOAD_IDLE_RELEASE:
+                            _coder_sustained_active = False
+                            try:
+                                log(f"carga sostenida CODER TERMINADA: respiró "
+                                    f"{SUSTAINED_LOAD_IDLE_RELEASE:.0f}s — válvula 5 coder OFF")
+                            except Exception:
+                                pass
+                except Exception:
+                    # Coder parado/arrancando: resetear su sustained (no hay carga).
+                    _coder_sustained_busy_since = 0.0
+                    _coder_sustained_idle_since = 0.0
+                    _coder_sustained_active = False
         except Exception:
             # /metrics inalcanzable (vLLM arrancando o muerto): contar para C4.
             _engine_down_streak += 1
@@ -783,9 +842,12 @@ UPSTREAM_TOTAL_TIMEOUT = 1200.0    # no-streaming: respuesta completa max 20 min
 # Tokens máximos de RAZONAMIENTO cuando un cliente pide thinking explícito.
 # Best practice vLLM (thinking_token_budget): el Qwen3 sin límite puede gastar
 # los 32000 tokens de output en "pensar" antes de responder. Con este budget el
-# pensamiento queda acotado (~2048 tokens ≈ 15-20s) y el resto del output va a
-# la respuesta real. Ajustable vía env. No afecta el modo default (thinking off).
-THINKING_TOKEN_BUDGET = int(os.environ.get("THINKING_TOKEN_BUDGET", "2048"))
+# pensamiento queda acotado y el resto del output va a la respuesta real.
+# 2026-11-06 (decisión owner, plan de profundidad local): 2048→8192 — con 2048
+# el razonamiento profundo se cortaba a mitad (el modelo no llegaba a concluir);
+# 8192 da espacio real de deliberación y deja ~23K de output útil (32000 total).
+# Ajustable vía env. No afecta el modo default (thinking off).
+THINKING_TOKEN_BUDGET = int(os.environ.get("THINKING_TOKEN_BUDGET", "8192"))
 
 # ---------------------------------------------------------------------------
 # FLIGHT RECORDER + DETECCIÓN DE ANOMALÍAS EN TIEMPO REAL (2026-09-20)
@@ -2135,7 +2197,7 @@ async def _proxy(request: Request, path: str, key_row: dict):
     # request en vuelo termina normal; el NUEVO espera su turno. Todos los
     # roles, sin bypass. 429 claro + Retry-After exacto (el cliente reintenta
     # espaciado; el trabajo sigue, el hardware descansa).
-    if SUSTAINED_LOAD_GUARD and _sustained_active:
+    if SUSTAINED_LOAD_GUARD and (_sustained_active or _coder_sustained_active):
         _s5_ok, _s5_retry = await _key_sustained_gap_ok(key_name)
         if not _s5_ok:
             try:
@@ -3164,7 +3226,7 @@ async def v1_granja(request: Request):
                         "nota": "solo roles admin/coder; arranque on-demand ~2-3 min; se descarga solo tras 30 min idle"} if CODER_ENABLED else None,
             "aliases": [
                 {"alias": "nvidia/Qwen3.6-35B-A3B-NVFP4-normal", "thinking": False, "uso": "coding rapido (DEFAULT)"},
-                {"alias": "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking", "thinking": True, "uso": "tareas complejas (budget 2048 tokens)"},
+                {"alias": "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking", "thinking": True, "uso": "tareas complejas (budget 8192 tokens)"},
             ],
             "limits": {"context": MAX_PROMPT_TOKENS, "output": 32000},
             "vision": "VLM nativo: image_url/video_url via OpenAI Vision API",

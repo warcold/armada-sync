@@ -448,8 +448,33 @@ def main() -> int:
         f"├─ ERRORES (24h)",
         f"│ Gateway ..... {gw_anom_txt}",
         f"│ Logs ........ {len(err_hist)} recientes",
-        f"```",
     ]
+    # --- APRENDIZAJE (2026-11-06, visión owner: "que el sistema aprenda cada
+    # día más de sus errores, auto-diagnóstico con reportería") — la memoria
+    # permanente de errores es ~/.victoria-custom/conocimiento/LECCIONES.md;
+    # esta sección muestra su frescura + las últimas lecciones para que el
+    # owner vea que el ciclo incidente→lección→regla está VIVO sin preguntar.
+    try:
+        _lec_path = ("/home/victoria/.victoria-custom/conocimiento/"
+                     "LECCIONES.md")
+        _lec_age_h = (time.time() - os.path.getmtime(_lec_path)) / 3600.0
+        _lecs: list[str] = []
+        with open(_lec_path, encoding="utf-8") as _lf:
+            for _line in _lf:
+                if _line.startswith("- `"):
+                    _lecs.append(_line.strip())
+        board.append(f"├─ APRENDIZAJE (memoria de errores)")
+        board.append(f"│ LECCIONES ... {len(_lecs)} reglas · actualizada "
+                     f"hace {_lec_age_h:.0f}h")
+        for _lc in _lecs[-2:]:
+            # limpiar formato markdown para WhatsApp: [dominio] REGLA — (ref)
+            _txt = (_lc[3:].replace("**", "").replace("`", "")
+                    .split(" — ")[0][:90])
+            board.append(f"│ · {_txt}")
+    except Exception:
+        board.append(f"├─ APRENDIZAJE (memoria de errores)")
+        board.append(f"│ LECCIONES ... no disponible")
+    board.append(f"```")
     lines = board
     for w in warns[:4]:
         lines.append(f"⚠️ {plain_error(w)}")

@@ -179,7 +179,7 @@ canónico para aplicar config es overrides + customize-apply + persist.sh.
 - Contexto: `--max-model-len 262144` (256K NATIVO — **upgrade 2026-10-01 noche**, autorización del owner: 14 días de data, las 4 seqs NUNCA se usaron (pico 3, 0.17%) → se canjeó una carril por contexto nativo: `--max-num-seqs 4→3` y 3×262,144=786K ≤ KV 1,012,483 medido → **sin preemption garantizado** (concurrencia 3.86x a 256K), mismo 80% del pool que la era 4×192K. Historia: 262144 → 160K 2026-09-28 (KV auto 21.5GiB) → 192K 2026-10-01 tarde → 256K nativo + seqs 3 noche). opencode limita a `220000` con `output: 32000` (regla: `context + output ≤ 262144 − headroom`; 220K+32K=252K deja ~10K de margen). El gateway aplica un límite de prompt de 220K (`MAX_PROMPT_TOKENS=220000`) igual para todos los roles + guarda combinada 260144. **KV cache acotado (2026-09-29)**: `--kv-cache-memory-bytes 12GiB` (≈1,012K tokens medidos; antes el pool auto-crecía a 1.6-1.7M tokens = sobredimensionado) y `--max-num-seqs 3`. En GB10 `--gpu-memory-utilization` NO controla el KV (memoria unificada: el build NGC lo dimensiona por memoria libre) — el flag de bytes es el control real.
 - Loaders: `--quantization modelopt --kv-cache-dtype fp8 --attention-backend flashinfer --moe-backend marlin --load-format fastsafetensors`.
 - Parsers: `--tool-call-parser qwen3_xml --reasoning-parser qwen3 --enable-auto-tool-choice`. **Tool parser `qwen3_xml` desde 2026-09-13** (antes `qwen3_coder`): es la recomendación de la model card oficial de NVIDIA y el parser correcto para el formato XML `<function=name><parameter=key>` que usa el chat template de este modelo. `qwen3_xml` usa un parser XML real (expat) + `ast.literal_eval` → maneja correctamente argumentos anidados (arrays/objetos), caracteres especiales (`<`, `>`, `&`) y tool calls paralelos, que `qwen3_coder` (regex) malparqueaba. Verificado E2E.
-- **Thinking OFF por defecto** (2026-09-13): `--default-chat-template-kwargs '{"enable_thinking": false}'`. El Qwen3 activa thinking por defecto en su chat template (ahí estaba el "se queda pensando" lento). Ahora el default es RÁPIDO (sin razonar) para todos los clientes; el thinking es opt-in vía sufijo `-thinking` en el model id o `reasoning_effort != none`, y queda acotado por `thinking_token_budget` (default 2048) inyectado por el gateway.
+- **Thinking OFF por defecto** (2026-09-13): `--default-chat-template-kwargs '{"enable_thinking": false}'`. El Qwen3 activa thinking por defecto en su chat template (ahí estaba el "se queda pensando" lento). Ahora el default es RÁPIDO (sin razonar) para todos los clientes; el thinking es opt-in vía sufijo `-thinking` en el model id o `reasoning_effort != none`, y queda acotado por `thinking_token_budget` (default 8192 desde 2026-11-06, antes 2048) inyectado por el gateway.
 - Receta canonica en `~/.nemoclaw/source/src/lib/inference/vllm-models.ts:292-348` (entrada `qwen3.6-35b-a3b-nvfp4`).
 - Pesos cacheados en `/home/victoria/.cache/huggingface/hub/models--nvidia--Qwen3.6-35B-A3B-NVFP4` (~22 GB).
 - Imagen pinned por digest: `nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2` (NGC vLLM 26.05.post1 / vLLM 0.21.0+2325b6f0, arm64).
@@ -548,9 +548,9 @@ amigos SOLO "Using a Victoria".
 | Nombre en picker | Provider | Model id real | Qué es | Cuándo usar |
 |---|---|---|---|---|
 | **Using a Victoria** | vllm (local) | `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` | Generalista VLM 35B, thinking OFF | DEFAULT — chat, coding diario, visión (imágenes/video), agentes |
-| ~~Thinking con Victoria~~ **fuera del picker (11-03)** | vllm (local) | `nvidia/Qwen3.6-35B-A3B-NVFP4-thinking` | Mismo modelo, thinking ON (budget 2048) | **REMOVIDA del picker 2026-11-03** (decisión owner: picker simple). El razonamiento profundo va por `@Thinker`, que pinea el id NORMAL + `request.body.chat_template_kwargs {enable_thinking:true}` (el gateway detecta los kwargs e inyecta el budget — no necesita la entrada en config; opencode NO hace passthrough de ids fuera de config, verificado). El id sigue válido a nivel gateway para power users. **5-6x más lento (~20s vs ~3-4s)**; MISMA memoria (mismos pesos, flag por-request) |
+| ~~Thinking con Victoria~~ **fuera del picker (11-03)** | vllm (local) | `nvidia/Qwen3.6-35B-A3B-NVFP4-thinking` | Mismo modelo, thinking ON (budget 8192 desde 2026-11-06) | **REMOVIDA del picker 2026-11-03** (decisión owner: picker simple). El razonamiento profundo va por `@Thinker`, que pinea el id NORMAL + `request.body.chat_template_kwargs {enable_thinking:true}` (el gateway detecta los kwargs e inyecta el budget — no necesita la entrada en config; opencode NO hace passthrough de ids fuera de config, verificado). El id sigue válido a nivel gateway para power users. **5-6x más lento (~20s vs ~3-4s)**; MISMA memoria (mismos pesos, flag por-request) |
 | **Coding con Victoria** | vllm (local, on-demand :8001) | `NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4` | Experto en código 30B (texto only, NO ve imágenes) | Coding pesado/especializado (refactors, SWE agéntico); non-thinking POR DISEÑO (entrenado para actuar, no delibrar); arranca solo (503 warming_up ~90s la 1ª vez); roles admin/coder; **idle = 0 RAM** (auto-stop 30 min) |
-| `deepseek-ai/deepseek-v4.1-flash` (nombre natural) | nvidia (NIM) | ídem | Nube 1M ctx, reasoning | Último recurso: contexto >220K o stack local caído |
+| `deepseek-ai/deepseek-v4.1-flash` (nombre natural) | nvidia (NIM) | ídem | Nube 1M ctx, reasoning | **FUERA del flujo de Victoria (11-06)**: config disponible SOLO para uso manual directo del owner |
 | `z-ai/glm-5.3-flash` (nombre natural) | nvidia (NIM) | ídem | Nube 1M ctx, reasoning | Ídem (alternativa — redundancia gratis: si una falla, la otra) |
 | `nvidia/nemotron-3-ultra-550b-a55b` (nombre natural) | nvidia (NIM) | ídem | Flagship NVIDIA nube, 1M ctx, tool-calling | Ídem (tareas agénticas grandes) |
 
@@ -559,6 +559,14 @@ en nuestra GPU, no pasan por nuestro metering) → sin nombres de marca, vienen 
 con su nombre natural. Se eliminó el bloque `models` con marca y el `name` del provider
 ("Nube de Victoria"). Se MANTIENE `whitelist` (filtro anti-ruido: 3 relevantes de 52) y
 los timeouts funcionales (1800s/600s). kimi muerto en NIM — no usar.
+
+**Nube FUERA del flujo de Victoria (2026-11-06, directiva owner)**: la delegación de
+"Using a Victoria" es 100% LOCAL (generalista + Coder + Thinker + skills + futuros
+motores internos). Los NIM permanecen en el opencode.json de ambos hosts como
+configuración disponible, pero SOLO para uso manual directo del owner (él cambia de
+modelo en el picker si quiere) — Victoria JAMÁS los rutea, sugiere ni usa en su flujo.
+El usuario final solo ve "Using a Victoria"; un futuro modelo de profundidad local
+(80B) sería OTRO motor interno, nunca una opción de picker.
 
 **Validación empírica de la flota (2026-11-01, test A/B/C con gateway)**: (1) traza sutil
 de Python (recursión + default mutable compartido): Coding 3.0s **MAL** (no trazó el
@@ -649,7 +657,7 @@ difiere).
 - **Thinking opt-in**: sufijo `-thinking` en el model id → `enable_thinking=true`;
   `reasoning_effort != none/minimal` → `enable_thinking=true`; o
   `chat_template_kwargs.enable_thinking=true` directo. El gateway inyecta
-  `thinking_token_budget` (default 2048) para acotar el razonamiento.
+  `thinking_token_budget` (default 8192 desde 2026-11-06) para acotar el razonamiento.
 - Alias opencode: **`-normal`** (id `...-normal`, thinking OFF, default recomendado)
   y **`...-thinking`** (id `...-thinking`, thinking ON acotado). El model id pelado
   (sin sufijo) ahora = thinking OFF (default del servidor).
@@ -766,7 +774,7 @@ a los 100K — fix 2026-09-30). El manual completo se lee con Read bajo demanda.
 | `Liveportrait` | LivePortrait talking-head :8180 (WebUI ES + tab Podcast-UI). | `agents/liveportrait.md` |
 | `Gpu` | GPU GB10 (guardián + árbitro + térmica + VRAM/OOM). | `agents/gpu.md` |
 | `Coder` | Ejecutor de código pesado — corre pineado al modelo Coding con Victoria (Qwen3-Coder-30B, SWE agéntico). Delegar implementación cuando la sesión primaria ya tiene el plan/todowrite. | `agents/coder.md` |
-| `Thinker` | Razonador profundo — pineado al id normal + kwargs thinking ON (budget 2048; el id -thinking salió del picker 11-03). Lógica sutil, verificación de planes, debugging de misterios. Análisis puro (5-6x más lento que Using; misma memoria). | `agents/thinker.md` |
+| `Thinker` | Razonador profundo — pineado al id normal + kwargs thinking ON (budget 8192 desde 2026-11-06; el id -thinking salió del picker 11-03). Lógica sutil, verificación de planes, debugging de misterios. Análisis puro (5-6x más lento que Using; misma memoria). | `agents/thinker.md` |
 
 Cualquier cambio en la arquitectura debe reflejarse en este `AGENTS.md` y en el
 subagente correspondiente. **No duplicar**: el subagente provee el prompt

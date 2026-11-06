@@ -827,11 +827,41 @@ def _discord_fallback_send(msg):
         return False
 
 
+def _gpu_top_processes(limit=3):
+    """Top procesos por memoria GPU (nvidia-smi compute apps). Mejora 2026-11-06:
+    las alertas de carga sostenida decían 'el motor' sin decir CUÁL — el owner
+    no podía saber qué proceso estaba pegado (incidente: bucle del coder 8h a
+    96%/80°C con 12 alertas que no identificaban al culpable). Retorna lista
+    de strings 'nombre (pid, XGB)' o [] si nvidia-smi falla."""
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-compute-apps=pid,process_name,used_memory",
+             "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=10).stdout.strip()
+        procs = []
+        for line in out.splitlines():
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) != 3:
+                continue
+            pid, name, mem = parts
+            short = name.split("/")[-1][:40]
+            try:
+                mem_gb = float(mem) / 1024.0
+                procs.append((mem_gb, f"{short} (pid {pid}, {mem_gb:.1f}G)"))
+            except ValueError:
+                continue
+        procs.sort(reverse=True)
+        return [p for _, p in procs[:limit]]
+    except Exception:
+        return []
+
+
 def _sustained_wa_alert(util, temp, minutes, duty_pct=None):
     """Alerta WhatsApp al owner (fire-and-forget, best-effort, hilo daemon).
     Reusa broadcast_common (misma vía que el alertero del gateway).
     Dead man's switch (2026-10-17): si WA falla WA_DEAD_AFTER veces seguidas,
-    la alerta sale TAMBIÉN por Discord (el listener WA pudo estar caído)."""
+    la alerta sale TAMBIÉN por Discord (el listener WA pudo estar caído).
+    2026-11-06: incluye el top de procesos GPU (auto-diagnóstico en la alerta)."""
     global _wa_fail_streak
     try:
         def _logw(m):
@@ -842,6 +872,9 @@ def _sustained_wa_alert(util, temp, minutes, duty_pct=None):
                "Ya liberé ComfyUI y el gateway está frenando el ritmo (válvula 5). "
                "Protejo el host de freeze — si se colgara igual, power-cycle y "
                "todo auto-arranca.")
+        procs = _gpu_top_processes()
+        if procs:
+            msg += "\n\n*Procesos en GPU:*\n" + "\n".join(f"• {p}" for p in procs)
         wa_ok = False
         from broadcast_common import wa_resolve, wa_send
         cid, pid, tok = wa_resolve(_logw)

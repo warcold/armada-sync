@@ -1,494 +1,495 @@
 {
- "harness": "victoria",
- "updated": "2026-11-03",
- "mode": "primary",
- "hidden": false,
- "agent_file": "/home/victoria/.config/opencode/agents/victoria.md",
- "scope": "Orquestadora principal del stack LLM local (DGX Spark GB10): 1 primary morada + 12 subagentes visibles en @; inferencia vLLM :8000 + gateway :8010, sandbox OpenClaw, contenido (ComfyUI/LivePortrait/Sonic/n8n), sentidos (voz/video/nav/whois/admin), distribución (IG/Discord/WhatsApp), infra (Cloudflare/nginx), GPU guardian. Contrato: NO ejecuta lo que pueden hacer subagentes; delega con live_check previo; escribe CHANGELOG general + servicio.",
- "temperature": 0.6,
- "top_p": 0.95,
- "vivo_2026_10_29": "Auditoría completa post-alineación: PHP 8.4.x (PROD), Python 3.13.18 (Victoria), Node.js v22.23.4 (kalimete), ERP Dev PHP 8.4.27, WordPress base images pendientes 8.4. Changelog unificado, changelog maestro, matriz versiones canónicas. ERP Dev build PHP 8.4 en curso. WordPress base images pendientes imagen oficial 8.4.",
- "live_check": "systemctl is-active victoria-llm-gateway victoria-gpu-saver victoria-voice-server victoria-openclaw-bridge cloudflared nginx comfyui liveportrait victoria-sonic-server && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8010/health | grep -q 200 && echo 'victoria:up' || echo 'victoria:down'",
- "checks": [
-  "systemctl is-active victoria-llm-gateway victoria-gpu-saver victoria-voice-server victoria-video-server victoria-openclaw-bridge victoria-whois-server victoria-host-admin cloudflared nginx comfyui liveportrait victoria-sonic-server",
-  "curl -s http://127.0.0.1:8010/health | python3 -m json.tool",
-  "curl -s http://127.0.0.1:8000/health",
-  "docker ps --format '{{.Names}} | {{.Status}}' | grep -E 'nemoclaw-vllm|openshell-victoria-armada|openclaw-publisher'",
-  "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv",
-  "sqlite3 ~/.victoria-llm/llm-gateway.db \"SELECT COUNT(*) FROM usage_log WHERE timestamp >= datetime('now','-1 hour') AND success=1;\""
- ],
- "upstream": {
-  "fuente": "ninguno (stack propietario local, DGX Spark GB10)",
-  "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Upgrades de vLLM/nemoclaw = Plan + owner (revision trimestral).",
-  "version_servida_live": "docker inspect nemoclaw-vllm --format '{{.Config.Image}}' + docker exec nemoclaw-vllm python3 -c \"import vllm; print(vllm.__version__)\"",
-  "donde_mirar": [
-   "https://github.com/vllm-project/vllm/releases",
-   "https://docs.nvidia.com/deeplearning/frameworks/vllm-release-notes/index.html",
-   "https://huggingface.co/nvidia/Qwen3.6-35B-A3B-NVFP4",
-   "https://ngc.nvidia.com/catalog/containers/nvidia:vllm"
+  "harness": "victoria",
+  "updated": "2026-11-06",
+  "mode": "primary",
+  "hidden": false,
+  "agent_file": "/home/victoria/.config/opencode/agents/victoria.md",
+  "scope": "Orquestadora principal del stack LLM local (DGX Spark GB10): 1 primary morada + 12 subagentes visibles en @; inferencia vLLM :8000 + gateway :8010, sandbox OpenClaw, contenido (ComfyUI/LivePortrait/Sonic/n8n), sentidos (voz/video/nav/whois/admin), distribución (IG/Discord/WhatsApp), infra (Cloudflare/nginx), GPU guardian. Contrato: NO ejecuta lo que pueden hacer subagentes; delega con live_check previo; escribe CHANGELOG general + servicio.",
+  "temperature": 0.6,
+  "top_p": 0.95,
+  "vivo_2026_10_29": "Auditoría completa post-alineación: PHP 8.4.x (PROD), Python 3.13.18 (Victoria), Node.js v22.23.4 (kalimete), ERP Dev PHP 8.4.27, WordPress base images pendientes 8.4. Changelog unificado, changelog maestro, matriz versiones canónicas. ERP Dev build PHP 8.4 en curso. WordPress base images pendientes imagen oficial 8.4.",
+  "live_check": "systemctl is-active victoria-llm-gateway victoria-gpu-saver victoria-voice-server victoria-openclaw-bridge cloudflared nginx comfyui liveportrait victoria-sonic-server && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8010/health | grep -q 200 && echo 'victoria:up' || echo 'victoria:down'",
+  "checks": [
+    "systemctl is-active victoria-llm-gateway victoria-gpu-saver victoria-voice-server victoria-video-server victoria-openclaw-bridge victoria-whois-server victoria-host-admin cloudflared nginx comfyui liveportrait victoria-sonic-server",
+    "curl -s http://127.0.0.1:8010/health | python3 -m json.tool",
+    "curl -s http://127.0.0.1:8000/health",
+    "docker ps --format '{{.Names}} | {{.Status}}' | grep -E 'nemoclaw-vllm|openshell-victoria-armada|openclaw-publisher'",
+    "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv",
+    "sqlite3 ~/.victoria-llm/llm-gateway.db \"SELECT COUNT(*) FROM usage_log WHERE timestamp >= datetime('now','-1 hour') AND success=1;\""
   ],
-  "frecuencia": "trimestral (politica owner) o ante incidente/CVE",
-  "politica": "digest PINNEADO @sha256:9204569b; NUNCA :latest/:tag movil. Upgrades NGC 26.06+ bloqueados (driver >=615.71 inexistente para kernel DGX).",
-  "como_reportar": "entrada en CHANGELOG-vllm.md + CHANGELOG.md general + aviso a Victoria en Task"
- },
- "servicios": [
-  {
-   "name": "nemoclaw-vllm (Docker)",
-   "puerto": 8000,
-   "imagen": "nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
-   "version": "vLLM 0.21.0+2325b6f0 (NGC 26.05.post1)",
-   "modelo": "nvidia/Qwen3.6-35B-A3B-NVFP4",
-   "flags_live": "--max-model-len 262144 --max-num-seqs 3 --gpu-memory-utilization 0.22 --kv-cache-memory-bytes 12884901888 --kv-cache-dtype fp8 --attention-backend flashinfer --moe-backend marlin --max-num-batched-tokens 8192 --tool-call-parser qwen3_xml --reasoning-parser qwen3 --load-format fastsafetensors --quantization modelopt --default-chat-template-kwargs {enable_thinking:false} --speculative-config mtp/3/triton",
-   "kv_cache_tokens": 1012483,
-   "label": "com.nvidia.nemoclaw.managed-vllm=true",
-   "restart": "unless-stopped"
+  "upstream": {
+    "fuente": "ninguno (stack propietario local, DGX Spark GB10)",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Upgrades de vLLM/nemoclaw = Plan + owner (revision trimestral).",
+    "version_servida_live": "docker inspect nemoclaw-vllm --format '{{.Config.Image}}' + docker exec nemoclaw-vllm python3 -c \"import vllm; print(vllm.__version__)\"",
+    "donde_mirar": [
+      "https://github.com/vllm-project/vllm/releases",
+      "https://docs.nvidia.com/deeplearning/frameworks/vllm-release-notes/index.html",
+      "https://huggingface.co/nvidia/Qwen3.6-35B-A3B-NVFP4",
+      "https://ngc.nvidia.com/catalog/containers/nvidia:vllm"
+    ],
+    "frecuencia": "trimestral (politica owner) o ante incidente/CVE",
+    "politica": "digest PINNEADO @sha256:9204569b; NUNCA :latest/:tag movil. Upgrades NGC 26.06+ bloqueados (driver >=615.71 inexistente para kernel DGX).",
+    "como_reportar": "entrada en CHANGELOG-vllm.md + CHANGELOG.md general + aviso a Victoria en Task"
   },
-  {
-   "name": "victoria-llm-gateway.service",
-   "puerto": 8010,
-   "codigo": "/home/victoria/llm-gateway.py",
-   "db": "/home/victoria/.victoria-llm/llm-gateway.db",
-   "deps": "FastAPI 0.141.1 + uvicorn 0.52.3 + httpx 0.28.1"
+  "servicios": [
+    {
+      "name": "nemoclaw-vllm (Docker)",
+      "puerto": 8000,
+      "imagen": "nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+      "version": "vLLM 0.21.0+2325b6f0 (NGC 26.05.post1)",
+      "modelo": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+      "flags_live": "--max-model-len 262144 --max-num-seqs 3 --gpu-memory-utilization 0.22 --kv-cache-memory-bytes 12884901888 --kv-cache-dtype fp8 --attention-backend flashinfer --moe-backend marlin --max-num-batched-tokens 8192 --tool-call-parser qwen3_xml --reasoning-parser qwen3 --load-format fastsafetensors --quantization modelopt --default-chat-template-kwargs {enable_thinking:false} --speculative-config mtp/3/triton",
+      "kv_cache_tokens": 1012483,
+      "label": "com.nvidia.nemoclaw.managed-vllm=true",
+      "restart": "unless-stopped"
+    },
+    {
+      "name": "victoria-llm-gateway.service",
+      "puerto": 8010,
+      "codigo": "/home/victoria/llm-gateway.py",
+      "db": "/home/victoria/.victoria-llm/llm-gateway.db",
+      "deps": "FastAPI 0.141.1 + uvicorn 0.52.3 + httpx 0.28.1"
+    },
+    {
+      "name": "victoria-gpu-saver.service",
+      "puerto": "none",
+      "codigo": "/home/victoria/victoria-gpu-saver.py",
+      "deps": "python3 sistema + nvidia-smi"
+    },
+    {
+      "name": "victoria-openclaw-bridge.service",
+      "puerto": 18800,
+      "codigo": "/home/victoria/openclaw-bridge-ensure.sh",
+      "loop": "15s"
+    },
+    {
+      "name": "cloudflared.service",
+      "puerto": 443,
+      "codigo": "/etc/cloudflared/config.yml"
+    },
+    {
+      "name": "nginx.service",
+      "puerto": "80/443",
+      "codigo": "/etc/nginx/sites-available/gateway.conf"
+    },
+    {
+      "name": "comfyui.service",
+      "puerto": 8188,
+      "codigo": "/home/victoria/ComfyUI/main.py (venv comfy-venv cu130)"
+    },
+    {
+      "name": "liveportrait.service",
+      "puerto": 8180,
+      "codigo": "/home/victoria/LivePortrait/app.py (venv liveportrait-venv)"
+    },
+    {
+      "name": "victoria-sonic-server.service",
+      "puerto": 18850,
+      "codigo": "/home/victoria/Sonic/sonic-server.py (venv sonic-venv)"
+    },
+    {
+      "name": "victoria-voice-server.service",
+      "puerto": 18810,
+      "codigo": "/home/victoria/voice-venv/voice-server-host.py"
+    },
+    {
+      "name": "victoria-video-server.service",
+      "puerto": 18811,
+      "codigo": "/home/victoria/victoria-video-server.py"
+    },
+    {
+      "name": "web-nav-server.service",
+      "puerto": 18820,
+      "codigo": "/home/victoria/web-nav-server.py"
+    },
+    {
+      "name": "victoria-whois-server.service",
+      "puerto": 18830,
+      "codigo": "/home/victoria/whois-server.py"
+    },
+    {
+      "name": "victoria-host-admin.service",
+      "puerto": 18840,
+      "codigo": "/home/victoria/victoria-host-admin.py"
+    }
+  ],
+  "scripts_host": [
+    "llm-gateway.py",
+    "vllm-loop-alert.py",
+    "observe-24h.py",
+    "victoria-gpu-saver.py",
+    "openclaw-bridge-ensure.sh",
+    "openclaw-persist.sh",
+    "openclaw-voice-host.sh",
+    "openclaw-discord-fix.sh",
+    "openclaw-whatsapp-fix.sh",
+    "openclaw-rss-install.sh",
+    "openclaw-customize-apply.sh",
+    "sense_auth.py",
+    "art-gen",
+    "art-approve",
+    "armada-sync.sh",
+    "doc-fresh.sh",
+    "upstream-sync.py"
+  ],
+  "docs": [
+    "/home/victoria/AGENTS.md",
+    "/home/victoria/.config/opencode/agents/victoria.md",
+    "/home/victoria/.config/opencode/AGENTS-summary.md",
+    "/home/victoria/.config/opencode/todowrite-discipline.md",
+    "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md",
+    "/home/victoria/.victoria-custom/conocimiento/LECCIONES.md"
+  ],
+  "docs_oficiales": {
+    "regla": "ANTES de programar/configurar contra cualquier componente, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags ni usar features de versiones no servidas.",
+    "fuentes": [
+      {
+        "nombre": "vLLM Model Card (nvidia/Qwen3.6-35B-A3B-NVFP4)",
+        "url": "https://huggingface.co/nvidia/Qwen3.6-35B-A3B-NVFP4",
+        "contenido_clave": "contexto 262K nativo; VLM nativo (text/image/video); sampling SciCode temp 0.6/top_p 0.95 vs general 1.0/0.95; receta DGX Spark oficial; tool parser qwen3_xml recomendado",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "vLLM Container Help (OFFLINE, version servida)",
+        "url": "docker exec nemoclaw-vllm vllm serve --help=<Grupo>",
+        "contenido_clave": "kv-cache-memory-bytes explicito en GB10; tool-call-parser choices incluyen qwen3_xml",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "OpenClaw Docs",
+        "url": "https://docs.openclaw.ai/",
+        "contenido_clave": "gateway, channels, agents, tools/skills, CLI, schemas, releases",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "OpenClaw Schema REAL (runtime 2026.9.x)",
+        "url": "extensions/*/dist/config-schema-*.js (dentro del sandbox)",
+        "contenido_clave": "validacion definitiva de openclaw.json; merge models.mode usa HIGHER value",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "ComfyUI Docs",
+        "url": "https://docs.comfy.org/",
+        "contenido_clave": "API format, custom nodes, workflow templates",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "LivePortrait GitHub",
+        "url": "https://github.com/KlingAIResearch/LivePortrait",
+        "contenido_clave": "Gradio 6.x API, talking-head SOTA, pesos CC-NC-ND",
+        "verificada": "2026-10-08"
+      },
+      {
+        "nombre": "Sonic CVPR 2025",
+        "url": "https://github.com/jixiaozhong/Sonic",
+        "contenido_clave": "audio-driven talking head, pesos CC-NC-ND (no comercial)",
+        "verificada": "2026-10-08"
+      }
+    ]
   },
-  {
-   "name": "victoria-gpu-saver.service",
-   "puerto": "none",
-   "codigo": "/home/victoria/victoria-gpu-saver.py",
-   "deps": "python3 sistema + nvidia-smi"
+  "changelog": [
+    {
+      "fecha": "2026-10-29",
+      "cambio": "Schema harness unificado aplicado a 42 harnesses (Victoria 11 + kalimete 31); live_check/checks[]/vivo_/upstream.fuente obligatorios; drift-check bidireccional granja (6h/1h); CHANGELOG maestro; RULES.md consolidado; delegación estricta con pre-check"
+    },
+    {
+      "fecha": "2026-10-29",
+      "cambio": "GET /v1/granja desplegado (catálogo LIVE 12 servicios + probes); skills kalimete con fuente viva; config-guide expone granja"
+    },
+    {
+      "fecha": "2026-10-29",
+      "cambio": "Seguridad labs: 4 puertos 0.0.0.0 -> loopback-only (3307/3310/6390/8025/3307); E2E verde"
+    },
+    {
+      "fecha": "2026-10-29",
+      "cambio": "MCP Blender E2E verificado (Blender 5.0.1 + addon :9876 -> get_scene_info OK); lección en LECCIONES.md"
+    },
+    {
+      "fecha": "2026-10-28",
+      "cambio": "Auditoría flota completa + 8 lenguajes nuevos + MCPs + cobertura 100% agents/harnesses"
+    },
+    {
+      "fecha": "2026-10-28",
+      "cambio": "Prep ventana prod Micaserogou: 3 artefactos sha256 OK, ops/status 200, artefacto A recuperado de réplica magantech; deploy bloqueado en owner (iak tenant 3)"
+    }
+  ],
+  "changelogs": [
+    "/home/victoria/CHANGELOG.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-vllm.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-sandbox.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-voice.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-video.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-whois.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-host-admin.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-comfyui.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-sonic.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-liveportrait.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-rss.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-social.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-weather.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-infra.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-gpu.md",
+    "/home/victoria/.victoria-custom/CHANGELOG-MAESTRO.md"
+  ],
+  "no_touch": [
+    "Solo 1 principal visible (Victoria morada #8B5CF6) — NUNCA crear otra Victoria",
+    "Los 10 subagentes son hidden:false (visibles en @) y NUNCA se borran (openclaw.md y victoria.md = No-Touch absoluto)",
+    "Cada cambio toca 3 lugares: doc subagente + harness JSON + changelog (servicio + general)",
+    "Frescura: lo LIVE manda (systemctl/curl/docker/nvidia-smi/logs primero); si el doc discrepa se cura + changelog",
+    "NUNCA dañar lo que funciona",
+    "digest vLLM @sha256:9204569b PINNEADO (nunca tag movil)",
+    "gpu-memory-utilization 0.22 + kv-cache-memory-bytes 12884901888 + max-num-seqs 3 + max-model-len 262144 (sagrados)",
+    "firewall IPv6 :8000 DROP, NUNCA quitar",
+    "opencode.jsonc sin confirmacion del owner",
+    "key_plaintext: columnas explicitas en la DB, nunca SELECT *",
+    "openclaw plugins install siempre uid 998, nunca root",
+    "container = efimero, snapshot antes con persist.sh backup",
+    "/sandbox/.openclaw modo 2770",
+    "art-approve approve/deny/revoke SOLO el owner"
+  ],
+  "recovery": [
+    "Stack completo: reboot -> docker (nemoclaw-vllm + sandbox) -> victoria-llm-gateway -> cloudflared (orden systemd resuelto). Ventana servicio: T+0..5s gateway/sandbox/cloudflared; T+5..7min vLLM carga modelo (502 normal).",
+    "vLLM ausente/roto: receta canonica docker run en vllm.md (intocable, confirmacion owner primero; carga 5-7min frio).",
+    "Gateway roto: sudo systemctl restart victoria-llm-gateway.service (stateless salvo SQLite).",
+    "Sandbox reconstruido: nemoclaw destroy + onboard --fresh -> ensure-loop restaura config/voz/plugins/bridges/ARTE en ~2-5 min (gatillo: session.identityLinks ausente = template).",
+    "vLLM colgado: victoria-gpu-saver lo detecta (4 probes hung ~4min) y hace docker restart con cooldown 15min.",
+    "Corte electrico: boot local NO espera ISP; cloudflared aguanta ~30min reintentos; crons perdidos sin daño (armada-sync.timer Persistent=true)."
+  ],
+  "medicion_live": {
+    "fecha": "2026-10-29T01:55:00Z",
+    "nota": "Evaluación completa contra diagnóstico Ecco Suite (174k tokens fragmentados -> harness-driven workflow). 42 harnesses estandarizados. Drift detectado: inventario Victoria 5.4.2 vs kalimete 5.9.1 real -> corregido.",
+    "versiones": {
+      "vLLM": "0.21.0+2325b6f0 (NGC 26.05.post1)",
+      "nemoclaw": "v0.0.130",
+      "openshell": "0.0.116",
+      "openclaw_runtime": "2026.9.2",
+      "ComfyUI": "v0.42.0 (2026-10-26)",
+      "LivePortrait": "Gradio 6.29.0",
+      "Sonic": "jixiaozhong/Sonic CVPR 2025",
+      "Hunyuan3D-2": "tencent/Hunyuan3D-2mini",
+      "kernel": "6.17.0-1032-nvidia",
+      "driver": "580.178.04"
+    }
   },
-  {
-   "name": "victoria-openclaw-bridge.service",
-   "puerto": 18800,
-   "codigo": "/home/victoria/openclaw-bridge-ensure.sh",
-   "loop": "15s"
+  "delegacion": {
+    "cuando_usar": "SIEMPRE que la tarea coincida con la mision EXACTA de un subagente (ver scope en subagents abajo). Para tareas que NO coinciden: Victoria ejecuta directamente (Build) o planifica (Plan).",
+    "pre_check": "EJECUTAR live_check del subagente objetivo ANTES de delegar con Task. Si live_check -> down: NO delegar, reportar estado y recovery. Si up: delegar con Task incluyendo 'lee primero <harness_file> y actualízalo al terminar'.",
+    "post_check": "Verificar que el subagente actualizo su harness + changelog + doc. Victoria escribe entrada en CHANGELOG general.",
+    "doctrina_modelos": "DIRECTIVA OWNER 2026-11-06: 'Using a Victoria' es la ÚNICA puerta de sesión (owner y usuarios — nadie selecciona modelos). El FLUJO de delegación de Victoria es 100% LOCAL: generalista :8000 (ella misma), Coder :8001 (@Coder), Thinker (thinking ON budget 8192), skills/wrappers (art/3d/animar/podcast). Los modelos NIM del opencode.json (ambos hosts) están FUERA del flujo: config disponible SOLO para uso manual directo del owner — Victoria JAMÁS los rutea ni sugiere. Capacidades faltantes = motor local nuevo (ej. futuro 80B de profundidad: motor interno on-demand, NUNCA opción de picker)."
   },
-  {
-   "name": "cloudflared.service",
-   "puerto": 443,
-   "codigo": "/etc/cloudflared/config.yml"
+  "subagents": [
+    {
+      "name": "vLLM",
+      "file": "/home/victoria/.config/opencode/agents/vllm.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/vllm.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/vllm.md",
+      "changelogs": [
+        "CHANGELOG-vllm.md"
+      ],
+      "scope": "vLLM :8000 + gateway :8010 (inferencia)",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "vLLM cae, hay que rearmarlo, diagnosticar inferencia, reiniciar gateway, gestionar llaves/valvulas",
+        "pre_check": "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health | grep -q 200 || echo 'vLLM:down'",
+        "post_check": "curl -s http://127.0.0.1:8010/health | python3 -m json.tool"
+      }
+    },
+    {
+      "name": "OpenClaw",
+      "file": "/home/victoria/.config/opencode/agents/openclaw.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/openclaw.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/openclaw.md",
+      "changelogs": [
+        "CHANGELOG-sandbox.md",
+        "CHANGELOG-voice.md",
+        "CHANGELOG-video.md",
+        "CHANGELOG-whois.md",
+        "CHANGELOG-host-admin.md"
+      ],
+      "scope": "sandbox victoria-armada + dashboard :18800 + bridges voz/video/whois/admin :18810-18840 + art-gen/art-approve",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "sandbox se reconstruye, pierde config/identity/canales, diagnosticar bridges/voz/video/whois/admin/art",
+        "pre_check": "curl -s http://victoria.local:18800/health | grep -q '\"ok\":true' || echo 'OpenClaw:down'",
+        "post_check": "nemoclaw victoria-armada doctor"
+      }
+    },
+    {
+      "name": "Comfyui",
+      "file": "/home/victoria/.config/opencode/agents/comfyui.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/comfyui.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/comfyui.md",
+      "changelogs": [
+        "CHANGELOG-comfyui.md"
+      ],
+      "scope": "ComfyUI :8188 + LivePortrait :8180 + n8n :5678 + Hunyuan3D-2 :18860 + Animar-chat :18861",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "generar contenido visual, mover modelos, diagnosticar ComfyUI/LivePortrait/n8n/Hunyuan3D/lp-animate",
+        "pre_check": "systemctl is-active comfyui liveportrait && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8188/ | grep -q 200 || echo 'ComfyUI:down'",
+        "post_check": "curl -s http://127.0.0.1:8188/system_stats | python3 -m json.tool"
+      }
+    },
+    {
+      "name": "Sonic",
+      "file": "/home/victoria/.config/opencode/agents/sonic.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/sonic.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/sonic.md",
+      "changelogs": [
+        "CHANGELOG-sonic.md"
+      ],
+      "scope": "Sonic :18850 + podcast talking-head + reels IG + tab Estudio Podcast en LivePortrait",
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "delegacion": {
+        "cuando_usar": "podcast no genera, daemon Sonic caido, lip-sync, publicar reel, VRAM Sonic",
+        "pre_check": "systemctl is-active victoria-sonic-server && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18850/health | grep -q 200 || echo 'Sonic:down'",
+        "post_check": "curl -s http://127.0.0.1:18850/health | python3 -m json.tool"
+      }
+    },
+    {
+      "name": "RSS System",
+      "file": "/home/victoria/.config/opencode/agents/rss-system.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/rss-system.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/rss-system.md",
+      "changelogs": [
+        "CHANGELOG-rss.md"
+      ],
+      "scope": "blogwatcher CLI + 15 feeds RSS + OPA policies + ingesta para distribucion",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "gestionar feeds RSS, monitorizar blogs, diagnosticar blogwatcher",
+        "pre_check": "systemctl is-active victoria-openclaw-bridge && docker exec $(docker ps -qf name=openshell-victoria-armada) /sandbox/.openclaw/bin/blogwatcher --version 2>/dev/null || echo 'RSS:down'",
+        "post_check": "curl -s http://127.0.0.1:8010/v1/granja | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('rss', {}).get('health', '?'))\" 2>/dev/null"
+      }
+    },
+    {
+      "name": "Meta Business",
+      "file": "/home/victoria/.config/opencode/agents/meta-business.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/meta-business.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/meta-business.md",
+      "changelogs": [
+        "CHANGELOG-social.md"
+      ],
+      "scope": "Instagram + Discord + WhatsApp broadcast + tokens OAuth + logs publicacion + reporte owner 4h",
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "delegacion": {
+        "cuando_usar": "revisar salud broadcast, reiniciar scripts, ver logs IG/Discord/WhatsApp, refresh token IG",
+        "pre_check": "systemctl is-active victoria-openclaw-bridge && ls /home/victoria/logs/*broadcast*.log 2>/dev/null | head -1 || echo 'Meta:down'",
+        "post_check": "python3 /home/victoria/instagram-token-refresh.py --status 2>/dev/null | head -3"
+      }
+    },
+    {
+      "name": "Weather",
+      "file": "/home/victoria/.config/opencode/agents/weather.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/weather.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/weather.md",
+      "changelogs": [
+        "CHANGELOG-weather.md"
+      ],
+      "scope": "clima (Open-Meteo/wttr.in/weather.gov) + geocodificacion (Nominatim) + POIs (Overpass) + country data — 100% gratis sin API key",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "necesitas meteorologia o POIs para ciudades americanas",
+        "pre_check": "curl -s -o /dev/null -w '%{http_code}' https://api.open-meteo.com/v1/forecast?latitude=0&longitude=0 | grep -q 200 || echo 'Weather:down'",
+        "post_check": "curl -s 'https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true' | python3 -m json.tool"
+      }
+    },
+    {
+      "name": "CloudFlare",
+      "file": "/home/victoria/.config/opencode/agents/cloudflare.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/cloudflare.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/cloudflare.md",
+      "changelogs": [
+        "CHANGELOG-infra.md"
+      ],
+      "scope": "tunel Cloudflare (victoria.armada.do -> :8010) + nginx (victoria.local solo LAN) + SSH/warcold + RDP",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "tunel caido, LAN no abre UIs, certificados/proxy/accesos",
+        "pre_check": "systemctl is-active cloudflared nginx && curl -s -o /dev/null -w '%{http_code}' https://victoria.armada.do/health | grep -q 200 || echo 'CF:down'",
+        "post_check": "curl -s https://victoria.armada.do/health | python3 -m json.tool"
+      }
+    },
+    {
+      "name": "Liveportrait",
+      "file": "/home/victoria/.config/opencode/agents/liveportrait.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/liveportrait.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/liveportrait.md",
+      "changelogs": [
+        "CHANGELOG-liveportrait.md"
+      ],
+      "scope": "LivePortrait :8180 WebUI ES (talking-head SOTA + tab Estudio Podcast) + Animar-chat :18861 (motor)",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "UI no abre, animacion falla, ejemplos 404, actualizar interfaz, lp-animate",
+        "pre_check": "systemctl is-active liveportrait && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8180/ | grep -q 200 || echo 'LP:down'",
+        "post_check": "curl -s http://127.0.0.1:8180/health 2>/dev/null | head -c 100"
+      }
+    },
+    {
+      "name": "Gpu",
+      "file": "/home/victoria/.config/opencode/agents/gpu.md",
+      "mode": "subagent",
+      "hidden": false,
+      "harness": "/home/victoria/.victoria-custom/harness/gpu.harness.json",
+      "doc": "/home/victoria/.config/opencode/agents/gpu.md",
+      "changelogs": [
+        "CHANGELOG-gpu.md"
+      ],
+      "scope": "GPU GB10: guardian gpu-saver + arbitro turnos (gpu_arbiter.py) + termica + VRAM/OOM + watchdog carga sostenida",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "freeze/OOM, temp alta, lock atorado, headroom antes de render pesado",
+        "pre_check": "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv | tail -1",
+        "post_check": "python3 /home/victoria/gpu_arbiter.py status 2>/dev/null | head -5"
+      }
+    },
+    {
+      "name": "Coder",
+      "file": "/home/victoria/.config/opencode/agents/coder.md",
+      "harness": "/home/victoria/.victoria-custom/harness/coder.harness.json",
+      "mode": "subagent",
+      "model": "vllm/NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4 (Coding con Victoria, on-demand :8001)",
+      "scope": "Ejecutor de código pesado (SWE agéntico, texto only). La primaria planea y delega implementación.",
+      "when": "implementar código cuando el plan ya existe"
+    },
+    {
+      "name": "Thinker",
+      "file": "/home/victoria/.config/opencode/agents/thinker.md",
+      "harness": "/home/victoria/.victoria-custom/harness/thinker.harness.json",
+      "mode": "subagent",
+      "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal + kwargs thinking (motor de razonamiento; el id -thinking salió del picker 11-03)",
+      "scope": "Razonador profundo: lógica sutil, verificación de planes, debugging de misterios. Análisis puro.",
+      "when": "cuando la respuesta rápida no basta"
+    }
+  ],
+  "changelog_unificado": {
+    "fuente_canonica": "GitHub warcold/armada-sync/CHANGELOG.md",
+    "mirror_local": "/home/victoria/CHANGELOG.md",
+    "endpoint_api": "GET /v1/changelog (cualquier llave, readonly incluido)",
+    "sync_script": "/home/victoria/.victoria-custom/bin/changelog-sync-victoria.sh",
+    "cron": "*/15 * * * *",
+    "nota": "Append-only format = merge natural sin conflictos. Los 3 principales (Victoria/Kalimete/Jonas) leen/escriben aquí."
   },
-  {
-   "name": "nginx.service",
-   "puerto": "80/443",
-   "codigo": "/etc/nginx/sites-available/gateway.conf"
-  },
-  {
-   "name": "comfyui.service",
-   "puerto": 8188,
-   "codigo": "/home/victoria/ComfyUI/main.py (venv comfy-venv cu130)"
-  },
-  {
-   "name": "liveportrait.service",
-   "puerto": 8180,
-   "codigo": "/home/victoria/LivePortrait/app.py (venv liveportrait-venv)"
-  },
-  {
-   "name": "victoria-sonic-server.service",
-   "puerto": 18850,
-   "codigo": "/home/victoria/Sonic/sonic-server.py (venv sonic-venv)"
-  },
-  {
-   "name": "victoria-voice-server.service",
-   "puerto": 18810,
-   "codigo": "/home/victoria/voice-venv/voice-server-host.py"
-  },
-  {
-   "name": "victoria-video-server.service",
-   "puerto": 18811,
-   "codigo": "/home/victoria/victoria-video-server.py"
-  },
-  {
-   "name": "web-nav-server.service",
-   "puerto": 18820,
-   "codigo": "/home/victoria/web-nav-server.py"
-  },
-  {
-   "name": "victoria-whois-server.service",
-   "puerto": 18830,
-   "codigo": "/home/victoria/whois-server.py"
-  },
-  {
-   "name": "victoria-host-admin.service",
-   "puerto": 18840,
-   "codigo": "/home/victoria/victoria-host-admin.py"
-  }
- ],
- "scripts_host": [
-  "llm-gateway.py",
-  "vllm-loop-alert.py",
-  "observe-24h.py",
-  "victoria-gpu-saver.py",
-  "openclaw-bridge-ensure.sh",
-  "openclaw-persist.sh",
-  "openclaw-voice-host.sh",
-  "openclaw-discord-fix.sh",
-  "openclaw-whatsapp-fix.sh",
-  "openclaw-rss-install.sh",
-  "openclaw-customize-apply.sh",
-  "sense_auth.py",
-  "art-gen",
-  "art-approve",
-  "armada-sync.sh",
-  "doc-fresh.sh",
-  "upstream-sync.py"
- ],
- "docs": [
-  "/home/victoria/AGENTS.md",
-  "/home/victoria/.config/opencode/agents/victoria.md",
-  "/home/victoria/.config/opencode/AGENTS-summary.md",
-  "/home/victoria/.config/opencode/todowrite-discipline.md",
-  "/home/victoria/.victoria-custom/harness/HARNESS_SCHEMA_UNIFICADO.md",
-  "/home/victoria/.victoria-custom/conocimiento/LECCIONES.md"
- ],
- "docs_oficiales": {
-  "regla": "ANTES de programar/configurar contra cualquier componente, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags ni usar features de versiones no servidas.",
-  "fuentes": [
-   {
-    "nombre": "vLLM Model Card (nvidia/Qwen3.6-35B-A3B-NVFP4)",
-    "url": "https://huggingface.co/nvidia/Qwen3.6-35B-A3B-NVFP4",
-    "contenido_clave": "contexto 262K nativo; VLM nativo (text/image/video); sampling SciCode temp 0.6/top_p 0.95 vs general 1.0/0.95; receta DGX Spark oficial; tool parser qwen3_xml recomendado",
-    "verificada": "2026-10-08"
-   },
-   {
-    "nombre": "vLLM Container Help (OFFLINE, version servida)",
-    "url": "docker exec nemoclaw-vllm vllm serve --help=<Grupo>",
-    "contenido_clave": "kv-cache-memory-bytes explicito en GB10; tool-call-parser choices incluyen qwen3_xml",
-    "verificada": "2026-10-08"
-   },
-   {
-    "nombre": "OpenClaw Docs",
-    "url": "https://docs.openclaw.ai/",
-    "contenido_clave": "gateway, channels, agents, tools/skills, CLI, schemas, releases",
-    "verificada": "2026-10-08"
-   },
-   {
-    "nombre": "OpenClaw Schema REAL (runtime 2026.9.x)",
-    "url": "extensions/*/dist/config-schema-*.js (dentro del sandbox)",
-    "contenido_clave": "validacion definitiva de openclaw.json; merge models.mode usa HIGHER value",
-    "verificada": "2026-10-08"
-   },
-   {
-    "nombre": "ComfyUI Docs",
-    "url": "https://docs.comfy.org/",
-    "contenido_clave": "API format, custom nodes, workflow templates",
-    "verificada": "2026-10-08"
-   },
-   {
-    "nombre": "LivePortrait GitHub",
-    "url": "https://github.com/KlingAIResearch/LivePortrait",
-    "contenido_clave": "Gradio 6.x API, talking-head SOTA, pesos CC-NC-ND",
-    "verificada": "2026-10-08"
-   },
-   {
-    "nombre": "Sonic CVPR 2025",
-    "url": "https://github.com/jixiaozhong/Sonic",
-    "contenido_clave": "audio-driven talking head, pesos CC-NC-ND (no comercial)",
-    "verificada": "2026-10-08"
-   }
-  ]
- },
- "changelog": [
-  {
-   "fecha": "2026-10-29",
-   "cambio": "Schema harness unificado aplicado a 42 harnesses (Victoria 11 + kalimete 31); live_check/checks[]/vivo_/upstream.fuente obligatorios; drift-check bidireccional granja (6h/1h); CHANGELOG maestro; RULES.md consolidado; delegación estricta con pre-check"
-  },
-  {
-   "fecha": "2026-10-29",
-   "cambio": "GET /v1/granja desplegado (catálogo LIVE 12 servicios + probes); skills kalimete con fuente viva; config-guide expone granja"
-  },
-  {
-   "fecha": "2026-10-29",
-   "cambio": "Seguridad labs: 4 puertos 0.0.0.0 -> loopback-only (3307/3310/6390/8025/3307); E2E verde"
-  },
-  {
-   "fecha": "2026-10-29",
-   "cambio": "MCP Blender E2E verificado (Blender 5.0.1 + addon :9876 -> get_scene_info OK); lección en LECCIONES.md"
-  },
-  {
-   "fecha": "2026-10-28",
-   "cambio": "Auditoría flota completa + 8 lenguajes nuevos + MCPs + cobertura 100% agents/harnesses"
-  },
-  {
-   "fecha": "2026-10-28",
-   "cambio": "Prep ventana prod Micaserogou: 3 artefactos sha256 OK, ops/status 200, artefacto A recuperado de réplica magantech; deploy bloqueado en owner (iak tenant 3)"
-  }
- ],
- "changelogs": [
-  "/home/victoria/CHANGELOG.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-vllm.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-sandbox.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-voice.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-video.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-whois.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-host-admin.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-comfyui.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-sonic.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-liveportrait.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-rss.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-social.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-weather.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-infra.md",
-  "/home/victoria/.victoria-custom/changelogs/CHANGELOG-gpu.md",
-  "/home/victoria/.victoria-custom/CHANGELOG-MAESTRO.md"
- ],
- "no_touch": [
-  "Solo 1 principal visible (Victoria morada #8B5CF6) — NUNCA crear otra Victoria",
-  "Los 10 subagentes son hidden:false (visibles en @) y NUNCA se borran (openclaw.md y victoria.md = No-Touch absoluto)",
-  "Cada cambio toca 3 lugares: doc subagente + harness JSON + changelog (servicio + general)",
-  "Frescura: lo LIVE manda (systemctl/curl/docker/nvidia-smi/logs primero); si el doc discrepa se cura + changelog",
-  "NUNCA dañar lo que funciona",
-  "digest vLLM @sha256:9204569b PINNEADO (nunca tag movil)",
-  "gpu-memory-utilization 0.22 + kv-cache-memory-bytes 12884901888 + max-num-seqs 3 + max-model-len 262144 (sagrados)",
-  "firewall IPv6 :8000 DROP, NUNCA quitar",
-  "opencode.jsonc sin confirmacion del owner",
-  "key_plaintext: columnas explicitas en la DB, nunca SELECT *",
-  "openclaw plugins install siempre uid 998, nunca root",
-  "container = efimero, snapshot antes con persist.sh backup",
-  "/sandbox/.openclaw modo 2770",
-  "art-approve approve/deny/revoke SOLO el owner"
- ],
- "recovery": [
-  "Stack completo: reboot -> docker (nemoclaw-vllm + sandbox) -> victoria-llm-gateway -> cloudflared (orden systemd resuelto). Ventana servicio: T+0..5s gateway/sandbox/cloudflared; T+5..7min vLLM carga modelo (502 normal).",
-  "vLLM ausente/roto: receta canonica docker run en vllm.md (intocable, confirmacion owner primero; carga 5-7min frio).",
-  "Gateway roto: sudo systemctl restart victoria-llm-gateway.service (stateless salvo SQLite).",
-  "Sandbox reconstruido: nemoclaw destroy + onboard --fresh -> ensure-loop restaura config/voz/plugins/bridges/ARTE en ~2-5 min (gatillo: session.identityLinks ausente = template).",
-  "vLLM colgado: victoria-gpu-saver lo detecta (4 probes hung ~4min) y hace docker restart con cooldown 15min.",
-  "Corte electrico: boot local NO espera ISP; cloudflared aguanta ~30min reintentos; crons perdidos sin daño (armada-sync.timer Persistent=true)."
- ],
- "medicion_live": {
-  "fecha": "2026-10-29T01:55:00Z",
-  "nota": "Evaluación completa contra diagnóstico Ecco Suite (174k tokens fragmentados -> harness-driven workflow). 42 harnesses estandarizados. Drift detectado: inventario Victoria 5.4.2 vs kalimete 5.9.1 real -> corregido.",
-  "versiones": {
-   "vLLM": "0.21.0+2325b6f0 (NGC 26.05.post1)",
-   "nemoclaw": "v0.0.130",
-   "openshell": "0.0.116",
-   "openclaw_runtime": "2026.9.2",
-   "ComfyUI": "v0.42.0 (2026-10-26)",
-   "LivePortrait": "Gradio 6.29.0",
-   "Sonic": "jixiaozhong/Sonic CVPR 2025",
-   "Hunyuan3D-2": "tencent/Hunyuan3D-2mini",
-   "kernel": "6.17.0-1032-nvidia",
-   "driver": "580.178.04"
-  }
- },
- "delegacion": {
-  "cuando_usar": "SIEMPRE que la tarea coincida con la mision EXACTA de un subagente (ver scope en subagents abajo). Para tareas que NO coinciden: Victoria ejecuta directamente (Build) o planifica (Plan).",
-  "pre_check": "EJECUTAR live_check del subagente objetivo ANTES de delegar con Task. Si live_check -> down: NO delegar, reportar estado y recovery. Si up: delegar con Task incluyendo 'lee primero <harness_file> y actualízalo al terminar'.",
-  "post_check": "Verificar que el subagente actualizo su harness + changelog + doc. Victoria escribe entrada en CHANGELOG general."
- },
- "subagents": [
-  {
-   "name": "vLLM",
-   "file": "/home/victoria/.config/opencode/agents/vllm.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/vllm.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/vllm.md",
-   "changelogs": [
-    "CHANGELOG-vllm.md"
-   ],
-   "scope": "vLLM :8000 + gateway :8010 (inferencia)",
-   "temperature": 0.1,
-   "delegacion": {
-    "cuando_usar": "vLLM cae, hay que rearmarlo, diagnosticar inferencia, reiniciar gateway, gestionar llaves/valvulas",
-    "pre_check": "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health | grep -q 200 || echo 'vLLM:down'",
-    "post_check": "curl -s http://127.0.0.1:8010/health | python3 -m json.tool"
-   }
-  },
-  {
-   "name": "OpenClaw",
-   "file": "/home/victoria/.config/opencode/agents/openclaw.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/openclaw.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/openclaw.md",
-   "changelogs": [
-    "CHANGELOG-sandbox.md",
-    "CHANGELOG-voice.md",
-    "CHANGELOG-video.md",
-    "CHANGELOG-whois.md",
-    "CHANGELOG-host-admin.md"
-   ],
-   "scope": "sandbox victoria-armada + dashboard :18800 + bridges voz/video/whois/admin :18810-18840 + art-gen/art-approve",
-   "temperature": 0.1,
-   "delegacion": {
-    "cuando_usar": "sandbox se reconstruye, pierde config/identity/canales, diagnosticar bridges/voz/video/whois/admin/art",
-    "pre_check": "curl -s http://victoria.local:18800/health | grep -q '\"ok\":true' || echo 'OpenClaw:down'",
-    "post_check": "nemoclaw victoria-armada doctor"
-   }
-  },
-  {
-   "name": "Comfyui",
-   "file": "/home/victoria/.config/opencode/agents/comfyui.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/comfyui.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/comfyui.md",
-   "changelogs": [
-    "CHANGELOG-comfyui.md"
-   ],
-   "scope": "ComfyUI :8188 + LivePortrait :8180 + n8n :5678 + Hunyuan3D-2 :18860 + Animar-chat :18861",
-   "temperature": 0.1,
-   "delegacion": {
-    "cuando_usar": "generar contenido visual, mover modelos, diagnosticar ComfyUI/LivePortrait/n8n/Hunyuan3D/lp-animate",
-    "pre_check": "systemctl is-active comfyui liveportrait && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8188/ | grep -q 200 || echo 'ComfyUI:down'",
-    "post_check": "curl -s http://127.0.0.1:8188/system_stats | python3 -m json.tool"
-   }
-  },
-  {
-   "name": "Sonic",
-   "file": "/home/victoria/.config/opencode/agents/sonic.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/sonic.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/sonic.md",
-   "changelogs": [
-    "CHANGELOG-sonic.md"
-   ],
-   "scope": "Sonic :18850 + podcast talking-head + reels IG + tab Estudio Podcast en LivePortrait",
-   "temperature": 0.6,
-   "top_p": 0.95,
-   "delegacion": {
-    "cuando_usar": "podcast no genera, daemon Sonic caido, lip-sync, publicar reel, VRAM Sonic",
-    "pre_check": "systemctl is-active victoria-sonic-server && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18850/health | grep -q 200 || echo 'Sonic:down'",
-    "post_check": "curl -s http://127.0.0.1:18850/health | python3 -m json.tool"
-   }
-  },
-  {
-   "name": "RSS System",
-   "file": "/home/victoria/.config/opencode/agents/rss-system.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/rss-system.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/rss-system.md",
-   "changelogs": [
-    "CHANGELOG-rss.md"
-   ],
-   "scope": "blogwatcher CLI + 15 feeds RSS + OPA policies + ingesta para distribucion",
-   "temperature": 0.1,
-   "delegacion": {
-    "cuando_usar": "gestionar feeds RSS, monitorizar blogs, diagnosticar blogwatcher",
-    "pre_check": "systemctl is-active victoria-openclaw-bridge && docker exec $(docker ps -qf name=openshell-victoria-armada) /sandbox/.openclaw/bin/blogwatcher --version 2>/dev/null || echo 'RSS:down'",
-    "post_check": "curl -s http://127.0.0.1:8010/v1/granja | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('rss', {}).get('health', '?'))\" 2>/dev/null"
-   }
-  },
-  {
-   "name": "Meta Business",
-   "file": "/home/victoria/.config/opencode/agents/meta-business.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/meta-business.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/meta-business.md",
-   "changelogs": [
-    "CHANGELOG-social.md"
-   ],
-   "scope": "Instagram + Discord + WhatsApp broadcast + tokens OAuth + logs publicacion + reporte owner 4h",
-   "temperature": 0.6,
-   "top_p": 0.95,
-   "delegacion": {
-    "cuando_usar": "revisar salud broadcast, reiniciar scripts, ver logs IG/Discord/WhatsApp, refresh token IG",
-    "pre_check": "systemctl is-active victoria-openclaw-bridge && ls /home/victoria/logs/*broadcast*.log 2>/dev/null | head -1 || echo 'Meta:down'",
-    "post_check": "python3 /home/victoria/instagram-token-refresh.py --status 2>/dev/null | head -3"
-   }
-  },
-  {
-   "name": "Weather",
-   "file": "/home/victoria/.config/opencode/agents/weather.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/weather.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/weather.md",
-   "changelogs": [
-    "CHANGELOG-weather.md"
-   ],
-   "scope": "clima (Open-Meteo/wttr.in/weather.gov) + geocodificacion (Nominatim) + POIs (Overpass) + country data — 100% gratis sin API key",
-   "temperature": 0.1,
-   "delegacion": {
-    "cuando_usar": "necesitas meteorologia o POIs para ciudades americanas",
-    "pre_check": "curl -s -o /dev/null -w '%{http_code}' https://api.open-meteo.com/v1/forecast?latitude=0&longitude=0 | grep -q 200 || echo 'Weather:down'",
-    "post_check": "curl -s 'https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true' | python3 -m json.tool"
-   }
-  },
-  {
-   "name": "CloudFlare",
-   "file": "/home/victoria/.config/opencode/agents/cloudflare.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/cloudflare.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/cloudflare.md",
-   "changelogs": [
-    "CHANGELOG-infra.md"
-   ],
-   "scope": "tunel Cloudflare (victoria.armada.do -> :8010) + nginx (victoria.local solo LAN) + SSH/warcold + RDP",
-   "temperature": 0.1,
-   "delegacion": {
-    "cuando_usar": "tunel caido, LAN no abre UIs, certificados/proxy/accesos",
-    "pre_check": "systemctl is-active cloudflared nginx && curl -s -o /dev/null -w '%{http_code}' https://victoria.armada.do/health | grep -q 200 || echo 'CF:down'",
-    "post_check": "curl -s https://victoria.armada.do/health | python3 -m json.tool"
-   }
-  },
-  {
-   "name": "Liveportrait",
-   "file": "/home/victoria/.config/opencode/agents/liveportrait.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/liveportrait.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/liveportrait.md",
-   "changelogs": [
-    "CHANGELOG-liveportrait.md"
-   ],
-   "scope": "LivePortrait :8180 WebUI ES (talking-head SOTA + tab Estudio Podcast) + Animar-chat :18861 (motor)",
-   "temperature": 0.1,
-   "delegacion": {
-    "cuando_usar": "UI no abre, animacion falla, ejemplos 404, actualizar interfaz, lp-animate",
-    "pre_check": "systemctl is-active liveportrait && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8180/ | grep -q 200 || echo 'LP:down'",
-    "post_check": "curl -s http://127.0.0.1:8180/health 2>/dev/null | head -c 100"
-   }
-  },
-  {
-   "name": "Gpu",
-   "file": "/home/victoria/.config/opencode/agents/gpu.md",
-   "mode": "subagent",
-   "hidden": false,
-   "harness": "/home/victoria/.victoria-custom/harness/gpu.harness.json",
-   "doc": "/home/victoria/.config/opencode/agents/gpu.md",
-   "changelogs": [
-    "CHANGELOG-gpu.md"
-   ],
-   "scope": "GPU GB10: guardian gpu-saver + arbitro turnos (gpu_arbiter.py) + termica + VRAM/OOM + watchdog carga sostenida",
-   "temperature": 0.1,
-   "delegacion": {
-    "cuando_usar": "freeze/OOM, temp alta, lock atorado, headroom antes de render pesado",
-    "pre_check": "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv | tail -1",
-    "post_check": "python3 /home/victoria/gpu_arbiter.py status 2>/dev/null | head -5"
-   }
-  },
-  {
-   "name": "Coder",
-   "file": "/home/victoria/.config/opencode/agents/coder.md",
-   "harness": "/home/victoria/.victoria-custom/harness/coder.harness.json",
-   "mode": "subagent",
-   "model": "vllm/NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4 (Coding con Victoria, on-demand :8001)",
-   "scope": "Ejecutor de código pesado (SWE agéntico, texto only). La primaria planea y delega implementación.",
-   "when": "implementar código cuando el plan ya existe"
-  },
-  {
-   "name": "Thinker",
-   "file": "/home/victoria/.config/opencode/agents/thinker.md",
-   "harness": "/home/victoria/.victoria-custom/harness/thinker.harness.json",
-   "mode": "subagent",
-   "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal + kwargs thinking (motor de razonamiento; el id -thinking salió del picker 11-03)",
-   "scope": "Razonador profundo: lógica sutil, verificación de planes, debugging de misterios. Análisis puro.",
-   "when": "cuando la respuesta rápida no basta"
-  }
- ],
- "changelog_unificado": {
-  "fuente_canonica": "GitHub warcold/armada-sync/CHANGELOG.md",
-  "mirror_local": "/home/victoria/CHANGELOG.md",
-  "endpoint_api": "GET /v1/changelog (cualquier llave, readonly incluido)",
-  "sync_script": "/home/victoria/.victoria-custom/bin/changelog-sync-victoria.sh",
-  "cron": "*/15 * * * *",
-  "nota": "Append-only format = merge natural sin conflictos. Los 3 principales (Victoria/Kalimete/Jonas) leen/escriben aquí."
- },
- "name": "Victoria"
+  "name": "Victoria"
 }
