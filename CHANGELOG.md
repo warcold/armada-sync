@@ -18,6 +18,14 @@
 - **Notas**: El bug de stickers y videos es un bug del runtime de OpenClaw que necesita fix upstream. Los permisos/tools de WhatsApp están bien configurados (dmPolicy allowlist, toolsBySender alineado, grupos requireMention). La configuración de WhatsApp está verificada OK.
 - **Verificado**: USER.md en sandbox ahora 1871 bytes (antes 4953 bytes truncados). sandbox healthy, container up 9d.
 - **Archivos modificados**: `USER-restore.md` (reducido a 1871 chars), `openclaw-bridge-ensure.sh` (eliminada skill+wrapper webanalyze del ensure-loop), `docker sandbox` (limpieza de webanalyze del workspace y bin_dir).
+### [2026-11-06 03:50 AST] [micaserogou] Fix2: fatal /wp-admin/ (ZionCommerce_AdminMenu::instance) — residuo fusión Zion CRM
+- **Tipo**: fix (plugin Zion CRM, capa 1)
+- **Modificado**: `zionv-crm-plugin/src/Modules/Commerce/Core/Bootstrap.php:239` — `ZionCommerce_AdminMenu::instance()` → `init()` (método pre-fusión inexistente; la clase unificada es estática, auto-init en AdminMenu.php:1434 + Main.php:464). Backup: Bootstrap.php.bkup-20261106. Commit submódulo `d10d158` pusheado a GitHub warcold/zionv-crm (incluye fix v2.0.1-fix del 2026-11-05: 404 connector.js/logger.js).
+- **Afecta a**: micaserogou preprod (:8094) — /wp-admin/ HTTP 500 → 200. Front nunca afectado (el hook admin_menu no corre en front).
+- **Causa**: owner recibió "critical error" al loguear al admin. Diagnóstico: WP_DEBUG_LOG activado temporalmente (wp-config), fatal capturado en debug.log.
+- **Estado**: ✅ verificado — wp-admin 200 (Dashboard carga), barrido páginas admin sin fatales, front 200, 0 fatales en debug.log. WP_DEBUG dejado activo con WP_DEBUG_DISPLAY false (log en wp-content/debug.log).
+- **Notas**: slug legacy `erp-suite` da 403 esperado (menú unificado es `zion-crm` → /crm/dashboard/); título del menú aún dice "Armada Suite" (cosmético, residuo fusión documentado en CHANGELOG del plugin). Credenciales admin local re-entregadas al owner (micaserogou_admin).
+
 ### [2026-11-05 08:45 AST] [micaserogou] Validación flujo compra: bug add-to-cart confirmado (connector.js 404) + orden prueba 293 OK en ERP
 - **Tipo**: diagnóstico (sin cambios de código)
 - **Modificado**: nada en código; datos de prueba creados (cliente ERP id 214 test-compra@micaserogou-test.com + venta 293 en erpipo-preprod tenant 3, email_verified_at seteado a mano — mail de verificación del registro NO llegó al Mailpit del ERP)
