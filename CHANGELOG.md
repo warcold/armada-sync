@@ -38,7 +38,13 @@
 - **Notas**: El bug de stickers y videos es un bug del runtime de OpenClaw que necesita fix upstream. Los permisos/tools de WhatsApp están bien configurados (dmPolicy allowlist, toolsBySender alineado, grupos requireMention). La configuración de WhatsApp está verificada OK.
 - **Verificado**: USER.md en sandbox ahora 1871 bytes (antes 4953 bytes truncados). sandbox healthy, container up 9d.
 - **Archivos modificados**: `USER-restore.md` (reducido a 1871 chars), `openclaw-bridge-ensure.sh` (eliminada skill+wrapper webanalyze del ensure-loop), `docker sandbox` (limpieza de webanalyze del workspace y bin_dir).
-### [2026-11-06 03:50 AST] [micaserogou] Fix2: fatal /wp-admin/ (ZionCommerce_AdminMenu::instance) — residuo fusión Zion CRM
+### [2026-11-06 18:20 AST] [micaserogou] v2.0.2-fusion: menú unificado Zion CRM (1 entrada) + panel ERP accesible
+- **Tipo**: fix estructural (plugin Zion CRM — fusión completada)
+- **Modificado**: 5 archivos del plugin (E1 init MenuUnifier gemelo ArmadaSuite retirado; E2 auto-init ERPSuite_AdminMenu neutralizado — desaparece entrada "Armada Suite"; E3 panel ERP → submenu `zion-crm-erp` con hooks corregidos; E4 submenu "Panel" inútil retirado; E5 doble init resuelto; E6 prioridad admin_menu 999 — fix 403). Backups `*.bkup-20261106`. Inventario completo en `docs/FUSION-INVENTARIO.md` (dentro del plugin). Commit submódulo `36925e7` pusheado a GitHub (incluye cambios de la fusión a medias 2026-10-28 que estaban sin versionar).
+- **Afecta a**: micaserogou preprod (:8094) — wp-admin ahora muestra UNA entrada "Zion CRM" con Panel ERP (10 tabs) + Exportar/Importar/Respaldos + Puente IA + ERPC Logs + System Status. Duplicación de submenús 12x → 1x.
+- **Causa**: owner vio 2 entradas de menú y opciones faltantes — residuos de la fusión a medias 2.0.0.
+- **Estado**: ✅ verificado — wp-admin 200, panel 200 con tabs, 0 fatales, front 200 + add-to-cart OK, magantech 200.
+- **Notas**: deuda restante documentada (clases gemelas ERPSuite_*/ZionCommerce_* con aliases, dirs bkup-before-fusion — no bloqueante). Diagnóstico/inventario por subagente ZionV CRM; ejecución quirúrgica por kalimete (plan del subagente).
 - **Tipo**: fix (plugin Zion CRM, capa 1)
 - **Modificado**: `zionv-crm-plugin/src/Modules/Commerce/Core/Bootstrap.php:239` — `ZionCommerce_AdminMenu::instance()` → `init()` (método pre-fusión inexistente; la clase unificada es estática, auto-init en AdminMenu.php:1434 + Main.php:464). Backup: Bootstrap.php.bkup-20261106. Commit submódulo `d10d158` pusheado a GitHub warcold/zionv-crm (incluye fix v2.0.1-fix del 2026-11-05: 404 connector.js/logger.js).
 - **Afecta a**: micaserogou preprod (:8094) — /wp-admin/ HTTP 500 → 200. Front nunca afectado (el hook admin_menu no corre en front).
