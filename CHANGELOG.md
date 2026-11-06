@@ -25,6 +25,8 @@
 - **Causa**: owner recibió "critical error" al loguear al admin. Diagnóstico: WP_DEBUG_LOG activado temporalmente (wp-config), fatal capturado en debug.log.
 - **Estado**: ✅ verificado — wp-admin 200 (Dashboard carga), barrido páginas admin sin fatales, front 200, 0 fatales en debug.log. WP_DEBUG dejado activo con WP_DEBUG_DISPLAY false (log en wp-content/debug.log).
 - **Notas**: slug legacy `erp-suite` da 403 esperado (menú unificado es `zion-crm` → /crm/dashboard/); título del menú aún dice "Armada Suite" (cosmético, residuo fusión documentado en CHANGELOG del plugin). Credenciales admin local re-entregadas al owner (micaserogou_admin).
+
+### [2026-11-05 08:45 AST] [micaserogou] Validación flujo compra: bug add-to-cart confirmado (connector.js 404) + orden prueba 293 OK en ERP
 - **Tipo**: diagnóstico (sin cambios de código)
 - **Modificado**: nada en código; datos de prueba creados (cliente ERP id 214 test-compra@micaserogou-test.com + venta 293 en erpipo-preprod tenant 3, email_verified_at seteado a mano — mail de verificación del registro NO llegó al Mailpit del ERP)
 - **Afecta a**: micaserogou preprod (:8094) + erpipo-preprod (datos prueba)
