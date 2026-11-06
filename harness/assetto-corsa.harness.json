@@ -1,104 +1,295 @@
 {
-  "harness": "assetto",
-  "updated": "2026-10-30",
-  "agent_file": "~/armada-sync/agents/assetto.md",
+  "harness": "assetto-corsa",
+  "updated": "2026-11-06",
+  "agent_file": "~/armada-sync/agents/assetto-corsa.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "Assetto Corsa Server Manager (JustaPenguin/assetto-server-manager) en vps-preprod. Misión: gestionar servidor Assetto Corsa online para comunidad dominicana — races, championships, content, Server Manager UI, acServer lifecycle.",
-  "vivo_2026_10_30": "Harness actualizado tras puesta en producción Modo B (Server Manager nativo). Server Manager Docker corriendo, Cloudflare tunnel activo, DNS UDP configurado, identidad RD aplicada, 4 zonas temáticas operativas. Modo standalone (systemd) desactivado en favor de Modo B nativo.",
-  "live_check": "ssh vps-preprod \"docker ps --format '{{.Names}}: {{.Status}}' | grep -i assetto || echo 'assetto:no-containers'; ss -uln | grep 9600 || echo 'UDP_9600:no-listener'\"",
+  "scope": "Servidor de Assetto Corsa para la comunidad dominicana en vps-preprod: Server Manager (seejy/assetto-server-manager en Docker), lifecycle de acServer v1.15 (Steam App 302550), races/championships, tracks/cars, Sol Weather y despliegue seguro de contenido branded (KN5 con texturas DDS + ZIP de Content Manager) con gates anti-regresión.",
+  "vivo_2026_11_06": "Modo B activo: contenedor assetto-corsa-server Up sirviendo SM :8772 y CM wrapper :8773; acServer.real lanzado por el SM con UDP/TCP 9600 y HTTP :8082; cloudflared activo; assetto-acserver (systemd standalone) inactivo. Race viva 371cd0f4-3e56-416f-8e1f-235d2b9b336f (vr506_dominicana_2_0 layout circu, practice, pass=false, pickup=true, maxclients=6). Branding alfredo.pro desplegado y verificado: KN5 local == KN5 server == KN5 dentro del ZIP == a2c39948ebd26204a44577cd69e5e8fe. Deriva conocida: autostart-race.sh del VPS apunta a fd8236dc-1871-41e7-90f4-c35b5b686308 (race vieja, ya no está en /custom; log 'carrera 500').",
+  "live_check": "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'hostname; docker ps --format \"{{.Names}} {{.Status}}\" | grep assetto; md5sum /srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5; curl -s -o /dev/null -w \"details:%{http_code}\\n\" http://127.0.0.1:8773/api/details'",
+  "hosts": {
+    "vps-preprod": {
+      "ip": "154.53.35.102",
+      "hostname_live": "auth.armada.do",
+      "ssh": "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod",
+      "role": "host del stack AC (Server Manager Docker + acServer + cloudflared)"
+    },
+    "local": {
+      "host": "kalimete",
+      "workspace": "~/dev/games/assetto-corsa",
+      "role": "pipeline de texturas, repo del proyecto y origen del deploy"
+    },
+    "dominios": {
+      "panel": "https://assetto.armada.do -> Cloudflare tunnel -> vps-preprod:8772",
+      "juego": "srv00.assetto.armada.do -> A record DNS-only 154.53.35.102 -> UDP/TCP 9600",
+      "descarga_cm": "https://assetto.armada.do/content/tracks/vr506_dominicana_2_0/download/vr506_dominicana_2_0.zip"
+    }
+  },
+  "paths": {
+    "host_vps": {
+      "proyecto": "/srv/assetto-corsa",
+      "contenido_ac": "/srv/assetto-corsa/assetto/content",
+      "track": "/srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0",
+      "kn5": "/srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5",
+      "zip_cm": "/srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/download/vr506_dominicana_2_0.zip",
+      "meta": "/srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/ui/meta_data.json",
+      "cfg_acserver": "/srv/assetto-corsa/assetto/cfg/server_cfg.ini (symlink -> ../content/config/server_cfg.ini)",
+      "cfg_sm": "/srv/assetto-corsa/assetto/content/config/server_cfg.ini",
+      "entry_list": "/srv/assetto-corsa/assetto/content/config/entry_list.ini",
+      "credenciales_sm": "/srv/assetto-corsa/.sm-admin-credentials (600, root-only)",
+      "log_watchdog": "/srv/assetto-corsa/autostart.log"
+    },
+    "container": {
+      "home_sm": "/home/assetto/server-manager",
+      "contenido_ac": "/home/assetto/server-manager/assetto/content",
+      "cfg": "/home/assetto/server-manager/assetto/cfg"
+    },
+    "local": {
+      "proyecto": "~/dev/games/assetto-corsa",
+      "track": "tracks/vr506_dominicana_2_0",
+      "kn5": "tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5",
+      "backup_original": "tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5.bkup-20261106",
+      "tar_original": "tracks/vr506_dominicana_2_0.tar",
+      "pipeline": "ac_replacer.py + tools/ac_replacer.py",
+      "harness_pipeline": "harness/assetto-corsa.md",
+      "script_deploy": "scripts/deploy-track.sh"
+    }
+  },
   "checks": [
-    "ssh vps-preprod \"docker ps --format '{{.Names}}: {{.Status}}' | grep -i assetto\"",
-    "ssh vps-preprod \"curl -s -o /dev/null -w '%{http_code}' http://localhost:8772 2>/dev/null || echo 'SM_UI:down'\"",
-    "ssh vps-preprod \"ss -uln | grep 9600 || echo 'UDP_9600:no-listener'\"",
-    "ssh vps-preprod \"ss -tln | grep -E '8772|9600|8081'\"",
-    "ssh vps-preprod \"systemctl is-active assetto-acserver 2>/dev/null || echo 'standalone:stopped'\""
+    "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'hostname; hostname -I; docker ps --format \"{{.Names}} {{.Image}} {{.Status}}\" | grep assetto'",
+    "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'ss -uln | grep 9600; ss -tln | grep -E \"8772|8773|8082|8081\"'",
+    "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'curl -s -o /dev/null -w \"SM:%{http_code}\\n\" http://localhost:8772/'",
+    "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'curl -s -o /dev/null -w \"details:%{http_code}\\n\" http://127.0.0.1:8773/api/details; curl -s http://127.0.0.1:8773/api/details | grep -oE \"\\\"(pass|track|name|port|cport)\\\":(\\\"[^\\\"]*\\\"|false|true|[0-9]+)\"'",
+    "md5 local == md5 server == md5 dentro del ZIP: md5sum ~/dev/games/assetto-corsa/tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5; ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'md5sum /srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/vr506_dominicana_2_0.kn5; unzip -p /srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/download/vr506_dominicana_2_0.zip vr506_dominicana_2_0/vr506_dominicana_2_0.kn5 | md5sum'",
+    "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'unzip -l /srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/download/vr506_dominicana_2_0.zip | grep -Ei \"bkup|vao-patch\" || echo \"ZIP limpio: sin bkup ni vao-patch.zip\"'",
+    "curl -s -o /dev/null -w 'https_assetto:%{http_code}\\n' https://assetto.armada.do/",
+    "dig +short srv00.assetto.armada.do @1.1.1.1",
+    "bash -n ~/dev/games/assetto-corsa/scripts/deploy-track.sh"
   ],
   "upstream": {
-    "fuente": "github JustaPenguin/assetto-server-manager (upstream oficial). Repo archivado Aug 2026. Docker image: seejy/assetto-server-manager:latest. Steam App 302550 (gratuito, login anonymous).",
-    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Repo archivado pero Docker image funcional.",
-    "version_servida_live": "ssh vps-preprod \"docker exec $(docker ps -qf name=assetto) cat /app/VERSION 2>/dev/null || echo 'sin-version'\"",
+    "fuente": "github JustaPenguin/assetto-server-manager (upstream oficial, repo archivado Aug 2026) + Docker image seejy/assetto-server-manager:latest + Steam App 302550 (gratuito, login anonymous).",
+    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Repo archivado pero Docker image y binario v1.15 funcionales.",
+    "version_servida_live": "SM v1.7.9 (assets ?cb=v1.7.9) en contenedor assetto-corsa-server; acServer Linux v1.15 (Steam App 302550).",
     "donde_mirar": [
       "https://github.com/JustaPenguin/assetto-server-manager",
       "https://hub.docker.com/r/seejy/assetto-server-manager",
+      "https://steamdb.info/app/302550/",
       "~/dev/games/assetto-corsa/ (proyecto local)"
     ],
     "frecuencia": "ante actualización upstream o release Docker",
     "politica": "Upstream = Plan + owner. Stack en vps-preprod. No auto-actualizar sin autorización."
   },
   "servicios": [
-    {"name": "assetto-server-manager", "host": "vps-preprod", "upstream": "JustaPenguin/assetto-server-manager", "puerto_ui": 8772, "puerto_juego_udp": 9600, "puerto_juego_tcp": 9600, "puerto_http_api": 8081},
-    {"name": "cloudflared", "host": "vps-preprod", "upstream": "cloudflare/cloudflared", "tunnel": "assetto.armada.do -> localhost:8772"},
-    {"name": "assetto-acserver-standalone", "host": "vps-preprod", "upstream": "Steam App 302550", "estado": "desactivado (Modo B activo)", "systemd_unit": "assetto-acserver.service"}
+    {
+      "name": "assetto-corsa-server",
+      "host": "vps-preprod",
+      "upstream": "seejy/assetto-server-manager:latest",
+      "image": "seejy/assetto-server-manager:latest",
+      "container": "assetto-corsa-server",
+      "network": "host",
+      "puerto_ui": 8772,
+      "puerto_cm_wrapper": 8773,
+      "puerto_juego_udp": 9600,
+      "puerto_juego_tcp": 9600
+    },
+    {
+      "name": "acServer.real",
+      "host": "vps-preprod (hijo del contenedor)",
+      "upstream": "Steam App 302550",
+      "version": "v1.15",
+      "puerto_http_api": 8082,
+      "nota": "Lo lanza el Server Manager al cargar una race; calcular checksums al arrancar."
+    },
+    {
+      "name": "cloudflared",
+      "host": "vps-preprod",
+      "upstream": "cloudflare/cloudflared",
+      "tunnel": "assetto.armada.do -> localhost:8772"
+    },
+    {
+      "name": "staging-adminer-1",
+      "host": "vps-preprod",
+      "upstream": "adminer:latest",
+      "puerto": 8081,
+      "nota": "NO es la API de AC; la API nativa está en 8082."
+    },
+    {
+      "name": "assetto-acserver-standalone",
+      "host": "vps-preprod",
+      "upstream": "Steam App 302550",
+      "estado": "inactivo (Modo B activo)",
+      "systemd_unit": "assetto-acserver.service"
+    }
   ],
   "scripts_host": [
+    "~/dev/games/assetto-corsa/scripts/deploy-track.sh (deploy seguro con gates anti-regresión; NO cron)",
+    "~/dev/games/assetto-corsa/scripts/autostart-race.sh (watchdog local del proyecto)",
     "~/dev/games/assetto-corsa/scripts/switch-zone.sh (4 zonas: drift/touge/trackday/race)",
     "~/dev/games/assetto-corsa/scripts/deploy.sh",
-    "~/dev/games/assetto-corsa/scripts/install.sh",
     "~/dev/games/assetto-corsa/scripts/backup.sh"
   ],
+  "incidencia_2026_11_06": {
+    "sintoma": "Nadie veía el branding de la marca en el track VR506; solo aparecían los logos por defecto del track.",
+    "causa_raiz": [
+      "El pipeline generó el KN5 branded SOLO en /tmp/ac_track_pipeline/vr506_dominicana_2_0_replaced.kn5 (volátil) y nunca se copió a tracks/vr506_dominicana_2_0/.",
+      "La carpeta local tracks/vr506_dominicana_2_0/ conservaba el KN5 ORIGINAL.",
+      "Un rsync de rutina del folder local al VPS desplegó el original ENCIMA del branded que ya tenía el server."
+    ],
+    "resolucion": "Se recuperó/regeneró el KN5 branded, se copió a la carpeta del track, se desplegó con backup y verificación md5, se regeneró el ZIP de Content Manager y se relanzó la race.",
+    "md5": {
+      "original": "3b72f19dcfb42b4e9641d6bbf528cc04",
+      "branded": "a2c39948ebd26204a44577cd69e5e8fe"
+    },
+    "texturas_branded_verificadas": [
+      "BANNER01.DDS (256x128 DXT1)",
+      "sponsor_h1_ovrhd.dds (512x256 DXT5)"
+    ],
+    "texturas_no_tocadas": [
+      "FENCE_MARSHALL.DDS (original)",
+      "marshall_buildings_dif.dds (original)"
+    ],
+    "pitfall_pipeline": "ac_replacer.py lee el header DDS invertido (height=u32@+12, width=u32@+16, fourCC@+84). Offset correcto: dxt_start = next_dds - expected, expected=(w/4)*(h/4)*(8 si DXT1, 16 si DXT5). No escribir desde dds_pos+128+sc6 con dims invertidas."
+  },
+  "checklist_anti_regresion": [
+    "Gate de original: md5 local != 3b72f19dcfb42b4e9641d6bbf528cc04 (y != md5 del KN5 dentro del tar original). Si es original, abortar.",
+    "Gate de branded: md5 local == a2c39948ebd26204a44577cd69e5e8fe (o ALLOW_UNKNOWN_KN5=1 registrando el md5 nuevo).",
+    "Backup local .bkup-<timestamp> antes de tocar el KN5.",
+    "Backup remoto .bkup-<timestamp> ANTES del rsync (preserva el live anterior).",
+    "Rsync sin --delete, excluyendo *.bkup*, download/ y *vao-patch.zip; target vps-preprod/154.53.35.102 verificado por IP.",
+    "Post-rsync: md5 server == md5 local.",
+    "Regenerar el ZIP excluyendo *.bkup* y vao-patch.zip.",
+    "Verificar md5 del KN5 dentro del ZIP (local y remoto) == md5 local.",
+    "chown assetto:assetto del track y del ZIP.",
+    "Relanzar la race vía GET /custom/load/<uuid> con cookie admin.",
+    "Verificar /api/details 200, pass=false, track presente.",
+    "Probar la descarga del ZIP público y confirmar el branding en Content Manager."
+  ],
   "docs": [
-    "~/armada-sync/agents/assetto.md",
+    "~/armada-sync/agents/assetto-corsa.md",
+    "~/armada-sync/harness/assetto-corsa.harness.json",
     "~/dev/games/assetto-corsa/docs/PROJECT.md",
     "~/dev/games/assetto-corsa/CHANGELOG.md",
-    "~/armada-sync/harness/HARNESS_SCHEMA_UNIFICADO.md"
+    "~/dev/games/assetto-corsa/harness/assetto-corsa.md",
+    "~/dev/games/assetto-corsa/tools/README.md",
+    "~/dev/games/assetto-corsa/scripts/deploy-track.sh"
   ],
   "docs_oficiales": {
-    "regla": "ANTES de operar, verificar LIVE en vps-preprod. NUNCA inventar config. Server Manager = server-rendered (NO REST API). Gestión vía web UI 8772.",
+    "regla": "ANTES de operar, verificar LIVE en vps-preprod. NUNCA inventar config. Server Manager = server-rendered (NO REST API pública). Gestión vía web UI 8772 o rutas web con cookie.",
     "fuentes": [
-      {"nombre": "Assetto Server Manager GitHub", "url": "https://github.com/JustaPenguin/assetto-server-manager", "contenido_clave": "Docker + config + web UI + championships", "verificada": "2026-10-30"},
-      {"nombre": "Server Manager Docker Hub", "url": "https://hub.docker.com/r/seejy/assetto-server-manager", "contenido_clave": "Imagen oficial, entrypoint, env vars", "verificada": "2026-10-30"},
-      {"nombre": "Assetto Corsa Server Tools", "url": "https://steamdb.info/app/302550/", "contenido_clave": "App 302550 gratuito, login anonymous", "verificada": "2026-10-30"},
-      {"nombre": "Content Manager", "url": "https://content-manager.net/", "contenido_clave": "Cliente alternativo, direct connect", "verificada": "2026-10-30"},
-      {"nombre": "Sol Weather", "url": "https://assettocorsa.net/threads/sol-weather.46499/", "contenido_clave": "Mod clima day/night", "verificada": "2026-10-30"}
+      {
+        "nombre": "Assetto Server Manager GitHub",
+        "url": "https://github.com/JustaPenguin/assetto-server-manager",
+        "contenido_clave": "Docker + config + web UI + championships",
+        "verificada": "2026-11-06"
+      },
+      {
+        "nombre": "Server Manager Docker Hub",
+        "url": "https://hub.docker.com/r/seejy/assetto-server-manager",
+        "contenido_clave": "Imagen oficial, entrypoint, env vars",
+        "verificada": "2026-11-06"
+      },
+      {
+        "nombre": "Assetto Corsa Server Tools",
+        "url": "https://steamdb.info/app/302550/",
+        "contenido_clave": "App 302550 gratuito, login anonymous",
+        "verificada": "2026-11-06"
+      },
+      {
+        "nombre": "Content Manager",
+        "url": "https://content-manager.net/",
+        "contenido_clave": "Cliente alternativo, direct connect, descarga de tracks por ZIP",
+        "verificada": "2026-11-06"
+      },
+      {
+        "nombre": "Sol Weather",
+        "url": "https://assettocorsa.net/threads/sol-weather.46499/",
+        "contenido_clave": "Mod clima day/night (pendiente)",
+        "verificada": "2026-11-06"
+      }
     ]
   },
   "changelog": [
-    {"fecha": "2026-10-30", "cambio": "Modo B activado (Server Manager nativo). Standalone systemd desactivado. Identidad RD aplicada. 4 zonas temáticas operativas. switch-zone.sh creado. Harness actualizado schema unificado."},
-    {"fecha": "2026-10-29", "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente). Assetto en vps-preprod, upstream JustaPenguin/assetto-server-manager."},
-    {"fecha": "2026-10-28", "cambio": "Proyecto creado: estructura, agente, harness, PROJECT.md, CHANGELOG.md, scripts, docker-compose."}
+    {
+      "fecha": "2026-11-06",
+      "cambio": "Incidente de branding perdido resuelto y endurecido: agente/harness renombrados a assetto-corsa, checklist anti-regresión, deploy-track.sh con gates (original/branded, backups, md5 local==server==ZIP, chown, relanzar race, /api/details). Documentada la causa raíz triple y la deriva del watchdog fd8236dc vs race viva 371cd0f4."
+    },
+    {
+      "fecha": "2026-10-30",
+      "cambio": "Modo B activado (Server Manager nativo). Standalone systemd desactivado. Identidad RD aplicada. 4 zonas temáticas operativas. switch-zone.sh creado."
+    },
+    {
+      "fecha": "2026-10-29",
+      "cambio": "Harness estandarizado schema unificado. Assetto en vps-preprod, upstream JustaPenguin/assetto-server-manager. SM + Docker + DNS UDP + firewall verificados."
+    },
+    {
+      "fecha": "2026-10-28",
+      "cambio": "Proyecto creado: estructura, agente, harness, PROJECT.md, CHANGELOG.md, scripts, docker-compose."
+    }
   ],
   "changelogs": [
     "~/armada-sync/CHANGELOG.md",
     "~/dev/games/assetto-corsa/CHANGELOG.md"
   ],
   "no_touch": [
-    "Config en vps-preprod generada por Server Manager (no tocar manualmente en Modo B)",
-    "DB Server Manager (BoltDB) — solo backup via script",
-    "Archivos generados por SM en /srv/assetto-corsa/assetto/cfg/ (server_cfg.ini, entry_list.ini)"
+    "Config en vps-preprod generada por Server Manager (no tocar cfg/ a mano en Modo B)",
+    "DB Server Manager (BoltDB) — solo backup",
+    "Archivos generados por SM en /srv/assetto-corsa/assetto/content/config/ (server_cfg.ini, entry_list.ini)",
+    "KN5 live sin backup .bkup previo",
+    "autostart-race.sh del VPS (UUID viejo) sin autorización del owner"
   ],
-  "recovery": "ssh vps-preprod para inspeccionar container assetto-corsa-server. Rebuild: docker-compose pull && docker-compose up -d. Si SM DB corrupta: restaurar backup + reiniciar container.",
+  "recovery": "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod. Si el SM no responde: docker ps | grep assetto; docker logs --tail 100 assetto-corsa-server; docker restart assetto-corsa-server (boot ~90s). Si se perdió el KN5 branded: restaurar desde el backup local/remoto .bkup o regenerar con ac_replacer.py y desplegar con scripts/deploy-track.sh. Si la race no arranca: verificar /custom/load/<uuid> y /api/details en 8773.",
   "delegacion": {
-    "cuando_usar": "gestionar servidor Assetto Corsa, crear races, championships, añadir content, actualizar SM, diagnosticar puertos/acServer",
-    "pre_check": "ssh vps-preprod \"docker ps --format '{{.Names}}: {{.Status}}' | grep -i assetto; ss -uln | grep 9600\"",
-    "post_check": "ssh vps-preprod \"docker ps --format '{{.Names}}: {{.Status}}' | grep -i assetto; ss -uln | grep 9600; curl -s -o /dev/null -w '%{http_code}' https://assetto.armada.do/\""
+    "cuando_usar": "gestionar servidor Assetto Corsa, crear races/championships, añadir content, desplegar tracks/texturas branded, regenerar ZIP de CM, diagnosticar puertos/acServer/checksums, actualizar SM",
+    "pre_check": "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'hostname; docker ps --format \"{{.Names}} {{.Status}}\" | grep assetto; ss -uln | grep 9600'",
+    "post_check": "ssh -p 1333 -i ~/.ssh/id_ed25519_kalimete root@vps-preprod 'curl -s -o /dev/null -w \"details:%{http_code}\\n\" http://127.0.0.1:8773/api/details; curl -s http://127.0.0.1:8773/api/details | grep -oE \"\\\"(pass|track)\\\":(\\\"[^\\\"]*\\\"|false|true)\"'"
   },
   "configuracion_clave": {
     "server_manager": {
       "config_file": "/srv/assetto-corsa/config.yml",
       "ui_port": 8772,
-      "api_port": 8081,
-      "db_type": "bolt",
-      "db_path": "/home/assetto/server-manager/data/ac-server-manager.db",
-      "steam": {"username": "anonymous", "app_id": 302550, "install_path": "assetto", "executable_path": "acServer"}
+      "cm_wrapper_port": 8773,
+      "acserver_http_port": 8082,
+      "adminer_port": 8081,
+      "db_type": "boltdb",
+      "db_path": "/home/assetto/server-manager/data/server_manager.db",
+      "steam": {
+        "username": "anonymous",
+        "app_id": 302550,
+        "install_path": "assetto",
+        "executable_path": "acServer"
+      }
     },
     "dominios": {
       "ui": "assetto.armada.do (Cloudflare tunnel -> vps-preprod:8772)",
-      "juego_udp": "srv00.assetto.armada.do (A record DNS-only -> 154.53.35.102:9600 UDP/TCP)"
+      "juego_udp": "srv00.assetto.armada.do (A record DNS-only -> 154.53.35.102:9600 UDP/TCP)",
+      "descarga_cm": "https://assetto.armada.do/content/tracks/vr506_dominicana_2_0/download/vr506_dominicana_2_0.zip"
     },
-    "firewall": "vps-preprod INPUT policy DROP. Reglas persistidas: UDP 9600, TCP 9600, TCP 8081. Backup: /etc/iptables/rules.v4.bkup-20261029-assetto",
-    "identidad_rd": {
-      "nombre": "🇩🇴 Assetto Corsa RD - Comunidad Dominicana",
-      "motd": "Mensaje completo con Discord + WhatsApp (\\n reales)",
-      "discord": "https://discord.gg/6Sc5KAg3Sk",
-      "whatsapp": "https://chat.whatsapp.com/FUpozjvDAjLHeEFY7IJmxe"
+    "firewall": "vps-preprod INPUT policy DROP. Reglas persistidas: UDP 9600, TCP 9600, API AC 8082. Backup: /etc/iptables/rules.v4.bkup-20261029-assetto",
+    "race_actual": {
+      "uuid": "371cd0f4-3e56-416f-8e1f-235d2b9b336f",
+      "nombre": "La Vgz -  Republica Dominicana - Another day of practice at Autodromo I. Las Americas",
+      "track": "vr506_dominicana_2_0",
+      "layout": "circu",
+      "relanzar": "GET /custom/load/371cd0f4-3e56-416f-8e1f-235d2b9b336f con cookie admin"
+    },
+    "watchdog_deriva": {
+      "script": "/srv/assetto-corsa/autostart-race.sh",
+      "uuid_actual_en_script": "fd8236dc-1871-41e7-90f4-c35b5b686308",
+      "estado": "race vieja, ya no aparece en /custom; pendiente actualizar con autorización del owner"
+    },
+    "track_branded": {
+      "slug": "vr506_dominicana_2_0",
+      "kn5_original_md5": "3b72f19dcfb42b4e9641d6bbf528cc04",
+      "kn5_branded_md5": "a2c39948ebd26204a44577cd69e5e8fe",
+      "texturas": ["BANNER01.DDS (256x128 DXT1)", "sponsor_h1_ovrhd.dds (512x256 DXT5)"],
+      "zip": "download/vr506_dominicana_2_0.zip",
+      "zip_nota": "Excluye *.bkup* y vao-patch.zip; el KN5 interno debe ser el branded."
     },
     "zonas_tematicas": {
       "drift": {"track": "drift", "cars": "bmw_m3_e30_drift;bmw_m3_e92_drift;bmw_z4_drift;bmw_m3_e30;bmw_z4;ks_mazda_rx7_tuned", "sessions": "Practice 1440"},
       "touge": {"track": "ks_highlands", "config_track": "long", "cars": "bmw_m3_e30;bmw_m3_e92;bmw_z4;alfa_romeo_giulietta_qv;abarth500;bmw_1m;ks_mazda_rx7_spirit_r", "sessions": "Practice 1440"},
       "trackday": {"track": "spa", "cars": "ks_ferrari_488_gt3;ks_lamborghini_huracan_gt3;ks_audi_r8_lms;ks_mclaren_650_gt3;ks_mercedes_amg_gt3;ks_nissan_gtr_gt3;ks_porsche_911_gt3_r_2016;bmw_m3_e92;bmw_z4;ks_mazda_rx7_spirit_r", "sessions": "Practice 1440"},
       "race": {"track": "ks_nurburgring", "config_track": "gp_a", "cars": "ks_ferrari_488_gt3;ks_lamborghini_huracan_gt3;ks_audi_r8_lms;ks_mclaren_650_gt3;ks_mercedes_amg_gt3;ks_nissan_gtr_gt3;ks_porsche_911_gt3_r_2016;ks_mazda_rx7_spirit_r;bmw_m3_e30", "sessions": "Practice 30 / Qualify 15 / Race 5 laps"}
-    },
-    "switch_zone_script": "/srv/assetto-corsa/switch-zone.sh (drift|touge|trackday|race|status)"
+    }
   }
 }

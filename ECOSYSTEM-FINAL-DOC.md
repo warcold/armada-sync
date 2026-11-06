@@ -50,7 +50,7 @@
 | **ecco-suit** | Subagent | ecco-suit.harness.json | VPS EccoQualita (Next.js + PostgreSQL) |
 | **game-studio** | Subagent | game-studio.harness.json | Fábrica juegos 3D (Godot + Blender) |
 | **blender** | Subagent | blender.harness.json | Blender 5.0.1 + MCP (:9876) |
-| **assetto** | Subagent | assetto.harness.json | Assetto Corsa Server Manager |
+| **assetto-corsa** | Subagent | assetto-corsa.harness.json | Assetto Corsa Server Manager + contenido branded |
 | **authentik** | Subagent | authentik.harness.json | SSO Authentik (auth.armada.do) |
 | **docuseal** | Subagent | docuseal.harness.json | Firma documentos DocuSeal |
 | **nextcloud** | Subagent | nextcloud.harness.json | Nextcloud + whiteboard |

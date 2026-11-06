@@ -16107,3 +16107,14 @@ Changes not staged for commit:
 
 no changes added to commit (use "git add" and/or "git commit -a")
 [12:00:01] Push FALLÓ
+[12:10:01] Sync bidireccional...
+[12:10:01] Pull GitHub → local...
+error: cannot pull with rebase: You have unstaged changes.
+error: additionally, your index contains uncommitted changes.
+error: Please commit or stash them.
+[12:10:01] Pull FALLÓ
+[12:10:01] Push local → GitHub...
+[master 8f11a17] changelog: sync from Kalimete 2026-11-06T17:10:01Z
+ 3 files changed, 11 insertions(+)
+ rename agents/{assetto.md => assetto-corsa.md} (100%)
+ rename harness/{assetto.harness.json => assetto-corsa.harness.json} (100%)
