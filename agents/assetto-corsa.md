@@ -220,7 +220,7 @@ El script hace, en orden: pre-flight de identidad/host/IP + gate de md5 → back
 
 Copiar y marcar en orden; si un gate falla, **parar** (no “seguir y ver”).
 
-- [ ] **1. Gate de original**: `md5sum tracks/<slug>/<slug>.kn5` ≠ `3b72f19dcfb42b4e9641d6bbf528cc04` (original). Si es igual → el branded nunca se copió; abortar.
+- [ ] **1. Gate de original**: `md5sum tracks/<slug>/<slug>.kn5` ≠ `3b72f19dcfb42b4e9641d6bbf528cc04` (original) **y** ≠ el md5 del KN5 dentro de `tracks/<slug>.tar`. Si es igual → el branded nunca se copió; abortar.
 - [ ] **2. Gate de branded**: el md5 local coincide con el branded esperado (`a2c39948ebd26204a44577cd69e5e8fe` para VR506). Si es otra versión legítima → `ALLOW_UNKNOWN_KN5=1` + registrar el md5 nuevo en este doc/CHANGELOG.
 - [ ] **3. Backup local**: existe `.bkup-<timestamp>` con el md5 que voy a desplegar (o el original, si aún no había branded).
 - [ ] **4. Backup remoto PRE-rsync**: el script copia el KN5 live a `.bkup-<timestamp>` antes de tocar nada. Verificar que el backup conserva el md5 que estaba vivo.
