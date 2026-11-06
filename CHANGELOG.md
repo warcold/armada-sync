@@ -45,6 +45,8 @@
 - **Causa**: owner vio 2 entradas de menú y opciones faltantes — residuos de la fusión a medias 2.0.0.
 - **Estado**: ✅ verificado — wp-admin 200, panel 200 con tabs, 0 fatales, front 200 + add-to-cart OK, magantech 200.
 - **Notas**: deuda restante documentada (clases gemelas ERPSuite_*/ZionCommerce_* con aliases, dirs bkup-before-fusion — no bloqueante). Diagnóstico/inventario por subagente ZionV CRM; ejecución quirúrgica por kalimete (plan del subagente).
+
+### [2026-11-06 03:50 AST] [micaserogou] Fix2: fatal /wp-admin/ (ZionCommerce_AdminMenu::instance) — residuo fusión Zion CRM
 - **Tipo**: fix (plugin Zion CRM, capa 1)
 - **Modificado**: `zionv-crm-plugin/src/Modules/Commerce/Core/Bootstrap.php:239` — `ZionCommerce_AdminMenu::instance()` → `init()` (método pre-fusión inexistente; la clase unificada es estática, auto-init en AdminMenu.php:1434 + Main.php:464). Backup: Bootstrap.php.bkup-20261106. Commit submódulo `d10d158` pusheado a GitHub warcold/zionv-crm (incluye fix v2.0.1-fix del 2026-11-05: 404 connector.js/logger.js).
 - **Afecta a**: micaserogou preprod (:8094) — /wp-admin/ HTTP 500 → 200. Front nunca afectado (el hook admin_menu no corre en front).
