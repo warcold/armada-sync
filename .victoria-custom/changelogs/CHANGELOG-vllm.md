@@ -1,10 +1,15 @@
-### [2026-11-06 15:20 EST] [flota] Directiva owner: flujo de Victoria 100% LOCAL — nube fuera de la delegación (config se mantiene)
+### [2026-11-06 16:10 EST] [gateway] Cerebro embebido client-config: regla dura de idioma
+- **Tipo**: fix (comportamiento)
+- **Qué**: el system prompt de Victoria embebida en /v1/client-config ahora incluye la regla dura: "Responde SIEMPRE en el idioma del mensaje del usuario... TODA tu prosa va en el idioma del usuario. NUNCA cambies de idioma de forma autónoma". Antes solo decía "Responde en el idioma del usuario" (débil — permitía code-switching).
+- **Verificado**: py_compile OK, gateway reiniciado sano, E2E con contexto técnico inglés + pregunta español → respuesta en español.
+- **Docs**: esta entrada + general.
 - **Tipo**: docs + política (directiva owner — "solo evaluar los locales que tenemos aquí y con ellos mejorar nuestro ecosistema")
 - **Qué**: la delegación de "Using a Victoria" es 100% LOCAL (generalista :8000 + Coder :8001 + Thinker thinking-ON + skills + futuros motores internos). Los modelos NIM (glm-5.3-flash, deepseek-v4.1, nemotron-3-ultra) permanecen en el opencode.json de ambos hosts como configuración disponible PERO están FUERA del flujo de delegación de Victoria: ella JAMÁS los rutea ni sugiere — solo uso manual directo del owner (él cambia de modelo en el picker si quiere). El usuario final solo ve "Using a Victoria"; un futuro modelo de profundidad local (80B) sería OTRO motor interno, NUNCA una opción de picker. **NO se tocó el opencode.jsonc** (el owner confirmó: mantener la config de nube en ambos hosts, solo fuera del flujo).
 - **Por que**: el owner no quiere confusión para el usuario (una sola puerta) ni dependencia de nube — el ecosistema se mejora con los recursos locales que ya tenemos.
 - **Docs actualizados**: `agents/victoria.md` (doctrina de ruteo reforzada + fila de contexto >220K corregida: "propongo al owner y él decide", ya no "NUBE si el owner la pide"), `AGENTS-summary.md` (flota + doctrina), `AGENTS.md` §5.1 (tabla NIM marcada FUERA del flujo + nota nueva "Nube FUERA del flujo de Victoria"), harness central (`delegacion.doctrina_modelos` + updated 2026-11-06). Verificado: config-guide/client-config del gateway ya entregan a clientes SOLO local (cerebro embebido delega a coder/thinker, cero nube) — sin cambios necesarios ahí.
 - **Verificado**: opencode.jsonc intacto (diff vs backup vacío); harnesses coder/thinker sin menciones de nube; grep de consistencia final limpio.
 - **Docs**: yes (esta entrada + general + los 4 archivos arriba).
+### [2026-11-06 15:20 EST] [flota] Directiva owner: flujo de Victoria 100% LOCAL — nube fuera de la delegación (config se mantiene)
 ### [2026-11-06 14:30 EST] [gateway] Thinking budget local 2048→8192 (plan de profundidad, decisión owner)
 - **Tipo**: feature (calidad de razonamiento — decisión owner "procede con todo")
 - **Qué**: `THINKING_TOKEN_BUDGET` default 2048→8192 en `llm-gateway.py` (línea ~847) + texto hardcodeado del catálogo (línea ~3229) actualizado. Con 2048 el razonamiento profundo se cortaba a mitad (el modelo no llegaba a concluir — limitación clave vs GLM en temas profundos); 8192 da espacio real de deliberación y deja ~23K de output útil (32000 total). Afecta a @Thinker y a todo cliente que pida thinking (sufijo -thinking / reasoning_effort). No afecta el default (thinking OFF).
