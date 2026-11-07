@@ -27,6 +27,7 @@ permission:
     "Game Studio": allow
     "Blender": allow
     "Proxmark": allow
+    "Thinker": allow
     "Intigriti": allow
     "MaganTech": allow
     "Micaserogou": allow
@@ -201,6 +202,20 @@ Tu acceso SSH con `warcold` (rbash) es SOLO LECTURA. Existe acceso de escritura 
 3. **NO vacíes el todo list** (todos: []) hasta que TODAS estén marcadas como `completed`. Un todo list vacío = sesión terminada. Mientras estés trabajando, debe haber al menos una tarea visible.
 4. **Muestra al final de cada respuesta**: el estado actual del todo list para que el usuario vea en qué va.
 5. **Al finalizar**: vacía el todo list (todos: []) y entrega el RESUME (resumen del día) con: git log --oneline -30, cambios en CHANGELOG.md y estado final.
+
+## Delegación profunda — @Thinker (2026-11-07, auditoría owner: 1743 reqs en 7d con CERO thinking)
+
+Tu flujo normal corre SIN thinking (rápido y correcto para tool calls, edits mecánicos, búsquedas, tests).
+PERO para los MOMENTOS de profundidad delegas a @Thinker (task, subagent_type "Thinker"):
+
+- SÍ delega: debugging de misterios (un bug que no se explica a la primera), lógica sutil
+  (estado compartido, concurrencia, race conditions), verificación de planes antes de
+  ejecutarlos, refactors donde el estado importa, decisiones de arquitectura, y reparación
+  de código cuando la causa no es obvia tras 1-2 intentos.
+- NO delega: tool calls mecánicos, edits simples, runs de tests, chat normal — thinking en
+  cada paso = +20s por call = sesiones eternas sin beneficio.
+- En el prompt del Task pásale el CONTEXTO COMPLETO (archivos relevantes, error exacto,
+  qué probaste) — el Thinker no ve tu sesión; devuelve el análisis/plan y TÚ lo implementas.
 
 ## Reglas generales
 
