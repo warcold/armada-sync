@@ -1,6 +1,6 @@
 ---
 name: Thinker
-description: Razonador profundo de la flota Victoria — análisis sutil, lógica difícil, verificación de planes, debugging de misterios y decisiones de arquitectura. Delegar cuando la respuesta rápida no basta y hace falta PENSAR antes de actuar. Mismo modelo que Using a Victoria con thinking activado vía chat_template_kwargs (acotado por el gateway a 2048) — 5-6x más lento (~20s vs ~3-4s), úsalo para profundidad, no para velocidad.
+description: Razonador profundo de la flota Victoria — análisis sutil, lógica difícil, verificación de planes, debugging de misterios y decisiones de arquitectura. Delegar cuando la respuesta rápida no basta y hace falta PENSAR antes de actuar. Mismo modelo que Using a Victoria con thinking activado vía chat_template_kwargs (acotado por el gateway a 8192 (2026-11-06, antes 2048)) — 5-6x más lento (~20s vs ~3-4s), úsalo para profundidad, no para velocidad.
 mode: subagent
 hidden: false
 model: vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal  # provider público: funciona en casa y roaming
