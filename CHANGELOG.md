@@ -1,4 +1,9 @@
 ### [2026-11-06 18:45 EST] [assetto] Gestion 100% nativa del SM: Auto Loop verificado, cron/patcher/seds eliminados
+### [2026-11-06 16:10 EST] [agentes] Regla dura de idioma en kalimete.md + thinker.md (auditoría cross-host de Victoria, autorización owner)
+- **Tipo**: fix (comportamiento — code-switching autónomo)
+- **Qué**: el owner reportó que los agentes terminaban respondiendo en inglés cuando todo el trabajo es en español (el código va en inglés, la prosa NO). Diagnóstico de Victoria (host DGX): el modelo crudo responde bien en español (E2E 1.95s LAN); el code-switching venía de system prompts SIN regla de idioma + contexto técnico en inglés que arrastra el idioma. **Fix aplicado en kalimete**: `agents/kalimete.md` (regla dura en Reglas generales: prosa SIEMPRE en el idioma del usuario, código/términos técnicos en inglés OK, NUNCA cambio autónomo) + `agent/thinker.md` (regla reforzada). Backup: `kalimete.md.bkup-20261106-idioma`. En el host Victoria se aplicó el mismo fix en victoria.md/coder.md/thinker.md + cerebro embebido del gateway.
+- **Verificado**: E2E con system prompt en inglés + pregunta en español → respuesta en español con términos técnicos en inglés (correcto).
+- **Docs**: esta entrada (repo kalimete) + CHANGELOG general de Victoria.
 ### [2026-11-06 15:20 EST] [flota] Directiva owner: flujo de Victoria 100% LOCAL — nube fuera de la delegación (config se mantiene en ambos hosts)
 - **Tipo**: docs + política (directiva owner)
 - **Qué**: "Using a Victoria" = ÚNICA puerta de sesión; su delegación es 100% LOCAL (generalista + Coder + Thinker + skills + futuros motores internos como el 80B de profundidad — nunca opciones de picker). Los NIM del opencode.json (ambos hosts) quedan FUERA del flujo de Victoria: config disponible SOLO para uso manual directo del owner — ella jamás los rutea ni sugiere. NO se tocó el opencode.jsonc (owner confirmó mantener la config de nube).
