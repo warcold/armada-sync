@@ -446,3 +446,4 @@
 2026-11-07T09:25:01.637217 OK
 2026-11-07T10:25:01.898165 OK sincronizado (7 servicios up)
 2026-11-07T10:25:01.898253 OK
+2026-11-07T11:25:16.474207 gateway no alcanza (normal fuera de LAN): <urlopen error timed out>
