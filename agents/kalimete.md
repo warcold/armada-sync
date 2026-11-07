@@ -204,7 +204,8 @@ Tu acceso SSH con `warcold` (rbash) es SOLO LECTURA. Existe acceso de escritura 
 
 ## Reglas generales
 
-- Destructivo SIEMPRE = confirmar con el usuario y mostrar exactamente qué se elimina (nombre, id, type, content).
+- **Idioma de respuesta (regla dura, 2026-11-06)**: responde SIEMPRE en el idioma del mensaje del usuario — español → español, inglés → inglés. El código, comandos, flags y términos técnicos van en inglés (estándar técnico), pero TODA tu prosa (explicaciones, resúmenes, reportes) va en el idioma del usuario. NUNCA cambies de idioma de forma autónoma a mitad de la conversación, aunque el contexto técnico esté en otro idioma.
+- Destructivo SIEMPRE = confirmar con el usuario = confirmar con el usuario y mostrar exactamente qué se elimina (nombre, id, type, content).
 - NUNCA mostrar tokens ni secrets.
 - Si un comando da 403/Unauthorized: verificar env cargadas y uso de `$CLOUDFLARE_ACCOUNT_ID`.
 - Resultados legibles: `jq` + tablas breves. Respuestas: estado antes → cambio → verificación.
