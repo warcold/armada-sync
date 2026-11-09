@@ -1,3 +1,13 @@
+### [2026-11-09 16:00] [ecco-suit] Deploy Incrementos 20-25 a producción: Ecco Improve (SAC) + Ecco Metrics + Rol Calidad + Nav Rail
+- **Tipo**: deploy | infra | base de datos
+- **Qué**: Deploy completo a VPS Ecco Qualitá (62.171.144.58) de Incrementos 20-25: 364 archivos (+305k líneas), 16 migraciones Drizzle nuevas (0026-0041), ~20 nuevas tablas (improve_*, metricas_*, notification_*). 4 containers: app (docker run), postgres, worker mail (local, polling 15s), caddy. Infra: docker run standalone + network `eccoqualita-proxy` con Caddy, volume persistente `ecco_storage`. DB: 57 tablas restauradas desde dump pre-deploy + 15 migraciones aplicadas = 102 tablas. Health HTTPS OK, CSP nonce activo, todas las nuevas rutas responden (mejora/*, indicacoes/ejecutivo/*, admin/correo, cuenta/avisos).
+- **Procedimiento**: db dump pre-deploy → merge origin/develop → build (app + worker) → rsync → db restore (pg_restore) → migraciones (drizzle-kit) → container app recreate (network host→eccoqualita-proxy) → container worker → worker mail UP. Deploy manual, no compose.
+- **Modificado**: `~/armada-sync/harness/ecco-suit.harness.json` (scope, vivo, changelog, checks, upstream, delegacion), `~/armada-sync/agents/ecco-suit.md` (historia, upstream, comandos), `~/dev/eccoqualita/EccoSuit-develop/COORDINACION.md`.
+- **Afecta a**: VPS Ecco Qualitá (62.171.144.58), proyecto local EccoSuite.
+- **Lección**: deploy standalone (no compose) para evitar conflicto de network/names con Caddy existente. Excluir `/docker-compose.yml` del rsync (sobrescribe compose prod). `--exclude=/storage` con `/` anclado (sin slash borró `src/platform/storage/` en deploy anterior).
+- **Estado**: ✅ TODO verificable. Health HTTPS, 4 containers UP, 102 tablas DB, worker mail activo.
+- **Docs**: CHANGELOG.md del repo (este archivo), CHANGELOG de Increments 20-25 (plan individual).
+
 ### [2026-11-06 18:45 EST] [assetto] Gestion 100% nativa del SM: Auto Loop verificado, cron/patcher/seds eliminados
 ### [2026-11-06 16:10 EST] [agentes+gateway] Regla dura de idioma: prosa SIEMPRE en el idioma del usuario (host + kalimete + cerebro clientes)
 - **Tipo**: fix (comportamiento — code-switching autónomo; pedido owner durante auditoría de kalimete)
