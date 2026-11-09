@@ -1,3 +1,17 @@
+### [2026-11-09 15:15 EST] [ecco-suit] Deploy verificado Incrementos 24-25 COMPLETADO en producción + compose corregido (Victoria @ victoria.local, autorización owner)
+- **Tipo**: deploy (producción) + fix (infra compose) + docs (runbook validado)
+- **Qué**: ejecutado el runbook GATE 0-3 completo para los Incrementos 24-25 (Rol Responsable de Calidad + Nav Rail/Ctrl+K), ya fusionados a `feature/csp-nonce` (`9e7ba8d`). (1) Backup pre-deploy `ecco_suite-pre-deploy-24-25-2026-11-09-1848.dump`. (2) rsync canónico. (3) GATE 1: 0041 + quality_manager + nav-model verificados EN la VPS. (4) Build `ecco-suite:local`=`ec3530081ea8` + `eccosuit-migrate:local` (nohup+poll). (5) Migración 0041 vía `docker run --network eccoqualita-proxy` con imagen build-stage — enum `quality_manager` VERIFICADO en BD. (6) **Compose de producción CORREGIDO** (causa raíz del histórico «conflicto con Caddy»: apuntaba a red/volumen huérfanos `eccosuit_ecco-internal`/`eccosuit_ecco_storage`; ahora red `eccoqualita-proxy` + volumen `ecco_storage` reales + `container_name: ecco-app/ecco-worker` + `build: .`; backup `docker-compose.yml.bkup-20261109-victoria`). (7) Swap de contenedores (los standalone viejos bloqueaban los nombres → stop+rm manual; `compose down` no los elimina). (8) GATE 2: health público `{"status":"ok","app":"up","database":"up"}`, login 307, worker en marcha, contenedores en `eccoqualita-proxy`. (9) GATE 3: registros actualizados (COORDINACION.md commit `4e3fe9c`, doc del agente con runbook EJECUTADO, harness). Downtime ~15s. Sin push a origin.
+- **Por qué**: orden del owner — terminar correctamente el deploy que el agente dejó pendiente y dejar la documentación validada para próximos updates.
+- **Lecciones documentadas**: (1) compose es el camino canónico — el problema era el compose file, no compose; (2) contenedores standalone con nombre custom no son reconocidos por compose (duplicados `eccosuit-app-1`); (3) la 0041 añade VALOR al enum `membership_role` (no crea tabla); (4) verificar EN EL DESTINO, no en el origen.
+- **Verificado**: health público OK, enum en BD, logs limpios, login 307, worker activo, JSON del harness válido.
+- **Docs**: `agents/ecco-suit.md` (runbook EJECUTADO Y VALIDADO + comandos reales + Historia/Vivo) + `harness/ecco-suit.harness.json` + este changelog.
+
+### [2026-11-09 13:00 EST] [kalimete/ecco-suit] Auditoría deploy EccoSuite + fusión Incrementos 24-25 + runbook verificado (TARGET=kalimete, autorización owner)
+- **Tipo**: fix + docs (trabajo cross-machine en kalimete; contrato respetado — detalle canónico en SU repo `~/armada-sync/CHANGELOG.md` de kalimete)
+- **Qué**: auditoría del desempeño del agente Ecco Suit (queja del cliente por cambios faltantes): el deploy del 2026-11-09 dejó producción en Incrementos 20-23 (verificado EN el VPS 62.171.144.58: `drizzle/` 0000-0040, sin `user_roles`, sin `quality_manager` ni `nav-model`) mientras los registros declaraban 20-25. Causa: 24-25 nunca fusionados (varados en `feature/quality-role`). Con autorización del owner: fusión a la rama de deploy (`9e7ba8d`), verificación (typecheck limpio + 30/30 tests unit nuevos), corrección de los 4 registros falsos (COORDINACION.md, PLAN-DEPLOY, doc del agente, harness) y runbook de deploy VERIFICADO (GATE 0-3) en `~/armada-sync/agents/ecco-suit.md`. Deploy de 24+25 queda para el agente Ecco Suit (próximo trabajo, orden explícita del owner).
+- **Verificado**: merge + typecheck + vitest 30/30 en kalimete; VPS verificado read-only.
+- **Docs**: `~/armada-sync/CHANGELOG.md` de kalimete + `agents/ecco-suit.md` + su harness.
+
 ### [2026-11-06 18:45 EST] [assetto] Gestion 100% nativa del SM: Auto Loop verificado, cron/patcher/seds eliminados
 ### [2026-11-06 16:10 EST] [agentes+gateway] Regla dura de idioma: prosa SIEMPRE en el idioma del usuario (host + kalimete + cerebro clientes)
 - **Tipo**: fix (comportamiento — code-switching autónomo; pedido owner durante auditoría de kalimete)
@@ -6084,3 +6098,18 @@ EOF又是
 
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
+
+## 2026-11-09
+
+### [21:21] - Cambio: VR506 track branded 13/13 texturas (logoj+logob corregidos)
+- **Tipo**: asset
+- **Modificado**: vr506_dominicana_2_0.kn5 + vao-patch (13/13 texturas)
+- **Afecta a**: kalimete (tracks) + vps-preprod (servidor AC)
+- **Causa**: Reemplazar todas las texturas del VR506 con anuncios profesionales de Alfredo.pro (IT Solutions). Los logos logoj.dds y logob.dds se omitieron en la primera ejecución por mismatch de tamaño BC5 — redimensionados a 256x64 y re-emitidos.
+- **Pipeline completo**: IA Victoria (z-image-turbo) → PNGs → resize 256x64 para logos → ac_replacer.py → DDS→KN5 injection → vao-patch → deploy
+- **Checksum kn5**: 3e3fe958c0b49621d575e8c10d03b35f
+- **vao-patch**: 112MB (118MB comprimido), checksum actualizado
+- **Deploy**: ✅ kn5, vao-patch, vao-patch.zip en servidor (todos con checksum correcto)
+- **Estado**: ✅ sincronizado + deploy OK
+- **Notas**: 162 texturas total, 13 ad texturas. FENCE_MARSHALL.DDS es solo 304B (strip de 8px). Banners usan paleta azul/navy Alfredo.pro.
+
