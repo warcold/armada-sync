@@ -6100,18 +6100,6 @@ EOF又是
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
 
 ## 2026-11-09
-## 2026-11-09
-
-### [23:59] - Cambio: VR506 billboards DXT5-optimized (PIL geometric designs)
-- **Tipo**: asset
-- **Modificado**: vr506_dominicana_2_0.kn5 (13 texturas) + vao-patch
-- **Afecta a**: kalimete + vps-preprod
-- **Causa**: Banners IA generados por z-image-turbo producían imágenes pixeladas en el juego. DXT5 (BC1/BC3/BC5) no comprime bien gradientes ni detalles finos: edge_pct post-DDS de 25-57% (esperado <20%). Solución: generar banners con PIL (geometría sólida: círculos, rectángulos, líneas) usando colores planos (#0D47A1 Navy, #FFFFFF, #FFC107 Yellow). Post-procesamiento: blur + posterización agresiva.
-- **Resultados calidad**: edge_pct post-DDS ahora 0.0-2.8% (antes 25-57%). diff: 0-123 antes 90-145. Color count: Sign frame N: 114 colores (antes ~5000).
-- **Checksum kn5**: f3166d00d897946794145ee018571d22
-- **vao-patch**: 111MB, checksum actualizado en Manifest.json
-- **Deploy**: ✅ kn5 + vao-patch.zip + vao-patch (descomprimido) en vps-preprod
-- **Estado**: ✅ sincronizado (git push OK, master 61b1278)
 
 ### [21:21] - Cambio: VR506 track branded 13/13 texturas (logoj+logob corregidos)
 - **Tipo**: asset
@@ -6125,28 +6113,3 @@ EOF又是
 - **Estado**: ✅ sincronizado + deploy OK
 - **Notas**: 162 texturas total, 13 ad texturas. FENCE_MARSHALL.DDS es solo 304B (strip de 8px). Banners usan paleta azul/navy Alfredo.pro.
 
-
-## 2026-11-09
-## 2026-11-09
-
-### [23:59] - Cambio: VR506 billboards DXT5-optimized (PIL geometric designs)
-- **Tipo**: asset
-- **Modificado**: vr506_dominicana_2_0.kn5 (13 texturas) + vao-patch
-- **Afecta a**: kalimete + vps-preprod
-- **Causa**: Banners IA generados por z-image-turbo producían imágenes pixeladas en el juego. DXT5 (BC1/BC3/BC5) no comprime bien gradientes ni detalles finos: edge_pct post-DDS de 25-57% (esperado <20%). Solución: generar banners con PIL (geometría sólida: círculos, rectángulos, líneas) usando colores planos (#0D47A1 Navy, #FFFFFF, #FFC107 Yellow). Post-procesamiento: blur + posterización agresiva.
-- **Resultados calidad**: edge_pct post-DDS ahora 0.0-2.8% (antes 25-57%). diff: 0-123 antes 90-145. Color count: Sign frame N: 114 colores (antes ~5000).
-- **Checksum kn5**: f3166d00d897946794145ee018571d22
-- **vao-patch**: 111MB, checksum actualizado en Manifest.json
-- **Deploy**: ✅ kn5 + vao-patch.zip + vao-patch (descomprimido) en vps-preprod
-- **Estado**: ✅ sincronizado (git push OK, master 61b1278)
-
-### [23:59] - Cambio: VR506 billboards DXT5-optimized (PIL geometric designs)
-- **Tipo**: asset
-- **Modificado**: vr506_dominicana_2_0.kn5 (13 texturas) + vao-patch
-- **Afecta a**: kalimete + vps-preprod
-- **Causa**: Los banners generados por IA (z-image-turbo) producían imágenes pixeladas en el juego porque DXT5 (BC1/BC3/BC5) no comprime bien gradientes ni detalles finos — edge_pct post-DDS de 25-57% (esperado <20%). Solución: generar banners directamente con PIL (geometría sólida: círculos, rectángulos, líneas) usando colores planos de la marca (#0D47A1, #FFFFFF, #FFC107). Post-procesamiento: blur + posterización agresiva.
-- **Resultados calidad**: edge_pct post-DDS ahora <3% (mejora de 25-57% → <3%)
-- **Checksum kn5**: f3166d00d897946794145ee018571d22
-- **vao-patch**: 111MB, checksum actualizado
-- **Deploy**: ✅ todo en vps-preprod
-- **Estado**: ✅ sincronizado
