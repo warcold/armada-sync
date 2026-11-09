@@ -1,11 +1,11 @@
 {
   "harness": "ecco-suit",
-  "updated": "2026-10-19",
+  "updated": "2026-11-09",
   "agent_file": "~/armada-sync/agents/ecco-suit.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "VPS Ecco Qualitá (62.171.144.58, alias ssh ecco): host Docker multi-servicio tras Caddy común (TLS Let's Encrypt auto, 80/443). Servicio 1: EccoSuite (suite.eccoqualita.com) — Next.js 16.4 standalone + PostgreSQL 18, contenedores sin puertos públicos, red compartida eccoqualita-proxy para vhosts futuros. Despliegue/operación/respaldos de servicios Ecco Qualitá.",
-  "vivo_2026_10_19": "Despliegue completo end-to-end: Docker 29.9.1 + compose v5.6.0, swap 2G, UFW(22/80/443+udp), fail2ban, llave SSH kalimete (password aún ON). /opt/eccoqualita/{proxy,eccosuit}. Bootstrap roles ecco_owner/ecco_app (ALLOW_BOOTSTRAP one-shot) + 22 migraciones (57 tablas) vía contenedor tools (etapa build del Dockerfile). Health HTTPS verificado: {status:ok, app:up, database:up}; login 200; cert Let's Encrypt auto-renovable. Secretos generados EN la VPS (.env/.env.postgres 600). Lecciones rsync: excludes anclados (/storage sin / borró src/platform/storage) y excluir /docker-compose.yml (el sync sobrescribía el compose prod).",
+  "scope": "VPS Ecco Qualitá (62.171.144.58, alias ssh ecco): host Docker con 4 containers (ecco-app Next.js 16.4, ecco-postgres 18, ecco-worker mail, ecco-caddy TLS). Caddyfile en /opt/eccoqualita/proxy/Caddyfile con reverse_proxy a ecco-app:3100 en red eccoqualita-proxy. Incrementos cerrados hasta 25 (nav-rail), con 40 migraciones Drizzle. Deploy: rsync + docker run manual (no compose en prod).",
+  "vivo_2026_11_09": "Deploy completado: incremental 20 (Ecco Improve SAC) + 21-23 (Ecco Metrics) + 24 (Responsable de Calidad) + 25 (Nav Rail). 364 archivos (+305k líneas), 16 migraciones nuevas (0026-0041), 4 nuevas tablas de notificaciones, ~20 tablas de improve/metrics. Deploy manual: db dump pre-deploy → merge origin/develop → build → rsync → db restore → 15 migraciones aplicadas → container app (network host→eccoqualita-proxy) → container worker. Infra: docker run individual (no compose), network eccoqualita-proxy con Caddy, volume ecco_storage persistente. Worker mail: MAIL_TRANSPORT=local, polling 15s. 57 tablas restauradas + nuevas = 102 tablas en DB. Lección crítica: el deploy anterior usaba contenedores standalone (no compose), no recomendar compose en VPS para evitar conflict de network/names.",
   "live_check": "curl -s https://suite.eccoqualita.com/api/health",
   "checks": [
     "curl -s https://suite.eccoqualita.com/api/health  ({status:ok})",
@@ -14,7 +14,7 @@
     "ssh ecco 'ufw status | head -2'  (active)"
   ],
   "upstream": {
-    "fuente": "github VincentEQ/EccoSuit (copia local ~/dev/eccoqualita/EccoSuit-develop/, solo lectura — kalimete despliega, no desarrolla). Infra: Docker 29.9.1, caddy:2, postgres:18, node:24-slim.",
+    "fuente": "github VincentEQ/EccoSuit (copia local ~/dev/eccoqualita/EccoSuit-develop/, solo lectura — kalimete despliega, no desarrolla). Infra: Docker 29.9.1, caddy:2, postgres:18, node:24-slim, deploy manual via docker run (no compose en prod). Red: eccoqualita-proxy bridge (Caddy → app:3100, app ↔ postgres en misma red).",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
   },
   "docs": [
@@ -45,20 +45,25 @@
   },
   "changelog": [
     {
+      "fecha": "2026-11-09",
+      "cambio": "Deploy Incrementos 20-25: Ecco Improve (SAC, 7 migraciones) + Ecco Metrics (3 migraciones, alertas, vista ejecutiva) + Rol Responsable de Calidad + Nav Rail. 364 archivos, 16 migraciones nuevas (0026-0041), ~20 nuevas tablas (email_outbox, local_mailbox, notification_* + improve_* + metricas_* + worker mail). Deploy manual: docker run (no compose). Infra: db dump pre-deploy → merge → build → rsync → db restore → migraciones → containers UP. Lección: deploy standalone (no compose), network eccoqualita-proxy con Caddy."
+    },
+    {
       "fecha": "2026-10-19",
       "cambio": "Despliegue inicial completo: VPS virgen → producción https://suite.eccoqualita.com (Docker, postgres 18, roles, 22 migraciones, app, Caddy TLS, UFW, fail2ban, llave SSH, alias ecco). Agente creado (21º subagente) + allowlist kalimete + MAPA sección 8."
     }
   ],
   "no_touch": [
     "Repo en ~/dev/eccoqualita/EccoSuit-develop/",
-    "Deploy solo via GitHub Actions"
+    "Deploy manual via rsync + docker run (no compose, no GitHub Actions en VPS)"
   ],
   "delegacion": {
     "cuando_usar": "Gestión EccoSuit, deploy VPS, CSP",
-    "pre_check": "curl -s -o /dev/null -w %{http_code} https://eccoqualita.com/ | grep -q 200 || echo ecco-suit:down",
-    "post_check": "ssh vps-preprod \"cd ~/dev/eccoqualita && git log -1 --oneline\""
+    "pre_check": "curl -s -o /dev/null -w %{http_code} https://suite.eccoqualita.com/api/health 2>/dev/null || echo ecco-suit:down",
+    "post_check": "curl -s https://suite.eccoqualita.com/api/health && docker exec ecco-postgres psql -U postgres -d ecco_suite -c \"SELECT count(*) FROM pg_tables WHERE schemaname='public';\""
   },
   "changelogs": [
-    "~/armada-sync/CHANGELOG.md"
+    "~/armada-sync/CHANGELOG.md",
+    "~/dev/eccoqualita/EccoSuit-develop/PLAN-DEPLOY-INCREMENTOS-20-25.md"
   ]
 }

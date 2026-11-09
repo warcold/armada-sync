@@ -74,6 +74,9 @@ Internet → :80/:443 → ecco-caddy (Caddy 2, TLS Let's Encrypt auto)
 ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'
 curl -s https://suite.eccoqualita.com/api/health     # {"status":"ok","app":"up","database":"up"}
 
+# Worker mail (2026-11-09+)
+ssh ecco 'docker logs --tail 20 ecco-worker'
+
 # Logs
 ssh ecco 'docker logs --tail 50 ecco-app'
 ssh ecco 'docker logs --tail 50 ecco-caddy'
@@ -93,6 +96,13 @@ ssh ecco 'cd /opt/eccoqualita/eccosuit && \
 
 # Respaldo BD (pg_dump del contenedor postgres — NO usa npm run db:backup, que exige clientes pg locales)
 ssh ecco 'docker exec ecco-postgres pg_dump -U postgres -Fc ecco_suite > /opt/eccoqualita/backups/ecco_suite-$(date +%F).dump'
+
+# Respaldo DB + restore: dump → merge → db restore → migraciones (patrón deploy 2026-11-09)
+ssh ecco 'docker exec ecco-postgres pg_dump -U postgres ecco_suite > /tmp/db_predeploy.sql'
+ssh ecco 'docker exec ecco-postgres psql -U postgres -c "DROP DATABASE ecco_suite;"'
+ssh ecco 'docker exec ecco-postgres psql -U postgres -c "CREATE DATABASE ecco_suite OWNER postgres;"'
+cat /tmp/db_predeploy.sql | ssh ecco 'cat | docker exec -i ecco-postgres psql -U postgres -d ecco_suite'
+# Luego aplicar migraciones: docker run --rm ... migrate npx tsx scripts/db-migrate.ts
 
 # PSQL de emergencia
 ssh ecco 'docker exec -it ecco-postgres psql -U postgres -d ecco_suite'
@@ -168,6 +178,7 @@ docker compose --profile tools run --rm \
 
 ## Historia
 
+- **2026-11-09**: Deploy Incrementos 20-25 (Ecco Improve SAC + Ecco Metrics + Rol de Calidad + Nav Rail). 364 archivos (+305k líneas), 16 migraciones Drizzle (0026-0041), ~20 nuevas tablas. Deploy manual: docker run standalone (no compose), db dump pre-deploy → merge → build → rsync → db restore → 15 migraciones aplicadas → containers UP en network `eccoqualita-proxy` con Caddy. Worker mail: MAIL_TRANSPORT=local, polling 15s. Infra: 4 containers (app, postgres, worker, caddy), 102 tablas DB. Lección: usar docker run individual (no compose) para evitar conflicto de network/names con Caddy existente. Deploy anterior usaba contenedores standalone (no compose) — mantener patrón.
 - **2026-10-28**: deploy CSP-nonce a producción — rsync `feature/csp-nonce` @ `612ea50` (= origin/develop) con `--exclude='*.bkup*'` + rebuild (`b872ba11d879`) + `up -d app`. Verificado: health OK, logs limpios (Next.js 16.4.3), CSP en vivo con `nonce-` en script-src y SIN `unsafe-inline` en script-src. Sin deps/migraciones nuevas. **Lección**: `docker compose build 2>&1 | tail` retiene el canal ssh abierto (pipe sin EOF) → timeout local falso a 15 min aunque el build remoto (~9 min) SÍ completó; verificar estado real (`docker images`/`docker ps`) antes de reintentar; para builds largos, `nohup … > log 2>&1 &` + polling.
 - **2026-10-20**: superadmin definitivo `v.tapia@eccoqualita.com` (orden del owner, clave elegida por él) — verificado signInEmail; placeholder `admin@eccoqualita.com` eliminado (cascade) + fichero de credenciales borrado. Nuevo script ops `prod-remove-user.ts` (guard último-admin).
 - **2026-10-19**: despliegue completo end-to-end (Docker 29.9.1 + swap 2G + postgres 18 + bootstrap roles + 22 migraciones/57 tablas + app + Caddy TLS + UFW/fail2ban + llave SSH). Health OK en https://suite.eccoqualita.com. **Cierre same-day**: primer admin creado+verificado (signInEmail), backups cron + restore-test, health monitor, password SSH desactivado (lección: cloud-init drop-in ganaba por orden; lección 2: tests de password con ssh-agent activo dan falsos positivos — usar `PubkeyAuthentication=no`).
@@ -179,11 +190,11 @@ docker compose --profile tools run --rm \
 - **Next.js (app EccoSuite)**: https://nextjs.org/docs
 - **PostgreSQL**: https://www.postgresql.org/docs/
 
-## Upstream (2026-10-22)
+## Upstream (2026-11-09)
 
 - **Fuente**: repo `VincentEQ/EccoSuit` (copia local `~/dev/eccoqualita/EccoSuit-develop/`); infra propia (compose + Caddy + ops kit `~/dev/eccoqualita/ops/`).
-- **Vivo**: despliegue validado end-to-end 2026-10-19/20 (health OK, backups cron + restore-test 57 tablas, superadmin verificado, password SSH desactivado). **2026-10-28: VPS AL DÍA** con `origin/develop` @ `612ea50` (CSP-nonce en producción, imagen `b872ba11d879`).
-- **Check**: `ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'` + `curl -s https://suite.eccoqualita.com/api/health`.
+- **Vivo**: VPS AL DÍA con `origin/develop` @ `edae56a` (Incrementos 20-25: Improve, Metrics, Calidad, Nav Rail). 40 migraciones Drizzle (0000-0040), 102 tablas en DB. Deploy manual: docker run standalone. Worker mail activo (MAIL_TRANSPORT=local). CSP nonce activo.
+- **Check**: `ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'` + `curl -s https://suite.eccoqualita.com/api/health` + `docker exec ecco-postgres psql -U postgres -d ecco_suite -c "SELECT count(*) FROM pg_tables WHERE schemaname='public';"` (esperado: 102).
 - **Regla**: LIVE manda; el código es de VincentEQ — kalimete solo despliega/opera, no desarrolla upstream.
 
 ```json upstream_drk
