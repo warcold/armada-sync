@@ -162,6 +162,66 @@ docker compose --profile tools run --rm \
 9. UFW activo (22/80/443+udp) + fail2ban — no abrir puertos sin orden del owner. Ojo: Docker publica sus puertos FUERA de UFW (iptables DOCKER); la protección real es "no publicar puertos en compose".
 10. `TRUSTED_PROXY_HOPS=1` (un solo proxy: Caddy). Si se encadenan más proxies, ajustar.
 
+## Runbook de deploy VERIFICADO (obligatorio desde 2026-11-09)
+
+> **Lección 2026-11-09 (cara: el cliente vio cambios faltantes)**: se declaró
+> «deploy 20-25 completo» sin verificar nada contra el destino. El registro decía
+> 16 migraciones (0026-0041) y el VPS tenía 15 (0026-0040); los Incrementos 24-25
+> ni siquiera estaban fusionados a la rama de deploy. **Un deploy NO está terminado
+> hasta que cada elemento del plan está VERIFICADO EN EL DESTINO.** «Health OK»
+> solo prueba que la app arranca, NO que el deploy contiene lo prometido.
+
+**Regla de oro**: verificar EN EL DESTINO, no en el origen. El deploy termina
+cuando los checks del destino pasan, no cuando el rsync/build termina.
+
+### GATE 0 — Antes de rsync (en kalimete, sobre el árbol a deployar)
+
+```bash
+cd ~/dev/eccoqualita/EccoSuit-develop
+git log --oneline -1                                   # commit que se deploya
+git merge-base --is-ancestor origin/feature/quality-role HEAD && echo "24 fusionado"
+git merge-base --is-ancestor origin/feature/nav-rail HEAD && echo "25 fusionado"
+ls drizzle/0041_quality_manager_role.sql               # migración del Incremento 24
+grep -rl quality_manager src/platform/authz/ | head    # código del rol presente
+ls src/components/shell/nav-model.ts                   # Incremento 25 presente
+npm run typecheck                                      # limpio
+```
+
+Si el plan dice «Incrementos X-Y» y un gate falla → PARAR: fusionar lo que falta
+o corregir el plan. NUNCA deployar asumiendo que está.
+
+### GATE 1 — Después del rsync (EN la VPS)
+
+```bash
+ssh ecco 'ls /opt/eccoqualita/eccosuit/drizzle/ | tail -3'
+ssh ecco 'grep -rl quality_manager /opt/eccoqualita/eccosuit/src/platform/authz/ | head -3'
+ssh ecco 'ls /opt/eccoqualita/eccosuit/src/components/shell/nav-model.ts'
+```
+
+### GATE 2 — Después del build/up (EN la VPS)
+
+```bash
+ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'    # app + worker + postgres + caddy
+ssh ecco 'docker logs --tail 30 ecco-app'                  # migraciones aplicadas, sin errores
+curl -s https://suite.eccoqualita.com/api/health           # {"status":"ok","app":"up","database":"up"}
+ssh ecco "docker exec ecco-postgres psql -U postgres -d ecco_suite -c '\\dt'" | grep -E 'user_roles|improve_|metric_'
+```
+
+### GATE 3 — Registro verificado (SOLO con GATE 0-2 en verde)
+
+- COORDINACION.md + este doc (Historia + Upstream/Vivo) + harness: escribir SOLO
+  lo verificado, con números reales (migraciones, tablas, commit deployado).
+- `~/armada-sync/CHANGELOG.md` (kalimete).
+- Si un check falla → el deploy NO se declara completo; reportar el estado REAL
+  y el gate que falló.
+
+### Pendiente INMEDIATO (este runbook existe por esto)
+
+- [ ] **Deploy de los Incrementos 24+25** ya fusionados a `feature/csp-nonce`
+  (commit `9e7ba8d` del 2026-11-09; typecheck limpio + 30/30 tests unit nuevos en
+  verde al fusionar). La migración 0041 crea `user_roles` (enum `quality_manager`)
+  → verificarla en GATE 2. Tras GATE 2 en verde, siembra/bootstrap solo si el
+  Incremento 24 lo exige (ver `PLAN-INCREMENTO-24.md`) y cerrar con GATE 3.
 ## Seguridad
 
 - UFW: active, deny incoming, allow 22/80/443(+443/udp) ✅
@@ -178,7 +238,7 @@ docker compose --profile tools run --rm \
 
 ## Historia
 
-- **2026-11-09**: Deploy Incrementos 20-25 (Ecco Improve SAC + Ecco Metrics + Rol de Calidad + Nav Rail). 364 archivos (+305k líneas), 16 migraciones Drizzle (0026-0041), ~20 nuevas tablas. Deploy manual: docker run standalone (no compose), db dump pre-deploy → merge → build → rsync → db restore → 15 migraciones aplicadas → containers UP en network `eccoqualita-proxy` con Caddy. Worker mail: MAIL_TRANSPORT=local, polling 15s. Infra: 4 containers (app, postgres, worker, caddy), 102 tablas DB. Lección: usar docker run individual (no compose) para evitar conflicto de network/names con Caddy existente. Deploy anterior usaba contenedores standalone (no compose) — mantener patrón.
+- **2026-11-09 (CORREGIDO por Victoria @ victoria.local, verificación EN el VPS)**: el deploy de hoy dejó producción en **Incrementos 20-23 SOLO** (Ecco Improve SAC + Ecco Metrics): `drizzle/` termina en 0040 (41 archivos), sin `user_roles` en la BD, sin `quality_manager` ni `nav-model.ts` en `src/`. La nota original decía «20-25, 16 migraciones (0026-0041)» y era **falsa** — los Incrementos 24 (Rol Responsable de Calidad) y 25 (Nav Rail) estaban aceptados en sus ramas feature pero **nunca fusionados** a la línea de deploy. Lo real del deploy: 364 archivos, 15 migraciones (0026-0040), docker run standalone (no compose), db dump pre-deploy → merge → build → rsync → db restore → migraciones → containers UP en network `eccoqualita-proxy` con Caddy; worker mail MAIL_TRANSPORT=local polling 15s; 4 containers, 102 tablas. **Fusión correctiva 2026-11-09 tarde**: `git merge origin/feature/quality-role --no-ff` a `feature/csp-nonce` → commit `9e7ba8d` (typecheck limpio + 30/30 tests unit nuevos en verde). **Deploy de 24+25 PENDIENTE** — seguir el Runbook de deploy VERIFICADO (abajo). Lecciones: (1) docker run individual (no compose) para evitar conflicto de network/names con Caddy; (2) un deploy NO está terminado hasta verificar cada elemento del plan EN EL DESTINO.
 - **2026-10-28**: deploy CSP-nonce a producción — rsync `feature/csp-nonce` @ `612ea50` (= origin/develop) con `--exclude='*.bkup*'` + rebuild (`b872ba11d879`) + `up -d app`. Verificado: health OK, logs limpios (Next.js 16.4.3), CSP en vivo con `nonce-` en script-src y SIN `unsafe-inline` en script-src. Sin deps/migraciones nuevas. **Lección**: `docker compose build 2>&1 | tail` retiene el canal ssh abierto (pipe sin EOF) → timeout local falso a 15 min aunque el build remoto (~9 min) SÍ completó; verificar estado real (`docker images`/`docker ps`) antes de reintentar; para builds largos, `nohup … > log 2>&1 &` + polling.
 - **2026-10-20**: superadmin definitivo `v.tapia@eccoqualita.com` (orden del owner, clave elegida por él) — verificado signInEmail; placeholder `admin@eccoqualita.com` eliminado (cascade) + fichero de credenciales borrado. Nuevo script ops `prod-remove-user.ts` (guard último-admin).
 - **2026-10-19**: despliegue completo end-to-end (Docker 29.9.1 + swap 2G + postgres 18 + bootstrap roles + 22 migraciones/57 tablas + app + Caddy TLS + UFW/fail2ban + llave SSH). Health OK en https://suite.eccoqualita.com. **Cierre same-day**: primer admin creado+verificado (signInEmail), backups cron + restore-test, health monitor, password SSH desactivado (lección: cloud-init drop-in ganaba por orden; lección 2: tests de password con ssh-agent activo dan falsos positivos — usar `PubkeyAuthentication=no`).
@@ -193,7 +253,7 @@ docker compose --profile tools run --rm \
 ## Upstream (2026-11-09)
 
 - **Fuente**: repo `VincentEQ/EccoSuit` (copia local `~/dev/eccoqualita/EccoSuit-develop/`); infra propia (compose + Caddy + ops kit `~/dev/eccoqualita/ops/`).
-- **Vivo**: VPS AL DÍA con `origin/develop` @ `edae56a` (Incrementos 20-25: Improve, Metrics, Calidad, Nav Rail). 40 migraciones Drizzle (0000-0040), 102 tablas en DB. Deploy manual: docker run standalone. Worker mail activo (MAIL_TRANSPORT=local). CSP nonce activo.
+- **Vivo**: VPS con `origin/develop` @ `edae56a` (**Incrementos 20-23**: Improve, Metrics). 41 migraciones Drizzle en disco (0000-0040), 102 tablas en DB. **NO incluye** el Incremento 24 (Rol Responsable de Calidad) ni el 25 (Nav Rail): fusionados a `feature/csp-nonce` el 2026-11-09 (commit `9e7ba8d`, typecheck + 30/30 tests unit OK) — **deploy pendiente** (runbook abajo). Deploy manual: docker run standalone. Worker mail activo (MAIL_TRANSPORT=local). CSP nonce activo.
 - **Check**: `ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'` + `curl -s https://suite.eccoqualita.com/api/health` + `docker exec ecco-postgres psql -U postgres -d ecco_suite -c "SELECT count(*) FROM pg_tables WHERE schemaname='public';"` (esperado: 102).
 - **Regla**: LIVE manda; el código es de VincentEQ — kalimete solo despliega/opera, no desarrolla upstream.
 
