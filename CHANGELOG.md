@@ -6090,3 +6090,18 @@ EOF又是
 
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
+
+## 2026-11-09
+
+### [21:21] - Cambio: VR506 track branded 13/13 texturas (logoj+logob corregidos)
+- **Tipo**: asset
+- **Modificado**: vr506_dominicana_2_0.kn5 + vao-patch (13/13 texturas)
+- **Afecta a**: kalimete (tracks) + vps-preprod (servidor AC)
+- **Causa**: Reemplazar todas las texturas del VR506 con anuncios profesionales de Alfredo.pro (IT Solutions). Los logos logoj.dds y logob.dds se omitieron en la primera ejecución por mismatch de tamaño BC5 — redimensionados a 256x64 y re-emitidos.
+- **Pipeline completo**: IA Victoria (z-image-turbo) → PNGs → resize 256x64 para logos → ac_replacer.py → DDS→KN5 injection → vao-patch → deploy
+- **Checksum kn5**: 3e3fe958c0b49621d575e8c10d03b35f
+- **vao-patch**: 112MB (118MB comprimido), checksum actualizado
+- **Deploy**: ✅ kn5, vao-patch, vao-patch.zip en servidor (todos con checksum correcto)
+- **Estado**: ✅ sincronizado + deploy OK
+- **Notas**: 162 texturas total, 13 ad texturas. FENCE_MARSHALL.DDS es solo 304B (strip de 8px). Banners usan paleta azul/navy Alfredo.pro.
+
