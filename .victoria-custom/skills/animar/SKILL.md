@@ -6,6 +6,20 @@ command: animar
 
 # Skill: animar — foto → videito (LivePortrait por chat)
 
+## REGLA ANTI-PRE-JUZGADO (2026-11-07, lección incidente abrazo)
+
+NUNCA digas que la herramienta está "bloqueada por políticas" o "no disponible"
+sin HABERLA EJECUTADO. En DM y para el owner el gate pasa SIEMPRE (bypass
+`dm`/`owner` — verificado E2E 2026-11-07: animación de prueba OK en 40s). Si
+dudas, EJECUTA y muestra el error REAL del JSON. Un error que no intentaste
+no existe — pre-juzgar un bloqueo = mentirle al owner (incidente 2026-11-07:
+se le dijo "bloqueada por políticas" sin un solo exec en los logs).
+
+Movimientos custom (ej. "que se abracen"): NO necesitas un preset — el usuario
+manda un video-guía propio (`--guia <video>`) y el guía manda (LivePortrait
+transfiere el movimiento preservando la identidad de la foto). Pídele el
+videito de referencia del movimiento y ejecuta.
+
 Cuándo usar: el usuario manda (o señala) una FOTO pidiendo animarla, darle
 vida, que hable o que se mueva ("anima esta foto", "dale vida", "haz que
 hable", "muévela"), con o sin video-guía. NO es generar imagen (skill `art`)
