@@ -57,7 +57,7 @@ Internet → :80/:443 → ecco-caddy (Caddy 2, TLS Let's Encrypt auto)
 | ecco-caddy | caddy:2 | **80, 443 (+443/udp)** | caddy_data, caddy_config + Caddyfile ro |
 | ecco-app | eccosuit-app (build local, 413MB) | NINGUNO (solo redes) | ecco_storage (/app/storage, uid 1001) |
 | ecco-postgres | postgres:18 | NINGUNO (solo red interna) | ecco_pgdata |
-| (tools) eccosuit-migrate | etapa `build` del Dockerfile | one-shot (`compose run`) | — |
+| (tools) eccosuit-migrate | etapa `build` del Dockerfile | one-shot (`docker run --network eccoqualita-proxy`; el compose ya no define servicio migrate — corregido 2026-11-09) | — |
 
 **Regla del patrón**: postgres y app NUNCA publican puertos — solo Caddy es expuesto. Un servicio nuevo = nuevo dir bajo /opt/eccoqualita/ + su compose unido a `eccoqualita-proxy` + bloque en el Caddyfile.
 
@@ -81,18 +81,18 @@ ssh ecco 'docker logs --tail 20 ecco-worker'
 ssh ecco 'docker logs --tail 50 ecco-app'
 ssh ecco 'docker logs --tail 50 ecco-caddy'
 
-# Reconstruir tras cambiar código (rsync primero, ver abajo)
-ssh ecco 'cd /opt/eccoqualita/eccosuit && docker compose build && docker compose up -d app'
+# Reconstruir tras cambiar código (rsync primero, ver abajo) — compose corregido 2026-11-09
+ssh ecco 'cd /opt/eccoqualita/eccosuit && docker compose build && docker compose up -d'
 
-# Migraciones (rol ecco_owner)
-ssh ecco 'cd /opt/eccoqualita/eccosuit && docker compose --profile tools run --rm migrate npx tsx scripts/db-migrate.ts'
+# Migraciones (one-shot con imagen build-stage; DATABASE_MIGRATION_URL del .env — verificado 2026-11-09)
+ssh ecco 'cd /opt/eccoqualita/eccosuit && MIG_URL=$(grep "^DATABASE_MIGRATION_URL=" .env | cut -d= -f2-) && docker run --rm --network eccoqualita-proxy -e DATABASE_MIGRATION_URL="$MIG_URL" eccosuit-migrate:local npx tsx scripts/db-migrate.ts'
 
-# Bootstrap (SOLO primera vez o cambio de roles; usa superusuario)
+# Bootstrap (SOLO primera vez o cambio de roles; usa superusuario — docker run, el compose ya no define servicio migrate)
 ssh ecco 'cd /opt/eccoqualita/eccosuit && \
   ADMIN_PW=$(grep "^POSTGRES_PASSWORD=" .env.postgres | cut -d= -f2) && \
-  docker compose --profile tools run --rm -e ALLOW_BOOTSTRAP=true \
+  docker run --rm --network eccoqualita-proxy -e ALLOW_BOOTSTRAP=true \
   -e "DATABASE_ADMIN_URL=postgresql://postgres:${ADMIN_PW}@ecco-postgres:5432/postgres" \
-  migrate npx tsx scripts/db-bootstrap.ts'
+  eccosuit-migrate:local npx tsx scripts/db-bootstrap.ts'
 
 # Respaldo BD (pg_dump del contenedor postgres — NO usa npm run db:backup, que exige clientes pg locales)
 ssh ecco 'docker exec ecco-postgres pg_dump -U postgres -Fc ecco_suite > /opt/eccoqualita/backups/ecco_suite-$(date +%F).dump'
@@ -162,7 +162,7 @@ docker compose --profile tools run --rm \
 9. UFW activo (22/80/443+udp) + fail2ban — no abrir puertos sin orden del owner. Ojo: Docker publica sus puertos FUERA de UFW (iptables DOCKER); la protección real es "no publicar puertos en compose".
 10. `TRUSTED_PROXY_HOPS=1` (un solo proxy: Caddy). Si se encadenan más proxies, ajustar.
 
-## Runbook de deploy VERIFICADO (obligatorio desde 2026-11-09)
+## Runbook de deploy VERIFICADO (EJECUTADO Y VALIDADO 2026-11-09 — deploy Incrementos 24-25)
 
 > **Lección 2026-11-09 (cara: el cliente vio cambios faltantes)**: se declaró
 > «deploy 20-25 completo» sin verificar nada contra el destino. El registro decía
@@ -171,8 +171,9 @@ docker compose --profile tools run --rm \
 > hasta que cada elemento del plan está VERIFICADO EN EL DESTINO.** «Health OK»
 > solo prueba que la app arranca, NO que el deploy contiene lo prometido.
 
-**Regla de oro**: verificar EN EL DESTINO, no en el origen. El deploy termina
-cuando los checks del destino pasan, no cuando el rsync/build termina.
+**Regla de oro**: verificar EN EL DESTINO, no en el origen. Este runbook se
+ejecutó COMPLETO el 2026-11-09 (tarde) para los Incrementos 24-25: GATE 0-3 en
+verde, sin caída (downtime ~15s en el swap de contenedores).
 
 ### GATE 0 — Antes de rsync (en kalimete, sobre el árbol a deployar)
 
@@ -181,14 +182,23 @@ cd ~/dev/eccoqualita/EccoSuit-develop
 git log --oneline -1                                   # commit que se deploya
 git merge-base --is-ancestor origin/feature/quality-role HEAD && echo "24 fusionado"
 git merge-base --is-ancestor origin/feature/nav-rail HEAD && echo "25 fusionado"
-ls drizzle/0041_quality_manager_role.sql               # migración del Incremento 24
+ls drizzle/0041_quality_manager_role.sql               # migraciones del plan presentes
 grep -rl quality_manager src/platform/authz/ | head    # código del rol presente
 ls src/components/shell/nav-model.ts                   # Incremento 25 presente
 npm run typecheck                                      # limpio
+npx vitest run tests/unit/nav-model.test.ts tests/unit/quality-role.test.ts tests/unit/rail-branding.test.ts
 ```
 
 Si el plan dice «Incrementos X-Y» y un gate falla → PARAR: fusionar lo que falta
 o corregir el plan. NUNCA deployar asumiendo que está.
+
+### Backup pre-deploy (SIEMPRE, antes de tocar la VPS)
+
+```bash
+ssh ecco 'docker exec ecco-postgres pg_dump -U postgres -Fc ecco_suite > /opt/eccoqualita/backups/ecco_suite-pre-deploy-$(date +%F-%H%M).dump'
+```
+
+### rsync — patrón canónico (ver sección "Actualizar código"; SIN --delete salvo necesidad demostrada)
 
 ### GATE 1 — Después del rsync (EN la VPS)
 
@@ -198,30 +208,63 @@ ssh ecco 'grep -rl quality_manager /opt/eccoqualita/eccosuit/src/platform/authz/
 ssh ecco 'ls /opt/eccoqualita/eccosuit/src/components/shell/nav-model.ts'
 ```
 
-### GATE 2 — Después del build/up (EN la VPS)
+### Build (nohup + polling — lección 2026-10-28: no mantener el pipe ssh abierto)
+
+```bash
+ssh ecco 'cd /opt/eccoqualita/eccosuit && nohup sh -c "docker build -t ecco-suite:local . && docker build --target build -t eccosuit-migrate:local ." > /tmp/ecco-build.log 2>&1 & echo launched'
+# Poll cada 2-3 min: tail -3 /tmp/ecco-build.log + docker images (~9 min; el target build es casi todo cache)
+```
+
+### Migraciones (después del build, ANTES del up; one-shot con imagen build-stage — verificado 2026-11-09)
+
+```bash
+ssh ecco 'cd /opt/eccoqualita/eccosuit && MIG_URL=$(grep "^DATABASE_MIGRATION_URL=" .env | cut -d= -f2-) && docker run --rm --network eccoqualita-proxy -e DATABASE_MIGRATION_URL="$MIG_URL" eccosuit-migrate:local npx tsx scripts/db-migrate.ts'
+# Esperado: "[migrate] Destino: ecco-postgres:5432/ecco_suite" + "[migrate] Migraciones aplicadas."
+```
+
+### Recrear contenedores (compose canónico — CORREGIDO 2026-11-09, es el camino único)
+
+```bash
+ssh ecco 'cd /opt/eccoqualita/eccosuit && docker compose up -d && sleep 10 && docker ps --format "{{.Names}}: {{.Status}}" | grep ecco'
+```
+
+El compose de producción YA ESTÁ CORRECTO (red `eccoqualita-proxy` + volumen
+`ecco_storage` reales + `container_name: ecco-app/ecco-worker` + `build: .`).
+NO recrear standalone: los contenedores standalone con nombre custom NO son
+reconocidos por compose (crea duplicados `eccosuit-app-1`). Si existen
+contenedores viejos standalone bloqueando los nombres: `docker stop` + `docker rm`
+de ellos ANTES del `up` (lección: `compose down` NO los elimina aunque tengan el
+label del proyecto).
+
+### GATE 2 — Después del up (EN la VPS)
 
 ```bash
 ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'    # app + worker + postgres + caddy
-ssh ecco 'docker logs --tail 30 ecco-app'                  # migraciones aplicadas, sin errores
+ssh ecco 'docker logs --tail 10 ecco-app'                  # "Base de datos al día" + Ready, sin errores
+ssh ecco 'docker logs --tail 5 ecco-worker'                # "[mail-worker] En marcha"
 curl -s https://suite.eccoqualita.com/api/health           # {"status":"ok","app":"up","database":"up"}
-ssh ecco "docker exec ecco-postgres psql -U postgres -d ecco_suite -c '\\dt'" | grep -E 'user_roles|improve_|metric_'
+curl -s -o /dev/null -w "%{http_code}" https://suite.eccoqualita.com/   # 307 (redirect auth) = app sirve
+# Enum del rol de calidad (la 0041 añade VALOR al enum membership_role, NO crea tabla):
+ssh ecco "docker exec ecco-postgres psql -U postgres -d ecco_suite -tc 'SELECT unnest(enum_range(NULL::membership_role));'" | grep -c quality_manager   # >=1
 ```
 
 ### GATE 3 — Registro verificado (SOLO con GATE 0-2 en verde)
 
 - COORDINACION.md + este doc (Historia + Upstream/Vivo) + harness: escribir SOLO
-  lo verificado, con números reales (migraciones, tablas, commit deployado).
+  lo verificado, con números reales (migraciones, commit deployado, image ID).
 - `~/armada-sync/CHANGELOG.md` (kalimete).
 - Si un check falla → el deploy NO se declara completo; reportar el estado REAL
   y el gate que falló.
 
-### Pendiente INMEDIATO (este runbook existe por esto)
+### Rollback (si GATE 2 falla)
 
-- [ ] **Deploy de los Incrementos 24+25** ya fusionados a `feature/csp-nonce`
-  (commit `9e7ba8d` del 2026-11-09; typecheck limpio + 30/30 tests unit nuevos en
-  verde al fusionar). La migración 0041 crea `user_roles` (enum `quality_manager`)
-  → verificarla en GATE 2. Tras GATE 2 en verde, siembra/bootstrap solo si el
-  Incremento 24 lo exige (ver `PLAN-INCREMENTO-24.md`) y cerrar con GATE 3.
+- BD: las migraciones Drizzle son aditivas e idempotentes (`ADD VALUE IF NOT
+  EXISTS`) — el código viejo ignora los valores nuevos; NO hace falta revertir la BD.
+- Código: `git checkout <commit-anterior>` en kalimete → rsync → rebuild → up.
+- BD completa (solo si la migración fuera destructiva): restore del dump pre-deploy
+  (patrón "Respaldo DB + restore" en Comandos verificados).
+
+
 ## Seguridad
 
 - UFW: active, deny incoming, allow 22/80/443(+443/udp) ✅
@@ -238,6 +281,8 @@ ssh ecco "docker exec ecco-postgres psql -U postgres -d ecco_suite -c '\\dt'" | 
 
 ## Historia
 
+- **2026-11-09 (tarde) — Deploy verificado Incrementos 24-25 (ejecutado por Victoria @ victoria.local, autorización del owner, runbook GATE 0-3 completo en verde)**: backup pre-deploy (`ecco_suite-pre-deploy-24-25-2026-11-09-1848.dump`) → rsync → GATE 1 (0041 + quality_manager + nav-model en destino) → build (`ecco-suite:local` = `ec3530081ea8` + `eccosuit-migrate:local`, nohup+poll) → migración 0041 (enum `quality_manager` verificado en BD) → **compose de producción CORREGIDO** (causa raíz del histórico «conflicto con Caddy»: el compose viejo apuntaba a red/volumen huérfanos `eccosuit_ecco-internal`/`eccosuit_ecco_storage`; ahora red `eccoqualita-proxy` + volumen `ecco_storage` reales + `container_name: ecco-app/ecco-worker` + `build: .`; backup `docker-compose.yml.bkup-20261109-victoria`) → `docker compose up -d` → GATE 2: health público OK, login 307, worker en marcha, contenedores en `eccoqualita-proxy`. Lecciones: (1) compose vuelve a ser el camino canónico — el problema nunca fue compose sino el compose file equivocado; (2) contenedores standalone con nombre custom no son reconocidos por compose (crea duplicados `eccosuit-app-1` — stop+rm de los viejos antes del up); (3) la 0041 añade VALOR al enum `membership_role` (NO crea tabla `user_roles`); (4) `docker compose down` no elimina contenedores standalone viejos aunque tengan el label del proyecto.
+
 - **2026-11-09 (CORREGIDO por Victoria @ victoria.local, verificación EN el VPS)**: el deploy de hoy dejó producción en **Incrementos 20-23 SOLO** (Ecco Improve SAC + Ecco Metrics): `drizzle/` termina en 0040 (41 archivos), sin `user_roles` en la BD, sin `quality_manager` ni `nav-model.ts` en `src/`. La nota original decía «20-25, 16 migraciones (0026-0041)» y era **falsa** — los Incrementos 24 (Rol Responsable de Calidad) y 25 (Nav Rail) estaban aceptados en sus ramas feature pero **nunca fusionados** a la línea de deploy. Lo real del deploy: 364 archivos, 15 migraciones (0026-0040), docker run standalone (no compose), db dump pre-deploy → merge → build → rsync → db restore → migraciones → containers UP en network `eccoqualita-proxy` con Caddy; worker mail MAIL_TRANSPORT=local polling 15s; 4 containers, 102 tablas. **Fusión correctiva 2026-11-09 tarde**: `git merge origin/feature/quality-role --no-ff` a `feature/csp-nonce` → commit `9e7ba8d` (typecheck limpio + 30/30 tests unit nuevos en verde). **Deploy de 24+25 PENDIENTE** — seguir el Runbook de deploy VERIFICADO (abajo). Lecciones: (1) docker run individual (no compose) para evitar conflicto de network/names con Caddy; (2) un deploy NO está terminado hasta verificar cada elemento del plan EN EL DESTINO.
 - **2026-10-28**: deploy CSP-nonce a producción — rsync `feature/csp-nonce` @ `612ea50` (= origin/develop) con `--exclude='*.bkup*'` + rebuild (`b872ba11d879`) + `up -d app`. Verificado: health OK, logs limpios (Next.js 16.4.3), CSP en vivo con `nonce-` en script-src y SIN `unsafe-inline` en script-src. Sin deps/migraciones nuevas. **Lección**: `docker compose build 2>&1 | tail` retiene el canal ssh abierto (pipe sin EOF) → timeout local falso a 15 min aunque el build remoto (~9 min) SÍ completó; verificar estado real (`docker images`/`docker ps`) antes de reintentar; para builds largos, `nohup … > log 2>&1 &` + polling.
 - **2026-10-20**: superadmin definitivo `v.tapia@eccoqualita.com` (orden del owner, clave elegida por él) — verificado signInEmail; placeholder `admin@eccoqualita.com` eliminado (cascade) + fichero de credenciales borrado. Nuevo script ops `prod-remove-user.ts` (guard último-admin).
@@ -253,7 +298,7 @@ ssh ecco "docker exec ecco-postgres psql -U postgres -d ecco_suite -c '\\dt'" | 
 ## Upstream (2026-11-09)
 
 - **Fuente**: repo `VincentEQ/EccoSuit` (copia local `~/dev/eccoqualita/EccoSuit-develop/`); infra propia (compose + Caddy + ops kit `~/dev/eccoqualita/ops/`).
-- **Vivo**: VPS con `origin/develop` @ `edae56a` (**Incrementos 20-23**: Improve, Metrics). 41 migraciones Drizzle en disco (0000-0040), 102 tablas en DB. **NO incluye** el Incremento 24 (Rol Responsable de Calidad) ni el 25 (Nav Rail): fusionados a `feature/csp-nonce` el 2026-11-09 (commit `9e7ba8d`, typecheck + 30/30 tests unit OK) — **deploy pendiente** (runbook abajo). Deploy manual: docker run standalone. Worker mail activo (MAIL_TRANSPORT=local). CSP nonce activo.
+- **Vivo**: VPS con los **Incrementos 20-25** (deploy verificado 2026-11-09 tarde por Victoria: 41 migraciones aplicadas 0000-0041, enum `quality_manager` en BD, health público OK). Imagen `ecco-suite:local` = `ec3530081ea8`. Contenedores compose-managed con nombres canónicos (`ecco-app`/`ecco-worker`, red `eccoqualita-proxy`). Worker mail activo (MAIL_TRANSPORT=local). CSP nonce activo.
 - **Check**: `ssh ecco 'docker ps --format "{{.Names}}: {{.Status}}"'` + `curl -s https://suite.eccoqualita.com/api/health` + `docker exec ecco-postgres psql -U postgres -d ecco_suite -c "SELECT count(*) FROM pg_tables WHERE schemaname='public';"` (esperado: 102).
 - **Regla**: LIVE manda; el código es de VincentEQ — kalimete solo despliega/opera, no desarrolla upstream.
 
