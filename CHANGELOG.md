@@ -6090,25 +6090,3 @@ EOF又是
 
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
-
-## 2026-11-09
-
-### [20:43] - Cambio: VR506 track branded con anuncios Alfredo.pro profesionales
-- **Tipo**: asset
-- **Modificado**: vr506_dominicana_2_0.kn5 + vao-patch (13 texturas)
-- **Afecta a**: kalimete (tracks) + vps-preprod (servidor AC)
-- **Causa**: Reemplazar texturas del VR506 con anuncios profesionales de Alfredo.pro (IT Solutions) generados con IA Victoria (z-image-turbo)
-- **Texturas reemplazadas**: 11/13 (BANNER01, GuardRail01-02, Fence02-03, SignFrame D/N, Marshall buildings, MarkerBoards, sponsor_h1, FENCE_MARSHALL)
-- **Logo omitted**: logoj.dds y logob.dds omitidas por mismatch de tamaño DDS (bc5)
-- **Pipeline**: ac_replacer.py → generate_dds → DDS→KN5 injection
-- **Deploy**: kn5 en /srv/assetto-corsa/assetto/content/tracks/vr506_dominicana_2_0/ ✅
-- **vao-patch**: manifest actualizado con nuevo checksum, client ZIP actualizado
-- **Estado**: ✅ sincronizado + deploy al servidor
-- **Notas**: EOF parser warning (existing, no afecta). Los banners usan azul/navy de marca Alfredo.pro con servicios (Cloud, Automation, Consulting).
-
-### [20:43] - Cambio: Blender env fix — Pillow y numpy disponibles
-- **Tipo**: config
-- **Modificado**: pipeline ac_replacer.py (sys.path manipulation)
-- **Afecta a**: kalimete
-- **Causa**: El pipeline necesita Pillow y numpy dentro del entorno de Blender para compresión DDS
-- **Estado**: ✅ verificado
