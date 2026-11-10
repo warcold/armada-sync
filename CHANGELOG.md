@@ -1,3 +1,15 @@
+### [2026-11-10 19:00 EST] [kalimete+ecco-suit] Correcciones menores post-auditoría: health check VPS, docs Docker, harness limpieza
+- **Tipo**: fix (infra VPS) + docs + harness (mantenimiento)
+- **Qué**: tres correcciones derivadas de la auditoría completa de EccoSuit (producción vs GitHub, agente, harness, dockerización):
+  1. **Health check VPS** (`/usr/local/bin/ecco-health-check.sh`): corregido dominio de `suit.eccoqualita.com` → `suite.eccoqualita.com` (el script no seguía redirects `-L`, reportaba WARNING falso aunque la app estaba sana). Backup `.bkup-20261110`. Verificado: log pasa de WARNING a OK.
+  2. **Documentación actualizada** (Docker en kalimete):
+     - `PLAN.md`: línea 24 (restricciones), línea 57 (tabla decisiones arquitectura), línea 188 (B8), línea 229 (criterios aceptación), línea 235 (riesgos) — Docker 28.4.0 + Compose v2.39.4 **SÍ instalado en kalimete** (verificado 2026-11-10); entorno original Windows no lo tenía.
+     - `docs/migracion-servidores.md`: nota de estado actualizada — `Dockerfile` y `docker-compose.yml` **probados en kalimete**.
+  3. **Harness kalimete** (`~/armada-sync/harness/kalimete.harness.json`): removida entrada "Armada Suite" (fusionado en **ZionV CRM 2.0.0** el 2026-10-28). Subagentes: 26 → 25 (cuenta real). Backup `.bkup-20261110`. JSON válido.
+- **Por qué**: auditoría detectó deriva entre docs (decían "Docker no instalado") y realidad (Docker instalado), bug en health check (dominio viejo), y harness con agente retirado.
+- **Verificado**: health check OK en VPS, docs consistentes, harness JSON válido con 25 subagentes reales.
+- **Docs**: `PLAN.md`, `docs/migracion-servidores.md`, `harness/kalimete.harness.json`, este changelog.
+
 ### [2026-11-10 17:30 EST] [victoria+auto-route] Auto-Route transparente implementado: skill auto-route clasifica intención (CONVERSATION/PLAN/CODE) y delega a @Thinker/@Coder automáticamente (Victoria @ victoria.local, autorización owner)
 - **Tipo**: feature (orquestación) + skill + docs
 - **Qué**: implementado sistema de enrutamiento automático que elimina la necesidad de mencionar `@Coder` o `@Thinker` explícitamente. Nueva skill `auto-route` en `~/.victoria-custom/skills/auto-route/` con clasificador LLM (Using a Victoria, temp=0, few-shot) que analiza el prompt y devuelve: `CONVERSATION` → respuesta directa (Using), `PLAN` → Task → @Thinker (thinking ON, budget 8192), `CODE` → Task → @Coder (modelo Coding con Victoria). Registrada en `opencode.jsonc` + integrada en doctrina de ruteo (`victoria.md` + `AGENTS-summary.md`). **Delegación explícita `@Coder`/`@Thinker` SIEMPRE respeta sobre auto**.
