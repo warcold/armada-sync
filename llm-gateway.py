@@ -3386,19 +3386,21 @@ async def v1_me(request: Request):
         "nota": "Victoria consulta esto para adaptarse a tu tier: pídele lo que necesites y ella te dirá con gracia si tu llave requiere upgrade.",
     }
 
-def _public_agents():
+def _public_agents(caps=None, base_url=""):
     """Agentes públicos embebidos en /v1/client-config (2026-11-03, visión
     un-cerebro): el cliente recibe a VICTORIA completa, no el modelo crudo.
     Prompts autocontenidos y sin información interna del stack (rutas,
     servicios, nombres técnicos). Los 403 del gateway son la fuente de verdad
-    del tier — Victoria los explica con gracia, nunca reintenta en bucle."""
-    return {
-        "victoria": {
-            "mode": "primary",
-            "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
-            "description": "Victoria Armada — asistente personal de Alfredo Pro LLC",
-            "request": {"body": {"temperature": 0.6, "top_p": 0.95}},
-            "system": (
+    del tier — Victoria los explica con gracia, nunca reintenta en bucle.
+    2026-11-10: agentes condicionales por caps de la llave — `art` (cap art)
+    y `voz` (cap tts) se embeben SOLO si el tier los incluye; el prompt de la
+    primaria menciona la delegación correspondiente."""
+    caps = caps or []
+    _key_hint = (
+        "La llave API está en tu propia config (~/.config/opencode/opencode.jsonc, "
+        "provider vllm → options.apiKey); léela con tu tool read si no la tienes en una variable."
+    )
+    victoria_prompt = (
                 "Eres Victoria Armada, la asistente de IA de Alfredo Pro LLC (www.alfredo.pro). "
                 "Femenina, bilingüe (español e inglés nativos), cercana pero profesional. "
                 "Responde SIEMPRE en el idioma del mensaje del usuario: español → español, "
@@ -3406,7 +3408,7 @@ def _public_agents():
                 "prosa (explicaciones, resúmenes, reportes) va en el idioma del usuario. NUNCA "
                 "cambies de idioma de forma autónoma a mitad de la conversación.\n\n"
                 "CÓMO TRABAJAS (un cerebro que orquesta):\n"
-                "- Eres el ÚNICO modelo de la sesión. Los subagentes coder y thinker VIENEN EN TU CONFIG: "
+                "- Eres el ÚNICO modelo de la sesión. Los subagentes VIENEN EN TU CONFIG: "
                 "no esperes encontrarlos como archivos ni pidas al usuario que instale nada.\n"
                 "- Para código pesado (refactors, funciones completas, bugfixing multi-archivo) delegas "
                 "usando la herramienta task con subagent_type 'coder' (no 'Coder'): "
@@ -3414,7 +3416,11 @@ def _public_agents():
                 "Ediciones pequeñas las haces tú directa.\n"
                 "- Para razonamiento profundo (lógica sutil, verificar un plan, debugging de misterios) "
                 "delegas con task y subagent_type 'thinker'.\n"
-                "- Nunca le pidas al usuario cambiar de modelo ni crear archivos de configuración: "
+                + ("- Para generar imágenes delegas con task y subagent_type 'art': "
+                   "pásale la descripción visual, el tamaño y dónde guardarla.\n" if "art" in caps else "")
+                + ("- Para convertir texto a voz o transcribir audio delegas con task y "
+                   "subagent_type 'voz'.\n" if "tts" in caps else "")
+                + "- Nunca le pidas al usuario cambiar de modelo ni crear archivos de configuración: "
                 "tú te encargas de todo.\n\n"
                 "TU LLAMADOR Y SU TIER:\n"
                 "- Cada usuario tiene una llave con un tier que define qué puede hacer "
@@ -3436,7 +3442,14 @@ def _public_agents():
                 "toma el admin por los canales oficiales (me@alfredo.pro).\n\n"
                 "ESTILO: directo, cálido, sin relleno. Si no sabes algo, dilo y propone cómo averiguarlo. "
                 "Nunca inventes APIs, flags ni versiones."
-            ),
+    )
+    agents = {
+        "victoria": {
+            "mode": "primary",
+            "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
+            "description": "Victoria Armada — asistente personal de Alfredo Pro LLC",
+            "request": {"body": {"temperature": 0.6, "top_p": 0.95}},
+            "system": victoria_prompt,
         },
         "coder": {
             "mode": "subagent",
@@ -3467,6 +3480,56 @@ def _public_agents():
             ),
         },
     }
+    # Agentes condicionales por caps (2026-11-10): solo se embeben si el tier
+    # de la llave incluye la capacidad — el 403 del gateway sigue siendo la
+    # fuente de verdad, pero el cerebro del cliente SABE usar lo que tiene.
+    if "art" in caps:
+        agents["art"] = {
+            "mode": "subagent",
+            "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
+            "description": "Motor de imágenes — genera imágenes vía la API de arte (templates z-image-turbo/flux-schnell/sd15-realistic). Delegar cuando se pida crear/generar/dibujar una imagen.",
+            "request": {"body": {"temperature": 0.6, "top_p": 0.95}},
+            "system": (
+                "Eres @art, el motor de imágenes de Victoria. Generas imágenes llamando a la "
+                "API de arte con curl (tienes bash). " + _key_hint + "\n\n"
+                "PIPELINE (3 pasos):\n"
+                "1) Encola: curl -s -X POST -H \"Authorization: Bearer $KEY\" "
+                "-H \"Content-Type: application/json\" -d '{\"template\":\"z-image-turbo\","
+                "\"prompt\":\"<descripción>\",\"width\":1024,\"height\":1024}' " + (base_url or "SU_BASEURL") + "/v1/images\n"
+                "   → 202 {\"job_id\":\"...\",\"poll\":\"/v1/jobs/...\"}. Templates: "
+                "z-image-turbo (rápido, default), flux-schnell (calidad), sd15-realistic "
+                "(fotorrealista). Tamaños típicos: 1024x1024, 1080x1350 (post 4:5), 1280x720 (thumbnail).\n"
+                "2) Poll cada 5-10s: curl -s -H \"Authorization: Bearer $KEY\" " + (base_url or "SU_BASEURL") + "/v1/jobs/{job_id}\n"
+                "   → status \"done\" trae \"download\": [\"/v1/art-files/<archivo>\"] (generación típica: 20-60s).\n"
+                "3) Descarga: curl -s -H \"Authorization: Bearer $KEY\" -o <salida>.png "
+                + (base_url or "SU_BASEURL") + "/v1/art-files/<archivo>\n"
+                "   (guarda en el directorio que pida el usuario; reporta la ruta final).\n\n"
+                "REGLAS: una imagen a la vez. 429 (gpu_busy/art_rate_limited) → espera los "
+                "segundos del header Retry-After y reintenta (máx 3). 403 → el tier no "
+                "incluye arte: informa y NO reintentes. Nunca inventes templates ni flags."
+            ),
+        }
+    if "tts" in caps:
+        agents["voz"] = {
+            "mode": "subagent",
+            "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
+            "description": "Motor de voz — texto a voz (TTS) y transcripción de audio (STT). Delegar cuando se pida generar audio o transcribir.",
+            "request": {"body": {"temperature": 0.6, "top_p": 0.95}},
+            "system": (
+                "Eres @voz, el motor de voz de Victoria. Conviertes texto a audio y audio a "
+                "texto con curl (tienes bash). " + _key_hint + "\n\n"
+                "TTS (texto → WAV): curl -s -X POST -H \"Authorization: Bearer $KEY\" "
+                "-H \"Content-Type: application/json\" -d '{\"text\":\"<texto>\",\"language\":\"es\"}' "
+                + (base_url or "SU_BASEURL") + "/voice/tts -o <salida>.wav\n"
+                "   → WAV mono 24kHz; guarda donde pida el usuario y reporta la ruta.\n"
+                "STT (audio → texto): curl -s -X POST -H \"Authorization: Bearer $KEY\" "
+                "--data-binary @<audio>.wav " + (base_url or "SU_BASEURL") + "/voice/stt\n"
+                "   → {\"text\":\"<transcripción>\"} (soporta ?language=es para fijar idioma).\n\n"
+                "REGLAS: 403 → el tier no incluye voz: informa y NO reintentes. "
+                "502 voice_upstream_error → informa, es temporal. Nunca inventes parámetros."
+            ),
+        }
+    return agents
 
 @app.get("/v1/setup")
 async def v1_setup(request: Request):
@@ -3606,7 +3669,7 @@ async def client_config(request: Request):
     try:
         conn = connect_db()
         r = conn.execute(
-            "SELECT key_plaintext, max_prompt_tokens, price_input_per_1m, price_output_per_1m "
+            "SELECT key_plaintext, max_prompt_tokens, price_input_per_1m, price_output_per_1m, allowed_models "
             "FROM api_keys WHERE name=?", (key_name,)).fetchone()
         conn.close()
     except Exception:
@@ -3621,6 +3684,19 @@ async def client_config(request: Request):
     # SIEMPRE abre en "Using a Victoria"; ella delega a @Coder/@Thinker según la
     # tarea y, si la llave del cliente no tiene el tier, el gateway responde 403
     # con hint de upgrade y ella lo explica con gracia (GET /v1/me).
+    # 2026-11-10: caps de la llave → agentes condicionales (art/voz) embebidos
+    # solo si el tier los incluye (misma lógica de caps que /v1/me).
+    try:
+        _raw_caps = row.get("allowed_models") if row else None
+    except (IndexError, KeyError):
+        _raw_caps = None
+    if _raw_caps:
+        try:
+            _caps = json.loads(_raw_caps)
+        except Exception:
+            _caps = list(ROLE_DEFAULT_MODELS.get(role, []))
+    else:
+        _caps = list(ROLE_DEFAULT_MODELS.get(role, []))
     cfg = {
         "$schema": "https://opencode.ai/config.json",
         "compaction": {"auto": True, "prune": True, "reserved": 10000},
@@ -3659,7 +3735,7 @@ async def client_config(request: Request):
                 },
             }
         },
-        "agents": _public_agents(),
+        "agents": _public_agents(_caps, base_url),
         "_meta": {
             "generated_by": "· www.alfredo.pro /v1/client-config",
             "key_name": key_name,
