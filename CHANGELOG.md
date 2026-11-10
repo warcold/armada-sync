@@ -6089,13 +6089,15 @@ EOF又是
 - **Notas**: 386 herramientas vs IvanMurzak/Godot-MCP (42 tools, requiere .NET 8 que no tenemos). @yanhuifair es TypeScript puro, funciona sin Godot abierto para 220+ tools, tiene undo nativo, runtime freeze/step/screenshot (único), 30 categorías
 
 
-## 2026-11-02 (auditoría cruzada) — estado kalimete verificado desde victoria
-- Flota picker OK (6 modelos: Using/Thinking/Coding + 3 nube natural). opencode 1.19.5.
-- Agentes live: 28 subagentes + kalimete (primary) + victoria-voz (mode: all, válido) — la doc interna que dice "18" quedó corta; actualizar en el próximo mantenimiento de kalimete.
-- Higiene: eliminados victoria-voz.md.bkup-20261027 y wordpress-dev.md.bkup-20260926 (stale). bkup-agents/ estructural 20261001 se conserva.
-- ydotoold OK, sync GitHub OK, disco 75% (108G libres).
-- **2026-11-03 14:45 EDT** - daily-report anti-stale (owner: "vemos errores que ya no existen"): auditoría del mecanismo de reporte (victoria-daily-report.py, cron 5×/día → WhatsApp DM owner; único reporte periódico, resto alertadores). 4 fixes: ventana última-alerta gateway 48h→24h (la tormenta resuelta del 01-nov salía ~9 reportes como reciente), coder on-demand :8001 visible (idle=NORMAL sin warning), n8n chequeado en docker, timestamps de logs parseados como hora local del host (sufijo "EDT" hardcodeado de los writers miente tras fin de DST). Backup .bkup-20261103-stale-fix. E2E dry-run OK; primer envío real con fix: cron 16:00 ET. Detalle: CHANGELOG-infra.
+## 2026-11-10
 
+### [04:05] - Cambio: fix distribución CM de vr506 (zip stale + password event override + purge CF)
+- **Tipo**: servicio
+- **Modificado**: vps-preprod /srv/assetto-corsa (download/vr506_dominicana_2_0.zip regenerado con kn5 PIL f3166d00; server_cfg PASSWORD=verganza via SM server-options; purge cache CF url zip; artefactos vao-patch movidos a backups/vr506-20261110)
+- **Afecta a**: vps-preprod, clientes Content Manager La Vgz
+- **Causa**: CM servia zip stale del 2026-11-09 (kn5 viejo); password del evento "Practice" (OverridePassword vacio) pisaba el global en cada arranque
+- **Estado**: ✅ sincronizado
+- **Notas**: curl publico verifica zip 151M/50 archivos con kn5 f3166d00 dentro; password via SM UI ({PECS:0}); residual: FileServer expone /content crudo (cars/kn5) sin auth — evaluar basic-auth Caddy; motd sin link de descarga (OK)
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
 
