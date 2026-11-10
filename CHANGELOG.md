@@ -1,3 +1,21 @@
+### [2026-11-10 19:30 EST] [gateway+onboard] Enrutamiento transparente por tier + Onboarding automático implementados en el Gateway (Victoria @ victoria.local, autorización owner)
+- **Tipo**: feature (gateway) + API + routing + onboarding
+- **Qué**: 
+  1. **Enrutamiento transparente** (`_route_request_by_capability`): el gateway intercepta TODOS los requests y verifica el tier del usuario (role + allowed_models) contra la capacidad solicitada (chat, coder, art, tts, whisper, provision). Si el tier NO incluye la capacidad → 403 `model_forbidden` con hint de upgrade UNIFORME (qué falta, tier actual, cómo solicitar upgrade). Si SÍ incluye → request continúa normalmente. El usuario NUNCA elige modelo; la decisión es automática y transparente.
+  2. **Onboarding automático** (`POST /v1/onboard`): endpoint admin que crea usuario nuevo con tier elegido y devuelve TODO listo: API key + `opencode.jsonc` completo (con baseURL detectada, agents condicionales por caps) + script de instalación en 1 comando (merge no destructivo, respaldo automático, verificación). Auth: solo admin.
+  3. **Tier model map** (`TIER_MODEL_MAP`): mapeo declarativo tier → capacidades + modelo chat + descripción. Soporta tiers: `llm`, `coder`, `services`, `art`, `admin`, `readonly`, y especializados (`liveportrait`, `comfyui`, `tts`, `whisper`, `n8n`).
+  4. **create_key extendido**: acepta `allowed_models` (JSON list) para overrides de capacidades por llave.
+- **Por qué**: replicar UX de Claude/ChatGPT — el usuario vibe-codea, Victoria/gateway decide la ruta óptima; onboarding en 1 request sin scripts manuales.
+- **Verificado E2E**: 
+  - `llm` tier: chat OK, imágenes → 403 con upgrade path, coder → 403, TTS → 403
+  - `art` tier: chat OK, imágenes OK (job encolado), coder → 403 (sin tier), TTS OK
+  - `coder` tier: chat OK, coder model OK (cuando GPU libre), imágenes → 403
+  - `services` tier: chat OK, TTS OK (WAV 83K generado), imágenes → 403
+  - `/v1/me` muestra caps + upgrade_path correcto por tier
+  - `/v1/client-config` embebe agents condicionales (art/voz solo si tier los incluye)
+  - `/v1/onboard` genera key + config + install_script funcional
+- **Docs**: `llm-gateway.py` (routing + onboard), este changelog.
+
 ### [2026-11-10 17:30 EST] [victoria+auto-route] Auto-Route transparente implementado: skill auto-route clasifica intención (CONVERSATION/PLAN/CODE) y delega a @Thinker/@Coder automáticamente (Victoria @ victoria.local, autorización owner)
 - **Tipo**: feature (orquestación) + skill + docs
 - **Qué**: implementado sistema de enrutamiento automático que elimina la necesidad de mencionar `@Coder` o `@Thinker` explícitamente. Nueva skill `auto-route` en `~/.victoria-custom/skills/auto-route/` con clasificador LLM (Using a Victoria, temp=0, few-shot) que analiza el prompt y devuelve: `CONVERSATION` → respuesta directa (Using), `PLAN` → Task → @Thinker (thinking ON, budget 8192), `CODE` → Task → @Coder (modelo Coding con Victoria). Registrada en `opencode.jsonc` + integrada en doctrina de ruteo (`victoria.md` + `AGENTS-summary.md`). **Delegación explícita `@Coder`/`@Thinker` SIEMPRE respeta sobre auto**.
