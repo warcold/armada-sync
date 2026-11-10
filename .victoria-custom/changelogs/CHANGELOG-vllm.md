@@ -1,3 +1,23 @@
+### [2026-11-10 19:30 EST] [gateway+onboard] Enrutamiento transparente por tier + Onboarding automático + Limpieza configs opencode
+- **Tipo**: feature (gateway) + API + routing + onboarding + config cleanup
+- **Qué**: 
+  1. **Enrutamiento transparente** (`_route_request_by_capability`): el gateway intercepta TODOS los requests y verifica el tier del usuario (role + allowed_models) contra la capacidad solicitada (chat, coder, art, tts, whisper, provision). Si el tier NO incluye la capacidad → 403 `model_forbidden` con hint de upgrade UNIFORME. Si SÍ incluye → request continúa. El usuario NUNCA elige modelo.
+  2. **Onboarding automático** (`POST /v1/onboard`): endpoint admin → key + `opencode.jsonc` completo + install_script (merge no destructivo). Auth: solo admin.
+  3. **Tier model map** (`TIER_MODEL_MAP`): tiers `llm`, `coder`, `services`, `art`, `admin`, `readonly`, especializados.
+  4. **create_key extendido**: `allowed_models` (JSON list) para overrides.
+  5. **Limpieza configs opencode (victoria + kalimete)**: configs mínimas (provider vllm + nvidia cloud). Sin modelos locales — gateway sirve modelos y routing por tier. Merge no destructivo: preserva providers custom, themes, permissions, MCP, agents propios. Victoria se SUMA (primaria + subagentes condicionales).
+  6. **Fix endpoints en agents**: art → `/v1/images`, `/v1/jobs`, `/v1/art-files`; voz → `/voice/tts`, `/voice/stt` (sin doble `/v1/`).
+- **Por qué**: UX Claude/ChatGPT — usuario vibe-codea, gateway decide ruta; onboarding 1 request; configs usuario intactas.
+- **Verificado E2E**: 4 tiers (llm/art/coder/services) con routing correcto, merge no destructivo verificado, configs simplificadas.
+- **Docs**: `llm-gateway.py`, `AGENTS.md` §7.2, CHANGELOG general.
+
+### [2026-11-10 17:30 EST] [victoria+auto-route] Auto-Route transparente: skill auto-route clasifica intención y delega a @Thinker/@Coder automáticamente
+- **Tipo**: feature (orquestación) + skill + docs
+- **Qué**: skill `auto-route` en `~/.victoria-custom/skills/auto-route/` con clasificador LLM (Using a Victoria, temp=0, few-shot) que analiza el prompt del usuario y devuelve: `CONVERSATION` → respuesta directa (Using), `PLAN` → Task → @Thinker (thinking ON, budget 8192), `CODE` → Task → @Coder (modelo Coding con Victoria). Registrada en `opencode.jsonc` + integrada en doctrina de ruteo (`victoria.md` + `AGENTS-summary.md`). **Delegación explícita `@Coder`/`@Thinker` SIEMPRE respeta sobre auto**.
+- **Por qué**: replicar comportamiento de Claude/ChatGPT — el usuario vibe-codea y Victoria decide la ruta óptima transparente.
+- **Verificado**: tests unitarios (10+ prompts: conversación, plan, código, ambiguos) — clasificación correcta en todos. Latencia ~200-500ms por clasificación.
+- **Docs**: `agents/victoria.md` (sección Auto-Route Transparente), `AGENTS-summary.md`, skill `auto-route/SKILL.md`, CHANGELOG general.
+
 ### [2026-11-10 09:50 EST] [gateway] Client-config: agentes condicionales art/voz por caps de la llave
 - **Tipo**: feature (multi-tenant — departamentos para clientes)
 - **Qué**: `/v1/client-config` ahora embebe subagentes `art` y `voz` SOLO si la llave del que llama tiene los caps correspondientes (misma lógica de caps que `/v1/me`: `allowed_models` de la llave o preset del rol). **Agente `art`** (cap art): pipeline curl completo — POST /v1/images (templates z-image-turbo/flux-schnell/sd15-realistic, tamaños típicos) → poll /v1/jobs/{id} → GET /v1/art-files/{f}; reglas 429 gpu_busy (Retry-After, máx 3 reintentos) y 403 (informa, no reintenta). **Agente `voz`** (cap tts): POST /voice/tts → WAV 24kHz + POST /voice/stt → transcripción. El prompt de la primaria menciona la delegación (`subagent_type 'art'/'voz'`) solo cuando el agente viene. La baseURL se template-a en los prompts (detectada del request, respeta túnel). La llave se lee de la config del propio cliente (hint en el prompt). Cierre del hueco: antes un cliente de tier Estudio recibía a Victoria sin herramienta de arte (sabía que existía, no podía usarla).

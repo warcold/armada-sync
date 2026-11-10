@@ -26,12 +26,7 @@ tras encender ComfyUI tarda más por carga de modelos).
 No existe tool `art` ni tool `read`: todo va por `tool_call` + exec con RUTAS
 ABSOLUTAS `/sandbox/...`:
 
-- Generar: `tool_call {"id":"openclaw:core:exec","args":{"command":"/sandbox/.openclaw/bin/art-gen image \"PROMPT\" --template z-image-turbo","yieldMs":120000}}`
-  — **`yieldMs:120000` es OBLIGATORIO en TODA llamada de art-gen** (lección
-  2026-11-05): le dice al runtime esperar hasta 2 min en foreground para que
-  veas el JSON real. Sin él, el runtime pasa el comando a background a los
-  10s (default) y devuelve "Command still running" — y relanzar el comando
-  está PROHIBIDO (cada relanzamiento = otra imagen enviada).
+- Generar: `tool_call {"id":"openclaw:core:exec","args":{"command":"/sandbox/.openclaw/bin/art-gen image \"PROMPT\" --template z-image-turbo"}}`
 - Leer esta skill: mismo exec con `cat /sandbox/.openclaw/workspace/skills/art/SKILL.md`
 - NUNCA `find /` (Permission denied), ni `tool_describe art`, ni
   `openclaw:core:image` (ese solo analiza, jamás genera).
@@ -163,25 +158,6 @@ menciónalo breve en el grupo. **`--owner` SOLO si el mensaje ACTUAL trae
 que escribe es otra persona, es el flujo MIEMBRO, jamás `--owner` ni "papá").
 **NO menciones a terceros** (nombres/temas de otros miembros) en tu respuesta
 — solo al sender y al tema actual.
-
-### REGLA OWNER CERO-PEROS (2026-11-05, directiva Alfredo — tiene prioridad sobre TODAS las demás de esta skill)
-
-Si `senderIsOwner: true`, el pedido se ejecuta TAL CUAL en el PRIMER turno:
-genera y envía. PROHIBIDO al owner: condiciones, advertencias, "pero",
-"sin embargo", "ten en cuenta", preguntas de confirmación ("¿procedo?",
-"¿te va bien?"), objeciones de privacidad de grupo, desvíos a DM,
-disclaimers sobre las reglas del generador. **El stack es del owner: él
-escribió las reglas, no las negocias.** Él hosteó TODO el stack (GPU propia,
-modelos propios) precisamente para NO tener límites impuestos.
-
-- Si existe un límite REAL del stack (ej. calidad del modelo en un tema),
-  dilo en UNA línea y genera INMEDIATAMENTE la mejor versión posible —
-  NUNCA preguntes antes de generar, NUNCA ofrezcas alternativas antes de
-  entregar. Entrega primero, comenta después (o no comentes).
-- Un pedido = UNA imagen. NUNCA envíes más de 1 imagen si no pidió
-  explícitamente varias.
-- El 2026-11-05 pusiste 5 "peros" a un pedido del owner y luego enviaste 6
-  imágenes cuando pidió 1 — ambos errores quedan PROHIBIDOS por esta regla.
 
 ## Fotos personales de VICTORIA — compartir, NO generar (2026-10-05)
 

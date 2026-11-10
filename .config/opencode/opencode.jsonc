@@ -11,6 +11,11 @@
     "prune": true,
     "reserved": 10000
   },
+  "skills": {
+    "auto-route": {
+      "path": "/home/victoria/.victoria-custom/skills/auto-route"
+    }
+  },
   "provider": {
     "vllm": {
       "npm": "@ai-sdk/openai-compatible",
@@ -21,52 +26,11 @@
         "timeout": 3600000,
         "chunkTimeout": 600000,
         "maxRetries": 3
-      },
-      "models": {
-        "nvidia/Qwen3.6-35B-A3B-NVFP4-normal": {
-          "name": "Using a Victoria",
-          "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
-          "limit": {
-            "context": 220000,
-            "output": 32000
-          },
-          "attachment": true,
-          "tool_call": true,
-          "reasoning": false,
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "video"
-            ],
-            "output": [
-              "text"
-            ]
-          }
-        },
-        "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4": {
-          "name": "Coding con Victoria",
-          "id": "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",
-          "limit": {
-            "context": 96000,
-            "output": 22000
-          },
-          "attachment": false,
-          "tool_call": true,
-          "reasoning": false,
-          "modalities": {
-            "input": [
-              "text"
-            ],
-            "output": [
-              "text"
-            ]
-          }
-        }
       }
     },
     "nvidia": {
       "npm": "@ai-sdk/openai-compatible",
+      "name": "NVIDIA NIM (cloud)",
       "options": {
         "baseURL": "https://integrate.api.nvidia.com/v1",
         "timeout": 1800000,
