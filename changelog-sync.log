@@ -21396,3 +21396,19 @@ To ssh://github.com/warcold/armada-sync.git
  ! [remote rejected] master -> master (cannot lock ref 'refs/heads/master': is at 91e77fce8b7a852dbc053682ff821c667a11b881 but expected d8ad2a268af6da0f163f982ffd6c9ddda7a2e685)
 error: failed to push some refs to 'ssh://github.com/warcold/armada-sync.git'
 [22:20:05] Push FALLÓ
+[22:30:01] Sync bidireccional...
+[22:30:01] Pull GitHub → local...
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+[22:30:01] Pull FALLÓ
+[22:30:01] Push local → GitHub...
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   changelog-sync.log
+
+no changes added to commit (use "git add" and/or "git commit -a")
+[22:30:01] Push FALLÓ
