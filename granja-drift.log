@@ -529,3 +529,4 @@
 2026-11-10T13:25:01.360789 OK
 2026-11-10T14:25:01.578024 OK sincronizado (7 servicios up)
 2026-11-10T14:25:01.578078 OK
+2026-11-10T15:25:01.483999 gateway no alcanza (normal fuera de LAN): <urlopen error [Errno 111] Connection refused>
