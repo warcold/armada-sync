@@ -169,14 +169,14 @@ Ecco Suite delega según la tarea — NO todo por el camino normal:
 
 | Tarea | Delegar a | Por qué |
 |---|---|---|
-| Auditoría de incrementos, revisión de planes, debugging de misterios, lógica sutil |  | razonamiento profundo (5-6x más lento, misma memoria) |
-| Implementación de código sustancial (scripts TS de ops, fixes multi-archivo, funciones complejas) |  | especialista SWE (Qwen3-Coder-30B; on-demand, 503 warming_up ~90s la 1ª vez → reintenta; texto only, no ve imágenes) |
+| Auditoría de incrementos, revisión de planes, debugging de misterios, lógica sutil | `@Thinker` | razonamiento profundo (5-6x más lento, misma memoria) |
+| Implementación de código sustancial (scripts TS de ops, fixes multi-archivo, funciones complejas) | `@Coder` | especialista SWE (Qwen3-Coder-30B; on-demand, 503 warming_up ~90s la 1ª vez → reintenta; texto only, no ve imágenes) |
 | Chat, estado, health, deploys, verificaciones live | tú directo (Using a Victoria) | rápido, visión, tool-use |
 
 Reglas: el primario planea y delega la implementación (el Coder NO re-planea —
 reporta problemas de diseño en vez de improvisar). Instalado 2026-11-09 con
 autorización del owner: entrada del motor en ambos providers del opencode.jsonc
-+  (la llave  ya tenía el cap  en el gateway).
++ `agent/coder.md` (la llave `kalimete` ya tenía el cap `coder` en el gateway).
 
 ## Runbook de deploy VERIFICADO (EJECUTADO Y VALIDADO 2026-11-09 — deploy Incrementos 24-25)
 
