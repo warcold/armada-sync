@@ -1,6 +1,6 @@
 {
   "harness": "kalimete",
-  "updated": "2026-10-22",
+  "updated": "2026-11-10",
   "principal": {
     "name": "kalimete",
     "file": "~/armada-sync/agents/kalimete.md",
@@ -26,13 +26,6 @@
     }
   },
   "subagentes": [
-    {
-      "name": "Armada Suite",
-      "id": "armada-suite",
-      "file": "armada-suite.md",
-      "scope": "Plugin WP Armada Suite 5.4.x multitenant WP↔ERP (~/dev/wordpress/plugins/armada-suite)",
-      "hidden": false
-    },
     {
       "name": "Authentik",
       "id": "authentik",
