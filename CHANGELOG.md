@@ -6097,7 +6097,7 @@ EOF又是
 - **Afecta a**: vps-preprod, clientes Content Manager La Vgz
 - **Causa**: CM servia zip stale del 2026-11-09 (kn5 viejo); password del evento "Practice" (OverridePassword vacio) pisaba el global en cada arranque
 - **Estado**: ✅ sincronizado
-- **Notas**: curl publico verifica zip 151M/50 archivos con kn5 f3166d00 dentro; password via SM UI ({PECS:0}); residual: FileServer expone /content crudo (cars/kn5) sin auth — evaluar basic-auth Caddy; motd sin link de descarga (OK)
+- **Notas**: curl publico verifica zip 151M/50 archivos con kn5 f3166d00 dentro; password via SM UI POST /server-options + reinicio del proceso AC (regen ok); residual: FileServer expone /content crudo (cars/kn5) sin auth — evaluar basic-auth Caddy; motd sin link de descarga (OK)
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
 
