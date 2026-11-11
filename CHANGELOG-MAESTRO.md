@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-11-11
+
+| Hora | Host | Servicio | Cambio | Changelog Origen |
+|------|------|----------|--------|------------------|
+| 07:40 | kalimete | **opencode** | Config opencode.jsonc restaurado: bloques models de vllm/vllm-lan + model default + whitelist NIM se PERDIERON el 10-11 19:46 (cambio no dokumentado, sin rastro en bash history — probable sesión de agente o script) → "Using a Victoria" desapareció del picker. Restaurado desde bkup-20261109-coder-motor (merge conservando default_agent Kalimete + instructions summary + mcp). Backup previo: bkup-20261111-models-restore. E2E: opencode models lista el modelo en 2 providers + inferencia real "OK" vía túnel. Fix por Victoria (SSH, TARGET=kalimete verificado, autorización owner) | sesión directa Victoria |
+
 ## 2026-10-29
 
 | Hora | Host | Servicio | Cambio | Changelog Origen |
