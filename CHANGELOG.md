@@ -1,3 +1,11 @@
+### [2026-11-11 02:15 EST] [hunyuan3d+gateway+coder] Paquete de mejoras post-análisis: Hunyuan lazy/unload, Coder KV 8GiB, retención usage_log
+- **Tipo**: feature (performance/memoria) + fix + higiene — análisis "busca oportunidades" autorizado por owner ("procede hasta terminar")
+- **Qué**: (1) **Hunyuan3D** (CHANGELOG-comfyui 23:15): carga perezosa + watchdog auto-unload (600s idle) + `POST /free` — libera ~10.9GB VRAM + ~11.1GB swap que retenía para siempre; causa raíz del OOM-kill del coder de esa tarde. (2) **Coder KV 6GiB→8GiB** (CHANGELOG-vllm 23:30): pool 174,752 tokens — 2 sesiones agénticas de ~87K concurrentes caben sin preemption; el OOM original fue de Hunyuan, no del KV. (3) **Retención usage_log** (CHANGELOG-vllm 23:30): DELETE >90 días al arrancar del gateway + índice timestamp (76K filas sin límite).
+- **Análisis que lo originó** (datos LIVE): prefix cache 93.3% hit, MTP acceptance 74.2%, latencias p50 4.2s/p90 23s/p99 70s (normales), ~14 rechazos/día (throttling por diseño), anomalías 0. Dead-ends verificados y documentados: MTP para el Coder IMPOSIBLE (checkpoint Qwen3MoeForCausalLM sin claves MTP — no intentar `--speculative-config`); `--gpu-memory-utilization` cosmético en GB10 (el control real es kv-cache-memory-bytes).
+- **Verificado**: Hunyuan E2E completo (generate 110.6s → /free → VRAM 10,948→253MiB, swap 11.1GB→0); Coder KV 174,752 tokens en log + request "OK" + last_use fresco; gateway sano con retención no-op (fila más vieja = exactamente 90 días).
+- **Impacto**: hunyuan-server.py + victoria-hunyuan3d.service, contenedor nemoclaw-vllm-coder recreado, llm-gateway.py (init_db). RAM disponible del host mejora ~11GB con Hunyuan descargado.
+- **Docs**: yes (AGENTS.md §11 Hunyuan3D-2 + agents/comfyui.md + CHANGELOG-comfyui + CHANGELOG-vllm + este).
+
 ### [2026-11-10 22:00 EST] [gateway+coder] Coder on-demand: context 96K→120K, output 22K→32K (elimina compactaciones prematuras)
 - **Tipo**: feature (performance) + config + docs
 - **Qué**: el modelo Coder (Qwen3-Coder-30B) sirve 128K nativo (`--max-model-len 131072`) pero opencode lo limitaba a 96K context / 22K output, causando compactaciones prematuras en tareas complejas (loop de compactación + re-trabajo). Actualizado a **context 120K + output 32K** (120K+32K=152K < 131K nativo, headroom ~20K).
