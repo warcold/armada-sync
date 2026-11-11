@@ -120,7 +120,7 @@ CODER_MODEL = os.environ.get("CODER_MODEL", "NVFP4/Qwen3-Coder-30B-A3B-Instruct-
 CODER_URL = os.environ.get("CODER_URL", "http://127.0.0.1:8001")
 CODER_CONTAINER = os.environ.get("CODER_CONTAINER", "nemoclaw-vllm-coder")
 CODER_TIERS = tuple(os.environ.get("CODER_TIERS", "admin,coder").split(","))
-CODER_MAX_LEN = int(os.environ.get("CODER_MAX_LEN", "131072"))      # 128K ctx (opencode manda ~87K de tools+system)
+CODER_MAX_LEN = int(os.environ.get("CODER_MAX_LEN", "163840"))      # 160K ctx (11-11 v3: cubre prompt avg real de kalimete 123K + 32K out; KV pool 174,752 >= 163,840, 0 RAM extra)
 CODER_START_MIN_RAM_GB = float(os.environ.get("CODER_START_MIN_RAM_GB", "20"))
 CODER_WARMUP_RETRY_AFTER = int(os.environ.get("CODER_WARMUP_RETRY_AFTER", "150"))
 CODER_ACTIVE_MEM_MIN_GB = float(os.environ.get("CODER_ACTIVE_MEM_MIN_GB", "10"))
@@ -138,6 +138,152 @@ def _is_coder_model(model_id):
         return False
     m = (model_id or "").lower()
     return "coder" in m
+
+
+# ---------------------------------------------------------------------------
+# AUTO-ROUTE (2026-11-11; fix 11-11 tarde: -normal NEUTRO + fallback thinking):
+# El cliente usa SOLO el generalista ("Using a Victoria"); el gateway clasifica
+# el turno y enruta sin que nadie elija modelo:
+#   CODE       -> motor coder :8001 (solo llaves con cap coder, sin imagenes,
+#                 prompt TOTAL (messages+tools) + output que quepa en el
+#                 max-model-len del coder y coder healthy). Si NO cabe/esta
+#                 caido/sin cap -> generalista CON THINKING ON (mejor practica
+#                 para codigo en el generalista; el coder es non-thinking POR
+#                 DISENO). Nunca rompe el request.
+#   REASONING  -> thinking ON (mismo modelo, flag por-request, budget 8192)
+#   CONVERSATION -> normal (default del servidor, thinking off)
+# La eleccion EXPLICITA del cliente SIEMPRE gana: sufijo -thinking*,
+# reasoning_effort (incl. none/minimal = OFF explicito) o
+# chat_template_kwargs.enable_thinking (true o false). **El sufijo -normal/-fast
+# es NEUTRO** (es el alias DEFAULT del template de opencode en ambos hosts: si
+# contara como explicito el auto-route jamas dispararia — ver CHANGELOG 11-11).
+# Heuristica por puntaje (senales es+en) sobre el ULTIMO mensaje user + bonus
+# acotado del contexto (sesion de codigo en curso); conservadora: sin senal en
+# el turno = conversation. Determinista, ~0 latency, sin red ni modelos.
+# Auditado en usage_log (columnas route/route_reason). Reversible: AUTO_ROUTE=0.
+# ---------------------------------------------------------------------------
+_AUTO_ROUTE = os.environ.get("AUTO_ROUTE", "1") == "1"
+AUTO_ROUTE_CODE_MIN = int(os.environ.get("AUTO_ROUTE_CODE_MIN", "2"))
+AUTO_ROUTE_REASON_MIN = int(os.environ.get("AUTO_ROUTE_REASON_MIN", "2"))
+AUTO_ROUTE_CODER_MAX_PROMPT = int(os.environ.get("AUTO_ROUTE_CODER_MAX_PROMPT", "128000"))
+AUTO_ROUTE_CODER_MIN_PROMPT = int(os.environ.get("AUTO_ROUTE_CODER_MIN_PROMPT", "1000"))
+AUTO_ROUTE_CODER_WARM_WAIT = int(os.environ.get("AUTO_ROUTE_CODER_WARM_WAIT", "120"))  # espera inline max (s) a que el coder cargue (prompt grande)
+# CODE sin coder usable (cae/lleno/sin cap/no cabe) -> generalista CON THINKING
+# (best practice para codigo en el generalista; el coder es non-thinking por
+# diseno). 0 = comportamiento viejo (generalista normal, sin thinking).
+AUTO_ROUTE_CODE_FALLBACK_THINKING = os.environ.get("AUTO_ROUTE_CODE_FALLBACK_THINKING", "1") == "1"
+
+_CODE_HINTS = [
+    (3, r"```"),  # code fence = senal fuerte
+    (2, r"\b[\w./\-]+\.(?:py|js|ts|tsx|jsx|mjs|go|rs|java|kt|php|rb|sh|bash|zsh|c|h|cpp|hpp|cs|swift|sql|json|ya?ml|toml|ini|conf|html|css|vue|svelte)\b"),
+    (2, r"\b(?:traceback|stack ?trace|syntaxerror|typeerror|nullpointer|segmentation fault|compile error|error de compilacion|no module named|modulenotfound)\b"),
+    (1, r"\b(?:implementa(?:r|me)?|refactor(?:iza|izar)?|reescribe(?:r)?|escribe (?:una?|el|la) (?:funcion|función|clase|class|script|metodo|método|componente|endpoint|test)|write (?:a|the) (?:function|class|script|component|endpoint|test)|fix (?:this|the) (?:bug|error|issue)|arregla (?:este|el) (?:bug|error)|corrige (?:este|el) (?:bug|error))\b"),
+    (1, r"\b(?:bug|funcion|función|function|clase|class|metodo|método|method|script|regex|sql|query|endpoint|webhook|middleware|unit test|pytest|jest|unittest|compila(?:r)?|lint|typehint|tipado)\b"),
+    (1, r"\b(?:git commit|merge conflict|pull request|npm (?:install|run)|pip install|cargo build|docker compose|dockerfile|makefile)\b"),
+    (1, r"\b(?:codigo|código|codebase|codigo fuente|source code)\b"),
+]
+_REASON_HINTS = [
+    (3, r"\b(?:piensa (?:profundo|bien|mucho)|piensa paso a paso|think (?:deep|hard|step)|razona (?:profundo|bien)|reason (?:deep|carefully)|deep (?:thinking|reasoning))\b"),
+    (2, r"\b(?:analiza(?:r)?|analisis|análisis|evalua|evalúa|evaluar|evaluacion|evaluación|plan(?:ea|ificar|ificacion)?|estrategia|diseña|disena|diseño|diseno|arquitectura|compara(?:r)?|comparacion|comparación|trade-?offs?|root cause|causa raiz|causa raíz|decide|decidir|recomienda(?:r)?|recomendacion|recomendación|riesgos?|pros y contras|ventajas y desventajas)\b"),
+    (1, r"\b(?:por ?que|por ?qué|paso a paso|step by step|opciones|alternativas|mejor enfoque|best approach|que pasa si|what if)\b"),
+]
+_CODE_HINTS_RE = [(w, re.compile(p, re.IGNORECASE)) for w, p in _CODE_HINTS]
+_REASON_HINTS_RE = [(w, re.compile(p, re.IGNORECASE)) for w, p in _REASON_HINTS]
+
+
+def _hint_score(text, hints):
+    s = 0
+    for w, rx in hints:
+        try:
+            if rx.search(text):
+                s += w
+        except Exception:
+            pass
+    return s
+
+
+def _request_has_image(body):
+    """True si el request trae partes de imagen/video (el coder es texto-only:
+    NUNKA enrutarle multimodal)."""
+    for m in body.get("messages") or []:
+        if not isinstance(m, dict):
+            continue
+        c = m.get("content")
+        if isinstance(c, list):
+            for p in c:
+                if isinstance(p, dict) and p.get("type") in (
+                        "image_url", "image", "video_url", "video", "input_image"):
+                    return True
+    return False
+
+
+def _classify_task(body):
+    """(clase, senal, prompt_chars) del turno actual. Clasifica el ULTIMO
+    mensaje user; el contexto previo aporta bonus SOLO si el turno ya muestra
+    senal (evita que un 'sigue' casual en una sesion de codigo salga al coder).
+    prompt_chars = TODO el prompt (system incluido) para el guard de tamano
+    del coder (max-model-len 128K)."""
+    msgs = body.get("messages") or []
+    last_user = ""
+    ctx = []
+    for m in reversed(msgs):
+        if not isinstance(m, dict):
+            continue
+        c = m.get("content", "")
+        if isinstance(c, list):
+            c = " ".join((p.get("text") or "") for p in c if isinstance(p, dict))
+        c = c if isinstance(c, str) else ""
+        if m.get("role") == "user" and not last_user:
+            last_user = c
+        elif last_user:
+            ctx.append(c)
+        if sum(len(x) for x in ctx) > 8000:
+            break
+    ctx_text = "\n".join(ctx)[:8000]
+    text = last_user[:6000]
+    t_code = _hint_score(text, _CODE_HINTS_RE)
+    t_reason = _hint_score(text, _REASON_HINTS_RE)
+    code_s = t_code + (min(_hint_score(ctx_text, _CODE_HINTS_RE), 2) if t_code >= 1 else 0)
+    reason_s = t_reason + (min(_hint_score(ctx_text, _REASON_HINTS_RE), 1) if t_reason >= 1 else 0)
+    pchars = sum(len(str(m.get("content", ""))) for m in msgs if isinstance(m, dict))
+    if code_s >= AUTO_ROUTE_CODE_MIN and code_s > reason_s:
+        return "code", f"code_s{code_s}", pchars
+    if reason_s >= AUTO_ROUTE_REASON_MIN and reason_s >= code_s:
+        return "reasoning", f"reason_s{reason_s}", pchars
+    return "conversation", "", pchars
+
+
+def _prompt_estimate(body):
+    """Estimado de tokens del prompt COMPLETO (messages + tools + tool_choice),
+    misma formula que la validacion previa (chars/3.5). El guard del coder DEBE
+    contar el catalogo de tools: opencode lo manda FUERA de messages (~40-50K
+    tokens reales) — medir solo messages dejaba pasar requests que revientan el
+    max-model-len del coder (128K) con 400 de vLLM. Ver CHANGELOG 11-11."""
+    chars = 0
+    try:
+        for m in body.get("messages") or []:
+            if not isinstance(m, dict):
+                continue
+            c = m.get("content", "")
+            if isinstance(c, list):
+                for part in c:
+                    if isinstance(part, dict):
+                        t = part.get("text", "")
+                        if isinstance(t, str):
+                            chars += len(t)
+                        elif "image" in str(part).lower() or "video" in str(part).lower():
+                            chars += 1000
+            elif isinstance(c, str):
+                chars += len(c)
+        _tools = body.get("tools")
+        if _tools:
+            chars += len(json.dumps(_tools, ensure_ascii=False))
+        _tchoice = body.get("tool_choice")
+        if isinstance(_tchoice, dict):
+            chars += len(json.dumps(_tchoice, ensure_ascii=False))
+    except Exception:
+        pass
+    return int(chars / 3.5)
 
 
 def _coder_running():
@@ -903,6 +1049,9 @@ def init_db():
     # ALTER es aditivo y no toca filas viejas.
     _ensure_column(conn, "usage_log", "reject_reason", "TEXT DEFAULT ''")
     _ensure_column(conn, "usage_log", "approx_tokens", "INTEGER DEFAULT 0")
+    # Auto-route (2026-11-11): decision de enrutado por request.
+    _ensure_column(conn, "usage_log", "route", "TEXT DEFAULT ''")
+    _ensure_column(conn, "usage_log", "route_reason", "TEXT DEFAULT ''")
     _ensure_column(conn, "usage_log", "eng_running", "REAL DEFAULT 0")
     _ensure_column(conn, "usage_log", "eng_waiting", "REAL DEFAULT 0")
     _ensure_column(conn, "usage_log", "eng_kv", "REAL DEFAULT 0")
@@ -1246,7 +1395,8 @@ def delete_key(name):
 
 def log_usage(key_name, endpoint, ip_address, response_ms=0, success=1,
               model="", prompt_tokens=0, completion_tokens=0, cost=0.0,
-              reject_reason="", approx_tokens=0, head_hash="", stream=0):
+              reject_reason="", approx_tokens=0, head_hash="", stream=0,
+              route="", route_reason=""):
     try:
         total = prompt_tokens + completion_tokens
         try:
@@ -1258,8 +1408,8 @@ def log_usage(key_name, endpoint, ip_address, response_ms=0, success=1,
             er = ew = ek = 0.0
         conn = connect_db()
         conn.execute(
-            "INSERT INTO usage_log (key_name, endpoint, model, prompt_tokens, completion_tokens, total_tokens, cost, ip, response_time_ms, success, reject_reason, approx_tokens, eng_running, eng_waiting, eng_kv, head_hash, stream) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (key_name, endpoint, model, prompt_tokens, completion_tokens, total, cost, ip_address, response_ms, 1 if success else 0, reject_reason, approx_tokens, er, ew, ek, head_hash, stream)
+            "INSERT INTO usage_log (key_name, endpoint, model, prompt_tokens, completion_tokens, total_tokens, cost, ip, response_time_ms, success, reject_reason, approx_tokens, eng_running, eng_waiting, eng_kv, head_hash, stream, route, route_reason) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (key_name, endpoint, model, prompt_tokens, completion_tokens, total, cost, ip_address, response_ms, 1 if success else 0, reject_reason, approx_tokens, er, ew, ek, head_hash, stream, route, route_reason)
         )
         conn.execute(
             "UPDATE api_keys SET usage_count=usage_count+1, total_tokens=total_tokens+?, total_cost=total_cost+?, total_requests=total_requests+1, last_used=datetime('now') WHERE name=?",
@@ -1726,6 +1876,7 @@ async def _proxy(request: Request, path: str, key_row: dict):
 
     ip_address = request.client.host if request.client else ""
     key_name = key_row["name"]
+    start = time.time()  # al inicio: los paths de rechazo temprano tambien miden
 
     # ---- vLLM-Coder (2026-11-01): detección + control de acceso por tier ----
     # SOLO roles admin/coder pueden invocar el modelo coder (decisión owner).
@@ -1786,7 +1937,6 @@ async def _proxy(request: Request, path: str, key_row: dict):
     # la key es vieja y no tiene las columnas nuevas (price_per_1k_tokens).
     price_in = float(key_row.get("price_input_per_1m") or key_row.get("price_per_1k_tokens") or DEFAULT_PRICE_INPUT)
     price_out = float(key_row.get("price_output_per_1m") or key_row.get("price_per_1k_tokens") or DEFAULT_PRICE_OUTPUT)
-    start = time.time()
     approx_tokens = 0  # estimado del prompt; se calcula en la validación previa
     _prefill_reserved = 0  # tokens reservados del presupuesto (se liberan en finally)
 
@@ -1879,7 +2029,13 @@ async def _proxy(request: Request, path: str, key_row: dict):
     # default es RÁPIDO (sin thinking). El thinking queda como opt-in explícito:
     #   - reasoning_effort (OpenAI) != none/minimal -> enable_thinking true
     #   - sufijo -thinking* en el model id -> enable_thinking true
-    #   - sufijo -normal/-fast o reasoning_effort none/minimal -> enable_thinking false
+    #   - reasoning_effort none/minimal o chat_template_kwargs.enable_thinking=false
+    #     -> enable_thinking false (OFF explícito)
+    #   - sufijo -normal/-fast -> NEUTRO (11-11 tarde): es el alias DEFAULT del
+    #     template de opencode en ambos hosts; si contara como OFF explícito el
+    #     auto-route jamas dispararia (route_reason=explicit_thinking en el 100%
+    #     de los turnos). Neutral = decide el auto-route; el default del servidor
+    #     sigue siendo off para conversation.
     # Y cuando se activa thinking explícitamente, se inyecta un thinking_token_budget
     # para que el razonamiento no se coma todo el output (antes llegaba a 32K).
     _want_thinking = None  # None = usar default del servidor (off); bool = explícito
@@ -1898,22 +2054,190 @@ async def _proxy(request: Request, path: str, key_row: dict):
         _kw["enable_thinking"] = True
         body["chat_template_kwargs"] = _kw
     elif _mid.endswith(("-fast", "-normal")):
-        _want_thinking = False
-        _kw = dict(body.get("chat_template_kwargs") or {})
-        _kw["enable_thinking"] = False
-        body["chat_template_kwargs"] = _kw
+        # NEUTRO a proposito (ver comentario arriba): el alias default del
+        # template no debe desactivar el auto-route. OFF explícito = kwargs false.
+        pass
 
     # Si el cliente pidió thinking explícitamente vía chat_template_kwargs directo
-    # (no por sufijo ni reasoning_effort), respetarlo.
+    # (no por sufijo ni reasoning_effort), respetarlo — True Y False (11-11: antes
+    # solo se honraba True; un False explícito debe ganar al auto-route).
     _kw = body.get("chat_template_kwargs") or {}
-    if isinstance(_kw, dict) and _kw.get("enable_thinking") is True:
-        _want_thinking = True
+    if isinstance(_kw, dict) and "enable_thinking" in _kw:
+        _want_thinking = bool(_kw.get("enable_thinking"))
 
     # Budget de razonamiento: cuando el thinking está activo explícitamente,
     # limitar los tokens de razonamiento para que no se coman todo el output
     # (antes un request trivial podía gastar los 32000 tokens en razonar).
     if _want_thinking is True and not body.get("thinking_token_budget"):
         body["thinking_token_budget"] = THINKING_TOKEN_BUDGET
+
+    # -----------------------------------------------------------------------
+    # AUTO-ROUTE (2026-11-11): decision de enrutado. Solo /v1/chat/completions
+    # y solo si el cliente NO pidio el coder explicitamente. La eleccion
+    # explicita de thinking (sufijo/reasoning_effort/kwargs) siempre gana.
+    # CODE + cap coder + sin imagenes + prompt <= 110K + coder healthy ->
+    # motor :8001; si algo falla -> generalista (fallback graceful). REASONING
+    # -> thinking ON con budget. Todo queda en usage_log.route/route_reason.
+    # -----------------------------------------------------------------------
+    _route = ""
+    _route_reason = ""
+    if _AUTO_ROUTE and path == "/v1/chat/completions" and not _want_coder:
+        try:
+            _cls, _sig, _pchars = _classify_task(body)
+            if _cls == "code":
+                _no_route = None
+                if _want_thinking is True:
+                    _no_route = "explicit_thinking"
+                elif _request_has_image(body):
+                    _no_route = "has_image"
+                else:
+                    # Guard de tamano REAL (11-11 tarde): messages + tools +
+                    # output pedido debe caber en el max-model-len del coder.
+                    # opencode manda el catalogo de tools FUERA de messages
+                    # (~40-50K tokens): medir solo messages dejaba pasar
+                    # requests que vLLM rechazaba con 400 en el coder.
+                    _ptok = _prompt_estimate(body)
+                    try:
+                        _req_out = int(body.get("max_tokens") or key_max)
+                    except Exception:
+                        _req_out = key_max
+                    _req_out = min(_req_out, key_max)
+                    if _ptok < AUTO_ROUTE_CODER_MIN_PROMPT:
+                        # Piso minimo (11-11 v3): request diminuto (utilidad tipo
+                        # "generar titulo" de opencode, ~600 tokens) NO es una
+                        # tarea de codigo real — mandarlo al coder lo mantendria
+                        # caliente (contrarresta el idle-stop) y podria pre-warm
+                        # un motor de 13G por un titulo. Senal debil -> generalista
+                        # rapido, sin thinking ni pre-warm.
+                        _no_route = "prompt_too_small"
+                    elif _ptok + _req_out + 2048 > CODER_MAX_LEN:
+                        _no_route = f"prompt_too_big_{_ptok}k"
+                    elif _ptok > AUTO_ROUTE_CODER_MAX_PROMPT:
+                        _no_route = f"prompt_too_big_{_ptok}k"
+                    elif not _key_allows(key_row, "coder"):
+                        _no_route = "no_coder_cap"
+                    elif not _coder_healthy():
+                        _no_route = "coder_down"
+                if _no_route == "explicit_thinking":
+                    # El cliente pidio thinking: se respeta (ya activo + budget).
+                    _route, _route_reason = "thinking", f"code_explicit_thinking:{_sig}"
+                elif _no_route:
+                    _served_by_wait = False
+                    # (11-11 v3) Prompt GRANDE + coder no disponible AHORA: el
+                    # fallback al generalista seria rechazado por la valvula 7
+                    # (coder cargado/cargando + prompt >=40K = riesgo OOM del
+                    # host). Esperar al coder INLINE (hasta 120s, SIN tomar el
+                    # semaforo — se adquiere despues): el turno aterriza en el
+                    # coder sin baile de 429/reintentos. Si no llega healthy en
+                    # la ventana, 503 warming_up honesto. Si el coder esta
+                    # parado, pre-warm aqui (mismo gate render/RAM del camino
+                    # explicito); si el gate falla (render activo), caer al
+                    # fallback de abajo (la valvula 7 no dispara con el coder
+                    # parado). Knob: AUTO_ROUTE_CODER_WARM_WAIT (default 120s).
+                    if (_no_route == "coder_down"
+                            and _ptok >= CODER_LARGE_PROMPT_GENERALIST):
+                        if not _coder_running():
+                            try:
+                                if _render_holder_active() is None:
+                                    _ram_now = _system_mem_available_gb()
+                                    if _ram_now < 0 or _ram_now >= CODER_START_MIN_RAM_GB:
+                                        if _coder_start_async():
+                                            # Invalidar la cache de 20s de
+                                            # _coder_running(): sin esto la
+                                            # lectura sigue diciendo "parado"
+                                            # y el wait loop de abajo NUNCA
+                                            # se entra (bug visto en E2E).
+                                            _coder_state_cache["checked"] = 0
+                                            await asyncio.sleep(2)
+                            except Exception:
+                                pass
+                        if _coder_running():
+                            _waited = 0
+                            while (_waited < AUTO_ROUTE_CODER_WARM_WAIT
+                                   and not _coder_healthy()):
+                                await asyncio.sleep(5)
+                                _waited += 5
+                            if _coder_healthy():
+                                _want_coder = True
+                                _coder_touch_last_use()
+                                _route, _route_reason = "coder", _sig
+                                _served_by_wait = True
+                            else:
+                                try:
+                                    log_usage(key_name, path, ip_address,
+                                              (time.time() - start) * 1000, 0,
+                                              reject_reason="code_warming_timeout",
+                                              approx_tokens=_ptok,
+                                              stream=1 if body.get("stream") else 0,
+                                              route="coder",
+                                              route_reason=f"code_warming_wait:{_sig}")
+                                except Exception:
+                                    pass
+                                return JSONResponse(
+                                    status_code=503,
+                                    content={
+                                        "error": "warming_up",
+                                        "retry_after_s": CODER_WARMUP_RETRY_AFTER,
+                                        "detail": ("El coder esta cargandose y tu prompt "
+                                                   f"(~{_ptok} tokens) es grande: responderlo "
+                                                   "con el generalista riesga OOM con el coder "
+                                                   f"en RAM. Reintenta en ~{CODER_WARMUP_RETRY_AFTER}s "
+                                                   "— caera directo en el coder."),
+                                    },
+                                    headers={"Retry-After": str(CODER_WARMUP_RETRY_AFTER)})
+                    if not _served_by_wait:
+                        # Pre-warm (11-11 tarde): si el coder esta PARADO y el gate
+                        # lo permite (sin render + RAM suficiente), arrancarlo en
+                        # background — este turno responde el generalista+thinking y
+                        # los siguientes ya usan el motor. Sin esto, tras el
+                        # idle-stop de 30 min el auto-coder casi nunca dispararia
+                        # (el coder pasa la mayor parte del dia parado).
+                        if _no_route == "coder_down" and not _coder_running():
+                            try:
+                                if _render_holder_active() is None:
+                                    _ram_now = _system_mem_available_gb()
+                                    if _ram_now < 0 or _ram_now >= CODER_START_MIN_RAM_GB:
+                                        if _coder_start_async():
+                                            _no_route = "coder_down_warm_start"
+                            except Exception:
+                                pass
+                        # Best practice (11-11): codigo en el generalista CON
+                        # thinking — el coder es non-thinking POR DISENO, pero el
+                        # generalista rinde mas en codigo razonando. Solo si el
+                        # cliente no forzo OFF explicitamente (kwargs false /
+                        # reasoning_effort none). Reversible: AUTO_ROUTE_CODE_FALLBACK_THINKING=0.
+                        if _no_route == "prompt_too_small":
+                            # Diminuto: generalista rapido, SIN thinking ni pre-warm.
+                            _route, _route_reason = "normal", f"code_no_route:{_no_route}"
+                        elif AUTO_ROUTE_CODE_FALLBACK_THINKING and _want_thinking is None:
+                            _want_thinking = True
+                            _kw = dict(body.get("chat_template_kwargs") or {})
+                            _kw["enable_thinking"] = True
+                            body["chat_template_kwargs"] = _kw
+                            if not body.get("thinking_token_budget"):
+                                body["thinking_token_budget"] = THINKING_TOKEN_BUDGET
+                            _route, _route_reason = "thinking", f"code_think_fallback:{_no_route}:{_sig}"
+                        else:
+                            _route, _route_reason = "normal", f"code_no_route:{_no_route}"
+                else:
+                    _want_coder = True
+                    _coder_touch_last_use()
+                    _route, _route_reason = "coder", _sig
+            elif _cls == "reasoning":
+                if _want_thinking is None:
+                    _want_thinking = True
+                    _kw = dict(body.get("chat_template_kwargs") or {})
+                    _kw["enable_thinking"] = True
+                    body["chat_template_kwargs"] = _kw
+                    if not body.get("thinking_token_budget"):
+                        body["thinking_token_budget"] = THINKING_TOKEN_BUDGET
+                    _route, _route_reason = "thinking", _sig
+                else:
+                    _route, _route_reason = "normal", f"reason_explicit:{_sig}"
+            else:
+                _route, _route_reason = "normal", _sig
+        except Exception as _are:
+            _route, _route_reason = "normal", f"autoroute_error:{type(_are).__name__}"
 
     # Normalizar model id -> modelo servido (cualquier alias).
     # (2026-11-01: el coder se normaliza a SU modelo; el generalista intacto.)
@@ -2077,7 +2401,8 @@ async def _proxy(request: Request, path: str, key_row: dict):
         try:
             log_usage(key_name, path, ip_address, (time.time() - start) * 1000, 0,
                       reject_reason="coder_busy", approx_tokens=approx_tokens,
-                      head_hash=_head_hash, stream=1 if body.get("stream") else 0)
+                      head_hash=_head_hash, stream=1 if body.get("stream") else 0,
+                      route=_route, route_reason=_route_reason)
         except Exception:
             pass
         return JSONResponse(status_code=429, content={
@@ -2175,7 +2500,8 @@ async def _proxy(request: Request, path: str, key_row: dict):
                   model=(CODER_MODEL if _want_coder else SERVED_MODEL),
                   prompt_tokens=pt, completion_tokens=ct, cost=cost,
                   reject_reason=reason, approx_tokens=approx_tokens,
-                  head_hash=_head_hash, stream=1 if body.get("stream") else 0)
+                  head_hash=_head_hash, stream=1 if body.get("stream") else 0,
+                  route=_route, route_reason=_route_reason)
 
     # Upstream dinámico (2026-11-01): coder → :8001, generalista → :8000.
     _upstream = CODER_URL if _want_coder else VLLM_URL
@@ -3000,6 +3326,31 @@ async def v1_config_guide(request: Request):
              "name": "Coding con Victoria",
              "thinking": False, "use": "especialista codigo 30B (texto only, NO ve imagenes); on-demand :8001; context 120K, output 32K; roles admin/coder"},
         ],
+        "auto_route": {
+            "descripcion": ("El gateway enruta AUTOMATICAMENTE cada turno (2026-11-11): "
+                            "usa SOLO el modelo default del template y el gateway decide. "
+                            "Tarea de CODIGO -> motor coder :8001 (si tu llave tiene cap "
+                            "coder; si no, responde el generalista igual). Tarea de "
+                            "RAZONAMIENTO PROFUNDO -> thinking ON con budget. Conversacion "
+                            "-> normal. NUNCA necesitas elegir modelo ni sufijos."),
+            "explicito_gana": ("Si pides -thinking*, reasoning_effort distinto de "
+                               "none/minimal, o chat_template_kwargs.enable_thinking=true, "
+                               "tu eleccion prevalece. OJO (2026-11-11): el sufijo -normal/-fast "
+                               "es NEUTRO (no fuerza OFF) — solo reasoning_effort "
+                               "none/minimal o enable_thinking=false fuerzan OFF."),
+            "codigo_sin_coder": ("Si detecta codigo pero el motor coder no aplica (llave sin "
+                                 "cap coder, motor caido — se precalienta en background — o el "
+                                 "prompt+output no cabe en su contexto), responde el generalista "
+                                 "CON thinking ON (mejor en codigo). Prompt grande (>=40K) con el "
+                                 "coder cargando: ESPERA inline hasta 120s a que cargue y aterriza "
+                                 "en el coder (sin 429 ni reintentos); si no carga, 503 warming_up "
+                                 "honesto. Prompt diminuto (<1000 tokens): generalista rapido sin "
+                                 "thinking (peticiones utilitarias tipo titulos). Reversible: "
+                                 "AUTO_ROUTE_CODE_FALLBACK_THINKING=0."),
+            "auditoria": "Cada request queda con su decision en usage_log (columnas route/route_reason).",
+            "reversible": ("Env AUTO_ROUTE=0 desactiva; AUTO_ROUTE_CODE_MIN/REASON_MIN/"
+                           "CODER_MAX_PROMPT/CODER_MIN_PROMPT/CODER_WARM_WAIT ajustan umbrales."),
+        },
         "connection": {
             "local": "http://127.0.0.1:8010/v1 (mismo host que el gateway)",
             "lan": "http://<host-lan>:8010/v1 (solo si estas en la red local del gateway; el admin te da el host)",
