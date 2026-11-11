@@ -1,3 +1,9 @@
+### [2026-11-11 07:45 EST] [kalimete+opencode] Config Kalimete restaurado: "Using a Victoria" volvió al picker (bloques models perdidos el 10-11)
+- **Tipo**: fix (config cross-machine, autorización owner "evalúa y arregla")
+- **Qué**: el opencode.jsonc de Kalimete fue reescrito el 10-11 19:46 (cambio NO dokumentado, sin rastro en bash history — probable sesión de agente o script) y perdió: bloques `models` de vllm+vllm-lan, `model` default y whitelist NIM → el picker no mostraba "Using a Victoria". Restaurado desde bkup-20261109-coder-motor con merge que conserva lo nuevo válido (default_agent Kalimete capitalizado — verificado contra name: del agent file; instructions AGENTS-summary.md; mcp godot/blender). Backup previo bkup-20261111-models-restore.
+- **Verificado E2E**: `opencode models` lista el modelo en ambos providers + inferencia real "OK" vía túnel (sesión abre con primario Kalimete). El owner debe abrir sesión nueva para verlo.
+- **victoria.local**: evaluado — SIN el problema (config tiene ambas entradas con name, opencode models las lista).
+- **Docs**: CHANGELOG-MAESTRO.md de Kalimete (entrada 07:40) + esta referencia. Lección candidata: cambios de config por agentes deben dokumentar (mismo patrón que el drift del 10-05).
 ### [2026-11-11 05:10 EST] [infra] changelog-sync-victoria.sh: pull destructivo eliminado (sync = push-only)
 - **Tipo**: fix (pérdida de datos) — descubierto en vivo durante el paquete de mejoras
 - **Qué**: el cron */15 `changelog-sync-victoria.sh sync` hacía pull+push donde el pull era un scp remoto→local que PISABA el CHANGELOG.md master con el espejo viejo del hub. Destruyó la entrada "2026-11-11 paquete de mejoras" escrita entre corridas (recuperada de /tmp y re-insertada). Fix: `sync` = push-only (el local es MASTER; el remoto es espejo puro — verificado: Kalimete no escribe entradas en este archivo, documenta lo suyo en su repo per contrato 2026-09-30). El pull queda SOLO manual para restauración explícita.
