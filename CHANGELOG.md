@@ -1,13 +1,3 @@
-## 2026-11-11
-
-### [15:50] - Cambio: MCP `godot` general para juegos (auto-detección) + rebranding assets assetto-corsa
-- **Tipo**: config | agente
-- **Modificado**: `opencode.jsonc` (MCP `godot`: `godot-mcp` sin `-p`, cwd `~/dev/games`, auto-detección; `godot-ror` conservado), `agents/kalimete.md`, `agents/game-studio.md`, `conocimiento/lenguajes/mcps.md`, `MAPA.md`
-- **Afecta a**: kalimete (opencode), agentes `Blender`/`Game Studio`/`Record of Ragnarok`
-- **Causa**: owner pidió MCPs de uso general para juegos, no dedicados a 1 proyecto
-- **Estado**: ✅ sincronizado (jsonc validado con node; auto-detección verificada en vivo — detecta record-of-ragnarok)
-- **Notas**: con 2+ project.godot la auto-detección es ambigua → patrón `godot-<slug>` dedicado (2026-10-20). Branding del track assetto-corsa regenerado en assets/ (kn5 pendiente de re-inyección).
-
 ### [2026-11-11 13:30 EST] [gateway] `/v1/setup` ya NO instala nada (caso Justin: Desktop + CLI duplicado)
 - **Tipo**: fix — cumplimiento de la decisión owner 11-04 que el código nunca cumplió
 - **Qué pasaba**: el script de `/v1/setup` instalaba el CLI de opencode (URL vieja = serie 1.x) si `command -v opencode` fallaba. Justin tenía la app **Desktop** (que NO pone CLI en el PATH) → el script le instaló el CLI por encima = duplicado. Validado contra docs oficiales: opencode tiene 3 sabores (CLI/Desktop/Web) y 2 majors (v1 validado por nuestro stack; v2 beta con instalador propio).
