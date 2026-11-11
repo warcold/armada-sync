@@ -30,7 +30,7 @@
 - User: warcold (UID 1000, zsh), SSH 1111
 - Sync hub: `~/armada-sync` (push/pull)
 - Docker: 7 containers (tapmap, kalimete, taohemps-frontend, taohemps-backend, petsuite, **wordpress-local**, **wordpress-db**)
-- **opencode.jsonc**: 4 providers + MCPs `godot-ror`, `blender` (verificado 2026-10-20; el archivo es la fuente única)
+- **opencode.jsonc**: 4 providers + MCPs `godot` (general, auto-detect cwd ~/dev/games), `godot-ror` (dedicado RoR), `blender` (verificado 2026-11-11; el archivo es la fuente única)
   1. **vllm** (pública): flota de Victoria vía túnel — `https://victoria.armada.do/v1` (roaming, SIEMPRE conecta)
   2. **vllm-lan** (LAN): misma flota — `http://victoria.local:8010/v1` (rápida en casa; regla: en casa `vllm-lan`, fuera `vllm`)
       - Ambos providers con la MISMA flota con nombre (rename 2026-11-01/02, verificado live 11-03):
