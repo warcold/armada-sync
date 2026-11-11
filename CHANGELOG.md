@@ -1,3 +1,11 @@
+### [2026-11-10 22:00 EST] [gateway+coder] Coder on-demand: context 96K→120K, output 22K→32K (elimina compactaciones prematuras)
+- **Tipo**: feature (performance) + config + docs
+- **Qué**: el modelo Coder (Qwen3-Coder-30B) sirve 128K nativo (`--max-model-len 131072`) pero opencode lo limitaba a 96K context / 22K output, causando compactaciones prematuras en tareas complejas (loop de compactación + re-trabajo). Actualizado a **context 120K + output 32K** (120K+32K=152K < 131K nativo, headroom ~20K).
+- **Cambios**: `OPENCODE_CODER_CONTEXT=120000` en gateway, config-guide template + opencode_template actualizados, opencode.jsonc local (victoria) + agents/coder.md (ventana 120K).
+- **Por qué**: lección 2026-11-01 "primer intento con 96K ctx dio 400 context_length_exceeded → subido a 128K; tools de opencode pesan ~87K". El límite artificial de 96K causaba compactaciones cada ~30 min en tareas agénticas.
+- **Verificado**: config-guide muestra Coder con context 120K/output 32K, opencode picker lista "Coding con Victoria", gateway sano.
+- **Docs**: AGENTS.md, agents/coder.md, opencode.jsonc, config-guide, CHANGELOG-vllm.md + esta entrada.
+
 ### [2026-11-10 21:30 EST] [gateway] THINKING_TOKEN_BUDGET default corregido 2048→8192 (deriva docs vs código)
 - **Tipo**: fix (configuración) + docs
 - **Qué**: el CHANGELOG 2026-11-06 registraba el cambio a 8192 pero el default en `llm-gateway.py` (línea 33055) seguía siendo 2048. Corregido el default a 8192, reiniciado gateway, verificado que `/v1/config-guide` ahora muestra 8192. Actualizados: AGENTS.md (3 refs), agents/vllm.md (3 refs), vllm.harness.json.
