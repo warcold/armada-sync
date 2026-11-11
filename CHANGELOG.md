@@ -1,3 +1,8 @@
+### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
+- **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
+- **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
+- **Detalle completo**: `CHANGELOG-vllm.md` 14:20 EST.
+
 ### [2026-11-11 13:30 EST] [gateway] `/v1/setup` ya NO instala nada (caso Justin: Desktop + CLI duplicado)
 - **Tipo**: fix — cumplimiento de la decisión owner 11-04 que el código nunca cumplió
 - **Qué pasaba**: el script de `/v1/setup` instalaba el CLI de opencode (URL vieja = serie 1.x) si `command -v opencode` fallaba. Justin tenía la app **Desktop** (que NO pone CLI en el PATH) → el script le instaló el CLI por encima = duplicado. Validado contra docs oficiales: opencode tiene 3 sabores (CLI/Desktop/Web) y 2 majors (v1 validado por nuestro stack; v2 beta con instalador propio).
