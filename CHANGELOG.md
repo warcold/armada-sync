@@ -1,3 +1,9 @@
+### [2026-11-11 07:55 EST] [opencode+kalimete] Validación cruzada + "model" default de victoria.local restaurado (perdido ayer 22:10)
+- **Tipo**: fix (config) + validación E2E cross-machine
+- **Qué**: (1) Kalimete validado completo: picker restaurado, inferencia OK por TÚNEL ("OK") y por LAN ("LAN-OK"), metering del gateway confirma key `kalimete` → modelo local. (2) Hallazgo en victoria.local: la edición de ayer 22:10 (sesión Coder 120K) borró accidentalmente `"model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal"` (diff vs bkup-20261106: `3d2`) → sin default, opencode hizo fallback y las sesiones nuevas no abrían con "Using a Victoria" (esta sesión corrió en glm-5.3-flash-free de Zen nube). Restaurado (backup bkup-20261111-model-default) y verificado E2E: `opencode run` sin -m → "DEFAULT-OK" + metering key victoria → vLLM local.
+- **Por qué**: doctrina flota — owner SIEMPRE abre en "Using a Victoria" (default); sin la clave, el picker/default queda a merced del last-used.
+- **Lección**: registrada en LECCIONES.md (edits que reescriben config completo → verificar claves top-level críticas contra backup).
+- **Docs**: yes (general + LECCIONES).
 ### [2026-11-11 07:45 EST] [kalimete+opencode] Config Kalimete restaurado: "Using a Victoria" volvió al picker (bloques models perdidos el 10-11)
 - **Tipo**: fix (config cross-machine, autorización owner "evalúa y arregla")
 - **Qué**: el opencode.jsonc de Kalimete fue reescrito el 10-11 19:46 (cambio NO dokumentado, sin rastro en bash history — probable sesión de agente o script) y perdió: bloques `models` de vllm+vllm-lan, `model` default y whitelist NIM → el picker no mostraba "Using a Victoria". Restaurado desde bkup-20261109-coder-motor con merge que conserva lo nuevo válido (default_agent Kalimete capitalizado — verificado contra name: del agent file; instructions AGENTS-summary.md; mcp godot/blender). Backup previo bkup-20261111-models-restore.
