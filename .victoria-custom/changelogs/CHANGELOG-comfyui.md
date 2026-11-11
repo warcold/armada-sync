@@ -1,3 +1,11 @@
+### [2026-11-11 00:35 EST] [hunyuan3d] Carga perezosa + auto-unload idle + POST /free (libera ~10.9GB VRAM + ~11GB swap)
+- **Tipo**: feature (performance/memoria) — parte del paquete de mejoras autorizado por owner ("procede hasta terminar")
+- **Que**: hunyuan-server.py re-arquitecturado autocontenido (sin tocar gpu-saver): (1) **carga perezosa** — los pipelines ya NO cargan al arrancar; cargan en el primer `/generate` bajo job_lock + lock del árbitro; (2) **watchdog idle interno** (hilo daemon, chequeo 60s): descarga los modelos tras `HUNYUAN_IDLE_UNLOAD_S` (default 600s) sin uso, bajo job_lock (nunca pisa un trabajo en curso); (3) **`POST /free`** (patrón /free de ComfyUI, auth sense_auth igual que /generate) para descarga manual; (4) `/health` ahora reporta `idle_s`.
+- **Por que**: Hunyuan retenía ~10.9GB VRAM + ~11.1GB en swap PARA SIEMPRE tras el primer uso (no había unload) — era la causa raíz del OOM-kill (exit 137) del coder esa misma tarde y un swap-in storm latente para el próximo 3D. El gpu-saver solo liberaba ComfyUI.
+- **Verificado E2E**: restart → `/health` `loaded:false` inmediato; generate real → GLB 3MB/235K verts en 110.6s (carga ~60s + gen ~45s, como previsto); `POST /free` → `unloaded:true` + journal "modelos descargados"; nvidia-smi **10,948MiB → 253MiB** (residual = contexto CUDA, inevitable sin matar proceso); VmSwap del proceso **11.1GB → 0 kB**. El watchdog comparte el mismo código verificado de /free (mismo `_unload_pipelines` bajo job_lock).
+- **Impacto**: victoria-hunyuan3d.service (restart aplicado); primer /generate tras idle tarda ~60s más (reload desde cache HF) — clientes ya toleran (single-flight + árbitro). Kalimete (granja) no cambia su receta.
+- **Docs**: yes (AGENTS.md §11 Hunyuan3D-2 + agents/comfyui.md §Hunyuan3D-2 + general).
+
 ### [2026-11-03 15:10 EDT] [comfyui] ComfyUI v0.42.0 -> v0.44.0 (44 commits, ventana de mantenimiento autorizada por owner)
 - **Tipo**: refactor (upgrade)
 - **Que**: git pull v0.42.0 -> v0.44.0 (2fb8cabd -> 2c75dc1b). requirements tras el pull: aimdo 0.6.0 + kitchen 0.2.40 SIN CAMBIOS (sin riesgo crash-loop). Deps actualizadas: comfyui-frontend-package 1.55.14->1.57.6, workflow-templates 0.11.78->0.11.101, embedded-docs 0.5.10->0.5.16.

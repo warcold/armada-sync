@@ -1197,7 +1197,8 @@ Notas:
 | Venv | `/home/victoria/hunyuan-venv/` (py3.12, torch 2.14+cu130, transformers **4.57.1** + diffusers **0.32.2** pineados — NO subir: transformers 5.x rompe el load del DiT, diffusers 0.41 exige hub 1.x) |
 | Código | `/home/victoria/Hunyuan3D-2/` (clone Tencent-Hunyuan, depth 1) + `hy3dgen` instalado `-e` + `custom_rasterizer` + `mesh_processor` compilados (ninja/pybind11, ARM64 OK) |
 | Pesos (HF cache) | `tencent/Hunyuan3D-2mini` (shape mini-turbo 0.6B) + `tencent/Hunyuan3D-2` (paint-turbo 1.3B) — públicos, sin token |
-| API | `GET /health` (abierto) + `POST /generate {image_path\|image_b64, texture?=true, steps?=5, seed?, face_count?}` → `{glb_path, seconds_taken, verts, bytes}` + `GET /file/<n>.glb` (solo OUT_DIR) |
+| API | `GET /health` (abierto; `loaded`/`idle_s` reflejan el estado perezoso) + `POST /generate {image_path\|image_b64, texture?=true, steps?=5, seed?, face_count?}` → `{glb_path, seconds_taken, verts, bytes}` + `GET /file/<n>.glb` (solo OUT_DIR) + `POST /free` (descarga manual de modelos, patrón ComfyUI) |
+| Carga perezosa | **2026-11-10**: los pipelines NO cargan al arrancar — cargan en el primer `/generate` (~60s extra la 1ª vez tras idle) y se DESCARGAN solos tras 600s sin uso (watchdog interno, `HUNYUAN_IDLE_UNLOAD_S` env). Antes retenían ~10.9GB VRAM + ~11GB swap para siempre (causa del OOM-kill del coder 2026-11-10). VRAM idle residual: ~253MB (contexto CUDA) |
 | ENV crítico | `LD_LIBRARY_PATH=<venv>/lib/python3.12/site-packages/torch/lib` (custom_rasterizer_kernel → libc10.so; sin esto ImportError). Va en la unit systemd |
 | VRAM | shape ~6GB, con textura picos medios; NO correr con Sonic render a la vez (árbitro lo impide con 503/429) |
 | Velocidad | turbo 5 steps: shape segundos, con textura ~45-55s/GLB 3-4MB |

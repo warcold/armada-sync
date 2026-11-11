@@ -938,6 +938,18 @@ def init_db():
         created_role TEXT DEFAULT '',
         ip TEXT DEFAULT ''
     )""")
+    # Retención de usage_log (2026-11-11): la tabla crece sin límite (76K filas
+    # en ~3 meses). Limpieza al arrancar: borra filas > USAGE_LOG_RETENTION_DAYS
+    # (default 90). Los agregados de facturación viven en api_keys (total_*),
+    # NO aquí — borrar filas viejas no toca balances ni metering acumulado.
+    _retention_days = int(os.environ.get("USAGE_LOG_RETENTION_DAYS", "90"))
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_usage_log_ts ON usage_log(timestamp)")
+    _cur = conn.execute(
+        "DELETE FROM usage_log WHERE timestamp < datetime('now', ?)",
+        (f"-{_retention_days} days",))
+    if _cur.rowcount and _cur.rowcount > 0:
+        print(f"gateway: retención usage_log: {_cur.rowcount} filas > "
+              f"{_retention_days} días eliminadas", flush=True)
     conn.commit()
     conn.close()
 

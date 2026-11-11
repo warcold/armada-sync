@@ -26,10 +26,15 @@ pull_remote() {
 }
 
 sync_both() {
-    log "Sync bidireccional..."
-    # Pull first (get remote changes)
-    pull_remote
-    # Then push (send local changes)
+    # FIX 2026-11-11: sync era pull+push y el pull era DESTRUCTIVO (scp remoto
+    # -> local pisaba el master con el espejo viejo) — destruyó la entrada del
+    # 2026-11-11 (paquete de mejoras) escrita entre corridas del cron */15.
+    # Es exactamente el modo de fallo que motivó armada-sync ("pérdida del
+    # historial CHANGELOG por overwrite"). El remoto es un ESPEJO puro de
+    # Victoria (Kalimete documenta lo suyo en su propio repo, contrato
+    # 2026-09-30) → el local es el MASTER y sync = push-only. El pull queda
+    # disponible SOLO manual (pull) para restauración explícita.
+    log "Sync = push-only (local es master; pull manual destruiría entradas nuevas)"
     push_local
 }
 

@@ -1734,7 +1734,8 @@ fue parcheado y luego resuelto con upgrade a Gradio 6.28.0.
 | Daemon | `/home/victoria/hunyuan-server.py` (stdlib, single-flight 503, auth sense_auth, turno `hunyuan3d-standalone` en `gpu_arbiter.py`) |
 | Venv | `/home/victoria/hunyuan-venv/` (py3.12, torch 2.14+cu130, **transformers 4.57.1 + diffusers 0.32.2 pineados** — 5.x/0.41 rompen el load del DiT) |
 | Código/pesos | `/home/victoria/Hunyuan3D-2/` + `custom_rasterizer`/`mesh_processor` compilados ARM64; pesos HF `tencent/Hunyuan3D-2mini` (shape turbo 0.6B) + `tencent/Hunyuan3D-2` (paint-turbo 1.3B), ~10G |
-| API | `GET /health` + `POST /generate {image_path\|image_b64, texture?, steps?=5}` → GLB + `GET /file/<n>.glb` |
+| API | `GET /health` + `POST /generate {image_path\|image_b64, texture?, steps?=5}` → GLB + `GET /file/<n>.glb` + `POST /free` (descarga manual) |
+| Carga perezosa | **2026-11-10**: pipelines cargan en el 1er `/generate` (~60s extra tras idle) y se auto-descargan tras 600s sin uso (watchdog interno, env `HUNYUAN_IDLE_UNLOAD_S`). Antes retenían ~10.9GB VRAM + ~11GB swap idle para siempre (causa del OOM-kill del coder 2026-11-10). Residual idle: ~253MB contexto CUDA |
 | ENV crítico | `LD_LIBRARY_PATH=<venv>/.../torch/lib` (sin esto `custom_rasterizer_kernel` da ImportError libc10) |
 | Chat | wrapper `art-3d` (gate feature `3d`, base64+descarga) + skill `hunyuan3d` + nginx `/hunyuan3d/` LAN |
 | Kalimete | **Recurso de la granja (2026-10-19)**: `POST /generate {"image_b64"}` + `GET /file/<n>.glb` con la llave `kalimete` (cap art → sense elevation) — E2E verificado (GLB 3.5MB/46s descargado en Kalimete); receta en su skill `assets-3d` |
