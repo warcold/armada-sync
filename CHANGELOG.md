@@ -1,3 +1,10 @@
+### [2026-11-11 13:30 EST] [gateway] `/v1/setup` ya NO instala nada (caso Justin: Desktop + CLI duplicado)
+- **Tipo**: fix — cumplimiento de la decisión owner 11-04 que el código nunca cumplió
+- **Qué pasaba**: el script de `/v1/setup` instalaba el CLI de opencode (URL vieja = serie 1.x) si `command -v opencode` fallaba. Justin tenía la app **Desktop** (que NO pone CLI en el PATH) → el script le instaló el CLI por encima = duplicado. Validado contra docs oficiales: opencode tiene 3 sabores (CLI/Desktop/Web) y 2 majors (v1 validado por nuestro stack; v2 beta con instalador propio).
+- **Fix**: script reescrito — CERO instalaciones; detección en PATH + 4 rutas comunes; sin CLI → instrucciones oficiales + exit sin tocar nada (E2E: 0 archivos); con CLI → reporta versión y advierte si es v2/beta; respaldo + config + verificación intactos. Mensaje menciona el caso Desktop explícitamente.
+- **Verificado E2E 3 escenarios** (HOMEs temporales): sin CLI → 0 archivos tocados ✓; CLI v1 → backup+config+Victoria ✓; CLI v2-beta → advertencia ✓. Justin: su CLI instalado funciona con nuestra config (puede quedárselo o eliminarlo con `rm -rf ~/.opencode` + limpiar la línea PATH de su shell rc; su Desktop no fue tocado).
+- **Detalle completo**: `CHANGELOG-vllm.md` 13:30 EST.
+
 ### [2026-11-11 12:45 EST] [gateway] Válvula 7 RAM-consciente (fix loop coder_busy de kalimete)
 - **Tipo**: fix — detectado por el owner (loop de reintentos `coder_busy` cada 5 min)
 - **Qué pasaba**: sesión de kalimete con turnos CODE (servidos por el coder ✓) + un reasoning gigante (152,923 est / ~186K real) rechazado 6 veces en 30+ min por la válvula 7, que rechaza ciego todo prompt ≥40K al generalista con el coder cargado — regla por correlación, no por causa. Con 63G libres el rechazo era innecesario (la regla nació cuando el coder dejaba ~12-26G). Se auto-resolvía a los 30 min (idle-stop descarga el coder) pero con reintentos inútiles entretanto.
