@@ -1,3 +1,10 @@
+### [2026-11-10 21:30 EST] [gateway] THINKING_TOKEN_BUDGET default corregido 2048→8192 (deriva docs vs código)
+- **Tipo**: fix (configuración) + docs
+- **Qué**: el CHANGELOG 2026-11-06 registraba el cambio a 8192 pero el default en `llm-gateway.py` (línea 33055) seguía siendo 2048. Corregido el default a 8192, reiniciado gateway, verificado que `/v1/config-guide` ahora muestra 8192. Actualizados: AGENTS.md (3 refs), agents/vllm.md (3 refs), vllm.harness.json.
+- **Por qué**: @Thinker y clientes con `-thinking`/`reasoning_effort` recibían 2048 tokens de budget en vez de los 8192 aprobados por el owner (fase 1 plan de profundidad local).
+- **Verificado**: config-guide dinámico muestra 8192, gateway sano, inferencia E2E con id -thinking OK.
+- **Docs**: AGENTS.md, agents/vllm.md, vllm.harness.json, CHANGELOG-vllm.md + esta entrada.
+
 ### [2026-11-05 00:40 EDT] [gateway] /v1/setup ya NO instala opencode (decisión owner): requisito + pre-flight + merge intacto
 - **Tipo**: refactor (política)
 - **Qué**: el owner indicó que NO debemos instalar opencode a nadie — es requisito del cliente. El configurador ahora hace pre-flight: si opencode falta (revisando también ~/.opencode/bin, /usr/local/bin, /usr/bin, /opt/homebrew/bin por si está fuera del PATH), imprime el requisito con los métodos oficiales de instalación y **sale sin tocar NADA** (sin backup, sin merge). Si existe: respaldo + merge no destructivo + verificación como antes.
@@ -5993,7 +6000,4 @@ EOF又是
 - Agentes live: 28 subagentes + Kalimete (primary) + victoria-voz (mode: all, válido) — la doc interna que dice "18" quedó corta; actualizar en el próximo mantenimiento de Kalimete.
 - Higiene: eliminados victoria-voz.md.bkup-20261027 y wordpress-dev.md.bkup-20260926 (stale). bkup-agents/ estructural 20261001 se conserva.
 - ydotoold OK, sync GitHub OK, disco 75% (108G libres).
-- **2026-11-03 14:45 EDT** - daily-report anti-stale (owner: "vemos errores que ya no existen"): auditoría del mecanismo de reporte (victoria-daily-report.py, cron 5×/día → WhatsApp DM owner; único reporte periódico, resto alertadores). 4 fixes: ventana última-alerta gateway 48h→24h (la tormenta resuelta del 01-nov salía ~9 reportes como reciente), coder on-demand :8001 visible (idle=NORMAL sin warning), n8n chequeado en docker, timestamps de logs parseados como hora local del host (sufijo "EDT" hardcodeado de los writers miente tras fin de DST). Backup .bkup-20261103-stale-fix. E2E dry-run OK; primer envío real con fix: cron 16:00 ET. Detalle: CHANGELOG-infra.
-
-## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
-- MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia Kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en Kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
+- **2026-11-03 14:45 EDT** - daily-report anti-stale (owner: "vemos errores que ya no existen"): auditoría del mecanismo de reporte (victoria-daily-report.py, cron 5×/día → WhatsApp DM owner; único reporte periódico, resto alertadores). 4 fixes: ventana última-alerta gateway 48h→24h (la tormenta resuelta del 01-nov salía ~9 reportes como reciente), coder on-demand :8001 visible (idle=NORMAL sin warning), n8n chequeado en docker, timestamps de logs parseados como hora local del host (sufijo "EDT" hardcodeado de los writers miente tras fin de DST). Backup .bkup-202611
