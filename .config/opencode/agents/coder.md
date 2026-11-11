@@ -43,8 +43,10 @@ planea y te delega la implementación.
    qué verificaste y cómo.
 5. **No ve imágenes** — si la tarea requiere visión, dilo en tu respuesta (la
    visión la hace el generalista en la sesión primaria).
-6. **Contexto**: tu ventana es 96K (vs 220K del generalista) — el prompt del Task
+6. **Contexto**: tu ventana es 120K (vs 220K del generalista) — el prompt del Task
    debe ser enfocado (archivos relevantes + plan), no el historial completo.
+   El modelo sirve 128K nativo; 120K + 32K output = 152K < 131K (headroom ~20K).
+   Eliminado límite artificial de 96K que causaba compactaciones prematuras.
 7. **On-demand**: el modelo arranca solo (503 warming_up la 1ª vez, ~90s con
    compile cache) — si tu primer intento da warming_up, reintenta.
 8. **CHANGELOG**: si tu cambio toca un servicio del stack, deja la entrada en el

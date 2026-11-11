@@ -61,13 +61,11 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 TEMPLATE_PATH = pathlib.Path(__file__).parent / "admin_template.html"
 SERVED_MODEL = os.environ.get("SERVED_MODEL", "nvidia/Qwen3.6-35B-A3B-NVFP4")
 # Precio separado input/output por 1M tokens (estandar industria).
-# v4 (2026-11-04): alineado al mercado online de la clase comparable (35B MoE VLM,
-# contexto gigante) — GLM 5.3 FlashX $0.37/$1.25, Ripple-65B $0.20/$0.60, coding
-# barato $0.05/$0.50 (OpenRouter, nov 2026). Nuestro v3 ($0.10/$0.30) estaba 60-70%
-# bajo el mercado. Costo real propio: ~$0.0253/1M -> margen ~10-30x (servicio
-# premium local: privado, dedicado, sin logs de terceros).
-DEFAULT_PRICE_INPUT = float(os.environ.get("DEFAULT_PRICE_INPUT_PER_1M", "0.25"))   # USD / 1M input tokens
-DEFAULT_PRICE_OUTPUT = float(os.environ.get("DEFAULT_PRICE_OUTPUT_PER_1M", "0.75")) # USD / 1M output tokens
+# v3 (2026-08-30): recalibrado al costo real de produccion + margen razonable.
+#   Costo real: ~$0.0253/1M (hw $2.40/dia + elec $0.86/dia, 129M tok/dia).
+#   Defaults: input $0.10/1M, output $0.30/1M (output 3x, es el estandar: genera mas computo).
+DEFAULT_PRICE_INPUT = float(os.environ.get("DEFAULT_PRICE_INPUT_PER_1M", "0.10"))   # USD / 1M input tokens
+DEFAULT_PRICE_OUTPUT = float(os.environ.get("DEFAULT_PRICE_OUTPUT_PER_1M", "0.30")) # USD / 1M output tokens
 
 ADMIN_PASS_HASH = hashlib.sha256(
     os.environ.get("ADMIN_PASS", "victoria-admin").encode()
@@ -98,6 +96,12 @@ MAX_PROMPT_TOKENS = 220000  # 220K prompt + 32K output = 252K < 262144 − 2K
 # sin chocar con el tope del gateway. 220K + 32K output = 252K < max-model-len.
 # (Historial trigger compact: ~78K con context 120K → ~102K con 144K → ~178K con 220K.)
 OPENCODE_CONTEXT = 220000  # 220K (cliente)
+
+# Context recomendado para el modelo Coder (Qwen3-Coder-30B).
+# El modelo sirve 128K nativo (--max-model-len 131072), KV 8GiB.
+# opencode limitaba a 96K (causaba compactaciones prematuras en tareas complejas).
+# 120K + 32K output = 152K < 131072 (headroom ~20K).
+OPENCODE_CODER_CONTEXT = 120000  # 120K (cliente Coder)
 
 VLLM_URL = os.environ.get("VLLM_URL", "http://localhost:8000")
 PORT = int(os.environ.get("GATEWAY_PORT", "8010"))
@@ -785,7 +789,7 @@ UPSTREAM_TOTAL_TIMEOUT = 1200.0    # no-streaming: respuesta completa max 20 min
 # los 32000 tokens de output en "pensar" antes de responder. Con este budget el
 # pensamiento queda acotado (~2048 tokens ≈ 15-20s) y el resto del output va a
 # la respuesta real. Ajustable vía env. No afecta el modo default (thinking off).
-THINKING_TOKEN_BUDGET = int(os.environ.get("THINKING_TOKEN_BUDGET", "2048"))
+THINKING_TOKEN_BUDGET = int(os.environ.get("THINKING_TOKEN_BUDGET", "8192"))
 
 # ---------------------------------------------------------------------------
 # FLIGHT RECORDER + DETECCIÓN DE ANOMALÍAS EN TIEMPO REAL (2026-09-20)
@@ -904,7 +908,7 @@ def init_db():
     _ensure_column(conn, "usage_log", "eng_kv", "REAL DEFAULT 0")
     # Router unico + arte (2026-09-16): capacidades por llave y precios art.
     _ensure_column(conn, "api_keys", "allowed_models", "TEXT DEFAULT ''")
-    _ensure_column(conn, "api_keys", "price_per_image", "REAL DEFAULT 0.25")
+    _ensure_column(conn, "api_keys", "price_per_image", "REAL DEFAULT 0.10")
     _ensure_column(conn, "api_keys", "price_per_video_sec", "REAL DEFAULT 0.02")
     # Flight recorder + anomalías (2026-09-20): head_hash del prompt (el mismo
     # hash del costo-efectivo, ahora persistido para forense), flag stream y
@@ -2576,7 +2580,7 @@ async def _art_submit(request: Request, kind: str):
                 pass
         return JSONResponse(status_code=502, content={"error": "comfyui_rejected", "detail": "sin prompt_id"})
     job_id = "art-" + secrets.token_hex(8)
-    price = float(key.get("price_per_image") or 0.25) if kind == "image" else float(key.get("price_per_video_sec") or 0.05) * float(body.get("duration_sec") or 8)
+    price = float(key.get("price_per_image") or 0.10) if kind == "image" else float(key.get("price_per_video_sec") or 0.02) * float(body.get("duration_sec") or 8)
     with _art_lock:
         _art_jobs[job_id] = {"prompt_id": prompt_id, "key_name": key_name, "kind": kind, "template": template or "custom", "t0": time.time(), "status": "queued", "arbiter": _arb_tok, "patched": patched}
     try:
@@ -2850,6 +2854,18 @@ async def v1_config_guide(request: Request):
                             "input": ["text", "image", "video"],
                             "output": ["text"]
                         }
+                    },
+                    "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4": {
+                        "name": "Coding con Victoria",
+                        "id": "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",
+                        "limit": {"context": OPENCODE_CODER_CONTEXT, "output": 32000},
+                        "attachment": False,
+                        "tool_call": True,
+                        "reasoning": False,
+                        "modalities": {
+                            "input": ["text"],
+                            "output": ["text"]
+                        }
                     }
                 }
             }
@@ -2880,7 +2896,8 @@ async def v1_config_guide(request: Request):
                         "margen) para TODOS los roles por igual. Excederlo devuelve 400 "
                         "prompt_tokens_exceeded. Configura 'context' en opencode del cliente en "
                         f"{OPENCODE_CONTEXT} y activa compaction auto+prune para mantener sesiones "
-                        "profundas sin chocar con el limite."
+                        "profundas sin chocar con el limite. "
+                        f"Modelo Coder (Qwen3-Coder-30B): context {OPENCODE_CODER_CONTEXT} + output 32K = 152K < 128K nativo (headroom ~20K)."
                     ),
                     "note_antifreeze": (
                         "Protección anti-freeze por admisión ADAPTATIVA (nunca se "
@@ -2967,6 +2984,9 @@ async def v1_config_guide(request: Request):
             {"alias": "nvidia/Qwen3.6-35B-A3B-NVFP4-thinking",
              "name": "(avanzado, fuera del template)",
              "thinking": True, "use": "tareas complejas; thinking acotado a " + str(THINKING_TOKEN_BUDGET) + " tokens; para agentes propios tambien sirve el id normal + request.body.chat_template_kwargs {enable_thinking:true} (el gateway inyecta el budget)"},
+            {"alias": "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",
+             "name": "Coding con Victoria",
+             "thinking": False, "use": "especialista codigo 30B (texto only, NO ve imagenes); on-demand :8001; context 120K, output 32K; roles admin/coder"},
         ],
         "connection": {
             "local": "http://127.0.0.1:8010/v1 (mismo host que el gateway)",
@@ -2981,14 +3001,14 @@ async def v1_config_guide(request: Request):
             "REPLACE_APIKEY": "Tu API key del gateway (la que usaste para leer esto)"
         },
         "client_config_recomendado": (
-            "REQUISITO: opencode instalado (https://opencode.ai — el configurador NO lo instala por ti). "
-            "VIA CANONICA (2026-11-04): UN comando suma Victoria a tu config SIN tocar lo tuyo "
-            "(respalda tu config anterior y hace merge: tus providers/modelos/temas quedan intactos): "
+            "VIA CANONICA (2026-11-03): UN comando hace todo (instala opencode si falta, "
+            "RESPALDA tu config anterior sin perderla, descarga tu config con el cerebro incluido y verifica): "
             "curl -fsSL -H 'Authorization: Bearer TU_KEY' TU_BASEURL/v1/setup | bash . "
             "Luego corre 'opencode': la sesion abre con VICTORIA como agente primario "
             "(te atiende, delega a coder/thinker segun la tarea) y tus limites ya configurados. "
             "Tus modelos anteriores (OpenCode Zen, etc.) siguen disponibles en el picker. "
-            "Alternativa manual: mkdir -p ~/.config/opencode && curl -s -H 'Authorization: Bearer TU_KEY' "
+            "Alternativa manual (2 comandos): (1) curl -fsSL https://opencode.ai/install | bash "
+            "(2) mkdir -p ~/.config/opencode && curl -s -H 'Authorization: Bearer TU_KEY' "
             "TU_BASEURL/v1/client-config -o ~/.config/opencode/opencode.jsonc . "
             "El template manual de abajo es el fallback minimo (solo el modelo, sin agentes)."),
         "validation": {
@@ -3405,12 +3425,11 @@ def _public_agents():
 
 @app.get("/v1/setup")
 async def v1_setup(request: Request):
-    """Configurador de 1 comando para clientes (2026-11-04): genera un script
-    bash PERSONALIZADO con la llave y baseURL del que llama. NO instala
-    opencode (decisión owner: instalar software ajeno es invasivo) — si falta,
-    indica el requisito y sale sin tocar nada. Si existe: RESPALDA la config
-    del cliente, hace MERGE no destructivo (Victoria se suma, lo suyo queda)
-    y verifica. Uso:
+    """Instalador de 1 comando para clientes (2026-11-03): genera un script
+    bash PERSONALIZADO con la llave y baseURL del que llama. El script:
+    instala opencode si falta, RESPALDA la config existente del cliente
+    (no toca lo que tiene sin copia), descarga la config con el cerebro
+    embebido y verifica. Uso:
       curl -fsSL -H "Authorization: Bearer TU_LLAVE" <gateway>/v1/setup | bash
     Auth: cualquier llave válida. La llave viaja en el script por el mismo
     canal TLS que el comando manual — sin diferencia de exposición."""
@@ -3437,23 +3456,12 @@ OC_FILE="$OC_DIR/opencode.jsonc"
 
 echo "==> Victoria Armada · instalador (llave: {info['name']}, rol: {info['role']})"
 
-# 1) opencode es REQUISITO (no lo instalamos por ti — decisión owner)
+# 1) opencode presente? si no, instalarlo
 if ! command -v opencode >/dev/null 2>&1; then
-  for CAND in "$HOME/.opencode/bin" /usr/local/bin /usr/bin /opt/homebrew/bin; do
-    if [ -x "$CAND/opencode" ]; then export PATH="$CAND:$PATH"; break; fi
-  done
+  echo "==> opencode no está instalado — instalando..."
+  curl -fsSL https://opencode.ai/install | bash
+  export PATH="$HOME/.opencode/bin:$PATH"
 fi
-if ! command -v opencode >/dev/null 2>&1; then
-  echo ""
-  echo "⚠️  opencode no está instalado — es el requisito para usar Victoria."
-  echo "    Nada fue modificado en tu computadora."
-  echo "    Instálalo primero con el método oficial:"
-  echo "      curl -fsSL https://opencode.ai/install | bash"
-  echo "      (o npm i -g opencode-ai  ·  docs: https://opencode.ai/docs)"
-  echo "    Y luego vuelve a correr este comando."
-  exit 1
-fi
-echo "==> opencode detectado: $(command -v opencode)"
 
 # 2) RESPALDO de la config existente (no tocamos lo que tienes sin copia)
 mkdir -p "$OC_DIR"
@@ -3463,34 +3471,9 @@ if [ -f "$OC_FILE" ]; then
   echo "==> Respaldo de tu config anterior: $BAK"
 fi
 
-# 3) Descargar tu config y SUMARLA a la tuya (merge: no destructivo)
-TMP_CFG="$(mktemp)"
-curl -s -H "Authorization: Bearer {api_key}" {base}/v1/client-config -o "$TMP_CFG"
-if command -v python3 >/dev/null 2>&1; then
-  python3 - "$TMP_CFG" <<'PYMERGE'
-import json, sys, os
-ours = json.load(open(sys.argv[1]))
-p = os.path.expanduser("~/.config/opencode/opencode.jsonc")
-try:
-    cur = json.load(open(p))
-    if not isinstance(cur, dict): cur = {{}}
-except Exception:
-    cur = {{}}
-# Lo nuestro reemplaza SOLO nuestras llaves; todo lo demás del cliente se preserva
-prov = cur.get("provider") if isinstance(cur.get("provider"), dict) else {{}}
-for k, v in (ours.get("provider") or {{}}).items():
-    prov[k] = v
-cur["provider"] = prov
-for k in ("$schema", "compaction", "default_agent", "agents", "_meta"):
-    if k in ours: cur[k] = ours[k]
-json.dump(cur, open(p, "w"), indent=2, ensure_ascii=False)
-print("==> Config fusionada: Victoria sumada, tu configuración anterior intacta")
-PYMERGE
-else
-  mv "$TMP_CFG" "$OC_FILE"
-  echo "==> Config instalada (python3 no encontrado: reemplazo directo, tu backup tiene la anterior)"
-fi
-rm -f "$TMP_CFG"
+# 3) Descargar tu config lista (con Victoria como cerebro incluido)
+curl -s -H "Authorization: Bearer {api_key}" {base}/v1/client-config -o "$OC_FILE"
+echo "==> Config instalada en $OC_FILE"
 
 # 4) Verificar que el cerebro quedó registrado
 if command -v opencode >/dev/null 2>&1; then
@@ -3508,7 +3491,7 @@ cat <<'MSG'
   - Ella se encarga de todo (conversar, codear, crear).
   - Tus capacidades: curl -s -H "Authorization: Bearer TU_LLAVE" {base}/v1/me
   - ¿Necesitas más nivel? Alfredo Pro LLC · me@alfredo.pro · +1.202.500.0357
-  - Tus modelos y providers anteriores siguen intactos (Victoria se SUMA).
+  - Tus modelos anteriores (OpenCode Zen, etc.) siguen en el picker.
 ==============================================
 MSG
 """

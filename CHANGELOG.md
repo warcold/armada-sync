@@ -1,3 +1,18 @@
+### [2026-11-10 22:00 EST] [gateway+coder] Coder on-demand: context 96K→120K, output 22K→32K (elimina compactaciones prematuras)
+- **Tipo**: feature (performance) + config + docs
+- **Qué**: el modelo Coder (Qwen3-Coder-30B) sirve 128K nativo (`--max-model-len 131072`) pero opencode lo limitaba a 96K context / 22K output, causando compactaciones prematuras en tareas complejas (loop de compactación + re-trabajo). Actualizado a **context 120K + output 32K** (120K+32K=152K < 131K nativo, headroom ~20K).
+- **Cambios**: `OPENCODE_CODER_CONTEXT=120000` en gateway, config-guide template + opencode_template actualizados, opencode.jsonc local (victoria) + agents/coder.md (ventana 120K).
+- **Por qué**: lección 2026-11-01 "primer intento con 96K ctx dio 400 context_length_exceeded → subido a 128K; tools de opencode pesan ~87K". El límite artificial de 96K causaba compactaciones cada ~30 min en tareas agénticas.
+- **Verificado**: config-guide muestra Coder con context 120K/output 32K, opencode picker lista "Coding con Victoria", gateway sano.
+- **Docs**: AGENTS.md, agents/coder.md, opencode.jsonc, config-guide, CHANGELOG-vllm.md + esta entrada.
+
+### [2026-11-10 21:30 EST] [gateway] THINKING_TOKEN_BUDGET default corregido 2048→8192 (deriva docs vs código)
+- **Tipo**: fix (configuración) + docs
+- **Qué**: el CHANGELOG 2026-11-06 registraba el cambio a 8192 pero el default en `llm-gateway.py` (línea 33055) seguía siendo 2048. Corregido el default a 8192, reiniciado gateway, verificado que `/v1/config-guide` ahora muestra 8192. Actualizados: AGENTS.md (3 refs), agents/vllm.md (3 refs), vllm.harness.json.
+- **Por qué**: @Thinker y clientes con `-thinking`/`reasoning_effort` recibían 2048 tokens de budget en vez de los 8192 aprobados por el owner (fase 1 plan de profundidad local).
+- **Verificado**: config-guide dinámico muestra 8192, gateway sano, inferencia E2E con id -thinking OK.
+- **Docs**: AGENTS.md, agents/vllm.md, vllm.harness.json, CHANGELOG-vllm.md + esta entrada.
+
 ### [2026-11-05 00:40 EDT] [gateway] /v1/setup ya NO instala opencode (decisión owner): requisito + pre-flight + merge intacto
 - **Tipo**: refactor (política)
 - **Qué**: el owner indicó que NO debemos instalar opencode a nadie — es requisito del cliente. El configurador ahora hace pre-flight: si opencode falta (revisando también ~/.opencode/bin, /usr/local/bin, /usr/bin, /opt/homebrew/bin por si está fuera del PATH), imprime el requisito con los métodos oficiales de instalación y **sale sin tocar NADA** (sin backup, sin merge). Si existe: respaldo + merge no destructivo + verificación como antes.
@@ -20,37 +35,37 @@
 - **Docs**: changelogs general + vllm. Backups: llm-gateway.py.bkup-20261104-precios.
 ### [2026-11-04 18:10 EDT] [gateway+panel] Modelo BASE+ADD-ONS de tiers (directiva owner): llm base universal + caps aditivas + cap coder
 - **Tipo**: feature + refactor de permisos
-- **Qué**: el owner definió el modelo definitivo de tiers: `llm` (chat) es la BASE UNIVERSAL de toda llave que infiere (siempre activa, no desactivable, salvo readonly); los demás caps se SUMAN por selección (checkboxes) y el owner los aprueba. Implementado: (1) `_key_allows` reescrito — llm=True para todos salvo readonly; caps = la selección del panel (la verdad) sobre la base; (2) **cap `coder` nueva** (9 caps totales) — el gate del motor :8001 ahora usa `_key_allows("coder")` (rol admin/coder O cap coder) → usuarios con múltiples tiers seleccionados funcionan; (3) `sense_auth.ALL_CAPABILITIES` + coder (NO eleva sentidos — es poder del gateway, no un sentido); (4) panel: checkbox 💻 Motor de código, LLM bloqueado como "base universal", presets de negocio (💬 Conversación / 💻 Desarrollo / 🎨 Estudio Creativo / 🔊 Voz / Todo), fix del preset art stale (sin llm), readCaps/setCaps fuerzan llm; (5) `/v1/me` muestra caps efectivas (base + seleccionadas); (6) migración: kalimete caps + `coder` (bajo caps=verdad habría perdido el motor).
-- **E2E (matriz 7 tiers)**: EL CASO CLAVE — rol llm + cap `["coder"]` → chat 200 + motor arranca (503 warming = gate pasado) ✓; rol llm + cap `["art"]` → chat 200 + arte OK + voz 403 (exactamente lo seleccionado) ✓; llm puro → solo chat ✓; coder (Juan) → chat+motor ✓; kalimete migrada → todo lo suyo ✓; readonly → nada ✓; admin → todo ✓. Llaves de prueba creadas y eliminadas.
+- **Qué**: el owner definió el modelo definitivo de tiers: `llm` (chat) es la BASE UNIVERSAL de toda llave que infiere (siempre activa, no desactivable, salvo readonly); los demás caps se SUMAN por selección (checkboxes) y el owner los aprueba. Implementado: (1) `_key_allows` reescrito — llm=True para todos salvo readonly; caps = la selección del panel (la verdad) sobre la base; (2) **cap `coder` nueva** (9 caps totales) — el gate del motor :8001 ahora usa `_key_allows("coder")` (rol admin/coder O cap coder) → usuarios con múltiples tiers seleccionados funcionan; (3) `sense_auth.ALL_CAPABILITIES` + coder (NO eleva sentidos — es poder del gateway, no un sentido); (4) panel: checkbox 💻 Motor de código, LLM bloqueado como "base universal", presets de negocio (💬 Conversación / 💻 Desarrollo / 🎨 Estudio Creativo / 🔊 Voz / Todo), fix del preset art stale (sin llm), readCaps/setCaps fuerzan llm; (5) `/v1/me` muestra caps efectivas (base + seleccionadas); (6) migración: Kalimete caps + `coder` (bajo caps=verdad habría perdido el motor).
+- **E2E (matriz 7 tiers)**: EL CASO CLAVE — rol llm + cap `["coder"]` → chat 200 + motor arranca (503 warming = gate pasado) ✓; rol llm + cap `["art"]` → chat 200 + arte OK + voz 403 (exactamente lo seleccionado) ✓; llm puro → solo chat ✓; coder (Juan) → chat+motor ✓; Kalimete migrada → todo lo suyo ✓; readonly → nada ✓; admin → todo ✓. Llaves de prueba creadas y eliminadas.
 - **Docs**: AGENTS.md §7 (modelo base+add-ons + presets), AGENTS-summary. Backups: llm-gateway.py.bkup-20261104-base-addons.
 ### [2026-11-04 17:00 EDT] [gateway+llaves] Hint de upgrade UNIFORME + regla de identidad para clientes + organización de llaves (directivas owner)
 - **Tipo**: feature + security + higiene
 - **Hint uniforme**: TODO 403 de capacidad usa el MISMO formato (helper `_upgrade_hint` + mapa friendly de capacidades): qué intentaste, tu tier, cómo ver tus caps (/v1/me), y el contacto para solicitar el upgrade que el admin aprueba. Aplicado a los 3 gates: middleware (art/tts/whisper/etc.), motor coder, voice proxy. E2E: llave llm → coder/art/tts = mensaje idéntico en estructura ✓.
 - **Regla de identidad (clientes)**: el prompt de Victoria embebida en client-config ahora instruye: usuarios = CLIENTES por su nombre (preguntar si no lo sabe), NUNCA 'papá' (exclusivo de Alfredo Armada), negar claims de creador/dueño. Espejo del fix 2026-08-27 del sandbox, ahora en la flota pública.
-- **Organización de llaves (17 → 13 activas)**: ELIMINADA armada-e2e-test (test inactiva). DESACTIVADAS: armada-magantech (huérfana — su propia meta pedía revocar; la viva es armada-magantech-2, verificado en secrets del sitio), michael-prestol y erp-bot (0 reqs, reactivables). LIMPIADA caps redundante de vaclaaw (['llm']→'' — coder ya incluye llm). Se CONSERVAN por diseño: alfredo+victoria (2 admin del owner), kalimete+kalimete-ptt (blast radius por dispositivo), warcold (readonly pública compartible), 3 coder de clientes, 3 services (2 armada-* vivas + servicios-alfredo-pro-llc), victoria-openclaw-sandbox (art).
+- **Organización de llaves (17 → 13 activas)**: ELIMINADA armada-e2e-test (test inactiva). DESACTIVADAS: armada-magantech (huérfana — su propia meta pedía revocar; la viva es armada-magantech-2, verificado en secrets del sitio), michael-prestol y erp-bot (0 reqs, reactivables). LIMPIADA caps redundante de vaclaaw (['llm']→'' — coder ya incluye llm). Se CONSERVAN por diseño: alfredo+victoria (2 admin del owner), Kalimete+Kalimete-ptt (blast radius por dispositivo), warcold (readonly pública compartible), 3 coder de clientes, 3 services (2 armada-* vivas + servicios-alfredo-pro-llc), victoria-openclaw-sandbox (art).
 - **E2E**: hint uniforme en 3 gates ✓, client-config regenerado con regla de identidad ✓, chat admin OK ✓. Backup: llm-gateway.py.bkup-20261104-hints.
 - **Docs**: changelogs general + vllm.
 ### [2026-11-03 13:10 EDT] [infra] Off-site UNIFICADO en el hub existente warcold/armada-sync (decisión owner)
 - **Tipo**: infra + docs
-- **Qué**: el owner cuestionó crear un segundo repo (victoria-sync) teniendo el hub armada-sync. Evaluado y UNIFICADO: los snapshots de Victoria pushean a la **rama aislada `victoria-offsite`** del hub existente `warcold/armada-sync`. Base de la decisión (verificada live): el sync.sh de kalimete solo opera `master` (`git pull origin master` + `git add -A` + `git push origin master` — sin force/--all/--delete, refspec limitado) → la rama de Victoria es invisible para su sync y viceversa; el hub solo tenía `master` (7.5MB, sin colisión). Historia huérfana (sin commits compartidos). Repo con nombre del SISTEMA (armada-sync), no de la máquina — semánticamente coherente: un repo, dos flujos aislados por rama.
-- **Cambios**: rama del worktree renombrada main→victoria-offsite; `do_offsite` con `OFFSITE_BRANCH` (default victoria-offsite) y remote apuntando al hub (`git@github-victoria:warcold/armada-sync.git`); contrato "NO usar el hub de kalimete" REVISADO por directiva owner (documentado en kalimete también). Push mecánico probado con bare local (139 archivos a victoria-offsite OK).
+- **Qué**: el owner cuestionó crear un segundo repo (victoria-sync) teniendo el hub armada-sync. Evaluado y UNIFICADO: los snapshots de Victoria pushean a la **rama aislada `victoria-offsite`** del hub existente `warcold/armada-sync`. Base de la decisión (verificada live): el sync.sh de Kalimete solo opera `master` (`git pull origin master` + `git add -A` + `git push origin master` — sin force/--all/--delete, refspec limitado) → la rama de Victoria es invisible para su sync y viceversa; el hub solo tenía `master` (7.5MB, sin colisión). Historia huérfana (sin commits compartidos). Repo con nombre del SISTEMA (armada-sync), no de la máquina — semánticamente coherente: un repo, dos flujos aislados por rama.
+- **Cambios**: rama del worktree renombrada main→victoria-offsite; `do_offsite` con `OFFSITE_BRANCH` (default victoria-offsite) y remote apuntando al hub (`git@github-victoria:warcold/armada-sync.git`); contrato "NO usar el hub de Kalimete" REVISADO por directiva owner (documentado en Kalimete también). Push mecánico probado con bare local (139 archivos a victoria-offsite OK).
 - **Owner (1 min)**: agregar deploy key `~/.ssh/id_github_victoria.pub` (write) al repo `warcold/armada-sync` — el primer push sale solo en el próximo ciclo.
 - **Verificado**: sintaxis bash, push a rama aislada OK, remote restaurado al hub, fallo graceful intacto.
-- **Docs**: yes (AGENTS.md §8, AGENTS-summary topología, changelog kalimete, general + infra).
+- **Docs**: yes (AGENTS.md §8, AGENTS-summary topología, changelog Kalimete, general + infra).
 ### [2026-11-03 10:45 EDT] [gateway+infra] Pendientes #2 y #3 del owner: TTS fuera de LAN + off-site armada-sync
 - **Tipo**: feature + infra + security
-- **#2 TTS fuera de LAN (RESUELTO)**: proxy `/voice/{tts,stt,health}` en el gateway → 127.0.0.1:18810. **Corrección de diseño**: la receta original (ruta cloudflared directa) era INSEGURA — el túnel llega como 127.0.0.1 y sense_auth confía en localhost sin llave = TTS público. El proxy exige llave SIEMPRE (validate_key + caps tts/whisper por rol o allowed_models; readonly→403). Metering en usage_log (rate limit aplica). E2E: local (WAV 142KB / 401 / 403) + REAL desde kalimete por el túnel (TTS WAV 219KB + STT roundtrip exacto). `VICTORIA_TTS_URL=https://victoria.armada.do/voice/tts` en ~/.bashrc de kalimete (bkup-20261103-tts-tunnel). Backup gateway: llm-gateway.py.bkup-20261103-voice-proxy.
+- **#2 TTS fuera de LAN (RESUELTO)**: proxy `/voice/{tts,stt,health}` en el gateway → 127.0.0.1:18810. **Corrección de diseño**: la receta original (ruta cloudflared directa) era INSEGURA — el túnel llega como 127.0.0.1 y sense_auth confía en localhost sin llave = TTS público. El proxy exige llave SIEMPRE (validate_key + caps tts/whisper por rol o allowed_models; readonly→403). Metering en usage_log (rate limit aplica). E2E: local (WAV 142KB / 401 / 403) + REAL desde Kalimete por el túnel (TTS WAV 219KB + STT roundtrip exacto). `VICTORIA_TTS_URL=https://victoria.armada.do/voice/tts` en ~/.bashrc de Kalimete (bkup-20261103-tts-tunnel). Backup gateway: llm-gateway.py.bkup-20261103-voice-proxy.
 - **#3 armada-sync off-site (TODO LISTO, falta repo del owner)**: llave dedicada `~/.ssh/id_github_victoria` (ed25519) + alias ssh `github-victoria`; worktree `~/.armada-sync/offsite/` (git init, 139 archivos); `do_offsite` en armada-sync.sh (rsync latest→offsite, commit, push; no fatal, graceful sin remote); enganchado a `cycle`. Push probado con repo local bare (139 archivos OK). Verify anti-secretos OK — única llave completa = readonly db13 (compartible por diseño). **Pendiente owner (2 min)**: crear repo privado `warcold/victoria-sync` + deploy key `~/.ssh/id_github_victoria.pub` (write).
 - **BONUS — 5 bugs del fleet arreglados**: (1) `cycle` del case tenía lógica inline que NO llamaba do_cycle() → do_granja_drift (29-oct) NUNCA corría con el timer — ahora fuente única do_cycle (granja-drift verificó sincronizado en su 1ª corrida real); (2) KeyError 'principal' en fleet vs estructura real del harness central; (3) coder.md fuera de la whitelist want; (4) rutas ~/ sin expandir en entry Coder; (5) changelogs_dir vacío + nombre del principal en minúscula. fleet OK: 12 agentes consistentes.
-- **Impacto**: gateway (+3 rutas /voice/*), armada-sync.sh (do_offsite + fixes), ~/.bashrc de kalimete (1 línea), docs (AGENTS.md §8, AGENTS-summary, vllm.md, harnesses vllm+central, changelog kalimete).
-- **Verificado**: gateway ok tras restart, E2E TTS/STT por túnel desde kalimete, fleet OK, cycle completo OK, offsite push OK (repo de prueba).
-- **Docs**: yes (general + vllm + infra + kalimete + AGENTS.md + AGENTS-summary + vllm.md + 2 harnesses).
+- **Impacto**: gateway (+3 rutas /voice/*), armada-sync.sh (do_offsite + fixes), ~/.bashrc de Kalimete (1 línea), docs (AGENTS.md §8, AGENTS-summary, vllm.md, harnesses vllm+central, changelog Kalimete).
+- **Verificado**: gateway ok tras restart, E2E TTS/STT por túnel desde Kalimete, fleet OK, cycle completo OK, offsite push OK (repo de prueba).
+- **Docs**: yes (general + vllm + infra + Kalimete + AGENTS.md + AGENTS-summary + vllm.md + 2 harnesses).
 ### [2026-11-03 00:30 EDT] [stack] Huecos mejorados con mejores prácticas (petición owner): firewall LAN :8000, gate coder RAM, docs refrescadas
 - **Tipo**: security + infra + docs
-- **Firewall vLLM :8000 (hueco #2 CERRADO)**: el tráfico al puerto publicado pasa por FORWARD/DOCKER-USER (DNAT Docker), no por INPUT. Reglas DOCKER-USER: RETURN para 127.0.0.1 y 172.16.0.0/12 (gateway-proxy 172.17.0.1, sandbox 172.18.x, victoria-lan 172.22.x) + DROP para todo lo demás (LAN 10.x, externo). Persistido con unit oneshot `victoria-firewall-vllm.service` (enabled, After=docker.service, idempotente — patrón gpu-clock-cap; NUNCA After=multi-user.target). **E2E real desde kalimete**: LAN→10.0.0.5:8000 = 000 ANTES 200 (bloqueado), gateway loopback→vLLM = "FW-OK", sandbox 172.18.0.1→vLLM = 200, LAN→:8010 = 200 (intacto). Verificado antes: NINGÚN consumidor legítimo de :8000 desde LAN (gateway usa loopback, kalimete usa :8010).
+- **Firewall vLLM :8000 (hueco #2 CERRADO)**: el tráfico al puerto publicado pasa por FORWARD/DOCKER-USER (DNAT Docker), no por INPUT. Reglas DOCKER-USER: RETURN para 127.0.0.1 y 172.16.0.0/12 (gateway-proxy 172.17.0.1, sandbox 172.18.x, victoria-lan 172.22.x) + DROP para todo lo demás (LAN 10.x, externo). Persistido con unit oneshot `victoria-firewall-vllm.service` (enabled, After=docker.service, idempotente — patrón gpu-clock-cap; NUNCA After=multi-user.target). **E2E real desde Kalimete**: LAN→10.0.0.5:8000 = 000 ANTES 200 (bloqueado), gateway loopback→vLLM = "FW-OK", sandbox 172.18.0.1→vLLM = 200, LAN→:8010 = 200 (intacto). Verificado antes: NINGÚN consumidor legítimo de :8000 desde LAN (gateway usa loopback, Kalimete usa :8010).
 - **Gate coder RAM endurecido (hueco #4 — swap)**: evaluación del swap 55GB: **MANTENER** — 26GB EN USO, 43 eventos NVRM NV_ERR_NO_MEMORY (nov 1-2) correlacionados con coder activo + RAM disponible 24-27GB (zona marginal UMA), 0 procesos OOM-killed, 0 freezes desde swappiness=10. El swap es load-bearing. Mejora aplicada con esa data: `CODER_START_MIN_RAM_GB=28` (drop-in systemd `coder-ram-gate.conf`, antes 20) — el coder ya no arranca presionando la UMA. Re-evaluar swap en 30 días.
 - **cloudflared (hueco #5 parcial)**: 2026.10.0 ES la última del repo apt (la deriva era vs GitHub releases, que van adelante) — esperar repo, no forzar binario (rompería el paquete). Túnel 200 vía IP real CF.
-- **Pendientes con receta lista (AGENTS.md §8 nueva tabla)**: #1 UPS+adaptador (OWNER físico), #2 TTS off-LAN (receta cloudflared tts.armada.do→:18810 + llave ya exigida), #3 armada-sync off-site (receta repo victoria-sync, NO el hub de kalimete), #4 swap (mantener, re-evaluar 30d), #5 derivas ComfyUI/Gradio (ventana de mantenimiento), #6 bug semanal runtime (reportable upstream).
+- **Pendientes con receta lista (AGENTS.md §8 nueva tabla)**: #1 UPS+adaptador (OWNER físico), #2 TTS off-LAN (receta cloudflared tts.armada.do→:18810 + llave ya exigida), #3 armada-sync off-site (receta repo victoria-sync, NO el hub de Kalimete), #4 swap (mantener, re-evaluar 30d), #5 derivas ComfyUI/Gradio (ventana de mantenimiento), #6 bug semanal runtime (reportable upstream).
 - **Docs refrescadas (los agentes ya saben)**: openclaw.md (capacidad PDF ruta exacta + webanalyze + bug semanal), meta-business.md (fix PIL/python3.12 + diagnóstico), vllm.md (firewall + gate coder + opencode 1.19.5), AGENTS-summary (firewall), AGENTS.md §8 (blindaje LAN + tabla pendientes), harnesses openclaw/meta-business/vllm (vivo_2026_11_03).
 - **Impacto**: iptables DOCKER-USER + 2 units systemd nuevos/drop-in, docs. Servicios verificados tras cambios: gateway ok, firewall active, cloudflared active, túnel 200.
 - **Docs**: yes (este changelog + general + 5 docs de agentes + 3 harnesses).
@@ -59,12 +74,12 @@
 - **FIX 1 — Posts sociales con imágenes rotos (IG stories desde 11:20)**: CAUSA RAÍZ: el flip global de python3 a 3.13 (29-oct 19:33) rompió la extensión C de Pillow del sistema (`cannot import name '_imaging'` — los .so son cp312) → `story_with_photo`/`story_card` devolvían False SILENCIO (except ImportError sin log) → "no se pudo generar imagen de story" cada 20 min. FIX: `update-alternatives` revert a python3.12 con prioridad durable (2 vs 1) para que apt no lo voltee. **Verificado E2E**: story publicada (id 18053447405813293, QA visual OK). Los 429 og:image de Discord/WhatsApp eran rate-limits externos transitorios (separados).
 - **FIX 2 — Capacidad PDF (CV de José, pedido del owner)**: forense completo: Victoria SÍ generó el CV mejorado (17-oct, 40KB) pero NUNCA pudo enviarlo — el runtime rechaza `/sandbox/.openclaw/workspace/media/outbound/` con `LocalMediaAccessError: path-not-allowed` (3 intentos, 2 días; reverse-engineering de `buildMediaLocalRoots` + evidencia art-gen). FIX: (a) CV copiado a la ruta correcta `/sandbox/.openclaw/media/outbound/`; (b) skill `pdf` corregida con la ruta EXACTA + advertencia (host master + sandbox); (c) skill `webanalyze` rota (sin frontmatter — spameaba el log cada 6s) arreglada. **E2E**: PDF enviado por WhatsApp al DM del owner — `messageId 3EB0A3AD83F7E310E623B2` ✅.
 - **FLOTA**: auditoría de consistencia completa — opencode.jsonc (Using/Thinking/Coding + nube natural + whitelist), 12 agentes (frontmatter OK, Coder pineado), harness central 11 subagents + coder.harness.json, cero referencias viejas (solo nota histórica en AGENTS.md).
-- **UPSTREAM**: opencode 1.19.4 → **1.19.5 en AMBOS hosts** (E2E: 19 agentes + inferencia OK victoria; 6 modelos flota kalimete). doc-fresh Victoria STALE → deep-check hecho → FRESH. upstream-sync: derivas menores (ComfyUI/Gradio/cloudflared) reportadas, no críticas — revisión normal.
-- **ARMADA-SYNC**: victoria timer activo (30 snapshots, último completo); kalimete cron 5min + push GitHub OK. Changelog de kalimete actualizado con la flota final + referencia de la doctrina.
+- **UPSTREAM**: opencode 1.19.4 → **1.19.5 en AMBOS hosts** (E2E: 19 agentes + inferencia OK victoria; 6 modelos flota Kalimete). doc-fresh Victoria STALE → deep-check hecho → FRESH. upstream-sync: derivas menores (ComfyUI/Gradio/cloudflared) reportadas, no críticas — revisión normal.
+- **ARMADA-SYNC**: victoria timer activo (30 snapshots, último completo); Kalimete cron 5min + push GitHub OK. Changelog de Kalimete actualizado con la flota final + referencia de la doctrina.
 - **HIGIENE**: eliminados harness bkup 10-08 (stale) + 4 opencode.jsonc bkups viejos (quedan los 2 recientes por política).
 - **Notas**: el review semanal interno de skills (18:24) falla con args malformados (`names` vs `name`) — bug del runtime, benigno (reintenta la próxima semana). Materialización de media inbound (imágenes recibidas por WA) tuvo 3 fallos de fetch el 01-nov — transitorio del CDN de WhatsApp, monitorear.
 - **Impacto**: /usr/bin/python3 (alternatives), instagram-broadcast (sin cambios de código), skills pdf/webanalyze (host+sandbox), opencode ambos hosts, docs. Servicios: todos active, contenedores up.
-- **Docs**: yes (este changelog + kalimete CHANGELOG + skills).
+- **Docs**: yes (este changelog + Kalimete CHANGELOG + skills).
 ### [2026-11-02 02:00 EDT] [opencode] Doctrina de ruteo de modelos y capacidades (decisión owner) + análisis de contextos
 - **Tipo**: docs (doctrina de comportamiento) — cero cambios de config/servicios
 - **Que**: escrita la doctrina de ruteo en `agents/victoria.md` (§ nueva tras "Como delegar a subagentes") + línea en AGENTS-summary:
@@ -83,7 +98,7 @@
   - "Thinking con Victoria" queda igual.
 - **Lógica del owner**: el generalista es el de todos los días ("Using a Victoria"); el nombre "Coding" le queda mejor al especialista real en código. Menos confuso.
 - **Variantes del Coder (pregunta del owner, verificado con el chat template real del modelo descargado)**: el template de `Qwen3-Coder-30B-A3B-Instruct-FP4` NO tiene `enable_thinking` (el del generalista sí) → **variante ÚNICA por diseño** (Qwen lo entrenó para actuar directo, estilo SWE-bench agéntico; no delibera). No hay modo thinking que configurar en este modelo — la única "gama" real de la familia Coder son otros tamaños (480B-A35B flagship, demasiado grande para GB10) y cuants (BF16 ~61G vs nuestro NVFP4 18.1G). Beneficio de tenerlo non-thinking: respuestas directas sin quemar tokens de razonamiento (3-5.5s medidos).
-- **Impacto**: opencode.jsonc (victoria + kalimete ×2 providers), AGENTS.md §5.-1, AGENTS-summary.md, agents/vllm.md. Backups previos vigentes (`opencode.jsonc.bkup-20261101-branding`).
+- **Impacto**: opencode.jsonc (victoria + Kalimete ×2 providers), AGENTS.md §5.-1, AGENTS-summary.md, agents/vllm.md. Backups previos vigentes (`opencode.jsonc.bkup-20261101-branding`).
 - **Docs**: yes (este changelog + general + los 3 docs).
 
 ### [2026-11-01 23:00 EDT] [opencode+gateway] Flota de modelos con nombre (branding) — local primero, nube de último recurso
@@ -94,11 +109,11 @@
 - **Whitelist del picker**: `provider.nvidia.whitelist` (docs oficiales opencode /docs/providers) limita el auto-descubrimiento de NIM de 52 → 3 modelos. Antes el picker mostraba 48 entradas de ruido.
 - **Hallazgo kimi (EOL)**: `moonshotai/kimi-k2.6` está `status: deprecated` en models.dev (opencode lo oculta del picker aunque esté en whitelist) y NIM ya lo retiró de la cuenta ("Function not found"); `kimi-k3` EOL 2026-10-15. Ambos muertos → reemplazado por `nemotron-3-ultra-550b-a55b` (flagship NVIDIA, 1M ctx, tool-calling, verificado 200 en 10.4s).
 - **Política de flota (decisión owner)**: LOCAL primero (Coding/Thinking/Coder con Victoria); la Nube SOLO cuando lo local no alcanza (sesiones >220K de contexto, tareas que desbordan la GPU, o caída del stack). Los costos de nube se muestran como $0 (llaves NIM gratuitas) — el metering real de la nube lo lleva NVIDIA.
-- **Kalimete**: mismo esquema aplicado vía SSH (TARGET=kalimete, backup `opencode.jsonc.bkup-20261101-branding`) + timeouts nvidia (1800s header / 600s chunk). Verificado: picker muestra exactamente los 3 de nube.
+- **Kalimete**: mismo esquema aplicado vía SSH (TARGET=Kalimete, backup `opencode.jsonc.bkup-20261101-branding`) + timeouts nvidia (1800s header / 600s chunk). Verificado: picker muestra exactamente los 3 de nube.
 - **Verificado E2E**: victoria `opencode models` → 3 nvidia + 3 vllm con nombres de marca; `opencode run -m nvidia/nvidia/nemotron-3-ultra-550b-a55b` → "BRANDING-OK" (10.4s). DeepSeek/GLM lentos transitorios en NIM (lado proveedor; el provider ya tiene timeout 30min de la sesión 10-01).
-- **Impacto**: `~/.config/opencode/opencode.jsonc` (backup `opencode.jsonc.bkup-20261101-branding`), mismo archivo en kalimete. Cero cambios de gateway/vLLM (los model ids reales enviados son los mismos de siempre — el gateway los normaliza igual).
+- **Impacto**: `~/.config/opencode/opencode.jsonc` (backup `opencode.jsonc.bkup-20261101-branding`), mismo archivo en Kalimete. Cero cambios de gateway/vLLM (los model ids reales enviados son los mismos de siempre — el gateway los normaliza igual).
 - **Docs**: yes (este changelog + general + AGENTS.md §5 + AGENTS-summary + agents/vllm.md).
-- **Addendum (23:30 EDT) — kalimete con flota completa**: además de la nube, kalimete recibió la entrada **"Coder con Victoria"** en sus 2 providers (vllm público + vllm-lan; su llave es rol coder → permitida) y los 2 locales renombrados (Coding/Thinking). E2E desde kalimete: gateway → warming_up honesto → coder UP → 200. Verificado con `opencode models` (5 entradas con marca en ambos providers).
+- **Addendum (23:30 EDT) — Kalimete con flota completa**: además de la nube, Kalimete recibió la entrada **"Coder con Victoria"** en sus 2 providers (vllm público + vllm-lan; su llave es rol coder → permitida) y los 2 locales renombrados (Coding/Thinking). E2E desde Kalimete: gateway → warming_up honesto → coder UP → 200. Verificado con `opencode models` (5 entradas con marca en ambos providers).
 
 - **Rollback**: restaurar `opencode.jsonc.bkup-20261101-branding` en ambos hosts (los ids técnicos vuelven solos).
 
@@ -129,7 +144,7 @@
 - **Afecta a**: vps-preprod, proyecto `~/dev/games/assetto-corsa/`
 - **Causa**: el website `assetto.armada.do` quedó caído (502, túnel sano / origen muerto) al retirar el SM. El owner quiere website + servidor.
 - **Estado**: ✅ verificado LIVE — contenedor Up, carrera Highlands arrancada vía API, UDP+TCP 9600 y TCP 8082 escuchando, website HTTP 302, /INFO externo OK, autostart con skip correcto
-- **Notas**: el entrypoint del VPS tenía mojibake del upload fallido previo (habría crasheado el contenedor). El wrapper acServer parchea el puerto que el SM regenera con 8081 (adminer lo ocupa). `/INFO` sigue con `"ip":""` (limitación binario v1.15, no afecta juego manual). Fallback systemd documentado con conflicto de puertos. Fix colateral: `changelog-sync-kalimete.sh` llevaba semanas fallando por `~` sin expandir (cd fallaba siempre) — corregido a `$HOME`.
+- **Notas**: el entrypoint del VPS tenía mojibake del upload fallido previo (habría crasheado el contenedor). El wrapper acServer parchea el puerto que el SM regenera con 8081 (adminer lo ocupa). `/INFO` sigue con `"ip":""` (limitación binario v1.15, no afecta juego manual). Fallback systemd documentado con conflicto de puertos. Fix colateral: `changelog-sync-Kalimete.sh` llevaba semanas fallando por `~` sin expandir (cd fallaba siempre) — corregido a `$HOME`.
 
 ### [2026-10-31 02:15 CET] [assetto] Migración a systemd directo — Server Manager retirado
 - **Tipo**: infra | arquitectura
@@ -146,7 +161,7 @@
 - **Segundo hallazgo**: existen DOS `server_cfg.ini`. El que lee acServer es `cfg/server_cfg.ini` (relativo a `/srv/assetto-corsa/assetto/`), NO `content/config/server_cfg.ini`. Las ediciones al segundo no tenían efecto.
 - **Identidad dominicana aplicada**: NAME `🇩🇴 Assetto Corsa RD - Comunidad Dominicana`, DESCRIPTION, `WELCOME_MESSAGE`, y `[MOTD] Text=` con saltos `\n` reales (estaban rotos como `nn`). MOTD incluye Discord + WhatsApp de la comunidad.
 - **Grid**: 10 slots GT3 (488 GT3, Huracán GT3, R8 LMS, 650S GT3, AMG GT3, GT-R GT3, 911 GT3 R 2016, Mazda RX-7 Spirit R, BMW M3 E30). Pista `ks_nurburgring` layout `gp_a`. Practice 30' → Qualify 15' → Race 5 laps.
-- **Verificado LIVE**: `systemctl is-active assetto-acserver` → active; `ss -uln | grep 9600` → LISTENING; `ss -tln | grep 9600` → LISTENING; TCP 9600 alcanzable desde kalimete; `dig srv00.assetto.armada.do` → 154.53.35.102; log con `Server started` + `HTTP server running @ :8081`.
+- **Verificado LIVE**: `systemctl is-active assetto-acserver` → active; `ss -uln | grep 9600` → LISTENING; `ss -tln | grep 9600` → LISTENING; TCP 9600 alcanzable desde Kalimete; `dig srv00.assetto.armada.do` → 154.53.35.102; log con `Server started` + `HTTP server running @ :8081`.
 - **Firewall**: reglas UDP+TCP 9600 ya presentes y persistidas (verificado, sin cambios).
 - **Afecta a**: vps-preprod, agente `Assetto Corsa`, proyecto `~/dev/games/assetto-corsa/`.
 - **Docs**: PROJECT.md (fases 0.5-0.8 ✅, identidad RD, zonas temáticas, gotchas, comandos del servicio), CHANGELOG del proyecto, `agents/assetto.md` (gotchas 9-13, verificación systemd).
@@ -154,18 +169,18 @@
 
 ### [2026-10-29 18:30 EDT] [php] Corrección versiones PHP en harnesses + Plugin Armada Suite Requires PHP 8.1+
 - **Tipo**: fix | docs | security
-- **Qué**: Corrección de versiones PHP en harnesses de kalimete (Micaserogou, Magantech, WordPress, WordPress-dev) para reflejar versiones reales de producción/preprod. Actualización header plugin Armada Suite: `Requires PHP: 7.4` → `Requires PHP: 8.1+` (mínimo probado en producción 8.3/8.4/8.5).
+- **Qué**: Corrección de versiones PHP en harnesses de Kalimete (Micaserogou, Magantech, WordPress, WordPress-dev) para reflejar versiones reales de producción/preprod. Actualización header plugin Armada Suite: `Requires PHP: 7.4` → `Requires PHP: 8.1+` (mínimo probado en producción 8.3/8.4/8.5).
 - **Versiones PHP reales auditadas**:
   - Micaserogou PROD: PHP 8.4.27 (cPanel)
   - Micaserogou PREPROD: PHP 8.3.35 (Docker)
   - Magantech PROD: PHP 8.5.11 (cPanel)
   - Magantech PREPROD: PHP 8.3 (Docker)
-  - WordPress-dev (kalimete): PHP 8.3.20 (Docker)
+  - WordPress-dev (Kalimete): PHP 8.3.20 (Docker)
   - ZionV CRM: PHP 8.3.20 (Docker)
   - ERP Dev: PHP 8.3.33 (Docker)
   - Armada Suite plugin header: `Requires PHP: 7.4` → `Requires PHP: 8.1+`
 - **Compatibilidad PHP 8.4 verificada**: Armada Suite sin funciones removidas (create_function, each, get_magic_quotes, etc.). Uso correcto de `unserialize` con `allowed_classes`, `random_bytes()` para crypto, sin dynamic properties. WordPress 7.1+ compatible con PHP 8.4.
-- **Harnesses actualizados**: micaserogou, magantech, wordpress, wordpress-dev, wordpress-dev (kalimete) con versiones PHP precisas por entorno.
+- **Harnesses actualizados**: micaserogou, magantech, wordpress, wordpress-dev, wordpress-dev (Kalimete) con versiones PHP precisas por entorno.
 - **Docs ambiguas eliminadas**: Referencias a "PHP 8.3" genérico reemplazadas por versiones específicas por entorno (prod/preprod/dev).
 - **Verificado**: Plugin header Armada Suite actualizado `Requires PHP: 8.1+`. Sintaxis OK (`php -l`). Tests regresión 35/35 PASS. Compatibilidad PHP 8.4 confirmada.
 
@@ -174,72 +189,72 @@
 > Fuente canónica: GitHub `warcold/armada-sync/CHANGELOG.md` | Mirrors locales: Victoria `/home/victoria/CHANGELOG.md`, Kalimete `~/armada-sync/CHANGELOG.md`, Jonas `~/armada-sync/CHANGELOG.md`
 ### [2026-10-29 01:55 EDT] [vllm] GET /v1/granja — catálogo LIVE de la granja + drift-check bidireccional
 - **Tipo**: feature (aprobado por el owner tras la evaluación de sincronización)
-- **Qué**: nuevo endpoint `GET /v1/granja` (cualquier llave): catálogo unificado LIVE de toda la granja (12 servicios: llm/art/tts/stt/hunyuan3d/lp_animate/video/webnav/whois/sonic/host_admin/provision) con **probes de salud TCP en vivo** (7/7 up). Motivación: el conocimiento de kalimete vivía en skills estáticas con drift real (5.4.2 vs 5.9.1). Ahora la fuente es VIVA.
-- **Cambios**: endpoint + readonly permitido + config-guide expone `granja` + skills art/voice-video/assets-3d de kalimete con sección "Fuente viva" (commits 20c932c/13dd428) + drift-check bidireccional: `do_granja_drift()` en armada-sync cycle (6h) + cron horario en kalimete (`granja-drift-kalimete.py` 25*).
-- **Verificado**: /v1/granja con llave kalimete OK; E2E desde kalimete por LAN; drift-check verde ambos lados; gateway reiniciado sano x2; doc-fresh vLLM FRESH.
+- **Qué**: nuevo endpoint `GET /v1/granja` (cualquier llave): catálogo unificado LIVE de toda la granja (12 servicios: llm/art/tts/stt/hunyuan3d/lp_animate/video/webnav/whois/sonic/host_admin/provision) con **probes de salud TCP en vivo** (7/7 up). Motivación: el conocimiento de Kalimete vivía en skills estáticas con drift real (5.4.2 vs 5.9.1). Ahora la fuente es VIVA.
+- **Cambios**: endpoint + readonly permitido + config-guide expone `granja` + skills art/voice-video/assets-3d de Kalimete con sección "Fuente viva" (commits 20c932c/13dd428) + drift-check bidireccional: `do_granja_drift()` en armada-sync cycle (6h) + cron horario en Kalimete (`granja-drift-Kalimete.py` 25*).
+- **Verificado**: /v1/granja con llave Kalimete OK; E2E desde Kalimete por LAN; drift-check verde ambos lados; gateway reiniciado sano x2; doc-fresh vLLM FRESH.
 - **Rollback**: `llm-gateway.py.bkup-20261029-granja`. Detalle completo en CHANGELOG-vllm.md.
 
 ### [2026-10-29 01:30 EDT] [flota] Auditoría de sincronización cross-machine (petición del owner) + fixes doc-level
 - **Tipo**: docs | audit
-- **Qué**: evaluación de sincronización Victoria↔kalimete (skills, config-guide, TTLs, puertos). Veredicto: ~80% sincronizado con 4 gaps. Fixes aplicados: (1) catálogo de puertos de la granja agregado al agente `victoria-server` de kalimete (faltaban :8188/:8180/:18820/:18830/:5678 — agente era del 01-oct); commit kalimete. (2) TTLs doc-fresh renovados (Victoria/vLLM/OpenClaw → FRESH 24h; estaban vencidos 9d/2d).
-- **Hallazgos**: config-guide del gateway es VIVO y cubre LLM+art_api+provision_api, pero NO los sentidos (voz :18810 sí tiene /voice/config-guide; video/Hunyuan/lp-animate NO tienen). Skills de kalimete cubren modelos (3 arte, 5 voces, Hunyuan, presets) pero son ESTÁTICAS sin drift-check automático.
-- **Propuesto al owner (requiere aprobación)**: endpoint `GET /v1/granja` en el gateway (catálogo unificado LIVE de todos los servicios+modelos+how-to consumibles por kalimete) + drift-check automático bidireccional en armada-sync.
-- **Verificado**: agente kalimete 225 líneas + commit; doc-fresh FRESH x3.
+- **Qué**: evaluación de sincronización Victoria↔Kalimete (skills, config-guide, TTLs, puertos). Veredicto: ~80% sincronizado con 4 gaps. Fixes aplicados: (1) catálogo de puertos de la granja agregado al agente `victoria-server` de Kalimete (faltaban :8188/:8180/:18820/:18830/:5678 — agente era del 01-oct); commit Kalimete. (2) TTLs doc-fresh renovados (Victoria/vLLM/OpenClaw → FRESH 24h; estaban vencidos 9d/2d).
+- **Hallazgos**: config-guide del gateway es VIVO y cubre LLM+art_api+provision_api, pero NO los sentidos (voz :18810 sí tiene /voice/config-guide; video/Hunyuan/lp-animate NO tienen). Skills de Kalimete cubren modelos (3 arte, 5 voces, Hunyuan, presets) pero son ESTÁTICAS sin drift-check automático.
+- **Propuesto al owner (requiere aprobación)**: endpoint `GET /v1/granja` en el gateway (catálogo unificado LIVE de todos los servicios+modelos+how-to consumibles por Kalimete) + drift-check automático bidireccional en armada-sync.
+- **Verificado**: agente Kalimete 225 líneas + commit; doc-fresh FRESH x3.
 
 ### [2026-10-29 00:45 EDT] [flota+kalimete] Seguridad labs + docs_oficiales + MCP blender E2E + prep ventana prod Micaserogou
 - **Tipo**: security | docs | infra (cross-machine, autorizada por el owner)
-- **Seguridad (labs kalimete)**: 4 puertos 0.0.0.0 → loopback-only: erpipo db :3310, redis :6390, mailpit :8025 (compose, backup .bkup) + wordpress-db :3307 (recreado con misma config/aliases; datos en volumen intactos, 22 tablas). E2E: nginx :8100 200, stack healthy, WP :8091 200.
-- **docs_oficiales kalimete**: 29/32 ya los tenían; 3 gaps llenados (armada-templates, assetto, wordpress). Commit 8fbd16e.
-- **MCP blender E2E VERIFICADO** (kalimete): Blender 5.0.1 bajo Xvfb → addon :9876 → get_scene_info success (3 objetos). Lección: el addon responde JSON SIN newline — tests TCP crudos con recv+timeout, nunca recv-loop por \n (un hang mató al addon con EBADF, parecía crash). En conocimiento/LECCIONES.md de ambos hosts.
+- **Seguridad (labs Kalimete)**: 4 puertos 0.0.0.0 → loopback-only: erpipo db :3310, redis :6390, mailpit :8025 (compose, backup .bkup) + wordpress-db :3307 (recreado con misma config/aliases; datos en volumen intactos, 22 tablas). E2E: nginx :8100 200, stack healthy, WP :8091 200.
+- **docs_oficiales Kalimete**: 29/32 ya los tenían; 3 gaps llenados (armada-templates, assetto, wordpress). Commit 8fbd16e.
+- **MCP blender E2E VERIFICADO** (Kalimete): Blender 5.0.1 bajo Xvfb → addon :9876 → get_scene_info success (3 objetos). Lección: el addon responde JSON SIN newline — tests TCP crudos con recv+timeout, nunca recv-loop por \n (un hang mató al addon con EBADF, parecía crash). En conocimiento/LECCIONES.md de ambos hosts.
 - **Prep ventana prod Micaserogou**: ops/status (App Password, user victoria) → 200 (prod WP 7.1.4/PHP 8.4.27/plugin 5.5.10). Artefacto A (5.7.0.zip) RECUPERADO de réplica magantech — sha256 766345c9… MATCH EXACTO (el repo dev-lab fue eliminado 28-oct; rebuild desde espejo NO coincide: espejo divergió 446 vs 529 archivos). B (130f4b4c…) y C (b35e007c…) verificados. 3 ZIPs listos en export/ de micaserogou.
 - **BLOCKERS del deploy (owner)**: (1) iak tenant 3 en ERP prod (erpipos.armada.do) — solo owner/Juan Carlos; (2) ventana manual cPanel+wp-admin; (3) decisión 5.7.0 vs fusión Zion CRM 2.0.0 (en vuelo, commits 28-oct 23:00-23:45).
-- **Hallazgo**: inventario viejo (5.4.2) — flota kalimete en 5.9.1 + Zion CRM 2.0.0. Docs curadas. Verificado: commits kalimete 8fbd16e + sesión 29-oct.
+- **Hallazgo**: inventario viejo (5.4.2) — flota Kalimete en 5.9.1 + Zion CRM 2.0.0. Docs curadas. Verificado: commits Kalimete 8fbd16e + sesión 29-oct.
 
 ### [2026-10-28 20:30 EDT] [flota+conocimiento] Auditoría profunda de la flota completa + 8 lenguajes nuevos + MCPs + cobertura 100%
-- **Tipo**: docs/feature (directiva del owner: "mejor análisis de todos los proyectos en kalimete y victoria, servidores, programas, lenguajes, MCPs, todo con agente/doc/harness")
-- **Inventario profundo**: kalimete = **24 contenedores Docker** (el MAPA documentaba 7): 4 WordPress (labs+clientes magantech/micaserogou/zionv con sus MariaDB+mailpit), erpipo-preprod (7 contenedores: app/queue/scheduler/db/nginx/redis/phpmyadmin), ror-postgres (pg17+pgvector), tapmap, kalimete nginx, taohemps (2), petsuite. **VPS ecco (62.171.144.58) descubierto y sondeado**: EccoQualita en producción (ecco-app + ecco-caddy + ecco-postgres, código en ~/dev/eccoqualita). **Proyecto dev/victoria (kalimete)**: monorepo Victoria app (overlay 3D Electron+Three.js, backend Bun :8931, PWA, TUI) — ya tenía agente victoria-server + harness. Residencial = plataforma inmobiliaria scaffold en vps-preprod.
-- **Que**: (1) **8 docs de lenguajes nuevos** en conocimiento/lenguajes/ (go 1.26.6, git 2.43, html-css-js, zsh, sql MySQL/MariaDB/PostgreSQL+pgvector, bun-typescript, php-wordpress 7.1.3+armada-suite 5.4.2, electron-threejs) + **mcps.md** (godot-ror: godot-mcp binario; blender: mcp-for-blender vía uvx + addon :9876) — 15 docs totales, sincronizadas al hub kalimete (commit 823fca5). (2) **Cobertura cerrada**: agentes + harnesses para **Tapmap** y **Residencial** (kalimete, commits 3be73ac; verificados en `opencode agent list`), ledger ethical-hacking creado, nodo ecco verificado en MAPA. (3) **docs_oficiales**: verificado que TODOS los harnesses de servicio de Victoria ya lo tienen (trabajo 2026-10-08/09) — solo el manifiesto central no lo lleva (correcto, es índice).
-- **Verificado**: agentes resuelven (`Residencial (subagent)`, `Tapmap (subagent)`), 32 harnesses en kalimete, JSONs válidos, hub sincronizado.
+- **Tipo**: docs/feature (directiva del owner: "mejor análisis de todos los proyectos en Kalimete y victoria, servidores, programas, lenguajes, MCPs, todo con agente/doc/harness")
+- **Inventario profundo**: Kalimete = **24 contenedores Docker** (el MAPA documentaba 7): 4 WordPress (labs+clientes magantech/micaserogou/zionv con sus MariaDB+mailpit), erpipo-preprod (7 contenedores: app/queue/scheduler/db/nginx/redis/phpmyadmin), ror-postgres (pg17+pgvector), tapmap, Kalimete nginx, taohemps (2), petsuite. **VPS ecco (62.171.144.58) descubierto y sondeado**: EccoQualita en producción (ecco-app + ecco-caddy + ecco-postgres, código en ~/dev/eccoqualita). **Proyecto dev/victoria (Kalimete)**: monorepo Victoria app (overlay 3D Electron+Three.js, backend Bun :8931, PWA, TUI) — ya tenía agente victoria-server + harness. Residencial = plataforma inmobiliaria scaffold en vps-preprod.
+- **Que**: (1) **8 docs de lenguajes nuevos** en conocimiento/lenguajes/ (go 1.26.6, git 2.43, html-css-js, zsh, sql MySQL/MariaDB/PostgreSQL+pgvector, bun-typescript, php-wordpress 7.1.3+armada-suite 5.4.2, electron-threejs) + **mcps.md** (godot-ror: godot-mcp binario; blender: mcp-for-blender vía uvx + addon :9876) — 15 docs totales, sincronizadas al hub Kalimete (commit 823fca5). (2) **Cobertura cerrada**: agentes + harnesses para **Tapmap** y **Residencial** (Kalimete, commits 3be73ac; verificados en `opencode agent list`), ledger ethical-hacking creado, nodo ecco verificado en MAPA. (3) **docs_oficiales**: verificado que TODOS los harnesses de servicio de Victoria ya lo tienen (trabajo 2026-10-08/09) — solo el manifiesto central no lo lleva (correcto, es índice).
+- **Verificado**: agentes resuelven (`Residencial (subagent)`, `Tapmap (subagent)`), 32 harnesses en Kalimete, JSONs válidos, hub sincronizado.
 - **Docs**: yes (conocimiento/ + MAPA + harnesses + este changelog).
 
 ### [2026-10-27 19:30 EDT] [conocimiento] Sistema de aprendizaje del ecosistema — LECCIONES + lenguajes/ + disciplina de siguientes pasos (visión del owner: "parámetros extra" del modelo)
 - **Tipo**: feature (directiva del owner: "evaluar el ecosistema... agentes auto-aprendan, changelogs para no repetir errores, siguientes pasos bajo investigación")
-- **Auditoría previa**: Victoria = 1 primary + 10 subagentes + 12 harness JSONs (con docs_oficiales/health/recovery/no_touch) + 14 changelogs por servicio + frescura (doc-fresh/upstream-sync/armada-sync 6h) — SÓLIDO. Kalimete = 25 agentes + 30 harness JSONs en su hub armada-sync (sync GitHub cada 5 min) + ledgers AGENTS.md por proyecto — SÓLIDO. **Huecos**: (1) lecciones enterradas en changelogs cronológicos sin índice consultable; (2) sin docs vivas de lenguajes/tools (Python 3.12 vs 3.13, bash/zsh, systemd 255, ffmpeg 6.1, sqlite 3.45, docker 29.6); (3) disciplina "siguientes pasos bajo investigación" no formalizada; (4) kalimete sin espejo de conocimiento.
-- **Que**: creado `~/.victoria-custom/conocimiento/` = **LECCIONES.md** (28 lecciones indexadas por dominio: boot/plymouth, docker, vLLM/GPU, Gradio, shell, seguridad, ops — extraídas de los changelogs) + **lenguajes/** (6 docs vivas: python/bash/systemd/ffmpeg/sqlite/docker, cada una con versión real verificada live + patrones + gotchas + docs oficiales) + **README.md** (el ciclo de aprendizaje: actuar→verificar→documentar→aprender→frescura). Disciplina **Regla 0** añadida a todowrite-discipline.md (siguientes pasos SIEMPRE bajo investigación, LECCIONES consultables antes de actuar). Conectado a victoria.harness.json (clave `conocimiento`) + AGENTS-summary.md. **Espejo en kalimete**: `~/armada-sync/conocimiento/` (LECCIONES propias + lenguajes compartidos) — commiteado al hub GitHub (se distribuye con el sync de 5 min).
+- **Auditoría previa**: Victoria = 1 primary + 10 subagentes + 12 harness JSONs (con docs_oficiales/health/recovery/no_touch) + 14 changelogs por servicio + frescura (doc-fresh/upstream-sync/armada-sync 6h) — SÓLIDO. Kalimete = 25 agentes + 30 harness JSONs en su hub armada-sync (sync GitHub cada 5 min) + ledgers AGENTS.md por proyecto — SÓLIDO. **Huecos**: (1) lecciones enterradas en changelogs cronológicos sin índice consultable; (2) sin docs vivas de lenguajes/tools (Python 3.12 vs 3.13, bash/zsh, systemd 255, ffmpeg 6.1, sqlite 3.45, docker 29.6); (3) disciplina "siguientes pasos bajo investigación" no formalizada; (4) Kalimete sin espejo de conocimiento.
+- **Que**: creado `~/.victoria-custom/conocimiento/` = **LECCIONES.md** (28 lecciones indexadas por dominio: boot/plymouth, docker, vLLM/GPU, Gradio, shell, seguridad, ops — extraídas de los changelogs) + **lenguajes/** (6 docs vivas: python/bash/systemd/ffmpeg/sqlite/docker, cada una con versión real verificada live + patrones + gotchas + docs oficiales) + **README.md** (el ciclo de aprendizaje: actuar→verificar→documentar→aprender→frescura). Disciplina **Regla 0** añadida a todowrite-discipline.md (siguientes pasos SIEMPRE bajo investigación, LECCIONES consultables antes de actuar). Conectado a victoria.harness.json (clave `conocimiento`) + AGENTS-summary.md. **Espejo en Kalimete**: `~/armada-sync/conocimiento/` (LECCIONES propias + lenguajes compartidos) — commiteado al hub GitHub (se distribuye con el sync de 5 min).
 - **Por qué**: los pesos del Qwen3.6 están congelados — este sistema ES la capa de "aprendizaje continuo": cada incidente → regla consultable; cada lenguaje en uso → doc viva con versión y gotchas; el harness conecta todo. La flota sabe lo que el modelo base no.
-- **Verificado**: JSON del harness válido (pendiente check final), archivos en ambos hosts, kalimete commiteado al hub.
+- **Verificado**: JSON del harness válido (pendiente check final), archivos en ambos hosts, Kalimete commiteado al hub.
 - **Docs**: yes (este changelog + README del sistema + AGENTS-summary + harness central).
 
-### [2026-10-27 18:20 EDT] [voice+kalimete-ptt] Fix "sonidos extraños" — runaway de Qwen3-TTS con texto hostil (horas/rangos/em-dashes) + disciplina dura de voz del agente
+### [2026-10-27 18:20 EDT] [voice+Kalimete-ptt] Fix "sonidos extraños" — runaway de Qwen3-TTS con texto hostil (horas/rangos/em-dashes) + disciplina dura de voz del agente
 - **Tipo**: fix (reporte del owner: "evaluar el comportamiento y los sonidos extraños"; forense con logs reales de su re-prueba 17:33)
 - **Forense**: la visibilidad de sesiones v5.1 FUNCIONÓ (el agente listó sus sesiones reales), pero la respuesta (lista de 7 items con "21:27", "2-5", em-dashes) disparó **runaway de Qwen3-TTS**: 2 frases de 74s (tope 512 tokens ≈ 42s de audio basura = los sonidos extraños), stream de 16 frases/233.7s, barge-in del owner. Causa raíz: el normalizador del voice-server cubría dinero/siglas/% pero NO horas, rangos ni guiones largos.
 - **Fix triple verificado E2E**: (1) **voice-server** `normalize_for_tts` +3 reglas (horas→"y", rangos→"a", em-dash→pausa) — el texto hostil exacto pasó de 74s a **10.3s gen/11.7s audio limpio**; (2) **victoria-voz** disciplina DURA (máx 3-4 frases, NUNCA recitar horas/IDs/listas>3 — mencionar en palabras); (3) **PTT** AGENT_TTS_CAP 1200→600. La MISMA pregunta pasó de 715 chars/16 frases/234s a **97 chars/6.5s de audio limpio** ("Papá, esta misma que estamos hablando. Se llama 'Control del entorno local y negocio online'").
-- **Nota metodológica**: el 401 transitorio durante los tests era artefacto del shell ad-hoc sin cargar el env file (el systemd service sí lo carga) — sense_role valida kalimete-ptt como 'services' OK; sin bug real.
-- **Commits**: kalimete f15277a (v5.2) + 91a5993 (v5.1). Detalle técnico en CHANGELOG-voice 18:15.
-- **Docs**: yes (voice + general + kalimete project).
+- **Nota metodológica**: el 401 transitorio durante los tests era artefacto del shell ad-hoc sin cargar el env file (el systemd service sí lo carga) — sense_role valida Kalimete-ptt como 'services' OK; sin bug real.
+- **Commits**: Kalimete f15277a (v5.2) + 91a5993 (v5.1). Detalle técnico en CHANGELOG-voice 18:15.
+- **Docs**: yes (voice + general + Kalimete project).
 
-### [2026-10-27 16:45 EDT] [kalimete-ptt-v5.1] Evaluación con logs reales del owner + fixes de comportamiento: visibilidad de sesiones opencode para el agente de voz + STT prompt verificado
+### [2026-10-27 16:45 EDT] [Kalimete-ptt-v5.1] Evaluación con logs reales del owner + fixes de comportamiento: visibilidad de sesiones opencode para el agente de voz + STT prompt verificado
 - **Tipo**: fix + evaluación (pedido del owner: "evalúa si es el comportamiento correcto a lo que quiero, evalúa los logs y continúa bajo las mejores prácticas")
 - **Evaluación (logs reales del PTT, 3 turnos de voz del owner post-v5)**: el core v5 funciona correcto (voz → agente con tools → respuesta por voz, 9-13s por turno). **Dos gaps contra lo que el owner quiere**: (1) 15:54 — preguntó "¿puedes ver la sección que tengo abierta de Opencode... la de los reinicios con ComfyUI y LivePortrait?" → el agente respondió que NO podía ver sus sesiones abiertas — INCORRECTO para su visión; (2) STT garlaba términos del ecosistema ("Confi UI", "Live Portray", "Reinicias") y una respuesta del agente divagó (mencionó Blender/"Kali Linux 7.0" sin verificar — alucinación de SO).
-- **Fix 1 — visibilidad de sesiones (kalimete, victoria-voz.md actualizado)**: las sesiones de opencode del owner viven en `~/.local/share/opencode/opencode.db` (SQLite) — el agente ahora tiene las queries verificadas (listar sesiones por título + leer conversación role/texto vía json_extract, SIEMPRE `-readonly`) + regla "retoma el contexto pero no te conectes a su sesión" + sección **"Verifica hechos con tools, NUNCA adivines"** (uname/os-release antes de afirmar el SO — mata la alucinación "Kali Linux") + **"Transcripción confusa"** (si el mensaje suena incongruente, pregunta antes de actuar). **E2E verificado**: el agente listó las sesiones reales del owner ("Soporte con OpenCode y DGX", "Micaserogou paquete prod 5.7.0") y ofreció retomar el contexto — exactamente lo que pidió a las 15:54.
-- **Fix 2 — STT prompt (implementado por sesión paralela del owner 01:32, verificado por Victoria)**: `POST /stt?prompt=` → `whisper initial_prompt` (≤400 chars, opt-in, backwards-compatible). El cliente kalimete ya enviaba el vocabulario desde 01:39. **Roundtrip TTS→STT verificado**: sin prompt "Confui y Live Portrait en Calimete" → con prompt "Comfyui y LivePortrait en kalimete". Entrada en CHANGELOG-voice (el cambio no tenía changelog — documentado ahora). Nota: `mode: all` en victoria-voz.md ajustado por la sesión paralela — respetado.
+- **Fix 1 — visibilidad de sesiones (Kalimete, victoria-voz.md actualizado)**: las sesiones de opencode del owner viven en `~/.local/share/opencode/opencode.db` (SQLite) — el agente ahora tiene las queries verificadas (listar sesiones por título + leer conversación role/texto vía json_extract, SIEMPRE `-readonly`) + regla "retoma el contexto pero no te conectes a su sesión" + sección **"Verifica hechos con tools, NUNCA adivines"** (uname/os-release antes de afirmar el SO — mata la alucinación "Kali Linux") + **"Transcripción confusa"** (si el mensaje suena incongruente, pregunta antes de actuar). **E2E verificado**: el agente listó las sesiones reales del owner ("Soporte con OpenCode y DGX", "Micaserogou paquete prod 5.7.0") y ofreció retomar el contexto — exactamente lo que pidió a las 15:54.
+- **Fix 2 — STT prompt (implementado por sesión paralela del owner 01:32, verificado por Victoria)**: `POST /stt?prompt=` → `whisper initial_prompt` (≤400 chars, opt-in, backwards-compatible). El cliente Kalimete ya enviaba el vocabulario desde 01:39. **Roundtrip TTS→STT verificado**: sin prompt "Confui y Live Portrait en Calimete" → con prompt "Comfyui y LivePortrait en Kalimete". Entrada en CHANGELOG-voice (el cambio no tenía changelog — documentado ahora). Nota: `mode: all` en victoria-voz.md ajustado por la sesión paralela — respetado.
 - **Verificado**: E2E visibilidad (respuesta con sesiones reales) · roundtrip STT con/sin prompt · validación 400 chars · servicio voice vivo desde 01:32 · agente recargado por turno (sin restart necesario).
 - **Pendiente owner**: re-prueba en vivo (Ctrl_R → "¿qué sesiones tengo abiertas?" y pedirle retomar una). El daemon de redes (F1-F3) sigue esperando el "go".
-- **Docs**: yes (general + CHANGELOG-voice + victoria-voz.md + STATE kalimete referencia).
+- **Docs**: yes (general + CHANGELOG-voice + victoria-voz.md + STATE Kalimete referencia).
 
-### [2026-10-27 00:15 EDT] [kalimete-ptt-v5+gateway+rss] "Victoria instalada en kalimete" (modo AGENTE por voz) + válvula 6 render_busy + round-robin IG + decisión models.json
+### [2026-10-27 00:15 EDT] [Kalimete-ptt-v5+gateway+rss] "Victoria instalada en Kalimete" (modo AGENTE por voz) + válvula 6 render_busy + round-robin IG + decisión models.json
 - **Tipo**: feature mayor + fix + decisión (autorización owner: "procede todo lo que puedas hacer por tu parte como mejora para reducir la lista" + visión recalibrada del proyecto estrella: el núcleo es controlar KALIMETE por voz usando los recursos de Victoria vía API/tiers — las redes sociales son una capacidad API que se conecta después)
-- **kalimete-ptt v5 — EL PROYECTO ESTRELLA (cross-machine TARGET=kalimete, commit c94b9cd)**: la voz ya no habla con un LLM suelto — habla con el **AGENTE REAL de opencode**. Ruta nueva: `_vibe_converse` (AGENT_MODE=1 default) → `_agent_ask()` → `opencode run --agent victoria-voz --format json [--session persistida] [-m vllm-lan]` desde el proyecto dedicado `~/dev/voz`. Componentes nuevos en kalimete: (a) **agente `victoria-voz`** (`~/.config/opencode/agent/`) — identidad de Victoria + UX de voz (respuestas cortas, `_speakable()` sanitiza markdown/emoji para TTS) + **gate de destructivas conversacional** (rm/sudo/systemctl/force-push/DROP → pregunta "¿Lo confirmas?" y espera el "sí" por voz); (b) **`~/dev/voz/.opencode.jsonc`** con permisos ALLOW — necesario porque `opencode run` headless AUTO-RECHAZA los "ask" (hallazgo en vivo; la config del TUI humano NO se tocó); (c) **memoria persistente** del agente (`agent-session.txt`, continuidad entre Ctrl_R, "nueva conversación" la limpia, auto-fresh si la sesión desaparece); (d) `_lan_model_flag()` — en casa usa vllm-lan (LAN directa), en roaming el túnel; (e) guard `_agent_busy` + timeout 420s con mensaje honesto; (f) fallback al mini-loop v4 si el agente falla (`PTT_AGENT_MODE=0` = legacy permanente). **Migración llave STT** a menor privilegio (PTT_VOICE_KEY services primero; ROOTSOURCE admin legacy de último). El agente tiene: bash/edit/read en kalimete + task a los 18 subagentes + skills de la granja (art/assets-3d/voice-video) + cerebro = modelos de Victoria (gateway DGX).
-- **Verificado E2E (remoto)**: opencode run headless con tools (creó archivo + "LISTO") · agente sabe que está en kalimete · **continuidad de sesión** (recordó turno anterior) · sanitizer OK · servicio restart activo · py_compile · commit c94b9cd + STATE.md/CHANGELOG.md del proyecto actualizados. **Pendiente: prueba en vivo del owner** (Ctrl_R + pedirle algo que use tools).
+- **Kalimete-ptt v5 — EL PROYECTO ESTRELLA (cross-machine TARGET=Kalimete, commit c94b9cd)**: la voz ya no habla con un LLM suelto — habla con el **AGENTE REAL de opencode**. Ruta nueva: `_vibe_converse` (AGENT_MODE=1 default) → `_agent_ask()` → `opencode run --agent victoria-voz --format json [--session persistida] [-m vllm-lan]` desde el proyecto dedicado `~/dev/voz`. Componentes nuevos en Kalimete: (a) **agente `victoria-voz`** (`~/.config/opencode/agent/`) — identidad de Victoria + UX de voz (respuestas cortas, `_speakable()` sanitiza markdown/emoji para TTS) + **gate de destructivas conversacional** (rm/sudo/systemctl/force-push/DROP → pregunta "¿Lo confirmas?" y espera el "sí" por voz); (b) **`~/dev/voz/.opencode.jsonc`** con permisos ALLOW — necesario porque `opencode run` headless AUTO-RECHAZA los "ask" (hallazgo en vivo; la config del TUI humano NO se tocó); (c) **memoria persistente** del agente (`agent-session.txt`, continuidad entre Ctrl_R, "nueva conversación" la limpia, auto-fresh si la sesión desaparece); (d) `_lan_model_flag()` — en casa usa vllm-lan (LAN directa), en roaming el túnel; (e) guard `_agent_busy` + timeout 420s con mensaje honesto; (f) fallback al mini-loop v4 si el agente falla (`PTT_AGENT_MODE=0` = legacy permanente). **Migración llave STT** a menor privilegio (PTT_VOICE_KEY services primero; ROOTSOURCE admin legacy de último). El agente tiene: bash/edit/read en Kalimete + task a los 18 subagentes + skills de la granja (art/assets-3d/voice-video) + cerebro = modelos de Victoria (gateway DGX).
+- **Verificado E2E (remoto)**: opencode run headless con tools (creó archivo + "LISTO") · agente sabe que está en Kalimete · **continuidad de sesión** (recordó turno anterior) · sanitizer OK · servicio restart activo · py_compile · commit c94b9cd + STATE.md/CHANGELOG.md del proyecto actualizados. **Pendiente: prueba en vivo del owner** (Ctrl_R + pedirle algo que use tools).
 - **Válvula 6 "render_busy" (delegada a `vLLM`, implementada + E2E)**: prompt ≥100K tokens con render activo en el árbitro → **429 render_busy en 24ms** + Retry-After (antes de tocar vLLM); prompts pequeños pasan (chat/PTT/broadcasts vivos durante renders); reversible `RENDER_BUSY_GUARD=0`; excluida del anomaly-tracker (válvula, no anomalía); knobs en /health + config-guide; backup `.bkup-20261026-valvula6`. Cierra el patrón letal del forense 10-24 (render + prefill gigante). Detalle en CHANGELOG-vllm.
 - **RSS/IG round-robin (quick win, aplicado directo)**: `pick_article` de instagram-broadcast.py ahora intercala por ronda de blog antes del random top-8 — el pool VIEJO estaba dominado por XatakaMX (7 de 8 slots; el mismo patrón DevTo); el NUEVO da 8 blogs distintos (simulación 10 picks: 6 blogs sanos). Backup `.bkup-20261026-roundrobin` (entrada social la referencia).
 - **Decisión models.json sandbox (mía, documentada)**: se queda en **128K/4K** (el runtime lo regenera así; más seguro anti-tormenta y estable desde hace semanas) — no restaurar 220K salto pedido explícito del owner.
-- **Impacto**: kalimete-ptt + victoria-voz.md + ~/dev/voz (kalimete) · llm-gateway.py (válvula 6) · instagram-broadcast.py (round-robin) · docs vllm (curadas por el subagente: compile-cache + bloqueo NGC anotados).
-- **Docs**: yes (general + vllm + social + STATE/CHANGELOG kalimete + AGENTS.md ya actualizados hoy).
+- **Impacto**: Kalimete-ptt + victoria-voz.md + ~/dev/voz (Kalimete) · llm-gateway.py (válvula 6) · instagram-broadcast.py (round-robin) · docs vllm (curadas por el subagente: compile-cache + bloqueo NGC anotados).
+- **Docs**: yes (general + vllm + social + STATE/CHANGELOG Kalimete + AGENTS.md ya actualizados hoy).
 
 ### [2026-10-26 19:05 EDT] [post-reboot] Verificación completa del boot + FIX PERMANENTE del deadlock plymouth (mask) — upgrade general CERRADO
 - **Tipo**: fix + verificación (cierre del upgrade general 2026-10-26 18:40)
-- **Post-reboot verificado (boot 18:48)**: 15/15 servicios activos + 0 failed · vLLM health 200 en ≤7min (compile-cache funcionando) · E2E inferencia "OK" · túnel OK desde kalimete · sandbox healthy + dashboard live · ComfyUI 200 + n8n 200 + LivePortrait/Sonic/Hunyuan/lp-animate activos · **clock cap VERIFICADO en su primer boot real**: GPU operando a 2093 MHz (bajo el lock 2100; antes boosteaba a 2418/3003) — el mecanismo anti-sobrecorriente está vivo en cada arranque.
+- **Post-reboot verificado (boot 18:48)**: 15/15 servicios activos + 0 failed · vLLM health 200 en ≤7min (compile-cache funcionando) · E2E inferencia "OK" · túnel OK desde Kalimete · sandbox healthy + dashboard live · ComfyUI 200 + n8n 200 + LivePortrait/Sonic/Hunyuan/lp-animate activos · **clock cap VERIFICADO en su primer boot real**: GPU operando a 2093 MHz (bajo el lock 2100; antes boosteaba a 2418/3003) — el mecanismo anti-sobrecorriente está vivo en cada arranque.
 - **FIX PERMANENTE plymouth**: el deadlock REGRESÓ en este boot (misma firma: plymouth-quit-wait running + 8 jobs esperando — multi-user, graphical, getty, setvtrgb). Causa raíz completa: **`plymouth-quit.service` nunca activa** en boots headless de esta imagen → nadie le dice a plymouthd que muera → quit-wait espera para siempre → cadena de targets bloqueada + **gettys de consola sin spawnear** (llevaban bloqueados desde el boot del 10-24 — recuperados ahora). El fix runtime de ayer (`plymouth quit` + stop) solo curaba ese boot. **Fix permanente aplicado: `systemctl mask plymouth-quit-wait.service plymouth-start.service`** (symlinks → /dev/null en /etc/systemd/system/) — sin plymouth en absoluto en el appliance headless: la cadena completa de boot completa en cada arranque, consolas disponibles para emergencias, y cualquier unit futura con ordenamiento a targets funciona. Tras el mask: jobs 0, getty.target active, 2 consolas spawneadas.
 - **Lección final consolidada**: en esta imagen DGX el arranque headless deja a plymouthd huérfano SIEMPRE — no es un bug puntual, es el comportamiento por defecto. Mask es la solución correcta para un appliance sin monitor.
 - **Verificado**: todo lo listado arriba + mask persistente (sobrevive reboots) + `nvidia-smi -lgc` re-confirmado.
@@ -271,24 +286,24 @@
 - **Tipo**: fix + feature + infra (autorización owner: "Procede con todo y da update a todo… aunque rompa versiones, la idea es mejorar y optimizar… sin romper los límites y hacer que la máquina haga freeze y/o shutdown")
 - **P0-estabilidad (fix del forense 2026-10-24 — muertes por sobrecorriente)**: (1) **Cap de clocks GPU 300-2100MHz** aplicado en vivo (`nvidia-smi -lgc 300,2100` OK) + **unit persistente `gpu-clock-cap.service`** (enabled+active, oneshot idempotente en cada boot; receta del foro NVIDIA 360336 validada multiusuario: potencia 85→50W, cero crashes). (2) **swappiness 60→10** persistido en `/etc/sysctl.d/99-victoria-uma.conf` (swap en UMA = freeze silencioso; primera fase escalonada — el swap file queda, solo se prioriza RAM). (3) **ComfyUI `--reserve-vram 8`** vía drop-in `/etc/systemd/system/comfyui.service.d/reserve-vram.conf` (el default Linux reservaba solo 400MB en memoria unificada compartida con vLLM 49GB + flota) — restart verificado HTTP 200, todos los servicios activos.
 - **BONUS FIX — deadlock de boot de 2 días desatascado**: al arrancar el unit nuevo, `systemctl start` se colgó → investigación: **`plymouth-quit-wait.service` llevaba ATASCADO desde el boot del 10-24 14:35** bloqueando la cadena completa (multi-user.target, graphical.target, getty, serial-getty, setvtrgb — 9 jobs en espera). Mi unit inicial traía `After=multi-user.target` (error mío — lo puse detrás del embudo). Fix doble: unit reescrito SIN After= + `plymouth quit` + stop plymouth-quit-wait → **"No jobs running"** por primera vez en 2 días; `systemctl --failed` limpio. **Lección**: en esta imagen DGX, plymouth nunca muere solo tras boot headless — cualquier unit nueva con ordenamiento tras multi-user.target se cuelga; units oneshot de boot van SIN After= a targets. El unit corregido arrancó activo al instante.
-- **P4 — opencode 1.19.0 → 1.19.4 en AMBOS hosts**: victoria (standalone `opencode upgrade`, E2E `opencode run` → "OK", agent list limpio) + kalimete (TARGET=kalimete vía SSH, path completo `~/.opencode/bin/opencode` — el shell no-interactivo no trae PATH; túnel verificado desde kalimete: gateway v3 OK).
+- **P4 — opencode 1.19.0 → 1.19.4 en AMBOS hosts**: victoria (standalone `opencode upgrade`, E2E `opencode run` → "OK", agent list limpio) + Kalimete (TARGET=Kalimete vía SSH, path completo `~/.opencode/bin/opencode` — el shell no-interactivo no trae PATH; túnel verificado desde Kalimete: gateway v3 OK).
 - **RSS System (delegado, cambios aplicados por el subagente — detalle en CHANGELOG-rss.md 12:40)**: **feed DevTo REMOVIDO** — inundaba el pool (52% ingesta) y **IG publicó SOLO DevTo 17 días seguidos** (33 posts consecutivos); remoción SQL (bug FK upstream documentado) + VACUUM 9.3→5.7MB + dry-run verificado con mezcla sana restaurada. Veredicto recursos: 35B correcto para todo el pipeline ($0.22/30d, 1.08s avg), thinking OFF confirmado, n8n templates descartados con evidencia (nuestro pipeline curado es superior). Doc curada + doc-fresh FRESH.
-- **OpenClaw (delegado, diseño — CORRECCIÓN de hallazgo propio)**: el "hallazgo CLI rota" del 2026-10-26 01:45 era **INCORRECTO** — la CLI 2026.9.2 funciona con la receta canónica (`docker exec + nsenter -t <gw_pid> -n + OPENCLAW_GATEWAY_URL=ws://127.0.0.1:18789 + OPENCLAW_GATEWAY_TOKEN del openclaw.json + runuser sandbox`), ya viva en `broadcast_common.wa_send` de producción. El gateway binda 18789 en su netns OCSF interior (docker exec plano → ECONNREFUSED; eso parecía "roto"). **Validado E2E**: `openclaw agent` procesa turnos programáticos (sesión aislada voice-probe-test → "PONG" en 2.8s, 13K ctx, coste 0) = la puerta para el **diseño "Agent Ingress"** (control de canales por voz desde kalimete): daemon :18870 + sesión voice-kalimete aislada + gates 3-niveles (lectura libre / escritura con ventanas art-approve / destructivas SIEMPRE confirmación DM+hash TTL 5min) + ensure_context_sync de changelogs al sandbox. **PENDIENTE owner**: 7 decisiones de diseño (puerto, marca de owner en turnos de voz, sesión aislada vs DM, IG por voz, cap channels, etc. — informe completo en la sesión del subagente).
+- **OpenClaw (delegado, diseño — CORRECCIÓN de hallazgo propio)**: el "hallazgo CLI rota" del 2026-10-26 01:45 era **INCORRECTO** — la CLI 2026.9.2 funciona con la receta canónica (`docker exec + nsenter -t <gw_pid> -n + OPENCLAW_GATEWAY_URL=ws://127.0.0.1:18789 + OPENCLAW_GATEWAY_TOKEN del openclaw.json + runuser sandbox`), ya viva en `broadcast_common.wa_send` de producción. El gateway binda 18789 en su netns OCSF interior (docker exec plano → ECONNREFUSED; eso parecía "roto"). **Validado E2E**: `openclaw agent` procesa turnos programáticos (sesión aislada voice-probe-test → "PONG" en 2.8s, 13K ctx, coste 0) = la puerta para el **diseño "Agent Ingress"** (control de canales por voz desde Kalimete): daemon :18870 + sesión voice-Kalimete aislada + gates 3-niveles (lectura libre / escritura con ventanas art-approve / destructivas SIEMPRE confirmación DM+hash TTL 5min) + ensure_context_sync de changelogs al sandbox. **PENDIENTE owner**: 7 decisiones de diseño (puerto, marca de owner en turnos de voz, sesión aislada vs DM, IG por voz, cap channels, etc. — informe completo en la sesión del subagente).
 - **P3 — NGC 26.09 EN PREPARACIÓN (no switch aún)**: tag exacto resuelto vía registry API: **`nvcr.io/nvidia/vllm:26.09-py3`** (vLLM 0.29.0, CUDA 13.4.1, flashinfer 0.6.18.post1; 106 tags listados — el formato lleva sufijo -py3, el "26.09" pelado no existe). **Pull en background** en curso. El switch se ejecuta con script de auto-rollback (stop→run nuevo→health≤10min→si falla: rollback al digest 9204569b) porque reiniciar vLLM mata la inferencia de la propia sesión que lo ejecuta. Known issues 26.09 verificadas: nuestra receta ya mitiga la asignación agresiva de memoria (0.22+KV explícito) y seqs 3 ≤ 4. Re-validar post-switch: aritmética contexto (breaking #57035) + CORS (upstream cambió default).
-- **Protocolo de registro cruzado victoria↔kalimete (formalizado, pedido del owner)**: TODO trabajo en cualquier máquina queda registrado en el changelog general con fecha + agente que lo ejecutó + verificación. Kalimete documenta en SU repo (~/armada-sync/CHANGELOG.md) y Victoria referencia aquí; Victoria documenta aquí y kalimete lee vía warcold SSH (acceso readonly ya existente). El diseño Agent Ingress F3 (ensure_context_sync) llevará estos changelogs al workspace del sandbox para que el agente OpenClaw responda "¿qué se hizo hoy?" por WhatsApp.
+- **Protocolo de registro cruzado victoria↔Kalimete (formalizado, pedido del owner)**: TODO trabajo en cualquier máquina queda registrado en el changelog general con fecha + agente que lo ejecutó + verificación. Kalimete documenta en SU repo (~/armada-sync/CHANGELOG.md) y Victoria referencia aquí; Victoria documenta aquí y Kalimete lee vía warcold SSH (acceso readonly ya existente). El diseño Agent Ingress F3 (ensure_context_sync) llevará estos changelogs al workspace del sandbox para que el agente OpenClaw responda "¿qué se hizo hoy?" por WhatsApp.
 - **Verificado**: nvidia-smi lgc OK + unit active/enabled · swappiness 10 · ComfyUI 200 + flota activa · opencode 1.19.4 ambos + E2E OK + túnel OK · RSS E2E (dry-run mezcla sana) · systemd "No jobs running" + 0 failed · pull 26.09-py3 en curso.
 - **Impacto**: gpu-clock-cap.service (nuevo) + /etc/sysctl.d/99-victoria-uma.conf (nuevo) + comfyui.service.d/reserve-vram.conf (nuevo) + opencode ambos hosts + blogwatcher DB (DevTo out) + rss-system.md/harness + diseño ingress pendiente de aprobación.
 - **Docs**: yes (este changelog + CHANGELOG-gpu/comfyui/rss/sandbox con sus ángulos + AGENTS.md §4 actualizado).
 
 ### [2026-10-26 01:45 EDT] [estrategia] Evaluación completa de modelos/servicios/consumo — veredicto: UN modelo (35B-A3B) + offload NIM; el "tráfico fantasma" era el probe del gpu-saver
-- **Tipo**: docs + evaluación estratégica (SOLO LECTURA — cero cambios; delegado a `vLLM` + `OpenClaw` en paralelo, consolidado por Victoria; pedido del owner: "valida oportunidades de mejora de máquina/modelos/softwares… ¿modelo menos pesado?… evalúa los logs de requests de todo y todos, incluyendo kalimete")
-- **Data medida (DB gateway 30d, 8,871 reqs LLM, 381.6M prompt / 2.17M completion)**: coding agéntico pesado = **99% de los tokens** (kalimete 155.4M — el mayor, avg 107.7K/req — · alfredo 70M · vaclaaw 45.5M (cliente externo por túnel IPv6, burst 8-10 oct con 4,645 reqs/día pico, luego desapareció) · jordan-diaz 42M · juancarlos 39.3M · victoria 28.9M); chat liviano = **<0.5%** (servicios 287 reqs/0.18M · kalimete-ptt 66 · armada-* chatbots 65) y YA corre rápido: P50 0.9s prompts <1K, avg 1.0-1.2s; arte separado (62 jobs z-image/flux vía ComfyUI, 0 tokens LLM). Latencia global P50 5.6s crece con el prompt (0.9s <1K → 8.0s 150K+) = el cuello es PREFILL de contexto agéntico, no el modelo. FIM /v1/completions: CERO uso en 30d.
+- **Tipo**: docs + evaluación estratégica (SOLO LECTURA — cero cambios; delegado a `vLLM` + `OpenClaw` en paralelo, consolidado por Victoria; pedido del owner: "valida oportunidades de mejora de máquina/modelos/softwares… ¿modelo menos pesado?… evalúa los logs de requests de todo y todos, incluyendo Kalimete")
+- **Data medida (DB gateway 30d, 8,871 reqs LLM, 381.6M prompt / 2.17M completion)**: coding agéntico pesado = **99% de los tokens** (Kalimete 155.4M — el mayor, avg 107.7K/req — · alfredo 70M · vaclaaw 45.5M (cliente externo por túnel IPv6, burst 8-10 oct con 4,645 reqs/día pico, luego desapareció) · jordan-diaz 42M · juancarlos 39.3M · victoria 28.9M); chat liviano = **<0.5%** (servicios 287 reqs/0.18M · Kalimete-ptt 66 · armada-* chatbots 65) y YA corre rápido: P50 0.9s prompts <1K, avg 1.0-1.2s; arte separado (62 jobs z-image/flux vía ComfyUI, 0 tokens LLM). Latencia global P50 5.6s crece con el prompt (0.9s <1K → 8.0s 150K+) = el cuello es PREFILL de contexto agéntico, no el modelo. FIM /v1/completions: CERO uso en 30d.
 - **Misterio resuelto (tráfico directo a vLLM)**: los "3,908 length + 610 POSTs/50min" = (a) **probe del gpu-saver** (chat de max_tokens=3 cada 30s directo a :8000 → finish_reason=length SIEMPRE; 33.7h × 120/h ≈ 3,975 — el 93% de los requests post-boot, ~60K tokens) y (b) **GetInferenceBundle gRPC** del sandbox (12.2/min, control-plane, cero GPU). El agente OpenClaw real: **~9-12 turns/día, prompts 2-5K, ~1% del consumo** — consumidor insignificante. Todos los POSTs aparecen como 172.17.0.1 (docker-proxy NATea todo — no distinguible por IP).
-- **Veredicto modelo ligero: NO** (ambos subagentes convergen): el 35B-A3B solo activa 3B params en decode — YA es "ligero" por turno (chat a 1s); un segundo modelo residente sumaría 10-15GB sobre los 72GB residentes de 128GB en una máquina con problema eléctrico sin cerrar (3 muertes 10-24), sin resolver nada (el chat ya va a 1s y el 99% del volumen es coding que necesita SWE-bench 70 + 256K ctx + VLM nativo). La palanca real de GPU es **disciplina de contexto en las sesiones de coding** (kalimete: 98K tokens promedio por request) + NIM como válvula de overflow (provider `nvidia` ya operativo en opencode, cero costo residente).
+- **Veredicto modelo ligero: NO** (ambos subagentes convergen): el 35B-A3B solo activa 3B params en decode — YA es "ligero" por turno (chat a 1s); un segundo modelo residente sumaría 10-15GB sobre los 72GB residentes de 128GB en una máquina con problema eléctrico sin cerrar (3 muertes 10-24), sin resolver nada (el chat ya va a 1s y el 99% del volumen es coding que necesita SWE-bench 70 + 256K ctx + VLM nativo). La palanca real de GPU es **disciplina de contexto en las sesiones de coding** (Kalimete: 98K tokens promedio por request) + NIM como válvula de overflow (provider `nvidia` ya operativo en opencode, cero costo residente).
 - **Upstream verificado (10-26)**: (1) `nvidia/Qwen3.6-35B-A3B-NVFP4` SIN cambios — sigue siendo lo mejor para GB10; Qwen3.8 solo existe en 96B (no cabe); **Nemotron-3.5-Lightning-30B-A3B-NVFP4 es DOWNGRADE** (SWE-bench 51.6 vs nuestro 70.1, Terminal-Bench 24.6 vs 44.4, text-only — pierde VLM). (2) **Imagen NGC vLLM: 26.05.post1 → 26.09 disponible** (vLLM 0.21→0.29, fixes MTP/flashinfer que sufrimos; upstream 0.32 trae **NVFP4 KV cache en SM12x** = duplicaría densidad del KV; ⚠️ breaking change #57035: max_tokens ya no se reserva del context window — re-validar aritmética 220K+32K tras upgrade). (3) **opencode 1.19.0 → 1.19.4** disponible (bajo riesgo). (4) CORS de vLLM upstream ya no permite todo origen (nuestro :8000 expuesto a LAN — a revisar en el upgrade).
 - **Bugs accionables encontrados de regalo (sandbox)**: (a) **CLI del sandbox ROTA** — "Legacy device auth requires migration" (4,181 errores en 2.5h) + ensure-loop apunta la CLI a ws://127.0.0.1:18790 pero el gateway binda 18789 desde re-onboard v0.0.130 → `openclaw cron list` falla y **art-pending-notify no se puede re-declarar tras un rebuild**; (b) **discrepancia models.json**: openclaw.json dice 220K/32K pero el runtime regeneró models.json con 131072/4096 (más seguro anti-tormenta pero compacta antes); (c) logging OCSF por-request del sandbox murió el Oct-17.
 - **Plan priorizado propuesto (PENDIENTE owner)**: P0 cerrar el problema eléctrico (cap clocks 2100MHz + adaptador 240W original + UPS — sin eso toda mejora es cosmética) · P1 mantener 35B-A3B único · P2 NIM overflow para coding extremo · P3 upgrade imagen NGC 26.09 en ventana de mantenimiento (digest nuevo pineado, re-validar aritmética de contexto, rollback al 9204569b) · P4 opencode 1.19.4 ambos hosts · P5 contador de tráfico no-gateway en /health (visibilidad sandbox) · P6 vigilar Qwen3.8-35B-A3B (aún no existe) + NVFP4 KV en NGC 26.10/26.11. Fixes sandbox: curar CLI (doctor --fix + puerto dinámico en ensure-loop) y decidir models.json 128K vs 220K.
-- **Verificado**: queries sqlite agregadas por llave/modelo/endpoint/hora + docker logs vLLM (conteo POSTs reales vs probes) + tcpdump (sandbox 0 paquetes a :8000) + journal openshell-gateway (24,212 GetInferenceBundle/33h) + SSH read-only kalimete (provider vllm público, proyectos dev/apps) + webfetch upstream (HF nvidia org, NGC release notes, vLLM releases, opencode npm).
+- **Verificado**: queries sqlite agregadas por llave/modelo/endpoint/hora + docker logs vLLM (conteo POSTs reales vs probes) + tcpdump (sandbox 0 paquetes a :8000) + journal openshell-gateway (24,212 GetInferenceBundle/33h) + SSH read-only Kalimete (provider vllm público, proyectos dev/apps) + webfetch upstream (HF nvidia org, NGC release notes, vLLM releases, opencode npm).
 - **Impacto**: ninguno (evaluación). Los updates P3/P4 + fixes sandbox requieren Plan + owner.
 - **Docs**: yes (este changelog + CHANGELOG-vllm.md + CHANGELOG-sandbox.md con sus ángulos).
 
@@ -315,50 +330,50 @@
 
 ### [2026-10-21 00:50 EDT] [voice+ptt] Fix "no me respondió": locks separados TTS/STT + voz-viva OFF en el host
 - **Tipo**: fix (incidente en vivo reportado por el owner tras probar el PTT v4.2)
-- **Que**: el owner presionó Ctrl_R y Victoria nunca respondió. Forense (logs de ambos lados): el /stt del PTT se encoló detrás de una ráfaga de /tts del plugin voz-viva de opencode (una petición por oración de mis propias respuestas, host SIN parlantes) — el voice-server usaba UN solo `_lock` para TTS y STT → starvation → timeout 180s×2 = 360s ("STT timeout — Victoria no respondio en 360s", kalimete 00:25:20→00:31:31). Fix: (1) **`_tts_lock` + `_stt_lock` separados** en `voice-server-host.py` (backup `.bkup-20261021-lock-split`) — ambos modelos coexisten en la GB10, solo comparten GPU; (2) **`VICTORIA_VOICE_LIVE=0` en `~/.bashrc` de victoria** — sesiones futuras de opencode en este host sin parlantes no quemarán TTS (la sesión actual sigue hasta cerrarse; el lock-split la vuelve inofensiva).
-- **Verificado**: TTS de fondo 12.4s + STT simultáneo en **1.27s** (antes 20s+ de hambre) · E2E desde kalimete por el camino exacto del PTT: **1.59s** con transcripción española · health OK.
-- **Docs**: yes (CHANGELOG-voice + AGENTS.md §Voz + STATE kalimete-ptt con la resolución + este changelog).
+- **Que**: el owner presionó Ctrl_R y Victoria nunca respondió. Forense (logs de ambos lados): el /stt del PTT se encoló detrás de una ráfaga de /tts del plugin voz-viva de opencode (una petición por oración de mis propias respuestas, host SIN parlantes) — el voice-server usaba UN solo `_lock` para TTS y STT → starvation → timeout 180s×2 = 360s ("STT timeout — Victoria no respondio en 360s", Kalimete 00:25:20→00:31:31). Fix: (1) **`_tts_lock` + `_stt_lock` separados** en `voice-server-host.py` (backup `.bkup-20261021-lock-split`) — ambos modelos coexisten en la GB10, solo comparten GPU; (2) **`VICTORIA_VOICE_LIVE=0` en `~/.bashrc` de victoria** — sesiones futuras de opencode en este host sin parlantes no quemarán TTS (la sesión actual sigue hasta cerrarse; el lock-split la vuelve inofensiva).
+- **Verificado**: TTS de fondo 12.4s + STT simultáneo en **1.27s** (antes 20s+ de hambre) · E2E desde Kalimete por el camino exacto del PTT: **1.59s** con transcripción española · health OK.
+- **Docs**: yes (CHANGELOG-voice + AGENTS.md §Voz + STATE Kalimete-ptt con la resolución + este changelog).
 
-### [2026-10-21 00:30 EDT] [kalimete-ptt] v4.1: fixes del lado cliente aplicados en kalimete (PTT totalmente funcional E2E)
-- **Tipo**: fix + feature (cross-machine TARGET=kalimete; owner: "Procede con el fix dejando totalmente funcional este proyecto de kalimete")
-- **Que**: completados los 4 fixes + canonización de fuente del PTT de kalimete (la mitad servidor ya estaba: `/stt?language=` aplicado 23:55). (1) **#1 idioma**: `_stt_url()` envía `?language=<PTT_LANGUAGE>` al /stt — E2E verificado cross-machine (dictado español desde kalimete → transcripción española). (2) **#2 confirmación**: `_YES_RE`/`_NO_RE` estrictas → clasificador `_answer_is()` tolerante (normaliza acentos/puntuación; "Sí, procede." ✓ — el caso exacto que falló en el log del owner 22:25; NO tiene prioridad ante duda) + `_dictate` (F9) ahora RESPONDE el PENDING activo en vez de pegar el "sí" en la ventana. 20/20 tests unitarios. (3) **#3 idea→prompt** (pedido original del owner): `PTT_IDEA_PROMPT=1` (ON) — tras dictar, `_idea_to_prompt()` pasa la idea por el LLM con system prompt de prompt-engineer y pega el PROMPT MEJORADO (texto literal —mensaje/comando/frase— pasa IGUAL, verificado con LLM real en ambos casos); `PTT_IDEA_CONTEXT` opcional para contexto del proyecto activo. (4) **#4 logs persistentes**: `~/.local/state/kalimete-ptt/kalimete-ptt.log` (sobrevive reboot; fallback /tmp). (5) **#5 fuente en git**: script canonizado en `~/dev/apps/kalimete-ptt/` (deploy = cp a `~/.local/bin`), commit `b229ce3`.
-- **Impacto (kalimete)**: `~/.local/bin/kalimete-ptt` (backup `.bak.20261020-victoria-v4.1`) + `~/dev/apps/kalimete-ptt/` (fuente+STATE+CHANGELOG, commit `b229ce3`) + `~/.config/kalimete-ptt/env` (backup `env.bak.20261020-victoria`; PTT_IDEA_PROMPT=1) + `~/armada-sync/agents/kalimete-ptt.md` (sync cron `fec945d` pusheó a GitHub). Servicio reiniciado, teclado escuchando, arranque limpio con los 4 fixes visibles en el log.
-- **Verificado**: py_compile local+remoto · 20/20 clasificador · STT E2E desde kalimete (llave+language) · idea→prompt con LLM real (mejora) + passthrough literal (idéntico) · health servicio OK.
-- **Docs**: yes (STATE.md + CHANGELOG.md del proyecto + agent kalimete-ptt.md en armada-sync — todo en kalimete; este changelog general del lado Victoria). Pendiente: prueba en vivo del owner (F9 español / "Sí, procede." / dictar una idea).
-- **Observación menor (documentada en STATE.md kalimete)**: el STT del cliente autentica con `ROOTSOURCE_API_KEY` (llave admin legacy de victoria); migrar a `PTT_VOICE_KEY` (services) en la próxima edición del script — menor privilegio.
+### [2026-10-21 00:30 EDT] [Kalimete-ptt] v4.1: fixes del lado cliente aplicados en Kalimete (PTT totalmente funcional E2E)
+- **Tipo**: fix + feature (cross-machine TARGET=Kalimete; owner: "Procede con el fix dejando totalmente funcional este proyecto de Kalimete")
+- **Que**: completados los 4 fixes + canonización de fuente del PTT de Kalimete (la mitad servidor ya estaba: `/stt?language=` aplicado 23:55). (1) **#1 idioma**: `_stt_url()` envía `?language=<PTT_LANGUAGE>` al /stt — E2E verificado cross-machine (dictado español desde Kalimete → transcripción española). (2) **#2 confirmación**: `_YES_RE`/`_NO_RE` estrictas → clasificador `_answer_is()` tolerante (normaliza acentos/puntuación; "Sí, procede." ✓ — el caso exacto que falló en el log del owner 22:25; NO tiene prioridad ante duda) + `_dictate` (F9) ahora RESPONDE el PENDING activo en vez de pegar el "sí" en la ventana. 20/20 tests unitarios. (3) **#3 idea→prompt** (pedido original del owner): `PTT_IDEA_PROMPT=1` (ON) — tras dictar, `_idea_to_prompt()` pasa la idea por el LLM con system prompt de prompt-engineer y pega el PROMPT MEJORADO (texto literal —mensaje/comando/frase— pasa IGUAL, verificado con LLM real en ambos casos); `PTT_IDEA_CONTEXT` opcional para contexto del proyecto activo. (4) **#4 logs persistentes**: `~/.local/state/Kalimete-ptt/Kalimete-ptt.log` (sobrevive reboot; fallback /tmp). (5) **#5 fuente en git**: script canonizado en `~/dev/apps/Kalimete-ptt/` (deploy = cp a `~/.local/bin`), commit `b229ce3`.
+- **Impacto (Kalimete)**: `~/.local/bin/Kalimete-ptt` (backup `.bak.20261020-victoria-v4.1`) + `~/dev/apps/Kalimete-ptt/` (fuente+STATE+CHANGELOG, commit `b229ce3`) + `~/.config/Kalimete-ptt/env` (backup `env.bak.20261020-victoria`; PTT_IDEA_PROMPT=1) + `~/armada-sync/agents/Kalimete-ptt.md` (sync cron `fec945d` pusheó a GitHub). Servicio reiniciado, teclado escuchando, arranque limpio con los 4 fixes visibles en el log.
+- **Verificado**: py_compile local+remoto · 20/20 clasificador · STT E2E desde Kalimete (llave+language) · idea→prompt con LLM real (mejora) + passthrough literal (idéntico) · health servicio OK.
+- **Docs**: yes (STATE.md + CHANGELOG.md del proyecto + agent Kalimete-ptt.md en armada-sync — todo en Kalimete; este changelog general del lado Victoria). Pendiente: prueba en vivo del owner (F9 español / "Sí, procede." / dictar una idea).
+- **Observación menor (documentada en STATE.md Kalimete)**: el STT del cliente autentica con `ROOTSOURCE_API_KEY` (llave admin legacy de victoria); migrar a `PTT_VOICE_KEY` (services) en la próxima edición del script — menor privilegio.
 
-### [2026-10-21 00:10 EDT] [kalimete-ptt] v4.2: sesión persistente para el asistente de voz (Ctrl_R reutiliza la conversación + límite de contexto con aviso)
-- **Tipo**: feature (cross-machine TARGET=kalimete; owner: "reutiliza la misma sección de chat... manteniendo el historial completo... detecta cuando la ventana de contexto se acerque al límite y notifica")
-- **Que**: (1) **Sesión persistente**: la conversación Ctrl_R vive en `~/.local/state/kalimete-ptt/session.json` (`{version, summary, archive, messages}`) — sobrevive restarts/reboots (guardado cada 3s por firma de cambio + atexit en SIGTERM, escritura atómica); al restaurar, un tool_call colgado por crash se cierra con resultado sintético "CANCELADO". (2) **Tap YA NO borra el historial** (antes lo borraba TODO): solo calla + cancela PENDING con constancia para el LLM; reset explícito por voz "nueva conversación" (archiva), "resume la conversación" (compacta). (3) **Límite de contexto**: presupuesto 32K tokens (`PTT_HIST_BUDGET_TOKENS`); al 75% Victoria NOTIFICA POR VOZ y compacta — el LLM resume lo antiguo (encadenado), se archiva, los últimos 8 turnos quedan verbatim → conversación fluida; red de seguridad recorta si algo escapa. (4) **Ventana al LLM**: antes 14 mensajes fijos, ahora TODO el historial dentro del presupuesto. **Hallazgo vLLM**: el build NGC rechaza un segundo system message ("System message must be at the beginning") → el resumen viaja DENTRO del system prompt. (5) **idea→prompt (F9) ajustado**: usa el resumen de sesión como contexto cuando `PTT_IDEA_CONTEXT` está vacío → las ideas se ajustan a lo que estamos haciendo (evaluación de comportamiento por texto transcrito pedida).
+### [2026-10-21 00:10 EDT] [Kalimete-ptt] v4.2: sesión persistente para el asistente de voz (Ctrl_R reutiliza la conversación + límite de contexto con aviso)
+- **Tipo**: feature (cross-machine TARGET=Kalimete; owner: "reutiliza la misma sección de chat... manteniendo el historial completo... detecta cuando la ventana de contexto se acerque al límite y notifica")
+- **Que**: (1) **Sesión persistente**: la conversación Ctrl_R vive en `~/.local/state/Kalimete-ptt/session.json` (`{version, summary, archive, messages}`) — sobrevive restarts/reboots (guardado cada 3s por firma de cambio + atexit en SIGTERM, escritura atómica); al restaurar, un tool_call colgado por crash se cierra con resultado sintético "CANCELADO". (2) **Tap YA NO borra el historial** (antes lo borraba TODO): solo calla + cancela PENDING con constancia para el LLM; reset explícito por voz "nueva conversación" (archiva), "resume la conversación" (compacta). (3) **Límite de contexto**: presupuesto 32K tokens (`PTT_HIST_BUDGET_TOKENS`); al 75% Victoria NOTIFICA POR VOZ y compacta — el LLM resume lo antiguo (encadenado), se archiva, los últimos 8 turnos quedan verbatim → conversación fluida; red de seguridad recorta si algo escapa. (4) **Ventana al LLM**: antes 14 mensajes fijos, ahora TODO el historial dentro del presupuesto. **Hallazgo vLLM**: el build NGC rechaza un segundo system message ("System message must be at the beginning") → el resumen viaja DENTRO del system prompt. (5) **idea→prompt (F9) ajustado**: usa el resumen de sesión como contexto cuando `PTT_IDEA_CONTEXT` está vacío → las ideas se ajustan a lo que estamos haciendo (evaluación de comportamiento por texto transcrito pedida).
 - **Evaluación del comportamiento previo** (pedida): voz = memoria solo en RAM, tap destructivo, restart la perdía, LLM ciego más allá de 14 msgs, sin aviso de contexto; texto F9 = idea→prompt sin contexto real. Todo ajustado en v4.2.
-- **Impacto (kalimete)**: `~/.local/bin/kalimete-ptt` + fuente en `~/dev/apps/kalimete-ptt/` (backup `.bak.20261021-victoria-v4.2`, commit `0452d3d`) + STATE/CHANGELOG + agent `kalimete-ptt.md` en armada-sync (sync cron). Servicio reiniciado, línea de sesión en el arranque, teclado escuchando.
-- **Verificado**: batería en kalimete (TTS silenciado, LLM real): comandos de voz + estimador + turno real + recorte por budget + compactación real + system único + **test decisivo: tras restart simulado (proceso nuevo), Victoria recordó el dato que SOLO existía en el resumen** ("Tu color favorito de hoy es el azul marino"). 400 del gateway diagnosticado y resuelto en el proceso (system duplicado).
+- **Impacto (Kalimete)**: `~/.local/bin/Kalimete-ptt` + fuente en `~/dev/apps/Kalimete-ptt/` (backup `.bak.20261021-victoria-v4.2`, commit `0452d3d`) + STATE/CHANGELOG + agent `Kalimete-ptt.md` en armada-sync (sync cron). Servicio reiniciado, línea de sesión en el arranque, teclado escuchando.
+- **Verificado**: batería en Kalimete (TTS silenciado, LLM real): comandos de voz + estimador + turno real + recorte por budget + compactación real + system único + **test decisivo: tras restart simulado (proceso nuevo), Victoria recordó el dato que SOLO existía en el resumen** ("Tu color favorito de hoy es el azul marino"). 400 del gateway diagnosticado y resuelto en el proceso (system duplicado).
 - **Docs**: yes (STATE + CHANGELOG del proyecto + agent .md en armada-sync + este changelog). Pendiente: prueba en vivo del owner (2 Ctrl_R seguidos, tap no borra, "nueva conversación", primera compactación real).
 
 ### [2026-10-20 23:55 EDT] [voice+kalimete] `/stt?language=` — fix alucinación de idioma del PTT (doble lado, parte Victoria)
 - **Tipo**: fix (feature aditiva, backwards-compatible; owner: "Procede")
-- **Que**: `POST /stt` del voice-server :18810 acepta `?language=es` (ISO 639, 2-3 letras) y lo pasa a `whisper.transcribe()`. Antes `language=None` hardcodeado → Whisper-small alucinaba idiomas en clips cortos (árabe/ruso/francés en el log de kalimete-ptt). Sin param = auto-detección intacta (sandbox whisper-cli, video-server y kalimete-ptt v4 no cambian); inválido → 400 `invalid_language`. Backup `.bkup-20261020-stt-language`, restart ~15s.
-- **Por qué**: validación de la sesión kalimete `ses_ea3adda92ffeYshinmCBIwQACd` (análisis del dashboard + diagnóstico PTT): bug de DOBLE lado — servidor nuestro (language=None) + cliente kalimete-ptt (resuelve PTT_LANGUAGE=es, lo loguea, nunca lo envía). Fix #1 de 4; #2-4 son lado kalimete (regex "Sí, procede.", idea→prompt, logs persistentes) con su propio OK del owner.
+- **Que**: `POST /stt` del voice-server :18810 acepta `?language=es` (ISO 639, 2-3 letras) y lo pasa a `whisper.transcribe()`. Antes `language=None` hardcodeado → Whisper-small alucinaba idiomas en clips cortos (árabe/ruso/francés en el log de Kalimete-ptt). Sin param = auto-detección intacta (sandbox whisper-cli, video-server y Kalimete-ptt v4 no cambian); inválido → 400 `invalid_language`. Backup `.bkup-20261020-stt-language`, restart ~15s.
+- **Por qué**: validación de la sesión Kalimete `ses_ea3adda92ffeYshinmCBIwQACd` (análisis del dashboard + diagnóstico PTT): bug de DOBLE lado — servidor nuestro (language=None) + cliente Kalimete-ptt (resuelve PTT_LANGUAGE=es, lo loguea, nunca lo envía). Fix #1 de 4; #2-4 son lado Kalimete (regex "Sí, procede.", idea→prompt, logs persistentes) con su propio OK del owner.
 - **Impacto**: `voice-server-host.py` (docstring + imports + config-guide + `_handle_stt` + transcribe). Docs: AGENTS.md §Endpoints voz + nota STT idioma.
 - **Verificado**: E2E 6 pruebas — sin param auto intacto (ref es→es exacto) · `?language=es` OK · inválido 400 claro · ref en auto→inglés correcto · misma ref en forzada es→español distinto ("¡Muchas gracias, muy mucho!") = param fluye hasta Whisper · health OK.
-- **Docs**: yes (AGENTS.md + CHANGELOG-voice.md + este changelog). Pendiente kalimete: enviar el param desde su cliente (fix #2 suyo).
+- **Docs**: yes (AGENTS.md + CHANGELOG-voice.md + este changelog). Pendiente Kalimete: enviar el param desde su cliente (fix #2 suyo).
 
-### [2026-10-20 01:45 EDT] [gateway+kalimete] Provisioning delegado: kalimete crea llaves de negocio armada-suite via POST /v1/provision-key (cap `provision`)
-- **Tipo**: feature + security (owner: "procede bajo las mejores prácticas" — evaluación de la sesión kalimete `ses_ea97154aeffeAWE9n5gdAqrm8V` / MaganTech)
-- **Que**: kalimete.local ya puede crear llaves de servicio LLM para los proyectos web de armada-suite (chatbots/plugins ERP) **con su propia llave, sin panel ni ADMIN_PASS**. (1) Nueva cap **`provision`** (8ª de `sense_auth.ALL_CAPABILITIES`; JAMÁS eleva a services — poder del gateway, no un sentido) otorgada a la llave `kalimete`. (2) Nuevo endpoint **`POST /v1/provision-key`** del gateway: crea SIEMPRE llaves de negocio rol `services` + caps `["llm"]` + prefijo `armada-<slug>` (menor privilegio: la llave creada no provisiona ni usa sentidos → cero escalada), máx 10 creaciones/hora por provisionadora (429 `provision_rate_limited`), budget/expiry clampeables, plaintext UNA vez. (3) Tabla **`provision_log`** (auditoría: quién creó qué, cuándo, desde qué IP). (4) Panel admin: checkbox 🛠️ Provisionar llaves (crear+editar+badges). (5) `/v1/config-guide` → sección `provision_api` auto-descriptiva para el script `armada-llm-provision` de kalimete. (6) **Primera llave de negocio creada: `armada-magantech`** — provisionada DESDE kalimete (10.0.0.106) con el flujo real del script; plaintext en `~/.victoria-custom/secrets/armada-magantech.key` (600) para pegarla en wp-admin → Asistente IA (mata el error `ERPCBOT_LLM_*` de prod magantech.com.do).
-- **Por qué**: la sesión de kalimete diagnosticó bien (1 key por negocio = metering/revocación/slots aislados) pero su propuesta técnica fallaba: `POST /admin/keys` NO acepta llaves API (exige sesión de panel con ADMIN_PASS). La alternativa evaluada con el owner: endpoint scoped con cap — menor privilegio, cero ADMIN_PASS compartido, cero poder admin en kalimete, consistente con el contrato "kalimete consume recursos, nunca opera la máquina".
-- **Impacto**: llm-gateway.py + sense_auth.py + admin_template.html (backups `.bkup-20261020-provision`), DB (tabla provision_log + cap en llave kalimete), restart gateway ~4s. Docs: AGENTS.md §7 (8 caps + endpoint), AGENTS-summary.md, victoria.md (granja kalimete), agents/vllm.md, vllm.harness.json, config-guide vivo. Detalle técnico completo en CHANGELOG-vllm.md misma fecha.
-- **Verificado E2E**: 403 sin cap (kalimete-ptt) · 201 con cap → rol/caps/prefijo forzados · llave nueva chatea 200 "OK" · llave nueva NO provisiona (403, cero escalada) · readonly 403 middleware · provision_log con IP de origen · **cross-machine: 201 desde kalimete 10.0.0.106** · panel 200 · health ok.
+### [2026-10-20 01:45 EDT] [gateway+kalimete] Provisioning delegado: Kalimete crea llaves de negocio armada-suite via POST /v1/provision-key (cap `provision`)
+- **Tipo**: feature + security (owner: "procede bajo las mejores prácticas" — evaluación de la sesión Kalimete `ses_ea97154aeffeAWE9n5gdAqrm8V` / MaganTech)
+- **Que**: Kalimete.local ya puede crear llaves de servicio LLM para los proyectos web de armada-suite (chatbots/plugins ERP) **con su propia llave, sin panel ni ADMIN_PASS**. (1) Nueva cap **`provision`** (8ª de `sense_auth.ALL_CAPABILITIES`; JAMÁS eleva a services — poder del gateway, no un sentido) otorgada a la llave `kalimete`. (2) Nuevo endpoint **`POST /v1/provision-key`** del gateway: crea SIEMPRE llaves de negocio rol `services` + caps `["llm"]` + prefijo `armada-<slug>` (menor privilegio: la llave creada no provisiona ni usa sentidos → cero escalada), máx 10 creaciones/hora por provisionadora (429 `provision_rate_limited`), budget/expiry clampeables, plaintext UNA vez. (3) Tabla **`provision_log`** (auditoría: quién creó qué, cuándo, desde qué IP). (4) Panel admin: checkbox 🛠️ Provisionar llaves (crear+editar+badges). (5) `/v1/config-guide` → sección `provision_api` auto-descriptiva para el script `armada-llm-provision` de Kalimete. (6) **Primera llave de negocio creada: `armada-magantech`** — provisionada DESDE Kalimete (10.0.0.106) con el flujo real del script; plaintext en `~/.victoria-custom/secrets/armada-magantech.key` (600) para pegarla en wp-admin → Asistente IA (mata el error `ERPCBOT_LLM_*` de prod magantech.com.do).
+- **Por qué**: la sesión de Kalimete diagnosticó bien (1 key por negocio = metering/revocación/slots aislados) pero su propuesta técnica fallaba: `POST /admin/keys` NO acepta llaves API (exige sesión de panel con ADMIN_PASS). La alternativa evaluada con el owner: endpoint scoped con cap — menor privilegio, cero ADMIN_PASS compartido, cero poder admin en Kalimete, consistente con el contrato "Kalimete consume recursos, nunca opera la máquina".
+- **Impacto**: llm-gateway.py + sense_auth.py + admin_template.html (backups `.bkup-20261020-provision`), DB (tabla provision_log + cap en llave Kalimete), restart gateway ~4s. Docs: AGENTS.md §7 (8 caps + endpoint), AGENTS-summary.md, victoria.md (granja Kalimete), agents/vllm.md, vllm.harness.json, config-guide vivo. Detalle técnico completo en CHANGELOG-vllm.md misma fecha.
+- **Verificado E2E**: 403 sin cap (Kalimete-ptt) · 201 con cap → rol/caps/prefijo forzados · llave nueva chatea 200 "OK" · llave nueva NO provisiona (403, cero escalada) · readonly 403 middleware · provision_log con IP de origen · **cross-machine: 201 desde Kalimete 10.0.0.106** · panel 200 · health ok.
 - **Docs**: yes (todos los anteriores + este changelog + CHANGELOG-vllm.md)
-- **Pendientes**: (a) kalimete construye su script `armada-llm-provision` sobre el endpoint (su dominio); (b) pegar `armada-magantech` en wp-admin prod; (c) rotar `servicios-alfredo-pro-llc` (quedó pegada en el chat de kalimete) cuando el tráfico migre a llaves por negocio; (d) broker ERP con identidad del plugin = endgame cuando la escala lo pida (camino A de la sesión).
+- **Pendientes**: (a) Kalimete construye su script `armada-llm-provision` sobre el endpoint (su dominio); (b) pegar `armada-magantech` en wp-admin prod; (c) rotar `servicios-alfredo-pro-llc` (quedó pegada en el chat de Kalimete) cuando el tráfico migre a llaves por negocio; (d) broker ERP con identidad del plugin = endgame cuando la escala lo pida (camino A de la sesión).
 
 ### [2026-10-19 01:00 EDT] [seguridad+granja] Kalimete×Victoria: granja de recursos COMPLETA via keys (juegos y todo) + host-admin cerrado a admin-only
 - **Tipo**: security + feature + docs (owner: "mejora todo para que [kalimete] tenga acceso a victoria... via keyring... sus recursos sin explotar y/o hacer que se reinicie")
-- **Que**: (1) **Evaluación de los cambios 2026-10-18 de kalimete** (Game Studio + blender-mcp + godot-mcp): sólidos — pipeline 7 fases bien documentado, hallazgos de Blender MCP (xvfb GUI, no --background) verificados, Frescura line presente, harness completo. Gap único: marcaba "image→3D Fase 2 pendiente" cuando Hunyuan3D-2 (:18860) ya estaba desplegado desde 2026-10-09 y acepta `image_b64` por HTTP. (2) **Granja COMPLETA para kalimete, sin cambios en Victoria**: la llave `kalimete` (coder + caps llm/art/tts/whisper) ya abre TODO lo HTTP-accesible — art API (imágenes), Hunyuan3D :18860 (GLB por image_b64), lp-animate :18861 (foto_b64→mp4), TTS/STT :18810, video :18811, LLM+VLM :8010. Kalimete solo necesitaba SABERLO: skill nueva `assets-3d` + agentes game-studio/victoria-server + harness actualizados (con autorización del owner, TARGET=kalimete verificado, backups .bkup-20261019-victoriafarm). (3) **FIX SECURITY en Victoria**: `victoria-host-admin.py` usaba `sense_role()` con elevación de caps → la llave kalimete podía operar la MÁQUINA (exec/apt/service) desde LAN. Endurecido a bridge key + rol admin puro: `sense_auth.sense_role(headers, elevate=False)` (param nuevo, backwards-compatible) + `role == "admin"`; rol services retirado de :18840 (sin consumidor legítimo). Los sentidos generadores conservan la elevación (recursos sí, máquina no).
-- **Por qué**: el owner monta una fábrica de juegos 3D en kalimete que consume los modelos/GPU de Victoria por API keys — el diseño correcto es HTTP+key (cero SSH-write, cero operación del host), y el hueco de host-admin contradecía la directiva explícita ("sin explotar y/o hacer que se reinicie").
-- **Impacto**: Victoria: `sense_auth.py` + `victoria-host-admin.py` (backups .bkup-20261019-kalimeteguard) + restart victoria-host-admin (instantáneo). Kalimete: skill `assets-3d` nueva, `game-studio.md` + `victoria-server.md` + `game-studio.harness.json` actualizados, CHANGELOG kalimete. GPU: protección intacta (árbitro + single-flight + válvulas del gateway — documentadas en la skill como "convivencia").
-- **Verificado E2E por red real desde kalimete**: gateway 200 · hunyuan health loaded · lp-anim health OK · **:18840 con llave kalimete → 401 (fix funciona)** · bridge key → 200 · admin key → pasa · concept art z-image-turbo ~25s (1.2MB) → **Hunyuan3D GLB 3.5MB/46.4s/284K verts, magic glTF, descargado en kalimete** · VLM describió la imagen en ES (image_url por chat completions). Artefactos: /tmp/victoria-farm-test/ en kalimete.
-- **Docs**: yes (general + CHANGELOG-host-admin + CHANGELOG-comfyui + CHANGELOG-liveportrait + AGENTS.md §auth/§Hunyuan3D/§Animar + victoria.md §granja kalimete + todo el lado kalimete)
+- **Que**: (1) **Evaluación de los cambios 2026-10-18 de Kalimete** (Game Studio + blender-mcp + godot-mcp): sólidos — pipeline 7 fases bien documentado, hallazgos de Blender MCP (xvfb GUI, no --background) verificados, Frescura line presente, harness completo. Gap único: marcaba "image→3D Fase 2 pendiente" cuando Hunyuan3D-2 (:18860) ya estaba desplegado desde 2026-10-09 y acepta `image_b64` por HTTP. (2) **Granja COMPLETA para Kalimete, sin cambios en Victoria**: la llave `kalimete` (coder + caps llm/art/tts/whisper) ya abre TODO lo HTTP-accesible — art API (imágenes), Hunyuan3D :18860 (GLB por image_b64), lp-animate :18861 (foto_b64→mp4), TTS/STT :18810, video :18811, LLM+VLM :8010. Kalimete solo necesitaba SABERLO: skill nueva `assets-3d` + agentes game-studio/victoria-server + harness actualizados (con autorización del owner, TARGET=Kalimete verificado, backups .bkup-20261019-victoriafarm). (3) **FIX SECURITY en Victoria**: `victoria-host-admin.py` usaba `sense_role()` con elevación de caps → la llave Kalimete podía operar la MÁQUINA (exec/apt/service) desde LAN. Endurecido a bridge key + rol admin puro: `sense_auth.sense_role(headers, elevate=False)` (param nuevo, backwards-compatible) + `role == "admin"`; rol services retirado de :18840 (sin consumidor legítimo). Los sentidos generadores conservan la elevación (recursos sí, máquina no).
+- **Por qué**: el owner monta una fábrica de juegos 3D en Kalimete que consume los modelos/GPU de Victoria por API keys — el diseño correcto es HTTP+key (cero SSH-write, cero operación del host), y el hueco de host-admin contradecía la directiva explícita ("sin explotar y/o hacer que se reinicie").
+- **Impacto**: Victoria: `sense_auth.py` + `victoria-host-admin.py` (backups .bkup-20261019-kalimeteguard) + restart victoria-host-admin (instantáneo). Kalimete: skill `assets-3d` nueva, `game-studio.md` + `victoria-server.md` + `game-studio.harness.json` actualizados, CHANGELOG Kalimete. GPU: protección intacta (árbitro + single-flight + válvulas del gateway — documentadas en la skill como "convivencia").
+- **Verificado E2E por red real desde Kalimete**: gateway 200 · hunyuan health loaded · lp-anim health OK · **:18840 con llave Kalimete → 401 (fix funciona)** · bridge key → 200 · admin key → pasa · concept art z-image-turbo ~25s (1.2MB) → **Hunyuan3D GLB 3.5MB/46.4s/284K verts, magic glTF, descargado en Kalimete** · VLM describió la imagen en ES (image_url por chat completions). Artefactos: /tmp/victoria-farm-test/ en Kalimete.
+- **Docs**: yes (general + CHANGELOG-host-admin + CHANGELOG-comfyui + CHANGELOG-liveportrait + AGENTS.md §auth/§Hunyuan3D/§Animar + victoria.md §granja Kalimete + todo el lado Kalimete)
 
 ### [2026-10-17 11:21 EDT] [rss+sandbox] Validación del reporte WhatsApp del owner — "fallos RSS" = falso positivo; sistema RSS 100% operativo (Tasks OpenClaw + RSS System, solo lectura)
 - **Tipo**: docs/diagnóstico (cero cambios)
@@ -413,9 +428,9 @@
 - **Hallazgo menor (NO tocado, para `Sonic` en próxima ventana de servicio)**: `sonic-server.py:126` check `face_num < 0` parece debería ser `<= 0` (foto sin cara pasaría el check → 500 críptico en vez de 400 claro) — daemon sano, cambio requiere restart: no se hizo (no dañar lo que funciona).
 - **Docs**: yes (CHANGELOG-sonic + CHANGELOG-liveportrait por los subagentes; AGENTS.md §11 2 filas curadas; sonic.md + liveportrait.md + harnesses curados; doc-fresh Sonic+Liveportrait FRESH; esta entrada)
 
-### [2026-10-14 15:10 EDT] [reporte+rss+openclaw] Reporte DGX-only (sin kalimete) + retry RSS + E2E inference OK + harness verificados
+### [2026-10-14 15:10 EDT] [reporte+rss+openclaw] Reporte DGX-only (sin Kalimete) + retry RSS + E2E inference OK + harness verificados
 - **Tipo**: fix + docs + validación (autorización owner "procede bajo mejores prácticas"; BUILD pequeño directo por Victoria, sin Task para edits simples)
-- **Que**: (1) **Reporte diario DGX-only**: `victoria-daily-report.py` 13→15 systemd (+`victoria-hunyuan3d :18860`, +`victoria-lp-animate :18861`), health + tablero `Hun·Anim`, docstring actualizado; **flota kalimete eliminada** (bloque SSH 7d-bis + board fuera — `wordpress-dev` y demás drifts ajenos ya no salen en el reporte de Victoria; Kalimete con su propio reporte; ahorra ~25s). Backup `.bkup-20261014-dgxonly`. (2) **RSS retry**: `sync_to_sandbox()` con 3 intentos + re-resolve interno (falsa `ALERTA: sandbox no corre` 04:00 hoy con sandbox healthy). Backup `.bkup-20261014-retry`. (3) **Harness/doc/subagente**: auditados los 11 (central + 10): Hunyuan3D-2 cubierto por `Comfyui` (doc §Hunyuan3D-2 + harness + nginx /hunyuan3d/), Animar-chat por `Liveportrait` (§Animar-chat + harness + nginx /animar/), Sonic por `Sonic` — ningún proyecto huérfano, NO se creó subagente duplicado. (4) **Discrepancias cerradas**: reporte 13 vs live 15 (curada), flota en reporte DGX (curada), falsa ALERTA RSS (curada), `not probed` Phase Error = cosmético (E2E manual 200 OK por ruta del agente; rebuild solo para el cartel costaría re-QR WhatsApp — no se hace).
+- **Que**: (1) **Reporte diario DGX-only**: `victoria-daily-report.py` 13→15 systemd (+`victoria-hunyuan3d :18860`, +`victoria-lp-animate :18861`), health + tablero `Hun·Anim`, docstring actualizado; **flota Kalimete eliminada** (bloque SSH 7d-bis + board fuera — `wordpress-dev` y demás drifts ajenos ya no salen en el reporte de Victoria; Kalimete con su propio reporte; ahorra ~25s). Backup `.bkup-20261014-dgxonly`. (2) **RSS retry**: `sync_to_sandbox()` con 3 intentos + re-resolve interno (falsa `ALERTA: sandbox no corre` 04:00 hoy con sandbox healthy). Backup `.bkup-20261014-retry`. (3) **Harness/doc/subagente**: auditados los 11 (central + 10): Hunyuan3D-2 cubierto por `Comfyui` (doc §Hunyuan3D-2 + harness + nginx /hunyuan3d/), Animar-chat por `Liveportrait` (§Animar-chat + harness + nginx /animar/), Sonic por `Sonic` — ningún proyecto huérfano, NO se creó subagente duplicado. (4) **Discrepancias cerradas**: reporte 13 vs live 15 (curada), flota en reporte DGX (curada), falsa ALERTA RSS (curada), `not probed` Phase Error = cosmético (E2E manual 200 OK por ruta del agente; rebuild solo para el cartel costaría re-QR WhatsApp — no se hace).
 - **Verificado**: `py_compile OK`, `bash -n OK`, `--dry-run` 15/15 ✅ sin flota, `sync` OK, `Task OpenClaw` E2E `POST inference.local/v1/chat/completions` 200 0.24s "OK" + sandbox healthy restarts=0 + gateway pid 421 estable + WA/Discord vivos + dashboard 200 + engine FRÍO anomalías 0.
 - **Docs**: yes (CHANGELOG-social + CHANGELOG-rss + este general; headers de scripts documentan DGX-only/retry)
 
@@ -479,7 +494,7 @@
 
 ### [2026-10-08 20:05 EDT] [multi] Kalimete uplift COMPLETO (SSH, TARGET verificado): §Docs oficiales en 19/19 agent files + docs_oficiales en 19/19 harnesses
 - **Tipo**: docs (cross-machine autorizado expreso por el owner; solo agent files/harnesses, cero servicios)
-- **Que**: (1) Reconocimiento: 19 .md canónicos en `~/armada-sync/agents/` (filenames ≠ `name:` — ej. godot-dev.md→Godot; bkups intactos) + 19 harnesses en `~/armada-sync/harness/`; todos ya tenían frontmatter + doctrina propia + Frescura + Upstream 18/19. (2) Payload `/tmp/kalimete-docs.json` construido local (secciones por servicio) + script aplicador con TARGET-check (`/etc/hostname`==kalimete), backups `.bkup-20261008-docs` por archivo, idempotente (skip si ya existe); scp + ejecución + /tmp limpio. Resultado: **19/19 MD + 19/19 HARNESS aplicados, 0 errores**. (3) Docs asignadas por servicio: Node/Express/Prisma/PG16/React/Vite (alfredo-ecomm/woodly), goauthentik.io, developers.cloudflare.com, github docusealco/docuseal (**docs.docuseal.com NO resuelve** — verificado — el repo es el canónico), upstream Juan Carlos + nginx/mysql/redis (erp-dev), docs.godotengine.org + GDScript, docs.inspircd.org (**v4 estable, v3 EOL 2026-01-01**) + ircv3.net, opencode.ai/docs + schema (**+§Upstream que faltaba en kalimete.md**), docs.nextcloud.com, ledger+Caddy (petsuite/scriberr/taohemps), proxmark3 GitHub, squid-cache.org + RFC 1928, rathena wiki (**viva, 189 págs**) + FluxCP, docker docs + Caddy (vps), developer.wordpress.org + handbook (wordpress-dev), AGENTS.md victoria + vllm docs (**victoria-server, SOLO LECTURA**). (4) Entrada espejo escrita en `~/armada-sync/CHANGELOG.md` de kalimete (formato propio `## fecha/
+- **Que**: (1) Reconocimiento: 19 .md canónicos en `~/armada-sync/agents/` (filenames ≠ `name:` — ej. godot-dev.md→Godot; bkups intactos) + 19 harnesses en `~/armada-sync/harness/`; todos ya tenían frontmatter + doctrina propia + Frescura + Upstream 18/19. (2) Payload `/tmp/Kalimete-docs.json` construido local (secciones por servicio) + script aplicador con TARGET-check (`/etc/hostname`==Kalimete), backups `.bkup-20261008-docs` por archivo, idempotente (skip si ya existe); scp + ejecución + /tmp limpio. Resultado: **19/19 MD + 19/19 HARNESS aplicados, 0 errores**. (3) Docs asignadas por servicio: Node/Express/Prisma/PG16/React/Vite (alfredo-ecomm/woodly), goauthentik.io, developers.cloudflare.com, github docusealco/docuseal (**docs.docuseal.com NO resuelve** — verificado — el repo es el canónico), upstream Juan Carlos + nginx/mysql/redis (erp-dev), docs.godotengine.org + GDScript, docs.inspircd.org (**v4 estable, v3 EOL 2026-01-01**) + ircv3.net, opencode.ai/docs + schema (**+§Upstream que faltaba en Kalimete.md**), docs.nextcloud.com, ledger+Caddy (petsuite/scriberr/taohemps), proxmark3 GitHub, squid-cache.org + RFC 1928, rathena wiki (**viva, 189 págs**) + FluxCP, docker docs + Caddy (vps), developer.wordpress.org + handbook (wordpress-dev), AGENTS.md victoria + vllm docs (**victoria-server, SOLO LECTURA**). (4) Entrada espejo escrita en `~/armada-sync/CHANGELOG.md` de Kalimete (formato propio `## fecha/
 
 ### [2026-10-08 19:50 EDT] [rss+weather] Deep treatments RSS y Weather DIRECTOS (delegaciones en 429): 6 feeds recuperados + 6 fuentes clima re-validadas
 - **Tipo**: fix + docs (hechos directos por Victoria — el provider externo dio 429 a las delegaciones; ambos trabajos eran medición + JSON, sin necesidad de subagente)
@@ -532,13 +547,13 @@
 - **Verificado**: overrides con mode replace + 220,000+32,000=252,000 (python check); config valid; 0 VLLMValidationError post-fix; WhatsApp envió mensaje real post-fix; ensure-loop sin errores nuevos; harness JSON válido; doc-fresh OpenClaw FRESH.
 - **Docs**: yes (openclaw.md §Docs actualizadas + openclaw.harness.json + CHANGELOG-sandbox.md + este general)
 
-### [2026-10-08 15:05 EDT] [multi] Restructuring de flota COMPLETO (victoria + kalimete): patrón vLLM aplicado a TODOS, 7 derivas STALE curadas, docs oficiales en los 11
+### [2026-10-08 15:05 EDT] [multi] Restructuring de flota COMPLETO (victoria + Kalimete): patrón vLLM aplicado a TODOS, 7 derivas STALE curadas, docs oficiales en los 11
 - **Tipo**: docs + refactor (delegado a subagente `vLLM` como auditor del patrón que él estableció; cero reinicios, cero flags, opencode.jsonc solo validado)
-- **Que**: el owner exigió TODOS los agentes sin excepción al estándar vLLM (docs oficiales versionadas + upstream + frontmatter + harness). **victoria.local (11/11)**: (1) §Docs oficiales + §Upstream check agregados a los 10 agent files que faltaban (Victoria, OpenClaw, Comfyui, Sonic, RSS System, Meta Business, Weather, CloudFlare, Liveportrait, Gpu — vLLM ya lo tenía) + §Changelog puntero donde faltaba (Meta Business, Weather); TODAS las URLs verificadas vivas con webfetch 2026-10-08 (docs.openclaw.ai, docs.comfy.org, docs.n8n.io, github jixiaozhong/Sonic + paper CVPR, github KlingAIResearch/LivePortrait, github Hyaxia/blogwatcher, open-meteo.com/en/docs, wttr.in/Nominatim/Overpass, developers.cloudflare.com/nginx.org, docs.nvidia.com/dgx, IG Graph/Discord/WhatsApp APIs, opencode.ai/docs+schema). (2) **7 derivas STALE curadas**: openclaw.harness.json + victoria.harness.json central decían dashboard :18789 → **:18800** (real desde 10-05); cloudflare.harness.json decía cloudflared 2026.9.3 → **2026.10.0**; comfyui.md decía "master 651ca296" → **v0.39.0 @ 46493d82**; rss-system.md decía "v0.0.3" → **v0.0.4**; openclaw.md:869 referenciaba path de runtime docs INEXISTENTE → docs.openclaw.ai + ~/.nemoclaw/source/docs; sonic.md licencia aclarada (repo = CC BY-NC-SA 4.0, regla no-comercial idéntica); kalimete.harness.json JSON ROTO (entrada Armada Arcade colgante de la retirada 10-03) → reparado con backup previo. (3) Harnesses: bloques docs_oficiales + upstream en los 10; todos JSON válidos + referenciados. (4) doc-fresh 11/11 FRESH (--mark-ok). **kalimete.local (19/19 auditados vía SSH, TARGET verificado)**: flota sana (frontmatter + SU doctrina 0.2/0.6+0.95/0.1 + Frescura + ## Upstream en 18/19), opencode 1.18.35, dual provider OK, key kalimete verificada contra nuestra DB (coder, caps llm/art/tts/whisper, active). Solo se fixeó el JSON central roto (backup `kalimete.harness.json.bkup-20261008-audit`); NADA más se tocó ahí.
+- **Que**: el owner exigió TODOS los agentes sin excepción al estándar vLLM (docs oficiales versionadas + upstream + frontmatter + harness). **victoria.local (11/11)**: (1) §Docs oficiales + §Upstream check agregados a los 10 agent files que faltaban (Victoria, OpenClaw, Comfyui, Sonic, RSS System, Meta Business, Weather, CloudFlare, Liveportrait, Gpu — vLLM ya lo tenía) + §Changelog puntero donde faltaba (Meta Business, Weather); TODAS las URLs verificadas vivas con webfetch 2026-10-08 (docs.openclaw.ai, docs.comfy.org, docs.n8n.io, github jixiaozhong/Sonic + paper CVPR, github KlingAIResearch/LivePortrait, github Hyaxia/blogwatcher, open-meteo.com/en/docs, wttr.in/Nominatim/Overpass, developers.cloudflare.com/nginx.org, docs.nvidia.com/dgx, IG Graph/Discord/WhatsApp APIs, opencode.ai/docs+schema). (2) **7 derivas STALE curadas**: openclaw.harness.json + victoria.harness.json central decían dashboard :18789 → **:18800** (real desde 10-05); cloudflare.harness.json decía cloudflared 2026.9.3 → **2026.10.0**; comfyui.md decía "master 651ca296" → **v0.39.0 @ 46493d82**; rss-system.md decía "v0.0.3" → **v0.0.4**; openclaw.md:869 referenciaba path de runtime docs INEXISTENTE → docs.openclaw.ai + ~/.nemoclaw/source/docs; sonic.md licencia aclarada (repo = CC BY-NC-SA 4.0, regla no-comercial idéntica); Kalimete.harness.json JSON ROTO (entrada Armada Arcade colgante de la retirada 10-03) → reparado con backup previo. (3) Harnesses: bloques docs_oficiales + upstream en los 10; todos JSON válidos + referenciados. (4) doc-fresh 11/11 FRESH (--mark-ok). **Kalimete.local (19/19 auditados vía SSH, TARGET verificado)**: flota sana (frontmatter + SU doctrina 0.2/0.6+0.95/0.1 + Frescura + ## Upstream en 18/19), opencode 1.18.35, dual provider OK, key Kalimete verificada contra nuestra DB (coder, caps llm/art/tts/whisper, active). Solo se fixeó el JSON central roto (backup `Kalimete.harness.json.bkup-20261008-audit`); NADA más se tocó ahí.
 - **Por que**: directiva del owner — todos los agentes deben programar según estándares de los creadores (docs versionadas embebidas), sin adivinar ni features fuera de versión, vigilando upstream.
-- **Impacto**: 10 agent files + 11 harnesses victoria + 1 harness kalimete; conocimiento operativo preservado (openclaw.md curado, no reescrito — ~890 líneas de lecciones intactas).
-- **Verificado**: `opencode agent list` victoria = 1 primary + 10 subagentes exactos, 0 duplicados, 0 corruptos; kalimete = 1 primary + 18; harnesses 11/11 + 19/19 JSON válidos; doc-fresh 11/11 FRESH; opencode.jsonc de victoria VÁLIDO (no modificado).
-- **Pendientes (matriz de gaps para siguiente wave)**: medición LIVE profunda por servicio en los harnesses (OpenClaw ALTA: runtime/channels/plugins versionados; Gpu MEDIA-ALTA: mapa VRAM real; Comfyui/Sonic/Liveportrait/CloudFlare/Meta Business MEDIA; RSS/Weather BAJA — data de Weather es del 2026-08-15); kalimete necesita §Docs oficiales en sus 19 agent files + harnesses ligeros → **delegar a su primaria kalimete como Task dedicado con este patrón como spec** (es su repo/convención); entrada del harness-fix de kalimete pendiente en SU ~/armada-sync/CHANGELOG.md (convención: la escribe su primaria).
+- **Impacto**: 10 agent files + 11 harnesses victoria + 1 harness Kalimete; conocimiento operativo preservado (openclaw.md curado, no reescrito — ~890 líneas de lecciones intactas).
+- **Verificado**: `opencode agent list` victoria = 1 primary + 10 subagentes exactos, 0 duplicados, 0 corruptos; Kalimete = 1 primary + 18; harnesses 11/11 + 19/19 JSON válidos; doc-fresh 11/11 FRESH; opencode.jsonc de victoria VÁLIDO (no modificado).
+- **Pendientes (matriz de gaps para siguiente wave)**: medición LIVE profunda por servicio en los harnesses (OpenClaw ALTA: runtime/channels/plugins versionados; Gpu MEDIA-ALTA: mapa VRAM real; Comfyui/Sonic/Liveportrait/CloudFlare/Meta Business MEDIA; RSS/Weather BAJA — data de Weather es del 2026-08-15); Kalimete necesita §Docs oficiales en sus 19 agent files + harnesses ligeros → **delegar a su primaria Kalimete como Task dedicado con este patrón como spec** (es su repo/convención); entrada del harness-fix de Kalimete pendiente en SU ~/armada-sync/CHANGELOG.md (convención: la escribe su primaria).
 - **Docs**: yes (general + CHANGELOG-{sandbox,infra,comfyui,sonic,rss,gpu,liveportrait,social,weather}.md)
 
 ### [2026-10-08 14:20 EDT] [vllm] Restructuring del agente vLLM (1º de la flota): medición LIVE + docs oficiales embebidas + disciplina upstream
@@ -584,20 +599,20 @@
 
 ### [2026-10-07 12:40 EDT] [liveportrait] Audio propio en Animar (uploader 🎧 + doblaje) + demo Boris con Sonic OK
 - **Tipo**: feature UI (pedido del owner: sincronizar video + nota de voz/audio — la opción NO existía en el dash)
-- **Que**: pestaña 🎬 Animar de `victoria.local/liveportrait/` suma paso 3️⃣ Audio propio (mp3/wav/mpeg/ogg/m4a): el audio reemplaza al del video generado (doblaje ffmpeg, sin re-codificar). Demo con archivos de kalimete (`boris.mp4` 7s + `boris audio.mpeg` 2s): doblaje → `videos/boris-doblaje-demo.mp4`; lip-sync real vía Sonic :18850 (76s) → `videos/boris-sonic-lipsync-demo.mp4`. Detalle en `CHANGELOG-liveportrait.md`. Pendiente (PLAN para `Sonic`): audio propio en el tab 🎙️ Estudio Podcast (hoy solo guion+TTS).
+- **Que**: pestaña 🎬 Animar de `victoria.local/liveportrait/` suma paso 3️⃣ Audio propio (mp3/wav/mpeg/ogg/m4a): el audio reemplaza al del video generado (doblaje ffmpeg, sin re-codificar). Demo con archivos de Kalimete (`boris.mp4` 7s + `boris audio.mpeg` 2s): doblaje → `videos/boris-doblaje-demo.mp4`; lip-sync real vía Sonic :18850 (76s) → `videos/boris-sonic-lipsync-demo.mp4`. Detalle en `CHANGELOG-liveportrait.md`. Pendiente (PLAN para `Sonic`): audio propio en el tab 🎙️ Estudio Podcast (hoy solo guion+TTS).
 - **Por que**: el owner solo veía "generar prompt para guion", sin forma de agregar su audio.
 - **Impacto**: solo `LivePortrait/app.py` (+backup); pipeline y pesos intactos.
 - **Verificado**: restart active, 200 directo+nginx, journal 0 errores, E2E por API con `_con-audio.mp4` h264+aac.
 - **Docs**: yes (liveportrait agent+harness+propio+AGENTS §11)
 
-### [2026-10-07 01:30 EDT] [kalimete-agentes] Granja de contenido documentada en los agentes de kalimete (Victoria Server + Godot + skills art/voice-video) — trabajo autorizado cross-machine
+### [2026-10-07 01:30 EDT] [Kalimete-agentes] Granja de contenido documentada en los agentes de Kalimete (Victoria Server + Godot + skills art/voice-video) — trabajo autorizado cross-machine
 - **Tipo**: docs (owner: "Procede… documenta todo, changelogs, documentaciones, armada-sync y demas")
-- **Que**: en kalimete (TARGET verificado, autorización explícita, victoria SOLO lectura): (1) `agents/victoria-server.md` + sección "Generar contenido desde kalimete" — tabla completa de la granja: art API del gateway (3 templates z-image-turbo/flux-schnell/sd15-realistic + flujo 202→poll→download), TTS/STT `:18810` (voces + idiomas), video-server `:18811` (analyze/analyze-upload), Sonic `:18850` con su constraint (rutas LOCALES de victoria → tab Estudio Podcast o pedírselo a Victoria), VLM image-input, cola GPU (429+Retry-After); fixes de deriva: dashboard 18789→**18800** (live 2026-10-05), driver→**580.178.04** (live). (2) `agents/godot-dev.md` + sección "Assets desde Victoria" (sprites→textures/, voz→AudioStreamWAV, cutscenes Sonic, referencia YouTube) + fix paths `armada-godot` (inexistente)→`mario-bros`+`armada-starfox` + nota MCP un-proyecto-a-la-vez. (3) Skill NUEVA `voice-video` en kalimete (TTS/STT/video-server/Sonic — espejo de la skill `art` que ya existía). (4) Harnesses de ambos actualizados. (5) Ledger `mario-bros/AGENTS.md` actualizado + ledger NUEVO `armada-starfox/AGENTS.md` (no tenía). (6) CHANGELOG de kalimete + commits `d984b10`+`3da8f17` push OK (skill recolectada por sync.sh, secrets-gate OK).
-- **Por que**: auditoría del owner: los agentes de kalimete NO informaban los modelos/APIs de imagen-video-voz disponibles en victoria; la llave `kalimete` (caps llm/art/tts/whisper) ya abría todo pero Godot no sabía que tenía la granja al lado. Cero cambios en victoria (solo lectura).
-- **E2E verificado desde kalimete**: imagen `z-image-turbo` (202→done ~20s → PNG 1MB `~/Desktop/e2e-victoria-art-20261007.png`) + TTS voz es nativa (WAV 284KB `~/Desktop/e2e-victoria-tts-20261007.wav`) + STT roundtrip (transcripción correcta) — el camino cross-machine LAN con la llave kalimete funciona completo.
-- **Deriva cazada en MI doc**: victoria.md decía "19 subagentes" en kalimete con `Armada Arcade` — RETIRADO en la auditoría 2026-10-03 de kalimete (solo queda `.bkup-20261003-auditoria`); corregido a 18 + apuntador de la granja en la sección kalimete.
-- **Impacto**: agentes/skills de kalimete (su repo), victoria.md (mi doc), cero servicios tocados.
-- **Docs**: yes (kalimete CHANGELOG detallado + esta referencia + victoria.md §kalimete)
+- **Que**: en Kalimete (TARGET verificado, autorización explícita, victoria SOLO lectura): (1) `agents/victoria-server.md` + sección "Generar contenido desde Kalimete" — tabla completa de la granja: art API del gateway (3 templates z-image-turbo/flux-schnell/sd15-realistic + flujo 202→poll→download), TTS/STT `:18810` (voces + idiomas), video-server `:18811` (analyze/analyze-upload), Sonic `:18850` con su constraint (rutas LOCALES de victoria → tab Estudio Podcast o pedírselo a Victoria), VLM image-input, cola GPU (429+Retry-After); fixes de deriva: dashboard 18789→**18800** (live 2026-10-05), driver→**580.178.04** (live). (2) `agents/godot-dev.md` + sección "Assets desde Victoria" (sprites→textures/, voz→AudioStreamWAV, cutscenes Sonic, referencia YouTube) + fix paths `armada-godot` (inexistente)→`mario-bros`+`armada-starfox` + nota MCP un-proyecto-a-la-vez. (3) Skill NUEVA `voice-video` en Kalimete (TTS/STT/video-server/Sonic — espejo de la skill `art` que ya existía). (4) Harnesses de ambos actualizados. (5) Ledger `mario-bros/AGENTS.md` actualizado + ledger NUEVO `armada-starfox/AGENTS.md` (no tenía). (6) CHANGELOG de Kalimete + commits `d984b10`+`3da8f17` push OK (skill recolectada por sync.sh, secrets-gate OK).
+- **Por que**: auditoría del owner: los agentes de Kalimete NO informaban los modelos/APIs de imagen-video-voz disponibles en victoria; la llave `kalimete` (caps llm/art/tts/whisper) ya abría todo pero Godot no sabía que tenía la granja al lado. Cero cambios en victoria (solo lectura).
+- **E2E verificado desde Kalimete**: imagen `z-image-turbo` (202→done ~20s → PNG 1MB `~/Desktop/e2e-victoria-art-20261007.png`) + TTS voz es nativa (WAV 284KB `~/Desktop/e2e-victoria-tts-20261007.wav`) + STT roundtrip (transcripción correcta) — el camino cross-machine LAN con la llave Kalimete funciona completo.
+- **Deriva cazada en MI doc**: victoria.md decía "19 subagentes" en Kalimete con `Armada Arcade` — RETIRADO en la auditoría 2026-10-03 de Kalimete (solo queda `.bkup-20261003-auditoria`); corregido a 18 + apuntador de la granja en la sección Kalimete.
+- **Impacto**: agentes/skills de Kalimete (su repo), victoria.md (mi doc), cero servicios tocados.
+- **Docs**: yes (Kalimete CHANGELOG detallado + esta referencia + victoria.md §Kalimete)
 - **armada-sync**: backup post-cambio (verificado)
 
 ### [2026-10-06 12:05 EDT] [sandbox] Bucle de arte en vivo (17+ generaciones, 0 envíos, 5 min typing) + MI bug del ensure (re-declaración 15s mató el sensor) + regla ANTI-BUCLE
@@ -626,7 +641,7 @@
 - **Fix de raíz**: `agents.defaults.heartbeat.every: ""` en overrides (ruta encontrada en `resolveHeartbeatIntervalMs` del dist: every vacío → null → skipped/disabled) + `_managed` + customize-apply + `openclaw config validate` OK (solo warnings preexistentes). **Verificado**: cero eventos en la sesión DM tras el tick 05:19Z (antes: 1 cada 30 min exactos). Defensa secundaria en TOOLS.md: si un wake llega igual → respuesta EXACTA `NO_REPLY`, nada más, y TODO texto en español.
 - **Timezone (Washington DC)**: USER.md decía `America/Santo_Domingo` (el modelo ubicaba a papá en RD y mezclaba "EST UTC-5") → corregido a `America/New_York` (DC; EDT -4 verano/EST -5 invierno) con nota RD (UTC-4 fijo, mismo horario en DST, divergen 1h en invierno) + regla "TODO texto en español". `Asistencia 6am-8pm EST` → `hora del Este (ET)`. **UTC-4 hardcodeado eliminado** de daily-report + 3 broadcasts (instagram/discord/whatsapp) → `datetime.now().astimezone()` (TZ del host America/New_York, sigue el DST sola; en invierno el viejo quedaba 1h adelantado). Host ya estaba en America/New_York ✓. Sandbox sigue UTC interno (logs Z) — correcto para infra.
 - **Weather validado E2E (subagente Weather)**: SANO — Open-Meteo/wttr.in/weather.gov 200 para DC y Santo Domingo (coherencia cruzada ✓), skill bundled (wttr.in j2) OK, egress OK (proxy 0 DENIED weather), cero errores en logs. **Los "!" de los reportes = exclamaciones españolas ¡…! de Victoria** ("¡Ya está, papá!") — no bugs ni alertas NWS (0 activas en DC).
-- **⚠️ de los daily reports explicados**: (a) "Panel web FALLA 000" = **falso negativo** — el publisher se movió a :18800 en el rebuild 2026.9.2 del 05-10 (ownership proof nemoclaw v0.0.130) y el daily-report seguía chequeando 18789 → FIX: chequea 18800 (dashboard verificado 200; nginx /openclaw/ ya apuntaba a 18800; el 403 de /openclaw/ sin token es normal). (b) "gpu-saver reinicio vLLM x1" = evento REAL: hang genuino 12:28-12:31 EDT del 05-10 (4 probes timeout 25s) → auto-recovery `docker restart` funcionó como está diseñado. (c) "wordpress-dev" = update pendiente de kalimete (informativo). (d) "caidos: victoria-openclaw-bridge" (reporte 20:00) = transitorio durante los fixes del día; servicio active ✓.
+- **⚠️ de los daily reports explicados**: (a) "Panel web FALLA 000" = **falso negativo** — el publisher se movió a :18800 en el rebuild 2026.9.2 del 05-10 (ownership proof nemoclaw v0.0.130) y el daily-report seguía chequeando 18789 → FIX: chequea 18800 (dashboard verificado 200; nginx /openclaw/ ya apuntaba a 18800; el 403 de /openclaw/ sin token es normal). (b) "gpu-saver reinicio vLLM x1" = evento REAL: hang genuino 12:28-12:31 EDT del 05-10 (4 probes timeout 25s) → auto-recovery `docker restart` funcionó como está diseñado. (c) "wordpress-dev" = update pendiente de Kalimete (informativo). (d) "caidos: victoria-openclaw-bridge" (reporte 20:00) = transitorio durante los fixes del día; servicio active ✓.
 - **Docs**: 18789→18800 en refs vivas de victoria.md (topología+tablas+health), openclaw.md (health+URL+sección), AGENTS.md (§Dashboard+URL) — históricos intactos.
 - **Verificado**: config validate OK; 0 eventos DM post-tick; dashboard 18800 200; py_compile 4 scripts; docs sync.
 - **Docs**: yes (general + sandbox + weather-diagnóstico referenciado)
@@ -768,123 +783,123 @@
 
 ### [2026-10-04 18:50 EDT] [kalimete+gateway+sandbox] Auditoría BillyCode 8/8 + próximos pasos ejecutados (single-source, auto-deploy, git)
 - **Tipo**: audit + refactor + feature (owner: "valida los cambios… aplica mejoras… procede con los próximos pasos")
-- **Que**: (1) **BillyCode validado** en kalimete: 8/8 checks, serve 1.18.34, .env correcto, `withPath()` defensivo bien hecho, voice-pipeline WS revisado (barge-in 2 niveles). Mejora aplicada: `apps/tui/voice.py` ELIMINADO (placeholder muerto que contradecía el ledger — la voz real vive en `apps/server/voice-pipeline.ts`; tests siguen 8/8). (2) **Paso #1 single-source**: `ALL_CAPABILITIES` vive SOLO en `sense_auth.py` (nuevo `SENSE_ELEVATION_CAPS` derivado) — `llm-gateway.py` la importa; antes duplicada en 2 archivos = deriva garantizada. (3) **Paso #2 auto-deploy**: `ensure_voice/video/whois/admin` ahora MATAN el bridge vivo cuando el md5 difiere (helper `bridge_pid` — `pkill -f` no opera en el sandbox) y el flujo existente lo relanza — verificado EN VIVO: nota de versión en video-bridge → ciclo del ensure → "pid 326501 matado por md5 — relanzando" → proceso nuevo + md5 IGUAL. (4) **Paso #3 git**: commit `a6139aa` (8 archivos: rename tts, bridges, single-source, docs, skill art). (5) **Paso #4**: victoria-server.md de kalimete re-verificado — limpio.
+- **Que**: (1) **BillyCode validado** en Kalimete: 8/8 checks, serve 1.18.34, .env correcto, `withPath()` defensivo bien hecho, voice-pipeline WS revisado (barge-in 2 niveles). Mejora aplicada: `apps/tui/voice.py` ELIMINADO (placeholder muerto que contradecía el ledger — la voz real vive en `apps/server/voice-pipeline.ts`; tests siguen 8/8). (2) **Paso #1 single-source**: `ALL_CAPABILITIES` vive SOLO en `sense_auth.py` (nuevo `SENSE_ELEVATION_CAPS` derivado) — `llm-gateway.py` la importa; antes duplicada en 2 archivos = deriva garantizada. (3) **Paso #2 auto-deploy**: `ensure_voice/video/whois/admin` ahora MATAN el bridge vivo cuando el md5 difiere (helper `bridge_pid` — `pkill -f` no opera en el sandbox) y el flujo existente lo relanza — verificado EN VIVO: nota de versión en video-bridge → ciclo del ensure → "pid 326501 matado por md5 — relanzando" → proceso nuevo + md5 IGUAL. (4) **Paso #3 git**: commit `a6139aa` (8 archivos: rename tts, bridges, single-source, docs, skill art). (5) **Paso #4**: victoria-server.md de Kalimete re-verificado — limpio.
 - **Lección**: el ensure-loop es un proceso LARGO — editar el script NO recarga las funciones en el proceso vivo; `systemctl restart victoria-openclaw-bridge` para que los cambios al script apliquen.
 - **Verificado**: py_compile OK; unit test elevación (kalimete→services, juancarlos→None); gateway restart sano; 4 bridges health OK por sockets; BillyCode 8/8 tras el borrado.
-- **Docs**: yes (general + vllm + voice + sandbox changelogs; kalimete: ledger billycode + changelog + victoria-server.md)
+- **Docs**: yes (general + vllm + voice + sandbox changelogs; Kalimete: ledger billycode + changelog + victoria-server.md)
 
 ### [2026-10-04 17:50 EDT] [gateway+voice+bridges] xtts→tts ejecutado + 4 bridges endurecidos + higiene total
 - **Tipo**: refactor + security fix + hygiene (owner: "procede con todo… quedemos sin discrepancia")
-- **Que**: (1) **Cap renombrada `xtts`→`tts`** en TODO el sistema: gateway (roles/caps/panel), sense_auth, DB (`kalimete` migrada), landing LAN, docs ambos hosts — el motor es Qwen3-TTS desde 10-03; el id viejo era la última referencia muerta. (2) **4 bridges UNIX socket endurecidos** (tts/video/whois/admin): thread por conexión + `settimeout(60)` + close garantizado + URLError→502 — antes mono-hilo con recv infinito: **un cliente mudo atascaba TODA la voz del sandbox** (hallazgo en vivo: wrapper colgaba 420s con curl directo OK; el tts-bridge de 20h murió 17:26 por un send sobre cliente muerto; los otros 3 corrían código de 4 días lanzado por el init). Fix admin-bridge bonus: mensaje "Whois bridge listening"→"Admin bridge". (3) **Higiene**: 12 backups viejos → `.hygiene-quarantine-20261004/` (quedan 2 por archivo), /tmp/opencode (24M scratch: wavs duplicados de jarvis-eval que ya vive en Documents, scripts one-off, copias viejas de kalimete-ptt) BORRADO, comentarios muertos curados (whois wrapper "xtts-cli"→"victoria-tts", voice-server "XTTS eliminado"→limpio, podcast-demo "TTS XTTS"→"Qwen3-TTS", victoria-tts wrapper "fallback XTTS"→"único motor", SCRIPTS.md ×2).
+- **Que**: (1) **Cap renombrada `xtts`→`tts`** en TODO el sistema: gateway (roles/caps/panel), sense_auth, DB (`kalimete` migrada), landing LAN, docs ambos hosts — el motor es Qwen3-TTS desde 10-03; el id viejo era la última referencia muerta. (2) **4 bridges UNIX socket endurecidos** (tts/video/whois/admin): thread por conexión + `settimeout(60)` + close garantizado + URLError→502 — antes mono-hilo con recv infinito: **un cliente mudo atascaba TODA la voz del sandbox** (hallazgo en vivo: wrapper colgaba 420s con curl directo OK; el tts-bridge de 20h murió 17:26 por un send sobre cliente muerto; los otros 3 corrían código de 4 días lanzado por el init). Fix admin-bridge bonus: mensaje "Whois bridge listening"→"Admin bridge". (3) **Higiene**: 12 backups viejos → `.hygiene-quarantine-20261004/` (quedan 2 por archivo), /tmp/opencode (24M scratch: wavs duplicados de jarvis-eval que ya vive en Documents, scripts one-off, copias viejas de Kalimete-ptt) BORRADO, comentarios muertos curados (whois wrapper "xtts-cli"→"victoria-tts", voice-server "XTTS eliminado"→limpio, podcast-demo "TTS XTTS"→"Qwen3-TTS", victoria-tts wrapper "fallback XTTS"→"único motor", SCRIPTS.md ×2).
 - **Lecciones**: `pkill -f` NO opera sobre procesos del init del sandbox — usar `kill <pid>`; tras editar un bridge hay que matar el proceso (el ensure-loop copia por md5 pero NO reinicia procesos vivos); los wrappers huérfanos de docker exec sobreviven al kill del cliente (timeout 420s propio).
-- **Verificado**: E2E completo — wrapper TTS desde sandbox exit=0 107KB (el test que colgaba), STT vía bridge casi exacto, health de los 4 bridges, gateway+6 daemons restart OK, panel cap-tts/cero cap-xtts, LLM+TTS+STT desde kalimete con llave migrada.
-- **Docs**: yes (AGENTS.md, vllm.md, victoria.md, openclaw.md, AGENTS-summary.md, landing, 5 changelogs de servicio, kalimete victoria-server.md + billycode + changelog kalimete)
+- **Verificado**: E2E completo — wrapper TTS desde sandbox exit=0 107KB (el test que colgaba), STT vía bridge casi exacto, health de los 4 bridges, gateway+6 daemons restart OK, panel cap-tts/cero cap-xtts, LLM+TTS+STT desde Kalimete con llave migrada.
+- **Docs**: yes (AGENTS.md, vllm.md, victoria.md, openclaw.md, AGENTS-summary.md, landing, 5 changelogs de servicio, Kalimete victoria-server.md + billycode + changelog Kalimete)
 
-### [2026-10-04 16:55 EDT] [docs] XTTS muerto: curada la confusión en docs victoria+kalimete (motor Qwen3-TTS)
-- **Tipo**: docs (pre-aprobación owner 2026-10-01; autorización owner para kalimete)
-- **Que**: el motor TTS es Qwen3-TTS desde 2026-10-03 pero el id de capacidad `xtts` seguía apareciendo sin aclarar. Anotado en 6 puntos vivos (AGENTS.md ×3, vllm.md, victoria.md, AGENTS-summary.md): `xtts` = cap de voz TTS, nombre histórico, motor Qwen3-TTS. En kalimete (TARGET=kalimete): `victoria-server.md` curado (voz Qwen3-TTS + Whisper small, contexto 256K nativo, prompt 220K, seqs 3, roster de llaves completo) + billycode (`03-tecnologias.md` sin fallback XTTS, comentarios de voz, ledger). Historial intacto (no se reescribe).
+### [2026-10-04 16:55 EDT] [docs] XTTS muerto: curada la confusión en docs victoria+Kalimete (motor Qwen3-TTS)
+- **Tipo**: docs (pre-aprobación owner 2026-10-01; autorización owner para Kalimete)
+- **Que**: el motor TTS es Qwen3-TTS desde 2026-10-03 pero el id de capacidad `xtts` seguía apareciendo sin aclarar. Anotado en 6 puntos vivos (AGENTS.md ×3, vllm.md, victoria.md, AGENTS-summary.md): `xtts` = cap de voz TTS, nombre histórico, motor Qwen3-TTS. En Kalimete (TARGET=Kalimete): `victoria-server.md` curado (voz Qwen3-TTS + Whisper small, contexto 256K nativo, prompt 220K, seqs 3, roster de llaves completo) + billycode (`03-tecnologias.md` sin fallback XTTS, comentarios de voz, ledger). Historial intacto (no se reescribe).
 - **Verificado**: engine live `qwen3` (:18810/health); venv solo `qwen_tts`; wrappers `victoria-tts`/`whisper-cli`; 0 refs XTTS en openclaw.json/harness; panel muestra "Voz TTS" (sin nombre XTTS).
-- **Docs**: yes (general + CHANGELOG-vllm.md + changelog kalimete + ledger billycode)
+- **Docs**: yes (general + CHANGELOG-vllm.md + changelog Kalimete + ledger billycode)
 - **Propuesta al owner**: renombrar la cap `xtts`→`tts` en gateway+sense_auth+panel+DB (cambio de código, requiere tu OK; incluye migrar el `allowed_models` de `kalimete`)
 
-### [2026-10-04 16:40 EDT] [kalimete] BillyCode: .env con llave kalimete (inferencia+voz) — tiers intactos
+### [2026-10-04 16:40 EDT] [kalimete] BillyCode: .env con llave Kalimete (inferencia+voz) — tiers intactos
 - **Tipo**: config (autorización owner) + auditoría de llaves/tiers
 - **Que**: `.env` de `/home/warcold/dev/billycode/` tenía `LLM_API_KEY`/`STT_API_KEY`/`TTS_API_KEY` vacías. Se configuraron las 3 con la llave `kalimete` (coder + `["llm","art","xtts","whisper"]`): una sola llave cubre inferencia (coder = chat LLM) y voz (elevada a services por `sense_auth.py` vía `allowed_models`). Sin crear llaves, sin tocar tiers/roles. `.env` a 600. Ledger BillyCode actualizado.
 - **Por que**: billycode necesita voz (STT/TTS :18810) + inferencia (:8010) y estaba sin configurar.
-- **Impacto**: solo kalimete (`dev/billycode/.env`); gateway/tiers intactos. `kalimete-ptt` intacto (sigue con su llave services dedicada).
-- **Verificado**: TARGET=kalimete (`hostname` antes de mutar); LLM 200 "OK"; TTS 200 WAV RIFF 76KB; STT roundtrip "Prueba de voz billicote."; `.env` perms 600.
+- **Impacto**: solo Kalimete (`dev/billycode/.env`); gateway/tiers intactos. `Kalimete-ptt` intacto (sigue con su llave services dedicada).
+- **Verificado**: TARGET=Kalimete (`hostname` antes de mutar); LLM 200 "OK"; TTS 200 WAV RIFF 76KB; STT roundtrip "Prueba de voz billicote."; `.env` perms 600.
 - **Docs**: yes (general + CHANGELOG-vllm.md + ledger billycode)
 
 ### [2026-10-04 08:20 EDT] [kalimete] BillyCode: readme.txt handoff de contexto (temporal)
 - **Tipo**: docs de traspaso (owner: instrucciones para continuar sin perder contexto)
 - **Que**: `~/dev/billycode/readme.txt` (131 líneas: visión, arquitectura, accesos, inventario, F0 técnico, fases, plan ptt, reglas, rutas) + ledger con línea temporal (49 líneas).
-- **Docs**: yes (changelog kalimete + general)
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 08:10 EDT] [kalimete] BillyCode: nombre final del proyecto (era armada-code)
 - **Tipo**: rename (orden owner)
 - **Que**: `mv ~/dev/armada-code ~/dev/billycode` + ledger actualizado (título, decisión, [x] nombre).
 - **Lección**: NUNCA backticks en comandos SSH con comillas dobles (zsh remoto los sustituye; sin daño esta vez).
-- **Docs**: yes (changelog kalimete + general)
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 08:05 EDT] [kalimete] opencode: había 2 binarios → solo el original + proyecto en ~/dev
 - **Tipo**: auditoría + dedup + init proyecto (owner: "opencode SÍ estaba instalado")
 - **Que**: el `which` del F0 falló por PATH no-interactivo. Rastreo: el otro binario vive en `~/.opencode/bin/` (instalador oficial 30-sep, v1.18.34 — pista en .zshrc). Eliminado SOLO mi duplicado npm; original intacto. Equipo verificado: 19 subagentes + opencode.jsonc + agent list OK. Proyecto `~/dev/armada-code/` + AGENTS.md ledger (48 líneas).
 - **Verificado**: 1 solo binario (`--version` 1.18.34); ledger desplegado (`ls` + `wc -l`).
-- **Docs**: yes (changelog kalimete + general)
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 08:00 EDT] [kalimete] F0 SPIKE Armada Code: cerebro opencode emite eventos en vivo (VIABLE ✅)
 - **Tipo**: spike (luz verde owner; proyecto "nuestro opencode con voz")
 - **Que**: opencode 1.18.34 instalado (npm, pinnear); serve :4096 localhost OK; spec 162 paths (session/message/prompt_async/event/abort/children/todo); SSE sin campo event: (tipo dentro del JSON); prueba texto 200 vía gateway local; prueba tools: usó bash de verdad + deltas en vivo 1.18→5.56s = STREAMING VIVO ✅. Riesgo de paridad SSE retirado (era del REST, no del bus).
-- **kalimete-ptt**: INTACTO (condición "si lo suplantamos" aún falsa — el cliente nuevo solo cubrirá voz dentro de su TUI, jamás dictado global). Plan de retiro documentado en changelog kalimete (4 pasos, solo tras F2 + confirmación owner).
+- **Kalimete-ptt**: INTACTO (condición "si lo suplantamos" aún falsa — el cliente nuevo solo cubrirá voz dentro de su TUI, jamás dictado global). Plan de retiro documentado en changelog Kalimete (4 pasos, solo tras F2 + confirmación owner).
 - **Limpieza**: serve apagado, scratch borrado. Huella: solo binario opencode.
-- **Docs**: yes (changelog kalimete + general)
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 07:45 EDT] [kalimete] victoria-tui: MOTD banner → mapa compacto de comandos
 - **Tipo**: cambio cosmético (owner: quitar banner, poner helper estilo opencode)
 - **Que**: BANNER ASCII → MOTD_HELPER de 3 líneas (título + voz/call/art/hangup + F2/F3/F4/PgUp-PgDn//help). Atajos verificados contra el código.
 - **Verificado**: captura pseudo-TTY con helper 1x, 0 rastros del banner; --check OK; TUI viva.
-- **Docs**: yes (changelog kalimete + general)
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 07:30 EDT] [kalimete] victoria-tui: banner MOTD "VAROEROS" → VICTORIA legible
 - **Tipo**: fix cosmético (owner: "qué significa VAROEROS")
-- **Que**: el BANNER figlet del MOTD (8 glifos, intentaba decir VICTORIA) se emborronaba y se leía "VAROEROS". Reemplazado por letras ASCII 5x5 verificadas + subtítulo "tu IA · hija de Alfredo Armada · kalimete". Lógica intacta.
+- **Que**: el BANNER figlet del MOTD (8 glifos, intentaba decir VICTORIA) se emborronaba y se leía "VAROEROS". Reemplazado por letras ASCII 5x5 verificadas + subtítulo "tu IA · hija de Alfredo Armada · Kalimete". Lógica intacta.
 - **Verificado**: captura pseudo-TTY en vivo muestra VICTORIA legible; --check OK; TUI viva.
-- **Docs**: yes (changelog kalimete + general)
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 02:10 EDT] [kalimete] victoria-tui v3: /call HANDS-FREE tipo ChatGPT voice (VAD propio)
 - **Tipo**: feature (owner: "debería quedarse hands free así como lo hace chatgpt, como hablando en tiempo real")
 - **Que**: `/call` ahora con micrófono siempre abierto + VAD de energía adaptativo (stdlib puro): detecta inicio de habla (90ms sobre umbral adaptativo) y fin (810ms de silencio) → STT → respuesta streaming+voz. Pre-roll 300ms anti-recorte, descarte de ruidos cortos, tope 30s, half-duplex con barge-in (hablar fuerte 300ms la calla), pausa anti-eco 400ms, PTT manual sigue de respaldo, status bar con estado en vivo ("escuchando… / tú hablas / transcribiendo / Victoria respondiendo"). Modo `--test-vad` con PCM sintético. Bug cazado en el test: `_decay()` reseteaba el contador de voz cada frame.
-- **Verificado**: --test-vad en kalimete → exactamente 2 utterances (2520/1980ms), blip descartado, busy no captura ✅; TUI viva + --check OK.
-- **Docs**: yes (changelog kalimete + general)
+- **Verificado**: --test-vad en Kalimete → exactamente 2 utterances (2520/1980ms), blip descartado, busy no captura ✅; TUI viva + --check OK.
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 01:20 EDT] [kalimete] FIX CRÍTICO victoria-tui: teclado muerto al abrir la TUI (grab evdev)
 - **Tipo**: bugfix crítico (reporte del owner: "se me inhabilitó el teclado al abrir el tui y no me podía mover")
-- **Causa raíz**: mi PttListener hacía `dev.grab()` (EVIOCGRAB exclusivo) en todos los teclados con la tecla PTT — el grab se lleva TODOS los eventos al proceso que lo toma y el listener descartaba todo excepto Right Ctrl → teclado muerto para el sistema Y para la propia TUI. El kalimete-ptt original NUNCA graba (pasivo) — el grab fue adición mía errónea. Bonus hallado: el hilo único con read_loop se cegaba en el primer teclado.
+- **Causa raíz**: mi PttListener hacía `dev.grab()` (EVIOCGRAB exclusivo) en todos los teclados con la tecla PTT — el grab se lleva TODOS los eventos al proceso que lo toma y el listener descartaba todo excepto Right Ctrl → teclado muerto para el sistema Y para la propia TUI. El Kalimete-ptt original NUNCA graba (pasivo) — el grab fue adición mía errónea. Bonus hallado: el hilo único con read_loop se cegaba en el primer teclado.
 - **Fix v2.2 (espejo del daemon probado)**: sin grab (pasivo), un hilo por dispositivo, filtro de virtuales (phys), hot-plug pyudev, debounce 300ms.
 - **Verificado E2E**: teclado virtual uinput con phys + Right Ctrl inyectado → listener detecta down/up OK **Y** un segundo lector pasivo ve los mismos eventos (prueba de no-exclusividad — con el grab viejo habría visto nada). TUI viva (exit 124) + --check OK.
-- **Docs**: yes (changelog kalimete + general)
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 00:45 EDT] [kalimete] victoria-gui RETIRADA + limpieza de rastros (ronda 5)
 - **Tipo**: removal + limpieza (owner: "quita la versión web no la necesitamos y limpia todos los rastros")
-- **Que**: (1) **victoria-gui eliminada por completo de kalimete** (binario + lanzador .desktop + proceso --lan que corría); la terminal (victoria-tui v2.1) es la interfaz única. (2) Limpieza de rastros de las 4 rondas: imágenes de test del Desktop de kalimete (robot-barista, gato pirata), temporales en /tmp de AMBOS hosts (scripts fuente, capturas, JSONs de submit, entries de changelog), imágenes de prueba en ComfyUI/output (art-*: gato astronauta, café cyberpunk, cachorro, águila FLUX) y en media/ del sandbox (test-sandbox-cafe, smoke-final, prueba-flux-aguila). El historial de la TUI se CONSERVA (lo usa). Los backups .bkup-20261003-* se CONSERVAN (son rollback, no temporales).
-- **Verificado**: kalimete solo tiene victoria-tui; 0 procesos gui; Desktop limpio; 0 art-* en ComfyUI/output; art-gen del sandbox sano post-limpieza (gateway ok); los art_*.jpg de media/ son del pipeline RSS (se quedan).
-- **Docs**: yes (changelog kalimete + general)
+- **Que**: (1) **victoria-gui eliminada por completo de Kalimete** (binario + lanzador .desktop + proceso --lan que corría); la terminal (victoria-tui v2.1) es la interfaz única. (2) Limpieza de rastros de las 4 rondas: imágenes de test del Desktop de Kalimete (robot-barista, gato pirata), temporales en /tmp de AMBOS hosts (scripts fuente, capturas, JSONs de submit, entries de changelog), imágenes de prueba en ComfyUI/output (art-*: gato astronauta, café cyberpunk, cachorro, águila FLUX) y en media/ del sandbox (test-sandbox-cafe, smoke-final, prueba-flux-aguila). El historial de la TUI se CONSERVA (lo usa). Los backups .bkup-20261003-* se CONSERVAN (son rollback, no temporales).
+- **Verificado**: Kalimete solo tiene victoria-tui; 0 procesos gui; Desktop limpio; 0 art-* en ComfyUI/output; art-gen del sandbox sano post-limpieza (gateway ok); los art_*.jpg de media/ son del pipeline RSS (se quedan).
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-04 00:20 EDT] [kalimete] victoria-tui v2: ARTE ASCII + avatar animado + comandos / + modo llamada (ronda 4)
 - **Tipo**: feature divertida (owner: "gráficos con ascii jeje, comandos / como /call, un terminal interactivo")
-- **Que**: la TUI de kalimete reconstruida con personalidad terminal-native: banner figlet ASCII, avatar animado con estados (idle parpadeando / grabando / pensando / hablando con boca y barras), comandos `/` (`/call` — Victoria entra en la llamada con saludo LLM+voz+timer · `/hangup` · `/art <desc>` — genera imagen vía la art API del gateway y la guarda en ~/Desktop · `/voice` `/status` `/model` `/lang` `/clear` `/config` `/help` `/exit`), voz encolada acoplada al avatar, y one-shot `--art`. **FIX CRÍTICO**: `noutrefresh()` sin `doupdate()` dejaba la pantalla EN BLANCO en terminal real (bug desde la v1, invisible en pruebas por pseudo-TTY) → `refresh()`. La victoria-gui web queda como extra.
+- **Que**: la TUI de Kalimete reconstruida con personalidad terminal-native: banner figlet ASCII, avatar animado con estados (idle parpadeando / grabando / pensando / hablando con boca y barras), comandos `/` (`/call` — Victoria entra en la llamada con saludo LLM+voz+timer · `/hangup` · `/art <desc>` — genera imagen vía la art API del gateway y la guarda en ~/Desktop · `/voice` `/status` `/model` `/lang` `/clear` `/config` `/help` `/exit`), voz encolada acoplada al avatar, y one-shot `--art`. **FIX CRÍTICO**: `noutrefresh()` sin `doupdate()` dejaba la pantalla EN BLANCO en terminal real (bug desde la v1, invisible en pruebas por pseudo-TTY) → `refresh()`. La victoria-gui web queda como extra.
 - **Verificado**: --art E2E (gato pirata → ~/Desktop en 15s, exit 0); captura pseudo-TTY muestra banner figlet + avatar parpadeando (2 estados) + status bar; daemon ptt restaurado tras kill.
-- **Docs**: yes (changelog kalimete + general)
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-03 22:15 EDT] [kalimete] victoria-gui: entorno GRÁFICO web de Victoria (ronda 3)
 - **Tipo**: feature (owner: "¿no tiene un entorno gráfico que pudiéramos ver mientras trabaja en la terminal?")
-- **Que**: `victoria-gui` en kalimete — servidor web local (stdlib) + página con tema de Victoria: chat de burbujas con **streaming en vivo**, **micrófono push-to-talk** (mantener 🎙 = graba, soltar = STT → envía), **voz de Victoria** en respuestas (toggle 🔊), config (F-config: voz/idioma/modelo/hablar), historial compartido con la TUI, barra de estado del gateway, y **lanzador en el menú de aplicaciones** del escritorio. El servidor proxya al stack (gateway :8010 + voice :18810) — la llave nunca llega al navegador. `--lan` para usarla desde el teléfono.
-- **Verificado**: SSE con tokens en vivo; TTS → WAV 24kHz; STT round-trip EXACTO; página completa servida; changelog en kalimete.
-- **Docs**: yes (changelog kalimete + general)
+- **Que**: `victoria-gui` en Kalimete — servidor web local (stdlib) + página con tema de Victoria: chat de burbujas con **streaming en vivo**, **micrófono push-to-talk** (mantener 🎙 = graba, soltar = STT → envía), **voz de Victoria** en respuestas (toggle 🔊), config (F-config: voz/idioma/modelo/hablar), historial compartido con la TUI, barra de estado del gateway, y **lanzador en el menú de aplicaciones** del escritorio. El servidor proxya al stack (gateway :8010 + voice :18810) — la llave nunca llega al navegador. `--lan` para usarla desde el teléfono.
+- **Verificado**: SSE con tokens en vivo; TTS → WAV 24kHz; STT round-trip EXACTO; página completa servida; changelog en Kalimete.
+- **Docs**: yes (changelog Kalimete + general)
 
 ### [2026-10-03 21:35 EDT] [gateway+comfyui+sandbox+kalimete] Ronda de cierre: FLUX activado + envío WhatsApp real verificado + skill art para agentes + TUI blindada
 - **Tipo**: feature + verificación (owner: "procede con todo lo que necesite para que lo que pido funcione")
-- **Que**: (1) **FLUX.1-schnell ACTIVADO**: descargado `clip_l.safetensors` (246MB, `comfyanonymous/flux_text_encoders` — faltaba desde el 15-ago y FLUX era inutilizable) + template API `flux-schnell` con la receta oficial (4 steps, cfg 1.0, euler/simple, DualCLIPLoader clip_l+t5xxl type flux) → **3 templates reales**: z-image-turbo, sd15-realistic, flux-schnell. (2) **Envío WhatsApp REAL verificado** (última milla): imagen del águila FLUX + mensaje enviados al DM del owner desde el netns del gateway (`openclaw message send --media`, messageId `3EB05E5D…`) — el pipeline voz→generación→envío está completo. (3) **Skill `art` para agentes opencode**: instalada en kalimete (repo `~/armada-sync/skills/art/` + config `~/.config/opencode/skills/art/`, con extracción de llave anti-leak) y en victoria host (mismo directorio config) — los agentes de AMBOS hosts pueden generar imágenes. (4) **E2E kalimete→victoria**: la llave `kalimete` (coder+multi-tier) generó el robot-barista vía art API y la imagen quedó en `~/Desktop/robot-barista.png` de kalimete — el caso "ponla en mi escritorio" PROBADO. (5) **victoria-tui blindada**: handlers SIGTERM/SIGHUP (cierre brusco de terminal restaura el daemon ptt — verificado con timeout kill: daemon volvió a `active`) + UI interactiva verificada por pseudo-TTY (corrió viva 8s, curses alt-screen dibujando).
-- **Impacto**: `comfyui-templates-api/flux-schnell.json` (nuevo), `models/text_encoders/clip_l.safetensors` (nuevo 246MB), catálogo (3 templates), skills art en 2 hosts + sandbox, victoria-tui (kalimete).
-- **Verificado**: FLUX E2E 27.7s → VLM confirmó "águila sobre montañas nevadas al atardecer" (prompt exacto); WhatsApp messageId real; kalimete submit `patched:True` + imagen en Desktop (671KB); TUI exit 124 (viva) + daemon restaurado; clip_l safetensors válido (197 tensors).
-- **Docs**: yes (AGENTS.md §7/§11 + modelos, changelogs vllm+sandbox + general, changelog kalimete, skills)
+- **Que**: (1) **FLUX.1-schnell ACTIVADO**: descargado `clip_l.safetensors` (246MB, `comfyanonymous/flux_text_encoders` — faltaba desde el 15-ago y FLUX era inutilizable) + template API `flux-schnell` con la receta oficial (4 steps, cfg 1.0, euler/simple, DualCLIPLoader clip_l+t5xxl type flux) → **3 templates reales**: z-image-turbo, sd15-realistic, flux-schnell. (2) **Envío WhatsApp REAL verificado** (última milla): imagen del águila FLUX + mensaje enviados al DM del owner desde el netns del gateway (`openclaw message send --media`, messageId `3EB05E5D…`) — el pipeline voz→generación→envío está completo. (3) **Skill `art` para agentes opencode**: instalada en Kalimete (repo `~/armada-sync/skills/art/` + config `~/.config/opencode/skills/art/`, con extracción de llave anti-leak) y en victoria host (mismo directorio config) — los agentes de AMBOS hosts pueden generar imágenes. (4) **E2E Kalimete→victoria**: la llave `kalimete` (coder+multi-tier) generó el robot-barista vía art API y la imagen quedó en `~/Desktop/robot-barista.png` de Kalimete — el caso "ponla en mi escritorio" PROBADO. (5) **victoria-tui blindada**: handlers SIGTERM/SIGHUP (cierre brusco de terminal restaura el daemon ptt — verificado con timeout kill: daemon volvió a `active`) + UI interactiva verificada por pseudo-TTY (corrió viva 8s, curses alt-screen dibujando).
+- **Impacto**: `comfyui-templates-api/flux-schnell.json` (nuevo), `models/text_encoders/clip_l.safetensors` (nuevo 246MB), catálogo (3 templates), skills art en 2 hosts + sandbox, victoria-tui (Kalimete).
+- **Verificado**: FLUX E2E 27.7s → VLM confirmó "águila sobre montañas nevadas al atardecer" (prompt exacto); WhatsApp messageId real; Kalimete submit `patched:True` + imagen en Desktop (671KB); TUI exit 124 (viva) + daemon restaurado; clip_l safetensors válido (197 tensors).
+- **Docs**: yes (AGENTS.md §7/§11 + modelos, changelogs vllm+sandbox + general, changelog Kalimete, skills)
 
 ### [2026-10-03 18:20 EDT] [gateway+sandbox+gpu+voice] Router multi-modelo: multi-tier por llave en el panel + OpenClaw genera imágenes + cola anti-OOM unificada
 - **Tipo**: feature (pedido del owner: "varios tiers por usuario en el panel", "agentes usando los otros modelos", "OpenClaw genera imágenes cuando se le pida por voz", "queue para que no se ejecuten todos a la vez")
-- **Que**: (1) **Panel admin multi-capacidad**: checkboxes de capacidades (`llm/art/liveportrait/comfyui/xtts/whisper/n8n`) en crear+editar llave, badges en la tabla, presets rápidos; backend amplía la validación de `allowed_models` (antes solo aceptaba `llm`/`art`); `sense_auth.py` honra `allowed_models` además del rol (una llave coder con voz puede usar TTS/STT). Kalimete → `["llm","art","xtts","whisper"]`. (2) **Art API con prompt real**: `_art_submit` inyecta `prompt`/`negative_prompt`/`seed` en los templates vía sampler-tracing (KSampler→positive/negative→CLIPTextEncode) — antes re-ejecutaba el workflow tal cual con su prompt horneado. (3) **OpenClaw genera IMÁGENES** (SOLO imágenes — política del owner 2026-10-03, nada de video por peso): wrapper `art-gen` en el sandbox (submit→poll→download a `media/`), skill `art` en el workspace, `ensure_art()` en el ensure-loop; llave servicios en archivo 600. (4) **Cola anti-OOM**: la art API integra `gpu_arbiter` (check_ready + acquire + release con sweeper) → arte y Sonic se excluyen mutuamente, temp ≥80°C bloquea todo lo pesado. (5) kalimete: TUI gráfica del ptt (chat streaming + PTT + config) — TARGET=kalimete, ver SU changelog.
+- **Que**: (1) **Panel admin multi-capacidad**: checkboxes de capacidades (`llm/art/liveportrait/comfyui/xtts/whisper/n8n`) en crear+editar llave, badges en la tabla, presets rápidos; backend amplía la validación de `allowed_models` (antes solo aceptaba `llm`/`art`); `sense_auth.py` honra `allowed_models` además del rol (una llave coder con voz puede usar TTS/STT). Kalimete → `["llm","art","xtts","whisper"]`. (2) **Art API con prompt real**: `_art_submit` inyecta `prompt`/`negative_prompt`/`seed` en los templates vía sampler-tracing (KSampler→positive/negative→CLIPTextEncode) — antes re-ejecutaba el workflow tal cual con su prompt horneado. (3) **OpenClaw genera IMÁGENES** (SOLO imágenes — política del owner 2026-10-03, nada de video por peso): wrapper `art-gen` en el sandbox (submit→poll→download a `media/`), skill `art` en el workspace, `ensure_art()` en el ensure-loop; llave servicios en archivo 600. (4) **Cola anti-OOM**: la art API integra `gpu_arbiter` (check_ready + acquire + release con sweeper) → arte y Sonic se excluyen mutuamente, temp ≥80°C bloquea todo lo pesado. (5) Kalimete: TUI gráfica del ptt (chat streaming + PTT + config) — TARGET=Kalimete, ver SU changelog.
 - **Por qué**: el router de capacidades ya existía en la DB (columna `allowed_models` + matriz ROLE_DEFAULT_MODELS) pero era invisible en la UI y válido solo para llm/art; OpenClaw no tenía vía de generación; y arte+Sonic podían solaparse (causa raíz de los OOMs del 27/28-sep).
-- **Impacto**: `llm-gateway.py`, `admin_template.html`, `sense_auth.py`, `openclaw-bridge-ensure.sh`, `~/.victoria-custom/bin/art-gen` (nuevo), `skills/art` (nuevo), kalimete TUI (nuevo, en kalimete).
-- **Verificado**: (1) gateway compile+restart OK, /health ok; PUT allowed_models con xtts/whisper → 200 `updated`; cap inválida → rechazada con lista de las 7; kalimete → `["llm","art","xtts","whisper"]` aplicado. (2) sense_auth unit-test: kalimete→services, juancarlos→None, servicios→services, warcold→None; 5 sentidos restarteados y sanos (:18840 401 = normal). (3) Panel: 9 elementos nuevos servidos, JS `node --check` OK. (4) Art API E2E: z-image-turbo + prompt → 202 `patched{prompt:true,seed,768x768}` → done 109s frío/30s caliente → VLM confirmó el contenido exacto del prompt ("gato naranja astronauta en el espacio"); lock del árbitro tomado en render y liberado al done. (5) Exclusión: lock sonic fake → arte 429 `gpu_busy` Retry-After 120 → release OK. (6) Sandbox E2E: `art-gen` desde docker exec → imagen en `/sandbox/.openclaw/media/` (30.3s); `message send --media` dry-run OK desde el netns del gateway; ensure_art desplegó solo en su primer ciclo y re-sincronizó la skill (md5 verificado). (7) HALLAZGO+FIX: ComfyUI llevaba roto desde el 28-sep (`comfy_aimdo.storage` faltante tras update) → `comfy-aimdo 0.5.2→0.5.5` + restart OK. (8) HALLAZGO: los 45 templates workflows/ eran shells UI-format VACÍOS (widgets_values=[]) → construidos 2 API-format reales (z-image-turbo con receta oficial Comfy-Org; sd15-realistic extraído de un PNG que funcionó) en `~/.victoria-custom/comfyui-templates-api/`; catálogo curado a 2 templates reales. (9) victoria-tui en kalimete: `--check` TODO OK (gateway 200, evdev 16 devs, ffmpeg/paplay), `--say` E2E streaming OK exit 0, changelog de kalimete escrito.
+- **Impacto**: `llm-gateway.py`, `admin_template.html`, `sense_auth.py`, `openclaw-bridge-ensure.sh`, `~/.victoria-custom/bin/art-gen` (nuevo), `skills/art` (nuevo), Kalimete TUI (nuevo, en Kalimete).
+- **Verificado**: (1) gateway compile+restart OK, /health ok; PUT allowed_models con xtts/whisper → 200 `updated`; cap inválida → rechazada con lista de las 7; Kalimete → `["llm","art","xtts","whisper"]` aplicado. (2) sense_auth unit-test: Kalimete→services, juancarlos→None, servicios→services, warcold→None; 5 sentidos restarteados y sanos (:18840 401 = normal). (3) Panel: 9 elementos nuevos servidos, JS `node --check` OK. (4) Art API E2E: z-image-turbo + prompt → 202 `patched{prompt:true,seed,768x768}` → done 109s frío/30s caliente → VLM confirmó el contenido exacto del prompt ("gato naranja astronauta en el espacio"); lock del árbitro tomado en render y liberado al done. (5) Exclusión: lock sonic fake → arte 429 `gpu_busy` Retry-After 120 → release OK. (6) Sandbox E2E: `art-gen` desde docker exec → imagen en `/sandbox/.openclaw/media/` (30.3s); `message send --media` dry-run OK desde el netns del gateway; ensure_art desplegó solo en su primer ciclo y re-sincronizó la skill (md5 verificado). (7) HALLAZGO+FIX: ComfyUI llevaba roto desde el 28-sep (`comfy_aimdo.storage` faltante tras update) → `comfy-aimdo 0.5.2→0.5.5` + restart OK. (8) HALLAZGO: los 45 templates workflows/ eran shells UI-format VACÍOS (widgets_values=[]) → construidos 2 API-format reales (z-image-turbo con receta oficial Comfy-Org; sd15-realistic extraído de un PNG que funcionó) en `~/.victoria-custom/comfyui-templates-api/`; catálogo curado a 2 templates reales. (9) victoria-tui en Kalimete: `--check` TODO OK (gateway 200, evdev 16 devs, ffmpeg/paplay), `--say` E2E streaming OK exit 0, changelog de Kalimete escrito.
 - **Docs**: yes (AGENTS.md §7/§art, subagentes vllm/openclaw/gpu, changelogs vllm+sandbox+gpu+voice + general)
 
-### [2026-10-03 16:50 EDT] [flota+voice+opencode] Auditoría cross-machine completa: sampling por rol en Victoria (espejo kalimete) + docs de voz curadas + kalimete.md a la realidad
+### [2026-10-03 16:50 EDT] [flota+voice+opencode] Auditoría cross-machine completa: sampling por rol en Victoria (espejo Kalimete) + docs de voz curadas + Kalimete.md a la realidad
 - **Tipo**: auditoría + config + docs (pedido del owner: "valida que todo haya quedado bien según los expertos y la documentación, y ajusta todo el ecosistema")
-- **Validado LIVE contra las fuentes**: (1) trabajo de temperatura de kalimete CONFIRMADO — la model card oficial nvidia/Qwen3.6-35B-A3B-NVFP4 evalúa SciCode/coding a `temperature 0.6, top_p 0.95` y los benchmarks generales a `1.0, top_p 0.95` → la doctrina "creativos 0.6/0.95, infra 0.1, kalimete 0.2" es correcta; (2) voz de Victoria E2E re-verificada: `/tts` es (ref nativa `victoria-es-reference`) → STT exacto "¡Hola, Papa! Esta es una prueba de mi voz en español nativo." + `/tts` en → STT exacto; plugin `victoria-voice-live.js` compilado y con md5 idéntico entre máquinas; venv SIN coqui (pip list verificado); kalimete-ptt conversacional activo con llave services dedicada; (3) sync de ambos hosts sano (kalimete hub push OK, victoria timer active).
-- **Discrepancias halladas y CORREGIDAS — kalimete (TARGET=kalimete, hostname verificado antes de mutar)**: (a) agente **Armada Arcade** quedó en `temperature 0.1` siendo creativo — el changelog de las 15:00 decía 12, live había 11 → 0.6 + top_p 0.95 en AMBAS copias (canónica `~/armada-arcade/agents/` + réplica `armada-sync/agents/`); (b) `kalimete.md` curado: frontmatter "subagentes ocultos" (son visibles en @ desde 10-01), `name: kalimete` explícito, línea corrupta "loopstream propio..." reconstruida, doctrina sampling actualizada, tabla "rotos eco-*" reemplazada (renombrados 10-01), display names en tabla (Armada Arcade/WordPress/ERP Dev/Godot); (c) datos de mi stack desactualizados en kalimete.md: 160K/seqs4 → 256K nativo/seqs3, driver 580.173.02, llaves 7→11, prompt 120K→220K, key opencode alfredo→kalimete, ⚠️ nginx/RDP/UFW resueltos contra live (nginx -t OK, sin :3389, ip6tables); (d) CHANGELOG kalimete: header de fecha duplicado eliminado + entrada propia (regla de procedencia).
-- **Corregido — victoria**: (a) **sampling por rol aplicado a los 11 agentes** (antes TODOS corrían al default 1.0 del modelo): Victoria 0.6+0.95, Meta Business+Sonic 0.6+0.95 (creativos), vLLM/OpenClaw/Comfyui/RSS/Weather/CloudFlare/Liveportrait/Gpu 0.1 (infra determinista); (b) **`"model"` default explícito** `vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal` en opencode.jsonc — en AMBOS hosts (antes las sesiones nuevas caían al modelo free de opencode, el origen de los rate-limit kills del forense 10-02; kalimete default = provider pública roaming-seguro, en casa sigue cambiando a vllm-lan); (c) `todowrite-discipline.md` creado como 2ª instruction (espejo kalimete: dueño=Victoria, subagentes no escriben la lista del padre, item de verificación, vaciar al cerrar); (d) typos del frontmatter de victoria.md ("epequeno"→"es pequeño", "niunka daonar"→"NUNKA dañar"); (e) plugin voz: línea de comentario duplicada eliminada (ambas máquinas, md5 vuelve a ser idéntico `bc531e54…`); (f) **docs curadas contra XTTS muerto** (cero menciones vivas fuera de historial): AGENTS.md ×6 (modelos sin XTTS-v2, health sin `xtts_fallback_loaded` — live: ok/uptime_s/engine/tts_loaded/whisper_loaded/voices/auth_required, venv sin coqui, fila runbook, sampling por rol en §5.0), victoria.md ×3, sonic.md ×2 (desc frontmatter + pipeline), gpu.md, comfyui.md ×4, openclaw.md ×5 (incl. monkeypatches XTTS que ya no viven en el código), sonic.harness.json (pipeline), header CHANGELOG-voice.md, AGENTS-summary.md (sampling + default model + todowrite).
-- **Verificado**: opencode.jsonc JSON válido ambos hosts; `opencode agent list` OK en ambos (kalimete+19 y Victoria+10 resuelven, cero errores de config); grep 12× temp 0.6 en kalimete; 11 harness JSON válidos (v2.4.0 con temperature); TTS/STT round-trip exacto es+en; armada-sync snapshot pre-cambio (16:28) + post.
+- **Validado LIVE contra las fuentes**: (1) trabajo de temperatura de Kalimete CONFIRMADO — la model card oficial nvidia/Qwen3.6-35B-A3B-NVFP4 evalúa SciCode/coding a `temperature 0.6, top_p 0.95` y los benchmarks generales a `1.0, top_p 0.95` → la doctrina "creativos 0.6/0.95, infra 0.1, Kalimete 0.2" es correcta; (2) voz de Victoria E2E re-verificada: `/tts` es (ref nativa `victoria-es-reference`) → STT exacto "¡Hola, Papa! Esta es una prueba de mi voz en español nativo." + `/tts` en → STT exacto; plugin `victoria-voice-live.js` compilado y con md5 idéntico entre máquinas; venv SIN coqui (pip list verificado); Kalimete-ptt conversacional activo con llave services dedicada; (3) sync de ambos hosts sano (Kalimete hub push OK, victoria timer active).
+- **Discrepancias halladas y CORREGIDAS — Kalimete (TARGET=Kalimete, hostname verificado antes de mutar)**: (a) agente **Armada Arcade** quedó en `temperature 0.1` siendo creativo — el changelog de las 15:00 decía 12, live había 11 → 0.6 + top_p 0.95 en AMBAS copias (canónica `~/armada-arcade/agents/` + réplica `armada-sync/agents/`); (b) `Kalimete.md` curado: frontmatter "subagentes ocultos" (son visibles en @ desde 10-01), `name: Kalimete` explícito, línea corrupta "loopstream propio..." reconstruida, doctrina sampling actualizada, tabla "rotos eco-*" reemplazada (renombrados 10-01), display names en tabla (Armada Arcade/WordPress/ERP Dev/Godot); (c) datos de mi stack desactualizados en Kalimete.md: 160K/seqs4 → 256K nativo/seqs3, driver 580.173.02, llaves 7→11, prompt 120K→220K, key opencode alfredo→Kalimete, ⚠️ nginx/RDP/UFW resueltos contra live (nginx -t OK, sin :3389, ip6tables); (d) CHANGELOG Kalimete: header de fecha duplicado eliminado + entrada propia (regla de procedencia).
+- **Corregido — victoria**: (a) **sampling por rol aplicado a los 11 agentes** (antes TODOS corrían al default 1.0 del modelo): Victoria 0.6+0.95, Meta Business+Sonic 0.6+0.95 (creativos), vLLM/OpenClaw/Comfyui/RSS/Weather/CloudFlare/Liveportrait/Gpu 0.1 (infra determinista); (b) **`"model"` default explícito** `vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal` en opencode.jsonc — en AMBOS hosts (antes las sesiones nuevas caían al modelo free de opencode, el origen de los rate-limit kills del forense 10-02; Kalimete default = provider pública roaming-seguro, en casa sigue cambiando a vllm-lan); (c) `todowrite-discipline.md` creado como 2ª instruction (espejo Kalimete: dueño=Victoria, subagentes no escriben la lista del padre, item de verificación, vaciar al cerrar); (d) typos del frontmatter de victoria.md ("epequeno"→"es pequeño", "niunka daonar"→"NUNKA dañar"); (e) plugin voz: línea de comentario duplicada eliminada (ambas máquinas, md5 vuelve a ser idéntico `bc531e54…`); (f) **docs curadas contra XTTS muerto** (cero menciones vivas fuera de historial): AGENTS.md ×6 (modelos sin XTTS-v2, health sin `xtts_fallback_loaded` — live: ok/uptime_s/engine/tts_loaded/whisper_loaded/voices/auth_required, venv sin coqui, fila runbook, sampling por rol en §5.0), victoria.md ×3, sonic.md ×2 (desc frontmatter + pipeline), gpu.md, comfyui.md ×4, openclaw.md ×5 (incl. monkeypatches XTTS que ya no viven en el código), sonic.harness.json (pipeline), header CHANGELOG-voice.md, AGENTS-summary.md (sampling + default model + todowrite).
+- **Verificado**: opencode.jsonc JSON válido ambos hosts; `opencode agent list` OK en ambos (kalimete+19 y Victoria+10 resuelven, cero errores de config); grep 12× temp 0.6 en Kalimete; 11 harness JSON válidos (v2.4.0 con temperature); TTS/STT round-trip exacto es+en; armada-sync snapshot pre-cambio (16:28) + post.
 - **Impacto**: sesiones nuevas de opencode arrancan en el cerebro local por defecto; subagentes con sampling determinista/creativo según rol (efectivo al reiniciar TUI); docs alineadas al live; la flota queda espejada en doctrina sampling + todowrite + default model.
-- **Docs**: yes (general + infra + voice + sonic + AGENTS.md + agents + harnesses + AGENTS-summary + repo kalimete).
+- **Docs**: yes (general + infra + voice + sonic + AGENTS.md + agents + harnesses + AGENTS-summary + repo Kalimete).
 - **NOTA**: reiniciar el TUI opencode en ambas máquinas para cargar temperatures/model default/instructions (las sesiones abiertas siguen con la config ya cargada).
 
 ### [2026-10-03 15:05 EDT] [voice] Acento nativo MISMA VOZ: referencia por idioma (español nativo por auto-recitación de su propio timbre)
@@ -895,21 +910,21 @@
 
 ### [2026-10-03 11:35 EDT] [voice+opencode+kalimete] XTTS eliminado + eco ICL cero + voz viva en opencode (habla, narra, barge-in)
 - **Tipo**: refactor+feature (orden del owner)
-- **Que**: (1) XTTS borrado del todo (pesos 2G + coqui + fallback + código; 4 voces del Estudio migradas a Qwen3 antes); (2) eco ICL corregido (ref victoria 30s→7s expresivos; STT 100% exacto; `_strip_ref_echo` por correlación descartado — eco re-generado, no copia); (3) plugin `victoria-voice-live.js`: opencode HABLA (deltas→oraciones→TTS→cola audio, narración tools con cooldown, sin leer código, barge-in) — desplegado y verificado en victoria + kalimete (misma versión opencode 1.18.34); (4) kalimete-ptt: `PTT_SUBMIT` + toque-corto-callar + `PTT_BARGE_ABORT` opt-in; (5) recursos: GPU 48/128GB (~80 libres), sin cambios de reparto; best practices multi-máquina en victoria.md. Bugs: voice:"1"→500, `VOICE_NAME` duplicado, preload CUDA en 2 hilos (meta tensor).
-- **Verificado**: 6 voces 200@24k + STT exacto + 0 tracebacks; plugin E2E ambas máquinas (tts ok + narración); kalimete-ptt active.
-- **Docs**: yes (voice + general + kalimete; AGENTS.md, victoria.md, openclaw.md, comfyui.md, harnesses). NOTA: reiniciar sesiones opencode TUI para cargar el plugin.
+- **Que**: (1) XTTS borrado del todo (pesos 2G + coqui + fallback + código; 4 voces del Estudio migradas a Qwen3 antes); (2) eco ICL corregido (ref victoria 30s→7s expresivos; STT 100% exacto; `_strip_ref_echo` por correlación descartado — eco re-generado, no copia); (3) plugin `victoria-voice-live.js`: opencode HABLA (deltas→oraciones→TTS→cola audio, narración tools con cooldown, sin leer código, barge-in) — desplegado y verificado en victoria + Kalimete (misma versión opencode 1.18.34); (4) Kalimete-ptt: `PTT_SUBMIT` + toque-corto-callar + `PTT_BARGE_ABORT` opt-in; (5) recursos: GPU 48/128GB (~80 libres), sin cambios de reparto; best practices multi-máquina en victoria.md. Bugs: voice:"1"→500, `VOICE_NAME` duplicado, preload CUDA en 2 hilos (meta tensor).
+- **Verificado**: 6 voces 200@24k + STT exacto + 0 tracebacks; plugin E2E ambas máquinas (tts ok + narración); Kalimete-ptt active.
+- **Docs**: yes (voice + general + Kalimete; AGENTS.md, victoria.md, openclaw.md, comfyui.md, harnesses). NOTA: reiniciar sesiones opencode TUI para cargar el plugin.
 
-### [2026-10-03 11:00 EDT] [voice+kalimete] Voz nueva Qwen3-TTS (Fase Jarvis) + kalimete-ptt conversacional con llave dedicada
+### [2026-10-03 11:00 EDT] [voice+kalimete] Voz nueva Qwen3-TTS (Fase Jarvis) + Kalimete-ptt conversacional con llave dedicada
 - **Tipo**: feature (mejora de voz + PTT conversacional) — pedido del owner
-- **Que**: (1) Motor TTS del `:18810` cambiado a Qwen3-TTS-12Hz-0.6B-Base (clonación ICL de la voz de Victoria, 24kHz; carga 15s, VRAM ~3.6GB) con fallback XTTS intacto; wrapper `xtts-cli`→`victoria-tts` (overrides+ensure+backup+restart gateway 12 plugins); API `/tts` idéntica → todo hereda. (2) kalimete-ptt conversacional (TARGET=kalimete, autorización owner): pega + Victoria responde por voz (Qwen-normal → TTS → paplay); llave nueva `kalimete-ptt` rol services (least privilege, sin panel) en env de kalimete; E2E remoto verificado (LLM 200 + TTS 200 + PLAY_OK). (3) Limpieza: jarvis-tts-venv 5.3G fuera, docs curados (AGENTS.md, victoria.md, openclaw.md, comfyui.md, USER-restore.md, harnesses), A/B + opción VoiceDesign en `Documents/Victoria Armada/jarvis-eval/` para el oído del owner.
-- **Verificado**: /tts es/en/larga/usuario/daisy + /stt exacto; gateway 12 plugins; status voice-host OK; kalimete-ptt compila + active.
-- **Docs**: yes (voice + general; kalimete documenta lo suyo en SU repo por contrato)
+- **Que**: (1) Motor TTS del `:18810` cambiado a Qwen3-TTS-12Hz-0.6B-Base (clonación ICL de la voz de Victoria, 24kHz; carga 15s, VRAM ~3.6GB) con fallback XTTS intacto; wrapper `xtts-cli`→`victoria-tts` (overrides+ensure+backup+restart gateway 12 plugins); API `/tts` idéntica → todo hereda. (2) Kalimete-ptt conversacional (TARGET=Kalimete, autorización owner): pega + Victoria responde por voz (Qwen-normal → TTS → paplay); llave nueva `Kalimete-ptt` rol services (least privilege, sin panel) en env de Kalimete; E2E remoto verificado (LLM 200 + TTS 200 + PLAY_OK). (3) Limpieza: jarvis-tts-venv 5.3G fuera, docs curados (AGENTS.md, victoria.md, openclaw.md, comfyui.md, USER-restore.md, harnesses), A/B + opción VoiceDesign en `Documents/Victoria Armada/jarvis-eval/` para el oído del owner.
+- **Verificado**: /tts es/en/larga/usuario/daisy + /stt exacto; gateway 12 plugins; status voice-host OK; Kalimete-ptt compila + active.
+- **Docs**: yes (voice + general; Kalimete documenta lo suyo en SU repo por contrato)
 
-### [2026-10-02 23:56 EDT] [kalimete+vllm] Auditoría cruzada EJECUTADA: key coder propia para kalimete + cura docs + stack commiteado
+### [2026-10-02 23:56 EDT] [kalimete+vllm] Auditoría cruzada EJECUTADA: key coder propia para Kalimete + cura docs + stack commiteado
 - **Tipo**: ejecución de auditoría (owner: "procede con las mejores prácticas")
-- **Que**: (a) creada key `kalimete` rol **coder** (least privilege + metering separado; la admin de alfredo se CONSERVA sin revocar — sesiones abiertas no se interrumpen); (b) `opencode.jsonc` de kalimete: apiKey nueva en providers `vllm`+`vllm-lan` + `instructions` a path absoluto (era relativa ambigua) — backup previo; (c) `git init` en `~/armada-godot` (+ `.gitignore` Godot: `.godot/`, `*.backup`, `*.bak`) — Mario Bros no tenía control de versiones (el ledger `armada-godot/AGENTS.md` ya existía y cubre `mario_bros/`, NO se duplicó); (d) `victoria.md` curada a los 19 names reales de kalimete (estaba en ids viejos `eco-*`/`godot-dev`); (e) commit del stack (ficheros live desde 10-02 + esta cura).
-- **Verificado**: key nueva 200 en `/v1/usage`; JSON kalimete válido; kalimete 224 req hoy 100% 200, prefix-cache 91.2%, engine FRÍO.
-- **Docs**: yes (general + vllm + entrada hub kalimete; ledger no duplicado por diseño)
+- **Que**: (a) creada key `kalimete` rol **coder** (least privilege + metering separado; la admin de alfredo se CONSERVA sin revocar — sesiones abiertas no se interrumpen); (b) `opencode.jsonc` de Kalimete: apiKey nueva en providers `vllm`+`vllm-lan` + `instructions` a path absoluto (era relativa ambigua) — backup previo; (c) `git init` en `~/armada-godot` (+ `.gitignore` Godot: `.godot/`, `*.backup`, `*.bak`) — Mario Bros no tenía control de versiones (el ledger `armada-godot/AGENTS.md` ya existía y cubre `mario_bros/`, NO se duplicó); (d) `victoria.md` curada a los 19 names reales de Kalimete (estaba en ids viejos `eco-*`/`godot-dev`); (e) commit del stack (ficheros live desde 10-02 + esta cura).
+- **Verificado**: key nueva 200 en `/v1/usage`; JSON Kalimete válido; Kalimete 224 req hoy 100% 200, prefix-cache 91.2%, engine FRÍO.
+- **Docs**: yes (general + vllm + entrada hub Kalimete; ledger no duplicado por diseño)
 
 ### [2026-10-02 21:55 EDT] [kalimete+vllm] Validación camino LOCAL: infra 100% sana — los stops eran comportamiento del modelo (compact-amnesia + thinking degenerado)
 - **Tipo**: diagnóstico forense (pedido del owner: "valida nuestro vlm local, este también se paraba")
@@ -917,57 +932,57 @@
 - **Modo de stop local 1 — amnesia por compactación (era 144K)**: 5 compactions verificadas cada ~5 min a 112K reales (19:31-19:50 EDT); tras cada compact el modelo perdía detalle y cerraba turnos anticipadamente (completions finales 120-338 tokens).
 - **Modo de stop local 2 — final degenerado a 133K con variante thinking**: el último mensaje de la sesión Godot (21:03:05) = `step-start + reasoning + step-finish` SIN texto y SIN tool call — el modelo pensó y no emitió nada → opencode cierra el turno → "se para". Completions colapsando (84/69/74/64/…/106 tokens en los minutos finales) + 3 requests cortados por `thinking_token_budget` 2048 (inyectado por el gateway). La sesión corría en "Thinking · Coding con Victoria".
 - **Recomendaciones dadas al owner**: (a) loops agénticos largos → variante NORMAL "Coding con Victoria" (thinking OFF, default del stack desde 09-13 — thinking para problemas puntuales, no maratones); (b) correr opencode DESDE `~/armada-godot` para que el ledger AGENTS.md auto-cargue (compact-proof); (c) el 220K ya aplicado reduce el churn 2.3x (trigger 188K).
-- **Docs**: yes (CHANGELOG kalimete hub con detalle + esta referencia)
+- **Docs**: yes (CHANGELOG Kalimete hub con detalle + esta referencia)
 
 ### [2026-10-02 21:35 EDT] [kalimete] FIX "se para incluso en auto" — timeouts NIM: glm-5.3 tardaba >5min en headers y opencode mataba el run
 - **Tipo**: fix cross-machine + diagnóstico forense (pedido del owner: "se para, frena de funcionar inclusive en auto, validar por qué no termina la tarea")
-- **Forense (LIVE, gateway + log de opencode de kalimete)**: el stack local estuvo SANO todo el día (239 requests, 0 rechazos, 0 errores de stream, todos 200 OK). La causa raíz: `ProviderHeaderTimeoutError: headers timed out after 300000ms` en el provider **nvidia** (`z-ai/glm-5.3` vía NIM, API externa) — 5 veces hoy + 7 rate-limits de kimi-k3/muse-spark. El default de opencode (`timeout` 300000 = header-timeout hasta los primeros bytes) mataba el RUN COMPLETO cuando NIM tardaba >5 min en responder (razonamiento variant-max + contexto grande) → el agente moría a mitad de tarea AUNQUE estuviera en auto. Coincidencia exacta verificada: error NIM 23:44:51 → stop de la sesión 23:44:57. El provider nvidia NO tenía timeouts configurados (solo los locales vllm/vllm-lan los tenían desde 2026-10-01).
-- **Que**: provider `nvidia` con `timeout: 1800000` (30 min) + `chunkTimeout: 600000` + `maxRetries: 3` en `opencode.jsonc` de **kalimete Y victoria** (ambos JSON válidos; victoria incluye mi propio provider NIM). Documentado en AGENTS.md §5.0 (el option `timeout` es el header-timeout, default 5 min; tabla del forense: 5 kills glm-5.3, 7 kimi/muse-spark, 0 local).
+- **Forense (LIVE, gateway + log de opencode de Kalimete)**: el stack local estuvo SANO todo el día (239 requests, 0 rechazos, 0 errores de stream, todos 200 OK). La causa raíz: `ProviderHeaderTimeoutError: headers timed out after 300000ms` en el provider **nvidia** (`z-ai/glm-5.3` vía NIM, API externa) — 5 veces hoy + 7 rate-limits de kimi-k3/muse-spark. El default de opencode (`timeout` 300000 = header-timeout hasta los primeros bytes) mataba el RUN COMPLETO cuando NIM tardaba >5 min en responder (razonamiento variant-max + contexto grande) → el agente moría a mitad de tarea AUNQUE estuviera en auto. Coincidencia exacta verificada: error NIM 23:44:51 → stop de la sesión 23:44:57. El provider nvidia NO tenía timeouts configurados (solo los locales vllm/vllm-lan los tenían desde 2026-10-01).
+- **Que**: provider `nvidia` con `timeout: 1800000` (30 min) + `chunkTimeout: 600000` + `maxRetries: 3` en `opencode.jsonc` de **Kalimete Y victoria** (ambos JSON válidos; victoria incluye mi propio provider NIM). Documentado en AGENTS.md §5.0 (el option `timeout` es el header-timeout, default 5 min; tabla del forense: 5 kills glm-5.3, 7 kimi/muse-spark, 0 local).
 - **Hallazgo secundario**: la sesión local de Godot compactaba cada ~5 min a 112K reales porque ese TUI sigue con `context 144000` en memoria (pre-upgrade al 220K) — requiere restart del TUI para tomar 220000 (trigger 188K).
 - **Impacto**: las sesiones NIM (glm/deepseek/kimi) sobreviven first-byte lentos + reintentan rate-limits; el run ya no muere por timeout de headers. Requiere reiniciar el TUI/sesiones abiertas.
-- **Docs**: yes (CHANGELOG kalimete hub con detalle + AGENTS.md §5.0 + esta referencia)
+- **Docs**: yes (CHANGELOG Kalimete hub con detalle + AGENTS.md §5.0 + esta referencia)
 
 ### [2026-10-01 20:45 EDT] [vllm] 256K NATIVO completo + seqs 4→3 — evaluación con data: las 4 carriles NUNCA se usaron
 - **Tipo**: upgrade de producción (autorización condicional del owner: "evalúa si estamos utilizando las 4 secuencias; de no utilizarlas mejora el contexto")
 - **Evaluación (LIVE, 14 días de usage_log + eng_running global que incluye el tráfico directo del sandbox)**: **4 running JAMÁS** — histograma 0:480, 1:2045, 2:236, 3:4 (pico 3 = 0.17% de 2,765 requests; promedio 0.84). Los 2 únicos picos de 3: juancarlos 09-20 y mi main+subagente 09-30. Mi propia sesión de hoy ya ejercitaba el 144K (requests de 100K/107K/125K reales pasando).
-- **Que**: se canjeó UNA carril por el contexto NATIVO completo del modelo: (1) **vLLM recreado** `--max-model-len 262144` (256K = max_position_embeddings del Qwen3.6, sin YaRN/scaling) + `--max-num-seqs 3`. Medido en vivo: **KV 1,012,483 tokens** (más margen que la era 192K) y **concurrencia 3.86x a 256K** → 3×262,144=786K ≤ 1,012K, sin preemption garantizado, mismo 80% del pool que 4×192K. Carga ~3.7 min. (2) **Gateway**: `MAX_MODEL_LEN=262144`, `MAX_PROMPT_TOKENS=144000→220000`, `OPENCODE_CONTEXT=220000`, semáforo `UPSTREAM_MAX_CONCURRENCY=4→3` (alineado con seqs), pydantic `le=262144` x4, guarda combinada 260144, textos. (3) **opencode**: victoria `context: 220000` x2 + kalimete x4. DB keys ya en `0` (=default, nada que tocar — la lección del fósil de la tarde). Trigger de compactación: **~78K → ~102K (tarde) → ~178K (+74% vs tarde, +128% vs ayer)**.
-- **Análisis de agentes (pedido del owner: "por la cantidad de contexto que emiten")**: kalimete SANO — AGENTS.md global 2.5KB (~700 tokens, no necesita summary slim), subagentes 0.6-2K tokens c/u, primary 5.8K; el ruidoso era el MCP godot (+60K/tool call, ya mitigado hoy con higiene+steps 50+ledger). VICTORIA: hallazgo — mi propio AGENTS.md (197KB ≈ 57K tokens) se auto-carga en cada sesión por convención de opencode (cwd=/home/victoria); con 220K queda amortiguado (57K manual + trabajo 178K), NO se toca (es la fuente de verdad viva citada por los subagentes; reestructurarla es riesgo alto vs beneficio bajo).
+- **Que**: se canjeó UNA carril por el contexto NATIVO completo del modelo: (1) **vLLM recreado** `--max-model-len 262144` (256K = max_position_embeddings del Qwen3.6, sin YaRN/scaling) + `--max-num-seqs 3`. Medido en vivo: **KV 1,012,483 tokens** (más margen que la era 192K) y **concurrencia 3.86x a 256K** → 3×262,144=786K ≤ 1,012K, sin preemption garantizado, mismo 80% del pool que 4×192K. Carga ~3.7 min. (2) **Gateway**: `MAX_MODEL_LEN=262144`, `MAX_PROMPT_TOKENS=144000→220000`, `OPENCODE_CONTEXT=220000`, semáforo `UPSTREAM_MAX_CONCURRENCY=4→3` (alineado con seqs), pydantic `le=262144` x4, guarda combinada 260144, textos. (3) **opencode**: victoria `context: 220000` x2 + Kalimete x4. DB keys ya en `0` (=default, nada que tocar — la lección del fósil de la tarde). Trigger de compactación: **~78K → ~102K (tarde) → ~178K (+74% vs tarde, +128% vs ayer)**.
+- **Análisis de agentes (pedido del owner: "por la cantidad de contexto que emiten")**: Kalimete SANO — AGENTS.md global 2.5KB (~700 tokens, no necesita summary slim), subagentes 0.6-2K tokens c/u, primary 5.8K; el ruidoso era el MCP godot (+60K/tool call, ya mitigado hoy con higiene+steps 50+ledger). VICTORIA: hallazgo — mi propio AGENTS.md (197KB ≈ 57K tokens) se auto-carga en cada sesión por convención de opencode (cwd=/home/victoria); con 220K queda amortiguado (57K manual + trabajo 178K), NO se toca (es la fuente de verdad viva citada por los subagentes; reestructurarla es riesgo alto vs beneficio bajo).
 - **Verificado**: /v1/models `max_model_len: 262144` local + vía proxy L7 del sandbox (cerebro sano); gateway health ok + engine up; E2E prompt 140,017 tokens reales → 200 "OK" (imposible en todas las eras anteriores); gpu-saver reactivado; 0 fallos durante la recreación.
 - **Impacto**: sesiones de coding (Godot/kalimete/victoria) con 2.3x el espacio de trabajo real vs ayer; concurrencia práctica intacta (el pico histórico es 3 y 3 carriles quedan); el sandbox mantiene su carril directo. Prefill de prompts 200K+: la 1ra vez es pesada (~60-90s), prefix-caching (~90% hit) mitiga los siguientes turnos.
 - **Rollback**: recrear con `--max-model-len 196608 --max-num-seqs 4` + gateway `bkup-20261001-196k` + opencode 144000.
-- **Docs**: yes (AGENTS.md §2/§4/§5.0/§5.2/§7/§7.2/§7.4 + victoria.md No-Touch+NUNKA + AGENTS-summary.md + vllm.md con las 3 eras + CHANGELOG-vllm.md + kalimete hub)
+- **Docs**: yes (AGENTS.md §2/§4/§5.0/§5.2/§7/§7.2/§7.4 + victoria.md No-Touch+NUNKA + AGENTS-summary.md + vllm.md con las 3 eras + CHANGELOG-vllm.md + Kalimete hub)
 
 ### [2026-10-01 18:54 EDT] [vllm] Contexto 160K → 192K (max-model-len 196608) + gateway 144K + opencode 144K ambos hosts — "al máximo sin afectar el ecosistema"
-- **Tipo**: upgrade de producción (autorización explícita del owner: "procede al máximo que se pueda [sin cambios que afecten el ecosistema] y configura el opencode.jsonc de victoria y kalimete")
-- **Que**: (1) **vLLM recreado** con la receta canónica intacta (digest pineado, gpu-mem 0.22, KV `12884901888` bytes, seqs 4, MTP, qwen3_xml — SOLO cambió `--max-model-len 160000→196608`). Carga en ~2.5 min (caché caliente). **KV 979,365 tokens medidos, concurrencia 4.98x a 192K → 4 seqs SIEMPRE caben sin preemption** (256K nativo requeriría subir KV o bajar seqs = sí afectaría — 192K es el máximo real). (2) **Gateway**: `MAX_MODEL_LEN=196608`, `MAX_PROMPT_TOKENS=120000→144000`, `OPENCODE_CONTEXT=144000`, pydantic `le=160000→196608` (x4), guarda combinada auto 158000→194608, label ES "(120K)→(144K)"; restart sane. (3) **DB**: 6 keys con fósil `max_prompt_tokens=120000` → `0` (= default global, lección del fósil: el límite vive solo en la constante). (4) **opencode.jsonc**: victoria `context 144000` x2 + kalimete x4 (`bkup-20261001-144k` en ambos). (5) gpu-saver pausado durante la recreación (no "rescatara" al contenedor cargando) y reactivado tras verificar.
+- **Tipo**: upgrade de producción (autorización explícita del owner: "procede al máximo que se pueda [sin cambios que afecten el ecosistema] y configura el opencode.jsonc de victoria y Kalimete")
+- **Que**: (1) **vLLM recreado** con la receta canónica intacta (digest pineado, gpu-mem 0.22, KV `12884901888` bytes, seqs 4, MTP, qwen3_xml — SOLO cambió `--max-model-len 160000→196608`). Carga en ~2.5 min (caché caliente). **KV 979,365 tokens medidos, concurrencia 4.98x a 192K → 4 seqs SIEMPRE caben sin preemption** (256K nativo requeriría subir KV o bajar seqs = sí afectaría — 192K es el máximo real). (2) **Gateway**: `MAX_MODEL_LEN=196608`, `MAX_PROMPT_TOKENS=120000→144000`, `OPENCODE_CONTEXT=144000`, pydantic `le=160000→196608` (x4), guarda combinada auto 158000→194608, label ES "(120K)→(144K)"; restart sane. (3) **DB**: 6 keys con fósil `max_prompt_tokens=120000` → `0` (= default global, lección del fósil: el límite vive solo en la constante). (4) **opencode.jsonc**: victoria `context 144000` x2 + Kalimete x4 (`bkup-20261001-144k` en ambos). (5) gpu-saver pausado durante la recreación (no "rescatara" al contenedor cargando) y reactivado tras verificar.
 - **Por que**: forense del agente Godot (entrada 11:15): techo real de compactación ~78K (120K−32K−10K); MCP ruidoso (+60K/tool call) compactaba cada 2-3 pasos. Nuevo techo: **144K−32K−10K ≈ 102K (+31% de espacio de trabajo real)**.
 - **Verificado (LIVE)**: vLLM `/v1/models` → `max_model_len: 196608`; gateway `/health` ok + engine up; E2E prompts 100-107K reales → 200 OK (antes capados a ~120K est); chat simple 200; **cerebro del sandbox E2E** vía proxy L7 (`nsenter -m -n` + `10.200.0.1:3128` + CA `openshell-tls`) → "OK" finish stop, 0 errores de inference en 24h; `opencode run` victoria → OK-144K; GPU 21.94 GiB pesos (sin cambio); KV 12 GiB intacto. **Lección de diagnóstico**: `inference.local` NO resuelve por DNS — es un nombre virtual del proxy L7 del sandbox; probarlo sin `-x 10.200.0.1:3128` + `--cacert /etc/openshell-tls/ca-bundle.pem` da 000 falso-positivo (host.docker.internal solo sirve para la ruta directa `:8000`).
-- **Impacto**: sesiones de coding largo (Godot/kalimete) compactan ~31% menos; el sandbox y las válvulas anti-freeze intactos (4 seqs + semáforo + presupuestos de prefill sin tocar); memoria unificada sin cambio (KV en bytes). Downtime total ~3 min (17:30-17:33 EDT) sin errores de clientes (0 rechazos warming_up).
-- **Docs**: yes (AGENTS.md §2/§4/§5.0/§5.2/§7/§7.2/§7.4 + victoria.md No-Touch/NUNKA + AGENTS-summary.md + vllm.md con historia 09-28/09-29/10-01 + CHANGELOG-vllm.md + kalimete hub)
+- **Impacto**: sesiones de coding largo (Godot/Kalimete) compactan ~31% menos; el sandbox y las válvulas anti-freeze intactos (4 seqs + semáforo + presupuestos de prefill sin tocar); memoria unificada sin cambio (KV en bytes). Downtime total ~3 min (17:30-17:33 EDT) sin errores de clientes (0 rechazos warming_up).
+- **Docs**: yes (AGENTS.md §2/§4/§5.0/§5.2/§7/§7.2/§7.4 + victoria.md No-Touch/NUNKA + AGENTS-summary.md + vllm.md con historia 09-28/09-29/10-01 + CHANGELOG-vllm.md + Kalimete hub)
 
-### [2026-10-01 11:15 EDT] [gateway] Diagnóstico forense: compactaciones del agente Godot (kalimete) — NO es fallo del modelo/gateway
-- **Tipo**: diagnóstico forense (pedido del owner: "hace compaction como 15 veces, ¿afecta producción?") + mejoras en kalimete (TARGET=kalimete)
+### [2026-10-01 11:15 EDT] [gateway] Diagnóstico forense: compactaciones del agente Godot (Kalimete) — NO es fallo del modelo/gateway
+- **Tipo**: diagnóstico forense (pedido del owner: "hace compaction como 15 veces, ¿afecta producción?") + mejoras en Kalimete (TARGET=Kalimete)
 - **Evidencia (usage_log, sesión del owner desde 10.0.0.106, key alfredo, modelo local)**: 105 requests / **0 fallos** / latencia media 11s con prompts de 75-90K (prefix-caching sano) / 19.3 min GPU total. Patrón medido: prompt crece 1-3K/turno hasta ~87K → compactación (llamada de resumen, output 2-3K) → cae a ~13-17K → **un solo tool call del MCP godot vuelve a subirlo a ~77K (+60K tokens en 1 turno)**.
-- **Hallazgo raíz (2 causas, ninguna es el modelo)**: (1) **techo real de compactación ~78-88K**, no 120K — el trigger de opencode es `context(120000) − output(32000) − reserved(10000)` ≈ 78K; (2) el **MCP godot (386 herramientas) devuelve outputs masivos** (árbol de escena/estado del editor) que queman ese espacio en 2-3 pasos. Añadido en kalimete: agente Godot tenía `steps: 15` (cortaba tareas grandes a mitad) y el proyecto NO tenía ledger.
-- **Aplicado en kalimete (seguro, sin producción)**: `~/armada-godot/AGENTS.md` creado (ledger por proyecto — protocolo 2026-09-30 — Mario Bros clone Godot 4.x); `godot-dev.md` `steps: 15→50` + sección "Higiene de contexto" (nodos específicos, no volcados completos, screenshots solo a pedido).
-- **Propuesta pendiente del owner (toca producción, reinicio vLLM 5-7 min)**: subir `--max-model-len` 160000→196608 + gateway `MAX_PROMPT_TOKENS` 120000→144000 + opencode `context: 144000` (ambos hosts) ⇒ espacio real de trabajo 78K→~102K (+30%). KV 12GiB lo soporta (4×192K=768K < 945K tokens). Alternativa sin tocar nada: sesiones maratón por provider NIM (DeepSeek 1M nativo, ya configurado en kalimete).
-- **Docs**: yes (CHANGELOG kalimete hub entrada [11:15] con detalle + ledger armada-godot + godot-dev.md + esta referencia)
+- **Hallazgo raíz (2 causas, ninguna es el modelo)**: (1) **techo real de compactación ~78-88K**, no 120K — el trigger de opencode es `context(120000) − output(32000) − reserved(10000)` ≈ 78K; (2) el **MCP godot (386 herramientas) devuelve outputs masivos** (árbol de escena/estado del editor) que queman ese espacio en 2-3 pasos. Añadido en Kalimete: agente Godot tenía `steps: 15` (cortaba tareas grandes a mitad) y el proyecto NO tenía ledger.
+- **Aplicado en Kalimete (seguro, sin producción)**: `~/armada-godot/AGENTS.md` creado (ledger por proyecto — protocolo 2026-09-30 — Mario Bros clone Godot 4.x); `godot-dev.md` `steps: 15→50` + sección "Higiene de contexto" (nodos específicos, no volcados completos, screenshots solo a pedido).
+- **Propuesta pendiente del owner (toca producción, reinicio vLLM 5-7 min)**: subir `--max-model-len` 160000→196608 + gateway `MAX_PROMPT_TOKENS` 120000→144000 + opencode `context: 144000` (ambos hosts) ⇒ espacio real de trabajo 78K→~102K (+30%). KV 12GiB lo soporta (4×192K=768K < 945K tokens). Alternativa sin tocar nada: sesiones maratón por provider NIM (DeepSeek 1M nativo, ya configurado en Kalimete).
+- **Docs**: yes (CHANGELOG Kalimete hub entrada [11:15] con detalle + ledger armada-godot + godot-dev.md + esta referencia)
 
-### [2026-10-01 10:54 EDT] [kalimete] Subagentes de Kalimete RENOMBRADOS a nombres reales (adiós eco-*) + harness + docs (TARGET=kalimete autorizado)
+### [2026-10-01 10:54 EDT] [kalimete] Subagentes de Kalimete RENOMBRADOS a nombres reales (adiós eco-*) + harness + docs (TARGET=Kalimete autorizado)
 - **Tipo**: refactor cross-machine (pedido explícito del owner: "no usemos eco, usemos el nombre bien — Authentik, Cloudflare, DocuSeal, NextCloud, Ragnarok... y cada agente con su harness + su documentación oficial como en Victoria")
-- **Que**: en kalimete.local, 14 `agents/eco-*.md` renombrados (git mv) quitando el prefijo + los 19 con `name:` display real (`Authentik`, `Cloudflare`, `DocuSeal`, `IRC`, `Nextcloud`, `PetSuite`, `Proxy`, `Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `Woodly`, `Alfredo Ecomm`, `Armada Arcade`, `ERP Dev`, `Godot`, `Proxmark`, `WordPress`), línea `> **Frescura**` estándar y ref a su harness en cada doc. `kalimete.md`: permission.task alineado a los names EXACTOS + scope + historia conservada. `harness/`: 14 renombrados + 20 alineados (name/id/hidden:false/agent_file/docs) + central (lista + scope). Symlinks `~/.config/opencode/agent/` recreados, doc-fresh.sh AGENTES, upstream-kalimete-check.py ids, ambos MAPA (repo + ecosistema-map + cloudflare-map, áreas Cloudflare compactadas al agente único), frescura.json remapeado. Decisión de diseño: `Victoria Server` (no "Victoria") para el subagente que GESTIONA este host en solo-lectura — evita que @Victoria en kalimete se confunda con hablar CONMIGO.
+- **Que**: en Kalimete.local, 14 `agents/eco-*.md` renombrados (git mv) quitando el prefijo + los 19 con `name:` display real (`Authentik`, `Cloudflare`, `DocuSeal`, `IRC`, `Nextcloud`, `PetSuite`, `Proxy`, `Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `Woodly`, `Alfredo Ecomm`, `Armada Arcade`, `ERP Dev`, `Godot`, `Proxmark`, `WordPress`), línea `> **Frescura**` estándar y ref a su harness en cada doc. `Kalimete.md`: permission.task alineado a los names EXACTOS + scope + historia conservada. `harness/`: 14 renombrados + 20 alineados (name/id/hidden:false/agent_file/docs) + central (lista + scope). Symlinks `~/.config/opencode/agent/` recreados, doc-fresh.sh AGENTES, upstream-Kalimete-check.py ids, ambos MAPA (repo + ecosistema-map + cloudflare-map, áreas Cloudflare compactadas al agente único), frescura.json remapeado. Decisión de diseño: `Victoria Server` (no "Victoria") para el subagente que GESTIONA este host en solo-lectura — evita que @Victoria en Kalimete se confunda con hablar CONMIGO.
 - **Por que**: el prefijo eco-* hacía los subagentes ilegibles en el autocomplete `@`; el estándar Victoria es nombre real + filename lowercase + harness propio + doc oficial curada por agente.
-- **Impacto**: kalimete TUI: Tab = kalimete/plan/build; `@` = los 19 con nombres reales identificables. Permisos por agente intactos (edit/write deny preservados donde correspondía). Hub GitHub publicado por sync automático (5 min). 0 cambios de producción. Requiere restart del TUI. Rollback: `~/.config/opencode/bkup-agents/rename-20261001-pre.tar.gz` (70 archivos).
+- **Impacto**: Kalimete TUI: Tab = Kalimete/plan/build; `@` = los 19 con nombres reales identificables. Permisos por agente intactos (edit/write deny preservados donde correspondía). Hub GitHub publicado por sync automático (5 min). 0 cambios de producción. Requiere restart del TUI. Rollback: `~/.config/opencode/bkup-agents/rename-20261001-pre.tar.gz` (70 archivos).
 - **Verificado**: `opencode agent list` live: 19 subagentes con nombres reales + primaries intactos + cero duplicados; 20 harness JSON válidos; permission.task = display names exactos; git limpio post-sync.
-- **Docs**: yes (CHANGELOG kalimete hub entrada [10:45] con detalle completo + esta referencia; docs de agentes actualizados in situ)
+- **Docs**: yes (CHANGELOG Kalimete hub entrada [10:45] con detalle completo + esta referencia; docs de agentes actualizados in situ)
 
-### [2026-10-01 10:12 EDT] [kalimete] Subagentes de Kalimete VISIBLES en el @ (espejo del fix de Victoria — TARGET=kalimete autorizado)
+### [2026-10-01 10:12 EDT] [kalimete] Subagentes de Kalimete VISIBLES en el @ (espejo del fix de Victoria — TARGET=Kalimete autorizado)
 - **Tipo**: config cross-machine (pedido explícito del owner: "también quiero como con Victoria poder ver los agentes para llamarlos de Kalimete")
-- **Que**: en kalimete.local (SSH warcold, verificado `hostname=kalimete` antes de mutar), frontmatter `hidden: true` → `hidden: false` en los 19 subagentes (`~/armada-sync/agents/*.md` + `~/armada-arcade/agents/armada-arcade.md`, las dos copias de arcade eran idénticas). `kalimete.md` INTACTO (primary teal + permission.task allowlist + sin línea hidden); `default_agent: kalimete` ya estaba. Backup pre-cambio: `~/.config/opencode/bkup-agents/bkup-20261001-hidden-false/` (21 archivos). Nota: el binario opencode de kalimete no está en PATH no-interactivo — ruta `/home/warcold/.opencode/bin/opencode` (verificación de `agent list` se hizo con ruta completa).
-- **Por que**: al montarse la estructura espejo (2026-10-01 02:30) los 19 quedaron `hidden: true` (tablas limpias); horas después en Victoria el owner decidió verlos todos en `@` — esta entrada aplica la MISMA decisión en kalimete.
-- **Impacto**: kalimete TUI: Tab sigue mostrando SOLO kalimete/plan/build (primaries); el autocomplete `@` ahora lista los 19 (armada-arcade, eco-* ×14, erp-dev, godot-dev, proxmark, wordpress-dev). Requiere restart del TUI para tomar el cambio. Cero cambios en producción/permisos.
+- **Que**: en Kalimete.local (SSH warcold, verificado `hostname=kalimete` antes de mutar), frontmatter `hidden: true` → `hidden: false` en los 19 subagentes (`~/armada-sync/agents/*.md` + `~/armada-arcade/agents/armada-arcade.md`, las dos copias de arcade eran idénticas). `Kalimete.md` INTACTO (primary teal + permission.task allowlist + sin línea hidden); `default_agent: Kalimete` ya estaba. Backup pre-cambio: `~/.config/opencode/bkup-agents/bkup-20261001-hidden-false/` (21 archivos). Nota: el binario opencode de Kalimete no está en PATH no-interactivo — ruta `/home/warcold/.opencode/bin/opencode` (verificación de `agent list` se hizo con ruta completa).
+- **Por que**: al montarse la estructura espejo (2026-10-01 02:30) los 19 quedaron `hidden: true` (tablas limpias); horas después en Victoria el owner decidió verlos todos en `@` — esta entrada aplica la MISMA decisión en Kalimete.
+- **Impacto**: Kalimete TUI: Tab sigue mostrando SOLO Kalimete/plan/build (primaries); el autocomplete `@` ahora lista los 19 (armada-arcade, eco-* ×14, erp-dev, godot-dev, proxmark, wordpress-dev). Requiere restart del TUI para tomar el cambio. Cero cambios en producción/permisos.
 - **Verificado**: `opencode agent list` live: 19 subagentes `(subagent)` sin duplicados; 0 `hidden: true` residual; permisos intactos (edit/write deny donde correspondía).
-- **Docs**: yes (CHANGELOG kalimete hub `~/armada-sync/CHANGELOG.md` entrada [10:10] con el detalle completo + esta referencia; regla de procedencia: el detalle vive en el repo de kalimete)
+- **Docs**: yes (CHANGELOG Kalimete hub `~/armada-sync/CHANGELOG.md` entrada [10:10] con el detalle completo + esta referencia; regla de procedencia: el detalle vive en el repo de Kalimete)
 
 ### [2026-10-01 03:45 EDT] [harness] Subagentes VISIBLES en el @ autocomplete (hidden:false ×10, pedido del owner)
 - **Tipo**: fix/UX del harness opencode (autorización explícita del owner en sesión: "se supone que deba salirme todos los subagentes alli")
@@ -980,22 +995,22 @@
 
 ### [2026-10-01 03:20 EDT] [flota] Upstream propio de Kalimete + flota en el reporte + cierre
 - **Tipo**: sync cross-machine (checker Kalimete keyless + reporte flota + campos upstream/groom x19)
-- **Schema extendido**: cada agente de kalimete con "{local,upstream,drift,ts,doc,href,href_docs,pin,ok}" + flag `groom_clean` (eco-victoria=FALSE contra ghost de días pasados; los 19 restantes TRUE). La documentación oficial LINK (href/href_docs) queda EN EL agente para el groom limpio 24h de doc-fresh.sh.
-- **Checker kalimete** (`bin/upstream-kalimete-check.py`): 19 sistemas (vps 28 labels + locales Godot-4.7.2 / arcade y erpipo git / nube keyless / prowler 5.36), guarda 24h, hub publica `~/armada-sync/upstream/state.json` + espejo `/srv/armada-upstream/kalimete-state.json` en vps-preprod. Labels `latest`-tagged comparado por doc (sin version-diff imaginario); wordpress.dev141 driftea 2025-04-11→2026-09-30 (la única real). CONTENEDOR espejo vps creado (root).
-- **Victoria daily-report**: fila `[flota]` junto a UPSTREAM (lee el espejo, no toca producción de kalimete): "todo al día · N ok · H" o "⚠ drift: …" + docs.
-- **Pendiente owner (consentidas)**: report Discord de kalimete falla (token presente, falla desde hace días; no toco porque es tu bot de Piso14) y `joom-watch` no existe como etiqueta (la tuya corre maria wordpress:6.7-php8.3-apache, sana). eco-irc vive por systemd (inspircd nativo, no docker) ✓ documentado. PR-DESCRIPCION.md local (descripción 404 por curl no-ls-files), subir solo si decides.
+- **Schema extendido**: cada agente de Kalimete con "{local,upstream,drift,ts,doc,href,href_docs,pin,ok}" + flag `groom_clean` (eco-victoria=FALSE contra ghost de días pasados; los 19 restantes TRUE). La documentación oficial LINK (href/href_docs) queda EN EL agente para el groom limpio 24h de doc-fresh.sh.
+- **Checker Kalimete** (`bin/upstream-Kalimete-check.py`): 19 sistemas (vps 28 labels + locales Godot-4.7.2 / arcade y erpipo git / nube keyless / prowler 5.36), guarda 24h, hub publica `~/armada-sync/upstream/state.json` + espejo `/srv/armada-upstream/Kalimete-state.json` en vps-preprod. Labels `latest`-tagged comparado por doc (sin version-diff imaginario); wordpress.dev141 driftea 2025-04-11→2026-09-30 (la única real). CONTENEDOR espejo vps creado (root).
+- **Victoria daily-report**: fila `[flota]` junto a UPSTREAM (lee el espejo, no toca producción de Kalimete): "todo al día · N ok · H" o "⚠ drift: …" + docs.
+- **Pendiente owner (consentidas)**: report Discord de Kalimete falla (token presente, falla desde hace días; no toco porque es tu bot de Piso14) y `joom-watch` no existe como etiqueta (la tuya corre maria wordpress:6.7-php8.3-apache, sana). eco-irc vive por systemd (inspircd nativo, no docker) ✓ documentado. PR-DESCRIPCION.md local (descripción 404 por curl no-ls-files), subir solo si decides.
 - **Docs/verificación**: changelogs Kalimete (hub) + general + infra + social; backup+verify OK; doc-fresh.sh con frescura.json local (fuera del repo / no sube).
-- **Docs**: yes (general + infra + social + repo CHANGELOG kalimete + kalimete.md).
+- **Docs**: yes (general + infra + social + repo CHANGELOG Kalimete + Kalimete.md).
 
 ### [2026-10-01 02:31 EDT] [flota] Estructura espejo Victoria en Kalimete + sync unificado + TARGET anti-equivocación
 - **Tipo**: estructura cross-machine (autorización explícita del owner: mismo sistema, scopes separados)
-- **Conexión**: SSH victoria→kalimete OK (warcold, up 2d23h) y kalimete→victoria OK (5 svcs active + GPU 44°C + DB readonly con 7 keys, todo verificado live).
-- **En Kalimete**: `default_agent: kalimete` (JSON válido); symlink `agents→agent` eliminado (un solo dir real `agent/`, 20 files, 0 bkup); permisos verificados COMPLETOS (19 + explore — mi "hallazgo" de faltantes era error de lectura truncada, duplicado mío corregido); `eco-victoria.md` curada (160K/Docker/13 svcs/7 keys/límites 120K/dual P-LAN + Upstream); 19× `## Upstream` con vivo-verificado 2026-10-01 (docker vps 25 + kalimete 15); `harness/` central + 19 (20 JSON válidos, versionados por el hub); `sync.sh` + secrets-gate (ciclo E2E OK, 2 push GitHub); `~/bin/doc-fresh.sh` (TTL 24h, 2 FRESH); `kalimete.md` (identidad flota + TARGET + frescura + @ + harness + snapshot victoria curado).
-- **Sync unificado**: misma garantía ambos lados (colecta + versionado + secrets-gate + frescura + upstream + harness + reporte); namespaces JAMÁS cruzados (hub GitHub = kalimete, snapshots locales = victoria).
+- **Conexión**: SSH victoria→Kalimete OK (warcold, up 2d23h) y Kalimete→victoria OK (5 svcs active + GPU 44°C + DB readonly con 7 keys, todo verificado live).
+- **En Kalimete**: `default_agent: Kalimete` (JSON válido); symlink `agents→agent` eliminado (un solo dir real `agent/`, 20 files, 0 bkup); permisos verificados COMPLETOS (19 + explore — mi "hallazgo" de faltantes era error de lectura truncada, duplicado mío corregido); `eco-victoria.md` curada (160K/Docker/13 svcs/7 keys/límites 120K/dual P-LAN + Upstream); 19× `## Upstream` con vivo-verificado 2026-10-01 (docker vps 25 + Kalimete 15); `harness/` central + 19 (20 JSON válidos, versionados por el hub); `sync.sh` + secrets-gate (ciclo E2E OK, 2 push GitHub); `~/bin/doc-fresh.sh` (TTL 24h, 2 FRESH); `Kalimete.md` (identidad flota + TARGET + frescura + @ + harness + snapshot victoria curado).
+- **Sync unificado**: misma garantía ambos lados (colecta + versionado + secrets-gate + frescura + upstream + harness + reporte); namespaces JAMÁS cruzados (hub GitHub = Kalimete, snapshots locales = victoria).
 - **Anti-equivocación** (scopes jerárquicos + identidad explícita + procedencia): YO SOY + TARGET obligatorio + `hostname` antes de mutar + RO por defecto + ledgers por máquina. Espejo en victoria.md (reglas 3/6/7) + devices.md.
-- **Pendientes (no bloquean, decide owner)**: eco-irc fuera de docker (¿nativo?); daily-report kalimete Discord FALLA con token presente (rotar/verificar); binario opencode fuera de PATH no-interactivo (`agent list` pendiente en TUI de kalimete).
-- **Verificado**: kalimete JSON + agent/ + doc-fresh + harness + sync push ×2 + repo CHANGELOG; victoria backup + verify OK (abajo).
-- **Docs**: yes (esta entrada + repo CHANGELOG kalimete + victoria.md + devices.md)
+- **Pendientes (no bloquean, decide owner)**: eco-irc fuera de docker (¿nativo?); daily-report Kalimete Discord FALLA con token presente (rotar/verificar); binario opencode fuera de PATH no-interactivo (`agent list` pendiente en TUI de Kalimete).
+- **Verificado**: Kalimete JSON + agent/ + doc-fresh + harness + sync push ×2 + repo CHANGELOG; victoria backup + verify OK (abajo).
+- **Docs**: yes (esta entrada + repo CHANGELOG Kalimete + victoria.md + devices.md)
 
 ### [2026-10-01 02:30 EDT] [updates] CIERRE — 3/3 actualizados + 11/11 docs FRESH, 0 derivas
 - **Tipo**: updates + docs (autorización explícita del owner 02:10)
@@ -1089,7 +1104,7 @@
 ### [2026-09-29 23:40 EDT] [sync] Red armada-sync resucitada: fix crash hub + bin/ + topología documentada
 - **Tipo**: fix (la red llevaba muerta: cada corrida del cron moría sin commit/push)
 - **Causa**: `agent/*.md` locales son symlinks al repo → `cp -f` sobre su propio target = error "same file" → `set -e` abortaba el hub ANTES de commit+push. Síntomas: `pull --rebase` bloqueado por cambios sin commitear + log con `cp: same file` cada 5 min.
-- **Que kalimete** (autorizado): `sync.sh` parcheado (backup `sync.sh.bkup-20260930`): guard `[ -ef ]` skip en collect + bloque BIN (solo texto a `repo/bin/`: cfmb25, tmp-clean, new-project, SCRIPTS.md; fuera `.phar`/ELF/`*.bak*`; `wp` excluido por binario — el match de "secretos" era falso positivo del phar). Recuperación: commit + push `4c84fac` OK (incluye limpieza del `.bkup` + `bin/` nuevo). 2da corrida: "No local changes" = estado estable, auto cada 5 min sano.
+- **Que Kalimete** (autorizado): `sync.sh` parcheado (backup `sync.sh.bkup-20260930`): guard `[ -ef ]` skip en collect + bloque BIN (solo texto a `repo/bin/`: cfmb25, tmp-clean, new-project, SCRIPTS.md; fuera `.phar`/ELF/`*.bak*`; `wp` excluido por binario — el match de "secretos" era falso positivo del phar). Recuperación: commit + push `4c84fac` OK (incluye limpieza del `.bkup` + `bin/` nuevo). 2da corrida: "No local changes" = estado estable, auto cada 5 min sano.
 - **Que victoria**: timer 6h activo + cobertura completa (summary, devices, ledgers, bin). NO se conecta al repo GitHub por diseño: el deploy follower destructivo borraría los agentes del stack. Topología documentada en `AGENTS-summary.md`. Off-site de victoria pendiente (repo nuevo + credenciales, decide el owner).
 - **Verificado**: pull+collect+push E2E OK; `bash -n` OK; cron sigue cada 5 min; `opencode.jsonc` excluido del sync GitHub (key viva).
 - **Docs**: yes (AGENTS-summary.md §Topología + esta entrada + CHANGELOG-infra.md).
@@ -1097,10 +1112,10 @@
 ### [2026-09-29 23:25 EDT] [ecosistema] Sistema reutilizable: scaffold + temporales KEEP + librerías + registro LAN
 - **Tipo**: feature (eficiencia — pedido del owner: no adivinar, ejecutar scripts bien hechos; cada dir nuevo con guía; temporales reciclables)
 - **Que victoria**: `~/tmp/` + `tmp-clean.sh` (DRY-RUN default, respeta `<x>.keep` y `KEEP.list`, `--apply` para borrar) + `new-project.sh <nombre> [destino]` (crea dir + `AGENTS.md` desde plantilla + `scripts/` + README; probado y limpiado) + `bin/SCRIPTS.md` (índice 20 scripts: buscar ANTES de crear; mejorar > duplicar). Regla: script reusado >1 vez se PROMUEVE a librería con header.
-- **Que kalimete**: `~/tmp/` + mismos `tmp-clean.sh`/`new-project.sh` (idénticos, diff 0) en `~/bin/` + `bin/SCRIPTS.md` (ptt, wrapper, cfmb25, wp, osint — cfmb25/wp con uso por completar).
-- **Red hogar**: `.victoria-custom/infra/devices.md` (router, victoria, kalimete con accesos; 5 IPs por identificar: .102/.134/.29/.230/.64 — falta que el owner diga qué son). Otros dispositivos pueden consumir LLM/voz/UIs por LAN con llave (flujo config-guide como kalimete).
+- **Que Kalimete**: `~/tmp/` + mismos `tmp-clean.sh`/`new-project.sh` (idénticos, diff 0) en `~/bin/` + `bin/SCRIPTS.md` (ptt, wrapper, cfmb25, wp, osint — cfmb25/wp con uso por completar).
+- **Red hogar**: `.victoria-custom/infra/devices.md` (router, victoria, Kalimete con accesos; 5 IPs por identificar: .102/.134/.29/.230/.64 — falta que el owner diga qué son). Otros dispositivos pueden consumir LLM/voz/UIs por LAN con llave (flujo config-guide como Kalimete).
 - **Sync**: `armada-sync.sh` FILES += `AGENTS-summary.md`, `infra/devices.md`, `Documents/Victoria Armada/AGENTS.md` (+ `bin/` ya cubría los scripts nuevos); backup 32 items verify OK.
-- **Verificado**: scaffold crea+limpia OK; tmp-clean DRY-RUN en ambas; diff tmp-clean victoria↔kalimete = 0; verify sin secretos.
+- **Verificado**: scaffold crea+limpia OK; tmp-clean DRY-RUN en ambas; diff tmp-clean victoria↔Kalimete = 0; verify sin secretos.
 - **Docs**: yes (SCRIPTS.md ×2, devices.md, ~/tmp/README ×2, esta entrada + CHANGELOG-infra.md).
 
 ### [2026-09-29 22:55 EDT] [kalimete] Nombres lindos dual: `· www.alfredo.pro | P/L`
@@ -1109,7 +1124,7 @@
 - **Docs**: yes (esta entrada).
 
 ### [2026-09-29 22:50 EDT] [kalimete] Dual roaming: vllm (pública) + vllm-lan (casa)
-- **Tipo**: config (decisión del owner: kalimete es laptop que sale de la LAN)
+- **Tipo**: config (decisión del owner: Kalimete es laptop que sale de la LAN)
 - **Que**: Kalimete conserva la pública como default (`vllm` → `https://victoria.armada.do/v1`, roaming siempre conecta) y suma `vllm-lan` → `http://victoria.local:8010/v1` (rápida en casa, 5ms, sin Cloudflare). Ambos con `context 120000 + timeout 3600s`. Backup `bkup-20260930-dual`. En casa usar `vllm-lan`, fuera `vllm`. Futuro opcional: Tailscale (misma URL dentro/fuera, sin CF) — no instalado en ninguno, queda propuesto.
 - **Verificado**: desde Kalimete en casa LAN:200 y PUB:200. JSON válido.
 - **Docs**: yes (AGENTS-summary.md + esta entrada).
@@ -1117,10 +1132,10 @@
 ### [2026-09-29 22:35 EDT] [contexto+agentes] Fix compactación prematura 100K + reparación total agentes victoria+kalimete
 - **Tipo**: fix + docs (contexto, agentes, sync — pedido del owner: "repara todo, optimiza estructura, limpia discrepancias")
 - **Causa raíz compactación 100K**: `instructions: ["AGENTS.md", "agents/victoria.md"]` = 232KB (~57K tokens) en CADA request → sistema 57K + historial 40K = 100K → opencode compactaba joven por peso del manual, no del trabajo. VLM sano (KV 12.5%, prefix 79%, 0 rechazos hoy); sesiones `alfredo` en 117K/120K al borde del 400.
-- **Que victoria.local**: (1) Nuevo `~/.config/opencode/AGENTS-summary.md` (slim ~5K tokens, mapa+límites+subagentes+kalimete) y `opencode.jsonc` → `instructions: [AGENTS-summary.md]` (backup `bkup-20260930-contextfix`). (2) `name:` agregado a `comfyui-ops/vllm-stack-ops/nemoclaw-sandbox-ops.md` (sin name el Task no invoca). (3) Symlink `~/.config/opencode/agent` → `agents/` (compat opencode 1.18 singular/plural). (4) Ledger `Documents/Victoria Armada/AGENTS.md` creado + README con sección ledger. (5) `AGENTS.md` §6: frontmatter obligatorio + summary + symlink. (6) `armada-sync.sh`: FILES += `AGENTS-summary.md`, verify must += summary; backup+verify OK (30 items, 1.4M, sin secretos).
-- **Que kalimete.local** (excepción autorizada al contrato): (1) `opencode.jsonc` backup `bkup-20260930-120k-fix`: `context 220000→120000` (fósil era 262K; gateway corta en 120K), `baseURL https://victoria.armada.do/v1` → `http://victoria.local:8010/v1` (LAN 5ms, era loop WAN con IP pública 69.143.73.120), `timeout 300s→3600s` + `chunkTimeout 120s→600s` + `maxRetries: 3`. Verificado `/health` + `/v1/config-guide` por LAN (key alfredo, limits 120K). (2) Agentes: symlink roto `eco-micaserogou.md` eliminado (target inexistente), `agents/` → `agent/` compat creado, `wordpress-dev.md.bkup-20260926` movido a `bkup-agents/` (no cargar bakups como agentes). (3) Ledger `~/armada-arcade/AGENTS.md` creado.
-- **Limpieza**: 0 `.bkup` en dirs de agentes victoria; kalimete agent/ sin rotos; bkups viejos con keys quedan locales 600 (no se sync, verify OK).
-- **Verificado**: victoria `opencode.jsonc` JSON válido; kalimete config-guide LAN 200 con limits correctos; `find agent/ -xtype l` vacío en ambas; armada-sync backup+verify OK; VLM `/metrics` KV 12.5%.
+- **Que victoria.local**: (1) Nuevo `~/.config/opencode/AGENTS-summary.md` (slim ~5K tokens, mapa+límites+subagentes+Kalimete) y `opencode.jsonc` → `instructions: [AGENTS-summary.md]` (backup `bkup-20260930-contextfix`). (2) `name:` agregado a `comfyui-ops/vllm-stack-ops/nemoclaw-sandbox-ops.md` (sin name el Task no invoca). (3) Symlink `~/.config/opencode/agent` → `agents/` (compat opencode 1.18 singular/plural). (4) Ledger `Documents/Victoria Armada/AGENTS.md` creado + README con sección ledger. (5) `AGENTS.md` §6: frontmatter obligatorio + summary + symlink. (6) `armada-sync.sh`: FILES += `AGENTS-summary.md`, verify must += summary; backup+verify OK (30 items, 1.4M, sin secretos).
+- **Que Kalimete.local** (excepción autorizada al contrato): (1) `opencode.jsonc` backup `bkup-20260930-120k-fix`: `context 220000→120000` (fósil era 262K; gateway corta en 120K), `baseURL https://victoria.armada.do/v1` → `http://victoria.local:8010/v1` (LAN 5ms, era loop WAN con IP pública 69.143.73.120), `timeout 300s→3600s` + `chunkTimeout 120s→600s` + `maxRetries: 3`. Verificado `/health` + `/v1/config-guide` por LAN (key alfredo, limits 120K). (2) Agentes: symlink roto `eco-micaserogou.md` eliminado (target inexistente), `agents/` → `agent/` compat creado, `wordpress-dev.md.bkup-20260926` movido a `bkup-agents/` (no cargar bakups como agentes). (3) Ledger `~/armada-arcade/AGENTS.md` creado.
+- **Limpieza**: 0 `.bkup` en dirs de agentes victoria; Kalimete agent/ sin rotos; bkups viejos con keys quedan locales 600 (no se sync, verify OK).
+- **Verificado**: victoria `opencode.jsonc` JSON válido; Kalimete config-guide LAN 200 con limits correctos; `find agent/ -xtype l` vacío en ambas; armada-sync backup+verify OK; VLM `/metrics` KV 12.5%.
 - **Docs**: yes (AGENTS.md §6, README Victoria Armada, ledgers nuevos, esta entrada + CHANGELOG-vllm.md + CHANGELOG-infra.md).
 
 ### [2026-09-29 22:00 EDT] [docs+agentes] Auditoría realidad-vs-docs: 15 discrepancias limpiadas + protocolo de contexto por proyecto
@@ -1134,7 +1149,7 @@
 ### [2026-09-29 20:15 EDT] [vllm+gateway+sonic] Re-partición de recursos: KV acotado 12GiB, seqs 4, límites 160K alineados, RAM 23→36GB + Sonic con resolución elegible
 - **Tipo**: infra (optimización de recursos — pedido del owner: "que el OS respire")
 - **Hallazgo crítico**: el vLLM (migrado a `--max-model-len 160000` el 09-28) seguía con el KV auto-dimensionado en **1.6-1.7M tokens (20-21.5 GiB) = 10x sobredimensionado** para 160K, mientras gateway/DB/opencode seguían con límites de la era 220K/262144 (riesgo de 400 masivos: el clamp ponía max_tokens=262144 a todo request). **En GB10 `--gpu-memory-utilization` NO controla el KV** (probado: 0.15 vs 0.22 → el pool SUBIÓ a 21.5 GiB): el control real es `--kv-cache-memory-bytes` (formato bytes `12884901888`, rechaza `12GiB` — primer intento crash-looped el parser, corregido en 2 min).
-- **Que**: (1) **vLLM recreado** (receta canónica + digest intacto): `--kv-cache-memory-bytes 12884901888` (12 GiB → **KV 947,555 tokens**, concurrencia 5.92x a 160K) + `--max-num-seqs 6→4` + `gpu-memory-utilization 0.22`. EngineCore **46.5→37.8 GB** (−8.7 GiB); RAM disponible **23→36 GB**. (2) **Gateway alineado a 160K**: `MAX_MODEL_LEN=160000`, `MAX_PROMPT_TOKENS=120000` (120K+32K=152K), guarda combinada 158000, clamps/defaults 262144→32000, concurrencia `UPSTREAM_MAX_CONCURRENCY=6→4`, config-guide actualizado, pydantic le=160000. (3) **DB**: 9 keys → `max_tokens=32000`, `max_prompt_tokens=120000`. (4) **Clientes**: opencode.jsonc + kalimete-config `context 220000→120000` (NIM 1M intacto, es API externa). (5) **Sonic**: `resolution` param (512/640/768 whitelist) + UI dropdown 640 default (test en curso).
+- **Que**: (1) **vLLM recreado** (receta canónica + digest intacto): `--kv-cache-memory-bytes 12884901888` (12 GiB → **KV 947,555 tokens**, concurrencia 5.92x a 160K) + `--max-num-seqs 6→4` + `gpu-memory-utilization 0.22`. EngineCore **46.5→37.8 GB** (−8.7 GiB); RAM disponible **23→36 GB**. (2) **Gateway alineado a 160K**: `MAX_MODEL_LEN=160000`, `MAX_PROMPT_TOKENS=120000` (120K+32K=152K), guarda combinada 158000, clamps/defaults 262144→32000, concurrencia `UPSTREAM_MAX_CONCURRENCY=6→4`, config-guide actualizado, pydantic le=160000. (3) **DB**: 9 keys → `max_tokens=32000`, `max_prompt_tokens=120000`. (4) **Clientes**: opencode.jsonc + Kalimete-config `context 220000→120000` (NIM 1M intacto, es API externa). (5) **Sonic**: `resolution` param (512/640/768 whitelist) + UI dropdown 640 default (test en curso).
 - **Verificado**: vLLM health 200 + KV 947K en logs; gateway E2E 200 (con max_tokens=50000 clampeado); **sandbox inferencia real 200 en 111ms vía inference.local** (log del gateway OpenClaw) + WhatsApp enviado 00:00; proxy sandbox→172.18.0.1:8000→200; EngineCore 37.8GB; RAM available 36GB. **Costo honesto**: durante la ventana de recreación (~40 min, 2 intentos) 1 mensaje WhatsApp falló con "inference unavailable" — se recuperó solo al volver vLLM.
 - **Docs**: yes (AGENTS.md §2/§4/§5/§7/§9, victoria.md regla de límites, sonic-ops.md, CHANGELOG-vllm.md + CHANGELOG-comfyui.md).
 
@@ -1521,7 +1536,7 @@
 
 ### [2026-09-19 12:27] [higiene] Fase A: admin key fuera de tts-bridge + plantillas a placeholder + verify detecta vllm-keys
 - **Tipo**: security/hygiene (OK del owner; CERO rotaciones, nada vivo tocado)
-- **Que**: (1) `tts-bridge.py` traía hardcodeada la admin key de alfredo (ACTIVA) como default `VOICE_API_KEY` → entraba a cada snapshot. Verificado peso muerto: el bridge ataca por red docker (keyless por `sense_auth.py`: `is_trusted` primero, header ignorado) → default a `""` + header solo si hay env. NINGUNA key activa rotada. (2) Plantillas `remote/opencode-juancarlos.jsonc` y `kalimete-config/opencode.jsonc` traían keys vivas → placeholders `REPLACE_WITH_*`; juancarlos y kalimete SIGUEN con sus keys (aclarado: plantilla ≠ servicio; cambiar plantilla no rompe a nadie, rotar sí — no se rotó nada). (3) `verify` de armada-sync ahora falla ante cualquier `vllm-key-*` completa que no sea la readonly `db13…` (excepción documentada §7.4). (4) Regla escrita en AGENTS.md §8 (secretos solo env/600, jamás hardcodeados). Solo `tts-bridge.py` tenía key entre los bridges.
+- **Que**: (1) `tts-bridge.py` traía hardcodeada la admin key de alfredo (ACTIVA) como default `VOICE_API_KEY` → entraba a cada snapshot. Verificado peso muerto: el bridge ataca por red docker (keyless por `sense_auth.py`: `is_trusted` primero, header ignorado) → default a `""` + header solo si hay env. NINGUNA key activa rotada. (2) Plantillas `remote/opencode-juancarlos.jsonc` y `Kalimete-config/opencode.jsonc` traían keys vivas → placeholders `REPLACE_WITH_*`; juancarlos y Kalimete SIGUEN con sus keys (aclarado: plantilla ≠ servicio; cambiar plantilla no rompe a nadie, rotar sí — no se rotó nada). (3) `verify` de armada-sync ahora falla ante cualquier `vllm-key-*` completa que no sea la readonly `db13…` (excepción documentada §7.4). (4) Regla escrita en AGENTS.md §8 (secretos solo env/600, jamás hardcodeados). Solo `tts-bridge.py` tenía key entre los bridges.
 - **Por que**: auditoría pre-paquete-cliente: ni snapshots ni futuros templates pueden llevar credenciales vivas.
 - **Impacto**: 1 script (bridge), 2 plantillas, verify, AGENTS.md §8. NO tocado: vLLM, gateway, opencode.jsonc vivo, openclaw.json, sandbox, canales, crons, DB.
 - **Verificado**: TTS E2E por el socket con código nuevo → `200 OK`, WAV 60KB válido (bridge relaunches solo vía ensure-loop); snapshot `20260919-122741` verify OK con el patrón nuevo.
@@ -1545,7 +1560,7 @@
 
 ### [2026-09-19 11:20] [diagnóstico] Intermitencia + HTTPS dashboard + estado posts/DM (WhatsApp QR diferido)
 - **Tipo**: docs/diagnóstico + fix menor (ventana 23:00)
-- **Que**: (1) **Intermitencia: NO hay flapping server-side**. Gateway PID único estable 9.5h (sin restarts, sin OOM, 51G libres), publisher 11h, sandbox 16h healthy, Discord `connected` con transport fresco. Lo que se siente como intermitencia: dashboard que nunca conecta desde browser (causa cliente, ver 2) + WhatsApp muerto (causa QR pendiente) + caos de tokens ayer 19:00-02:00 (ya resuelto). (2) **HTTPS dashboard: servidor 100% OK** — `https://victoria.local/openclaw/` → 200 y handshake WS `101 + connect.challenge` verificados con curl TANTO directo (`:18789`) como vía nginx (TLS termina en nginx, Upgrade headers correctos, timeouts 86400). La UI (SPA Vite) deriva el WS de `location` (`wss:` si la página es https) — funciona. La falla está en el cliente: cert mkcert (CA `warcold@victoria` NO instalada en dispositivos → interstitial del browser) y/o URL sin `#token=` (sin token la UI no autentica). La rootCA mkcert NO está en este host (el cert se generó en kalimete, OU=warcold@kalimete) → instalarla en cada dispositivo desde kalimete, o aceptar el warning. (3) **Falsa alarma messageIds**: las líneas "✓ sent (messageId 3EB0...)" de las 11:00 eran del **19 de agosto** (logs sin fecha, solo hora) — época sana. Verificado por reproducción en vivo: sin listener el CLI devuelve texto plano sin JSON y `wa_send` registra FAIL correctamente. El script es honesto; no hay bug de parsing. (4) **Fix aplicado**: ventana discord/whatsapp `hour >= 23` → `hour > 23` (el slot 23:00 moría por un tecnicismo de 30 min contra docs "09:00–23:30"; el 07:00 sigue fuera por diseño). (5) **Estado real de posts hoy**: IG sano (story 08:00, feed 08:20, story 09:40); Discord 11:00 posteó (OK TH); WhatsApp 11:00 falló honesto (no listener — QR pendiente por decisión del owner); reporte DM 08:00 falló honesto (misma causa; el token YA autentica — llegó hasta delivery). Discord inbound funciona (bot conectado); WhatsApp inbound imposible hasta el QR.
+- **Que**: (1) **Intermitencia: NO hay flapping server-side**. Gateway PID único estable 9.5h (sin restarts, sin OOM, 51G libres), publisher 11h, sandbox 16h healthy, Discord `connected` con transport fresco. Lo que se siente como intermitencia: dashboard que nunca conecta desde browser (causa cliente, ver 2) + WhatsApp muerto (causa QR pendiente) + caos de tokens ayer 19:00-02:00 (ya resuelto). (2) **HTTPS dashboard: servidor 100% OK** — `https://victoria.local/openclaw/` → 200 y handshake WS `101 + connect.challenge` verificados con curl TANTO directo (`:18789`) como vía nginx (TLS termina en nginx, Upgrade headers correctos, timeouts 86400). La UI (SPA Vite) deriva el WS de `location` (`wss:` si la página es https) — funciona. La falla está en el cliente: cert mkcert (CA `warcold@victoria` NO instalada en dispositivos → interstitial del browser) y/o URL sin `#token=` (sin token la UI no autentica). La rootCA mkcert NO está en este host (el cert se generó en Kalimete, OU=warcold@Kalimete) → instalarla en cada dispositivo desde Kalimete, o aceptar el warning. (3) **Falsa alarma messageIds**: las líneas "✓ sent (messageId 3EB0...)" de las 11:00 eran del **19 de agosto** (logs sin fecha, solo hora) — época sana. Verificado por reproducción en vivo: sin listener el CLI devuelve texto plano sin JSON y `wa_send` registra FAIL correctamente. El script es honesto; no hay bug de parsing. (4) **Fix aplicado**: ventana discord/whatsapp `hour >= 23` → `hour > 23` (el slot 23:00 moría por un tecnicismo de 30 min contra docs "09:00–23:30"; el 07:00 sigue fuera por diseño). (5) **Estado real de posts hoy**: IG sano (story 08:00, feed 08:20, story 09:40); Discord 11:00 posteó (OK TH); WhatsApp 11:00 falló honesto (no listener — QR pendiente por decisión del owner); reporte DM 08:00 falló honesto (misma causa; el token YA autentica — llegó hasta delivery). Discord inbound funciona (bot conectado); WhatsApp inbound imposible hasta el QR.
 - **Por que**: el owner reportó intermitencia + HTTPS caído + posts/DM faltantes.
 - **Impacto**: discord-broadcast.py + whatsapp-broadcast.py (1 línea c/u, ventana). Sin cambios de servidor para HTTPS (no hay nada que reparar ahí).
 - **Verificado**: curl 200+101 en ambas vías; cert SAN victoria.local/victoria vigente hasta 2028; gateway/boot/watcher sanos; Discord connected; IG posteando.
@@ -1586,7 +1601,7 @@
 
 ### [2026-09-18 17:30] [forense] Causa de la caída 16:58: stop externo vía SSH + script (no fue crash)
 - **Tipo**: security/forense (investigación, cero cambios al sistema)
-- **Que**: `docker events` + `dockerd` + `openshell-gateway` reconstruyen la escena: (1) 16:58:21 `CreateSshSession` + `ForwardTcp` al sandbox desde un cliente local; (2) 16:58:44 `ExecSandbox sh -s` con **stdin de 4377 bytes**; (3) 16:58:46 el container sale con **exit 0 + `hasBeenManuallyStopped=true`** → Docker NO reintenta (`restart canceled`); (4) 16:58:56 alguien lo arranca de nuevo; (5) 17:00:13 sale exit 0 otra vez → muerto desde entonces. **NO fue crash ni OOM** (cero OOM en dmesg/journal; uptime 20h intacto; vllm+publisher ni se inmutaron). La plataforma marcó `Provisioning→Error (ContainerExited)`. Sospechoso en ventana: segundo proceso `opencode` (pts/1, login 10.0.0.106 kalimete, arrancado 16:54, 54% CPU en loop) — activo 4 min ANTES del incidente. El contenido del stdin NO queda en ningún log → no se puede atribuir con certeza a humano vs agente; queda como sospechoso, no veredicto. Borrado final: el `destroy` parcial de esta sesión lo sacó del live gateway + `volume rm` (data preservada en persist.sh 3.1G + armada-sync).
+- **Que**: `docker events` + `dockerd` + `openshell-gateway` reconstruyen la escena: (1) 16:58:21 `CreateSshSession` + `ForwardTcp` al sandbox desde un cliente local; (2) 16:58:44 `ExecSandbox sh -s` con **stdin de 4377 bytes**; (3) 16:58:46 el container sale con **exit 0 + `hasBeenManuallyStopped=true`** → Docker NO reintenta (`restart canceled`); (4) 16:58:56 alguien lo arranca de nuevo; (5) 17:00:13 sale exit 0 otra vez → muerto desde entonces. **NO fue crash ni OOM** (cero OOM en dmesg/journal; uptime 20h intacto; vllm+publisher ni se inmutaron). La plataforma marcó `Provisioning→Error (ContainerExited)`. Sospechoso en ventana: segundo proceso `opencode` (pts/1, login 10.0.0.106 Kalimete, arrancado 16:54, 54% CPU en loop) — activo 4 min ANTES del incidente. El contenido del stdin NO queda en ningún log → no se puede atribuir con certeza a humano vs agente; queda como sospechoso, no veredicto. Borrado final: el `destroy` parcial de esta sesión lo sacó del live gateway + `volume rm` (data preservada en persist.sh 3.1G + armada-sync).
 - **Por que**: el owner preguntó cómo se borró y si estamos volviendo a nativo.
 - **Impacto**: solo diagnóstico. Veredicto arquitectura: **NO hay deriva a nativo** — el split es el diseño dokumentado (voz→host por py3.13 2026-08-17; video/whois/nav/host-admin = bridges host por binarios del sistema; gateway LAN+SQLite; ComfyUI venv+GPU unificada; en Docker solo vllm/publisher/sandbox efímero con persist.sh). El sandbox siempre fue container; murió por stop externo, no por rediseño.
 - **Verificado**: dockerd (`ShouldRestart failed... hasBeenManuallyStopped=true` ×2), containerd (shim disconnect ×2), gateway (CreateSshSession/ExecSandbox/sh -s/phase Error), `last` (sin SSH externo en ventana), crontab (sin stop programado).
@@ -1825,10 +1840,10 @@
 - **Verificado**: E2E local (51 templates, hosts) + público vía túnel (`--resolve` → 51 templates OK) + readonly accede + sin key → 401; gateway estable NRestarts=0.
 - **Docs**: yes (config-guide + este entry)
 
-### [2026-09-16 16:45] [art] Llave art-kalimete creada + E2E validado para prueba remota
+### [2026-09-16 16:45] [art] Llave art-Kalimete creada + E2E validado para prueba remota
 - **Tipo**: infra/docs
-- **Que**: llave `art-kalimete` (rol art, rate 120, max_tokens 4096) creada para la prueba de ComfyUI remoto desde kalimete (el owner instala ComfyUI allá y probará el API art contra este gateway). E2E validado con job real: 202 → done → PNG 256x256 descargado vía `/v1/art-files`. Kalimete ya consume el LLM por el gateway (10.0.0.5:8010, su opencode.jsonc configurado); esta llave añade la capacidad art. **ELIMINADA 2026-09-16 (decisión del owner): kalimete usa la llave admin de Alfredo (acceso a todos los modelos, incl. arte) — no necesita llave dedicada para la prueba.** Los 2 jobs de prueba quedaron en usage_log del owner.
-- **Por que**: preparación del test multi-host: kalimete como primer "cliente arte" — valida el flujo completo llave art → submit → poll → download desde otra máquina.
+- **Que**: llave `art-kalimete` (rol art, rate 120, max_tokens 4096) creada para la prueba de ComfyUI remoto desde Kalimete (el owner instala ComfyUI allá y probará el API art contra este gateway). E2E validado con job real: 202 → done → PNG 256x256 descargado vía `/v1/art-files`. Kalimete ya consume el LLM por el gateway (10.0.0.5:8010, su opencode.jsonc configurado); esta llave añade la capacidad art. **ELIMINADA 2026-09-16 (decisión del owner): Kalimete usa la llave admin de Alfredo (acceso a todos los modelos, incl. arte) — no necesita llave dedicada para la prueba.** Los 2 jobs de prueba quedaron en usage_log del owner.
+- **Por que**: preparación del test multi-host: Kalimete como primer "cliente arte" — valida el flujo completo llave art → submit → poll → download desde otra máquina.
 - **Impacto**: +1 llave art en DB (luego borrada). Sin cambios a código ni servicios.
 - **Verificado**: job art E2E 202→done (5s), PNG válido descargado; llave activa en DB; gateway sano (engine FRÍO).
 - **Docs**: yes (este entry; llave entregada al owner por canal privado — no commitear)
@@ -2027,7 +2042,7 @@
 - **Que**: (1) Validados los 12 .md del workspace (7 raíz + 5 skills): todos
   UTF-8 OK, fences balanceados, tamaños sanos (máx SOUL 13.7KB/198ln),
   frontmatter OK en 4/5 skills. (2) Skill `osint` ROTA: sin frontmatter y
-  apuntando al API :8090 eliminado (mudado a kalimete 2026-09-11) — probado:
+  apuntando al API :8090 eliminado (mudado a Kalimete 2026-09-11) — probado:
   `connection refused`. Eliminada del sandbox + del backup persist (no resucita
   en rebuilds; ensure-loop ya no la restaura; AGENTS §12 histórico intacto).
   (3) `openclaw config validate` → Config valid. (4) Conducta "papá":
@@ -2285,13 +2300,13 @@
   restaurará nada hasta que el sandbox se registre.
 
 ### [hora]`, 20:05).
-- **Verificado**: opencode agent list kalimete = 1 primary + 18 exactos (opencode en `~/.opencode/bin`, no en PATH no-interactivo); frontmatter intacto (spot-check godot-dev); harnesses JSON válidos; doc-fresh + revisión de fondo quedan a su primaria kalimete (su sistema, su llamada).
-- **Docs**: yes (este general + CHANGELOG de kalimete)
+- **Verificado**: opencode agent list Kalimete = 1 primary + 18 exactos (opencode en `~/.opencode/bin`, no en PATH no-interactivo); frontmatter intacto (spot-check godot-dev); harnesses JSON válidos; doc-fresh + revisión de fondo quedan a su primaria Kalimete (su sistema, su llamada).
+- **Docs**: yes (este general + CHANGELOG de Kalimete)
 
 ### [23:59] - erp-chatbot v1.4.6: la conversación sobrevive refresh/navegación/cierre
 - **Tipo**: proyecto | feature | persistencia | wordpress
 - **Modificado**: erp-chatbot 1.4.5→1.4.6 (~/dev/wordpress: guardado en cada turno en erpcbot_historial — últimos 30 + ts_actividad — + hooks pagehide/visibilitychange + estado abierto erpcbot_abierto; restore incondicional en load — repinta sin hablar, reabre si estaba abierto, sin duplicar saludo; TTL inactividad 24h — reset solo tras 24h sin interactuar; fusión con navegación por solape sin duplicar; historial al servidor — erpcbot_parse_historial decode JSON→array, contexto real en build_messages). PR #1 actualizado (MAIN intacto).
-- **Afecta a**: kalimete (wordpress-local :8091, widget)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget)
 - **Causa**: Usuario: al refrescar la página se perdía la conversación. Causa raíz: historial solo en memoria, guardado solo al navegar por voz, sin restore en load, sin estado abierto.
 - **Verificación**: node 38 checks (restore/retome/fusión) + suite 8/8 + php -l ✅ (2 verificaciones).
 - **Estado**: ✅ sincronizado (pendiente prueba del usuario en navegador: F5 a mitad de charla → reabre donde quedó)
@@ -2299,7 +2314,7 @@
 ### [23:59] - erp-chatbot v1.4.5 + erp-ecomm-connector v3.15.0: post-checkout → Mis pedidos estilo Amazon + carrito se limpia
 - **Tipo**: proyecto | feature+fix | UX checkout | wordpress
 - **Modificado**: erp-ecomm-connector 3.14.0→3.15.0 (~/dev/wordpress: clearCart() inmediato tras checkout exitoso — localStorage+badge; redirect a /mi-cuenta/?tab=pedidos con timeout 4000→1500ms — antes caía en tab Perfil; alias ?tab=pedidos; ajax_get_orders normaliza shape estable; vista Mis pedidos estilo Amazon — tarjeta con Pedido V-XXX/fecha/pill estado/total formateado/items con precio c/u y subtotal/total destacado/CSS responsive; fix customer_id real vía me() no-fatal — antes siempre 0). erp-chatbot 1.4.4→1.4.5 (saveCart([]) tras confirmar_pedido exitoso; prompt: mi-cuenta en destinos ir_a + regla 10 — felicita 1 frase con número de orden y lleva a Mis pedidos).
-- **Afecta a**: kalimete (wordpress-local :8091, checkout + mi-cuenta + widget)
+- **Afecta a**: Kalimete (wordpress-local :8091, checkout + mi-cuenta + widget)
 - **Causa**: Usuario: (1) al procesar la orden debe llevar a /mi-cuenta en mis pedidos; (2) mejorar vista de órdenes estilo Amazon con más info y precios correctos; (3) limpiar carrito al procesarse la orden.
 - **Diagnóstico**: redirect caía en tab Perfil (sin ?tab); localStorage del carrito nunca se limpiaba (riesgo resurrección vía sync); vista pedidos solo mostraba "Órden #X + total raw" sin items; customer_id siempre 0; bot no ofrecía navegar a mi-cuenta.
 - **Verificación**: normalize_order con orden real 279 → JSON estable (total 15450 float, fecha "2026-09-26 20:36", items_count 2) ✅; armar_ir_a mi-cuenta → URL real /mi-cuenta/ ✅; suite 8/8 PASS ✅; php -l + node --check OK.
@@ -2308,7 +2323,7 @@
 ### [23:59] - erp-chatbot v1.4.4: traducción de términos de búsqueda (EN→ES)
 - **Tipo**: proyecto | feature | búsqueda multilingüe | wordpress
 - **Modificado**: erp-chatbot 1.4.3→1.4.4 (~/dev/wordpress: traducir_termino() diccionario EN→ES ~36 entradas aplicado en tool_buscar_productos y armar_ir_a; regla 9 prompt — busca en español, responde en idioma del cliente; test 8 en suite).
-- **Afecta a**: kalimete (wordpress-local :8091, búsqueda chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, búsqueda chatbot)
 - **Causa**: Usuario pidió "printers" y el bot no encontró — catálogo/ERP en español, búsqueda literal, 0 resultados en inglés.
 - **Solución**: 2 capas — (1) determinista: diccionario por palabra tras singularizar (printers→impresora, laptop→portatil, keyboard and mouse→teclado y raton), ?buscar= nunca sale en inglés; (2) prompt: el LLM traduce cualquier idioma que sepa y responde en el idioma del cliente.
 - **Verificación**: batería 5/5 (IDs EN==ES contra ERP real: 6 impresoras 998/1016/1001/971/944/951) + suite 8/8 PASS ✅; php -l OK.
@@ -2319,7 +2334,7 @@
 ### [23:59] - Producción-ready: erp-chatbot + connector sin secretos en código + PRs GitHub para el admin
 - **Tipo**: proyecto | seguridad+infra | wordpress
 - **Modificado**: erp-chatbot (~/dev/wordpress: erpcbot_defaults() sin endpoint/key hardcodeados — resolución options > env ERPCBOT_LLM_URL/KEY/MODEL > vacío con error amigable; placeholder admin genérico; guard apunta a Ajustes). Stack: docker-compose.yml env-driven con ${VAR:-default} (local intacto), docker-compose.prod.yml (sin puertos 8091/3307, restart always), .env.example (placeholders sin valores), .gitignore, DEPLOY-PRODUCCION.md. GIT: repo nuevo github.com/warcold/erp-chatbot (privado) con PR #1 feature/v1.4.5-production-ready → main; connector PR #1 feature/v3.15.0-post-checkout-pedidos → main (incluye 5 commits no pusheados v3.12.5-3.12.10 + v3.15.0); stack commit local 938c270 (sin remote).
-- **Afecta a**: kalimete (dev/wordpress), producción futura (vps-preprod)
+- **Afecta a**: Kalimete (dev/wordpress), producción futura (vps-preprod)
 - **Causa**: Usuario: preparar commit para que el admin de GitHub acepte cambios y haga merge él; funcional en producción (conexiones por variables, no en plano) y en local.
 - **Diagnóstico**: API key LLM vllm-key-e473... en PLANO en erpcbot_defaults() (crítico), IP LAN 10.0.0.5 hardcodeada, creds DB en compose, erp-chatbot SIN repo (riesgo pérdida), connector con 16 archivos sin commit.
 - **Verificación**: settings() fusionada trae valores de DB (local igual) ✅; defaults puros sin env → url/key vacíos, con env → valores env ✅; grep vllm-key/10.0.0.5 código vivo = 0 hits ✅; suite 8/8 ✅; docker compose config local+prod OK ✅; contenedores healthy + curl 8091 200 ✅.
@@ -2337,7 +2352,7 @@
 ### [23:59] - ERP Commerce Suite 4.1.1: ZIP de producción listo + fix fallback de modo
 - **Tipo**: proyecto | build | seguridad | wordpress
 - **Modificado**: erp-commerce-suite 4.1.0→4.1.1 (Environment::mode() fallback por entorno: local=dev, production/staging=public + cinturón host .local; docker-compose.yml + WP_ENVIRONMENT_TYPE=local con bkup). ZIP: ~/dev/wordpress/export/erp-commerce-suite-v4.1.1.zip (757 KB, 86 entradas, sin .git/tests/.bkup)
-- **Afecta a**: producción (instalación fresca ahora apunta a ERP prod por defecto), kalimete (local intacto en dev)
+- **Afecta a**: producción (instalación fresca ahora apunta a ERP prod por defecto), Kalimete (local intacto en dev)
 - **Causa**: Usuario: ¿plugin listo para producción? ¿dónde está el ZIP?
 - **Validación**: mode local=dev + api_url 172.19.0.1:8100 ✓; prod-simulado=public + erpipos ✓; php -l 50 OK; tests 8/8; zip integrity OK; WP lee headers (ERP Commerce Suite v4.1.1, TextDomain erp-suite); scan secrets: 0 reales (solo forms de login de clientes)
 - **Estado**: ✅ listo para instalar en producción. Nota: en prod el admin debe configurar la api_key del ERP en Conexión ERP + la key LLM del chatbot; nginx de prod debería bloquear debug.log y uploads/erp-suite-connector/ (el ZIP lleva .htaccess+index.php para Apache)
@@ -2354,16 +2369,16 @@
 
 ### [23:58] - Key coder propia + git init armada-godot (auditoría Victoria)
 - **Tipo**: config | seguridad | procedencia
-- **Que**: (a) key `kalimete` (coder) creada en gateway Victoria; `opencode.jsonc`: apiKey nueva en `vllm`+`vllm-lan` + `instructions` absoluta (backup `.bkup-20261002-2358-kalimete-key`); la admin de alfredo se conserva (reiniciar TUI para tomar la nueva); (b) `git init` en `~/armada-godot` + `.gitignore` Godot (`.godot/`, `*.backup`, `*.bak`) + commit inicial (Mario Bros sin control de versiones; ledger `armada-godot/AGENTS.md` ya cubría `mario_bros/`, no se duplicó).
+- **Que**: (a) key `kalimete` (coder) creada en gateway Victoria; `opencode.jsonc`: apiKey nueva en `vllm`+`vllm-lan` + `instructions` absoluta (backup `.bkup-20261002-2358-Kalimete-key`); la admin de alfredo se conserva (reiniciar TUI para tomar la nueva); (b) `git init` en `~/armada-godot` + `.gitignore` Godot (`.godot/`, `*.backup`, `*.bak`) + commit inicial (Mario Bros sin control de versiones; ledger `armada-godot/AGENTS.md` ya cubría `mario_bros/`, no se duplicó).
 - **Verificado**: JSON válido; `/v1/usage` 200 con la nueva.
 
 ## 2026-10-01
 
 ### [23:55] - ZionV CRM 1.56.3: auditoría de discrepancias docs vs live — welcome notice → Configuración unificada
-- **Tipo**: fix | docs | ui (TARGET=kalimete local; repos warcold/zionv-crm + armada-sync)
+- **Tipo**: fix | docs | ui (TARGET=Kalimete local; repos warcold/zionv-crm + armada-sync)
 - **Modificado**:
   - **Hallazgo del owner confirmado**: README decía "Integraciones configurables desde wp-admin → Estado del sistema" (era 1.54) pese a que desde 1.56.0 toda la configuración vive en `/crm/configuracion/`. Auditoría completa encontró 9 puntos stale: README (3: header integraciones, selector "desde el Diagnóstico" —vive en tab Calendario desde 1.55.1—, desinstalación sin matiz), DEPLOY-GUIA (6: sección Configurar + Google/MS365/Nextcloud + selector + uninstall + troubleshooting apuntando a Estado del sistema).
-  - **Código**: `WelcomeNotice.php` — botón "Configurar correo e integraciones" apuntaba a `admin.php?page=zion-crm-status`; ahora a `/crm/configuracion/` (`CrmSettingsPage::ROUTE`, URL verificada live con `wp eval`: `https://zionv.kalimete.local/crm/configuracion/`). Docblock actualizado. Banner puente de AppShell queda como fallback correcto (solo renderiza sin parche).
+  - **Código**: `WelcomeNotice.php` — botón "Configurar correo e integraciones" apuntaba a `admin.php?page=zion-crm-status`; ahora a `/crm/configuracion/` (`CrmSettingsPage::ROUTE`, URL verificada live con `wp eval`: `https://zionv.Kalimete.local/crm/configuracion/`). Docblock actualizado. Banner puente de AppShell queda como fallback correcto (solo renderiza sin parche).
   - **Verificado en código**: el toggle `delete_data_on_uninstall` vive SOLO en Configuración → General (render_tab_general heredado; Estado del sistema no tiene tab General) — DEPLOY-GUIA decía "en Estado del sistema", corregido.
   - **Plugin 1.56.2→1.56.3** (commit `5d3efab` pushed, ZIP `export/zionv-crm-1.56.3.zip` 7.3M sha256 `e0b730d8…` sin secrets, fix incluido): README + DEPLOY-GUIA + changelogs; `php -l` OK; live 1.56.3 activo, 302 dashboard + 302 configuración.
   - **Agente + harness curados**: versiones 1.56.3/`5d3efab`/sha nuevo + lección nueva ("docs deben seguir la superficie canónica; cada cambio de 'dónde vive X' actualiza README+DEPLOY-GUIA+welcome notice+changelogs en el mismo commit").
@@ -2375,9 +2390,9 @@
 ## 2026-10-14
 
 ### [23:55] - Nuevo subagente Intigriti (bug bounty, proyecto ~/dev/ethical-hacking) + auditoría de flota limpia
-- **Tipo**: agente | flota | seguridad (TARGET=kalimete local)
-- **Modificado**: `agents/intigriti.md` (NUEVO, temp 0.1, steps 30, edit/write deny + bash/webfetch allow) + symlink `~/.config/opencode/agent/intigriti.md` + `harness/intigriti.harness.json` (NUEVO) + `harness/kalimete.harness.json` (subagentes 18→19, scope_agentes) + `agents/kalimete.md` (frontmatter permission.task +Intigriti, counts 18→19, tabla subagentes, infra 0.1, harness central+20, label 20 hijos) + `MAPA.md` (fila intigriti); backups .bkup-20261008-intigriti en kalimete.md/harness central/MAPA.md
-- **Afecta a**: kalimete (nueva delegación posible), flota 18→19 subagentes
+- **Tipo**: agente | flota | seguridad (TARGET=Kalimete local)
+- **Modificado**: `agents/intigriti.md` (NUEVO, temp 0.1, steps 30, edit/write deny + bash/webfetch allow) + symlink `~/.config/opencode/agent/intigriti.md` + `harness/intigriti.harness.json` (NUEVO) + `harness/Kalimete.harness.json` (subagentes 18→19, scope_agentes) + `agents/Kalimete.md` (frontmatter permission.task +Intigriti, counts 18→19, tabla subagentes, infra 0.1, harness central+20, label 20 hijos) + `MAPA.md` (fila intigriti); backups .bkup-20261008-intigriti en Kalimete.md/harness central/MAPA.md
+- **Afecta a**: Kalimete (nueva delegación posible), flota 18→19 subagentes
 - **Causa**: pedido del owner — agente experto en Intigriti para ethical-hacking, enfocado en PII leaks, priv esc horizontal/vertical, SQLi, Log4Shell, SIN ROMPER NADA
 - **Estado**: ✅ CoC (go.intigriti.com/coc, v2026-03-09) + Researcher T&C (go.intigriti.com/tac, v2023-08-21) leídos completos e incorporados como reglas duras del agente (scope primero, no-DoS, PII mínimo, pivoting=parar, 48h, AI disclosure, confidencialidad); auditoría previa de flota: 19/19 harness JSON válidos, symlinks OK, temperaturas conformes, git limpio
 - **Notas**: el agente NUNCA sube submits a la plataforma (prepara el report, el usuario lo sube); tools del framework (nuclei/subfinder/etc.) pendientes de verificación en vivo; flags no-destructivos documentados por herramienta (sqlmap sin --dump, nuclei -rl 10, ffuf -rate 50)
@@ -2397,11 +2412,11 @@
 ### [23:55] - Flota: agente MaganTech (#20, website cliente) + dominios locales por proyecto + curación de deriva
 - **Tipo**: agente | docs | infra | red
 - **Modificado**:
-  - **Agente `MaganTech`** (#20): `agents/magantech.md` + `harness/magantech.harness.json` (symlink `~/.config/opencode/agent/magantech.md` vivo). `opencode agent list` confirma `MaganTech (subagent)` → flota = **1 primary + 20 subagentes**; `permission.task` de kalimete corregida a `"MaganTech"` (name-match exacto; antes `"Magantech"`).
-  - **Dominios locales por proyecto** (política owner 2026-10-17): verificados 200 → `wordpress`, `zionv`, `magantech`, `erp` `.kalimete.local` (mkcert + nginx-TLS front-door). Template `docs/NUEVO-WEBSITE-TEMPLATE.md` **§8 "Dominio local"** añadido (131→171 líneas) para futuros; documentado en MAPA.
-  - **Curación de deriva** (reportada por subagentes; sin falsos positivos): `MAPA.md` (armada-suite 5.3.2→5.4.1, HEAD b4c2a89→dc46307, ZIP 5.4.1 sha `4bb2fa2c…`, regresión 25/25, dominios, filas zionv/magantech); `wordpress-dev.md` + harness (5.3.5→5.4.1, vivo 2026-10-17); `plugins-disponibles/armada-suite.txt` (5.4.1); `kalimete.md` (20 subagentes, vía MCP muerta documentada).
+  - **Agente `MaganTech`** (#20): `agents/magantech.md` + `harness/magantech.harness.json` (symlink `~/.config/opencode/agent/magantech.md` vivo). `opencode agent list` confirma `MaganTech (subagent)` → flota = **1 primary + 20 subagentes**; `permission.task` de Kalimete corregida a `"MaganTech"` (name-match exacto; antes `"Magantech"`).
+  - **Dominios locales por proyecto** (política owner 2026-10-17): verificados 200 → `wordpress`, `zionv`, `magantech`, `erp` `.Kalimete.local` (mkcert + nginx-TLS front-door). Template `docs/NUEVO-WEBSITE-TEMPLATE.md` **§8 "Dominio local"** añadido (131→171 líneas) para futuros; documentado en MAPA.
+  - **Curación de deriva** (reportada por subagentes; sin falsos positivos): `MAPA.md` (armada-suite 5.3.2→5.4.1, HEAD b4c2a89→dc46307, ZIP 5.4.1 sha `4bb2fa2c…`, regresión 25/25, dominios, filas zionv/magantech); `wordpress-dev.md` + harness (5.3.5→5.4.1, vivo 2026-10-17); `plugins-disponibles/armada-suite.txt` (5.4.1); `Kalimete.md` (20 subagentes, vía MCP muerta documentada).
   - **Commits repos plugins (locales, sin push)**: armada-suite `dc46307` (docs CONTROL-PLANE nuevo + REMOTE-OPS curado; sin remote); zionv `9698224` (`.gitignore *.bkup*`) — main ahead 2, push pendiente autorización owner.
-- **Afecta a**: kalimete (enrutado de flota), hub WP (~/dev/wordpress), website MaganTech, futuros websites
+- **Afecta a**: Kalimete (enrutado de flota), hub WP (~/dev/wordpress), website MaganTech, futuros websites
 - **Causa**: owner — "cada proyecto debe tener su agente propio y su dominio local preparado y funcionando; actualiza y documenta todo lo necesario para que los agentes tengan la información correcta"
 - **Estado**: ✅ verificado (agent list 1+20; dominios 4/4 = 200; JSONs válidos; symlink vivo)
 - **Notas**: pendientes siguen — rotar App Password Victoria (prod) + admin preprod; ventana preprod 5.4.0→5.4.1; push zionv (ahead 2). Bridge MCP `wp-magantech` y variante B de escritura de plugins: esperan OK del owner.
@@ -2409,9 +2424,9 @@
 ## 2026-10-16
 
 ### [23:55] - Fase 3 ERP implementada y enviada a Juan (G1+G2+G3+G4+G6 vía dev/ecomm-erp) + limpieza export/ plugin
-- **Tipo**: feature | fix | integración | wordpress-dev (TARGET=kalimete; upstream soycarlosjerez-hub/sistema-facturacion)
+- **Tipo**: feature | fix | integración | wordpress-dev (TARGET=Kalimete; upstream soycarlosjerez-hub/sistema-facturacion)
 - **Modificado**: ERP `dev/ecomm-erp` — 6 commits pushed `7a4060f..8ae9bb2`: `ff64301` fix(tienda) G6 ajusteInventario (**4 bugs, no 2**: notas sin ??, linea_negocio inexistente, tipo fuera del enum entrada/salida, almacen_id sin default), `601959e` feat(webhooks) comando retry-failed, `5ace5aa` feat(webhooks) evento invoice.issued post-NCF, `f961503` feat(webhooks) CRUD webhook endpoints API (staff only, secret nunca en respuestas), `e495454` feat(ecomm) PATCH orders/{id}/cancel (scoping auth.cliente, ventana 120min, stock repuesto + order.cancelled), `8ae9bb2` test 11 feature tests. Plugin: `~/dev/wordpress/export/` limpiado (5 zips era pre-rename → `backups/export-legacy/`), DEPLOY-GUIA.md actualizado
-- **Afecta a**: erpipo preprod (kalimete) + plugin Armada Suite 5.3.0 (agente IA ahora tiene cancelar pedido + ciclo webhooks completo del lado ERP)
+- **Afecta a**: erpipo preprod (Kalimete) + plugin Armada Suite 5.3.0 (agente IA ahora tiene cancelar pedido + ciclo webhooks completo del lado ERP)
 - **Causa**: pedido del owner — el plugin 5.3.0 necesita del ERP los gaps de RECOMENDACIONES-FASE3-AGENTE que Juan aún no implementó; PR #14 de Juan no rompió el contrato del plugin (verificado: su cambio fue en API interna del panel)
 - **Estado**: ✅ verificado: tests 16/16 (11 nuevos + 5 baseline Juan sin regresión), smoke en vivo (ajuste 4×200 + 422 ajeno, CRUD webhook 201/200/200/200 con limpieza, retry-failed OK, route:cache restaurado, queue:restart, migrate:status sin pendientes, cero migraciones); zip 5.3.0 validado al día con HEAD c084cdb (los 2 archivos "borrados" los auto-regenera el plugin — tree limpio solo)
 - **Notas**: export/ confirmado ruta canónica (decisión owner 2026-10-01, sin huérfanos). Adopción Juan: review dev/ecomm-erp → PR a main/develop, sin migrate, queue:restart tras deploy. Pendientes: G5 (fase futura), ventana cancelación como constante (mover a settings si la quiere por-tenant), ancla e-CF de invoice.issued. Trabajo delegado a subagente ERP Dev (5 sesiones por límite de pasos).
@@ -2426,7 +2441,7 @@
   - `class-erpc-admin.php`: `ajax_test_connection()` usa constante `ERPC_API_URL`
   - `class-erpc-admin.php`: `sanitize_settings()` elimina `api_url`
   - `load_settings()`: Defaults sin `api_url`
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: Arquitectura multi-tenant: **API URL FIJA** (mismo ERP para todos), solo **API Key + Tenant ID + Brand** por negocio
 - **Estado**: ✅ API URL hardcodeada (`https://erpipos.armada.do/api`), solo API Key + Tenant ID + Brand editables, Test Connection funcional
 - **Notas**:
@@ -2443,7 +2458,7 @@
 ### [23:50] - erp-chatbot v1.4.3: identidad Carlos sincronizada + doc agente wordpress-dev actualizada
 - **Tipo**: proyecto | config+doc | wordpress
 - **Modificado**: erp-chatbot 1.4.2→1.4.3 (~/dev/wordpress: defaults de identidad en código sincronizados con DB — Carlos/Asesor de ventas/perfil+saludo masculinos/voz masculina, antes Carla/femenina; regla 3 prompt neutralizada "práctica"→"eficaz"; ia.max_tokens DB 1024→350 que pisaba el default). agents/wordpress-dev.md (puerto 8091 real, WP 7.1.1/Elementor 4.2.4/EMCP 3.16.1, plugins custom erp-chatbot v1.4.3 + erp-ecomm-connector v3.14.0 documentados, LLM LAN 10.0.0.5:8010).
-- **Afecta a**: kalimete (wordpress-local :8091, chatbot identidad)
+- **Afecta a**: Kalimete (wordpress-local :8091, chatbot identidad)
 - **Causa**: Usuario cambió identidad del agente por defecto vía admin (Carla→Carlos); auditoría encontró código/DB desalineados (defaults viejos, max_tokens DB viejo pisando el 350, regla 3 en femenino) y doc del subagente desactualizada (8090, versiones viejas, sin mencionar plugins custom).
 - **Verificación**: settings() fusionada Carlos/masculina/350 ✅; system_prompt contiene "Carlos"+"eficaz" sin "práctica" ✅; defaults código==DB ✅; suite 7/7 PASS ✅; php -l OK.
 - **Estado**: ✅ sincronizado (commit pendiente de prueba del usuario en navegador)
@@ -2451,7 +2466,7 @@
 ### [23:50] - erp-chatbot v1.0.1: key de servicios activa + veredicto OpenClaw vs hub propio
 - **Tipo**: proyecto | IA | decisión de arquitectura | wordpress
 - **Modificado**: plugin erp-chatbot (~/dev/wordpress: defaults + options con key de servicios vllm-key-e4735…). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + gateway LLM victoria 10.0.0.5:8010)
+- **Afecta a**: Kalimete (wordpress-local :8091 + gateway LLM victoria 10.0.0.5:8010)
 - **Causa**: Usuario pidió validar la key de servicios y decidir: ¿integramos nosotros o usamos OpenClaw (plugin como canal del hub OpenClaw)?
 - **Key validada**: la key de servicios respondió una completion real en Qwen3.6-35B ✅ (tiene permiso LLM, a diferencia de la readonly). E2E vía admin-ajax: "Busca una impresora" → bot con 3 productos REALES del ERP (Canon G1110 RD$9,000, EcoTank L1250 RD$9,500, Brother T730DW RD$17,000) ✅. El bot está operativo.
 - **Evaluación OpenClaw** (docs oficiales, revisadas hoy): gateway WS :18789 con superficies WhatsApp vía Baileys (cliente NO oficial), Telegram vía grammY, Discord, WebChat estático; pairing de dispositivos; sesiones por agente/sender. VEREDICTO: NO usar OpenClaw como gateway del plugin — (1) es asistente personal/single-user, no multi-tenant de negocio; (2) WhatsApp Baileys = riesgo de baneo para negocio (producción exige Cloud API oficial); (3) su WebChat es genérico, incompatible con nuestro widget (identidad, voz teléfono, carrito localStorage); (4) el pairing es para dueños, no clientes anónimos de tienda; (5) habría que reescribir las ERP tools en TypeScript duplicando el cliente PHP que ya tenemos.
@@ -2472,7 +2487,7 @@
 - **Afecta a**: preprod :8093 (plugin 5.4.2 + modo dev), dev lab :8091 (verificado), docs del proyecto MaganTech
 - **Causa**: owner (update del plugin en local y public para pruebas)
 - **Estado**: ✅ verificado (wp plugin list 5.4.2, smoke 100%, config_fetched_at bump, logs auto_sync, brand MaganTech)
-- **Notas**: **PROD queda pendiente del owner** — flujo §(b) manual documentado: wp-admin → Plugins → Añadir nuevo → Subir plugin → `export/armada-suite-5.4.2.zip` (WP reemplaza y reactiva solo). Tras subirlo kalimete verifica con `smoke-prod.sh` (ops/status debe reportar plugin 5.4.2; la marca seguirá "Tienda" hasta el fix de datos de Juan Carlos — el mensaje UX nuevo "el ERP no envió nombre del negocio" lo dirá explícito). Rollback: subir ZIP 5.4.1.
+- **Notas**: **PROD queda pendiente del owner** — flujo §(b) manual documentado: wp-admin → Plugins → Añadir nuevo → Subir plugin → `export/armada-suite-5.4.2.zip` (WP reemplaza y reactiva solo). Tras subirlo Kalimete verifica con `smoke-prod.sh` (ops/status debe reportar plugin 5.4.2; la marca seguirá "Tienda" hasta el fix de datos de Juan Carlos — el mensaje UX nuevo "el ERP no envió nombre del negocio" lo dirá explícito). Rollback: subir ZIP 5.4.1.
 
 ## 2026-10-17
 
@@ -2500,7 +2515,7 @@
   - **opencode.jsonc**: MCP `blender` añadido (`uvx mcp-for-blender` + BLENDER_HOST/PORT; backup `opencode.jsonc.bkup-blender-mcp-20261018`; JSONC validado: mcp = godot, blender). Requiere restart de sesión para cargarse.
   - **Agente `game-studio`** (`agents/game-studio.md`, symlink `~/.config/opencode/agent/`): fábrica verde 7 fases (GDD → concept art victoria → assets 3D Blender+CC0 → mundo procedural → ensamblado Godot → QA visual screenshots → audio → export). Límite vs agente Godot: existentes = Godot; verde completo = Game Studio. temp 0.6/top_p 0.95 (rol creativo), steps 60. Harness `harness/game-studio.harness.json`.
   - **Workspace**: `~/dev/godot/studio/` (README; `current` symlink se crea con el primer juego; el MCP godot apunta a UN proyecto — cambiar `-p` al iniciar sesión Game Studio).
-- **Afecta a**: kalimete (stack local + config opencode + agentes); victoria solo como consumidor read-only de skills existentes (art/voice)
+- **Afecta a**: Kalimete (stack local + config opencode + agentes); victoria solo como consumidor read-only de skills existentes (art/voice)
 - **Causa**: owner (crear la capacidad de generar juegos completos con IA)
 - **Estado**: ✅ verificado (Blender TCP :9876 live, get_scene_info OK, JSONC OK, harness JSON OK, symlink OK). Pendiente: sesión opencode nueva para cargar MCP blender; update menor godot-mcp 1.12.3→1.12.9 opcional.
 - **Notas**: **Fase 2 (requiere auth owner)**: image→3D local en GB10 victoria (Hunyuan3D 2.1 / TRELLIS vía ComfyUI :8188) — victoria read-only por defecto; reportado, NO implementado. Blender quedó corriendo bajo Xvfb (PID sesión actual) — detener con `stop-blender.sh` si sobra.
@@ -2508,7 +2523,7 @@
 ### [23:45] - erp-chatbot v1.2.0: "Ver en tienda" (del chat a la tienda con filtro)
 - **Tipo**: proyecto | feature | UX conversacional | wordpress
 - **Modificado**: erp-chatbot 1.1.9→1.2.0 (~/dev/wordpress: tienda_url en respuestas con término, helper URL, botón en widget, link en WhatsApp, prompt, blindaje JSON). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, widget + canal WhatsApp)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget + canal WhatsApp)
 - **Causa**: Usuario: al encontrar lo buscado, el bot debe llevar a la sección (tienda con filtro) para continuar desde ahí.
 - **Solución**: el motor adjunta la URL de productos con `?buscar=` normalizado (el que matchea, no el plural del usuario); widget con botón, WhatsApp con link en texto.
 - **Verificación**: 3/3 tienda_url correcta ✅; /productos/?buscar=impresora filtra reales ✅; botón JS/CSS sirviéndose ✅; php + node OK.
@@ -2518,22 +2533,22 @@
 
 - **Tipo**: plugin | feature | templates
 - **Modificado**: `templates/packs/tech/pack.css` (nuevo, 6.9 KB, overlay frío #2563eb), `templates/packs/neutral/pack.css` (nuevo, 6.9 KB, overlay neutro #475569), `src/Modules/ArmadaSuite/Core/TemplatePacks.php` (registra tech + neutral con colors/dir/url), `src/Modules/ArmadaSuite/Core/Main.php` (enqueue `erpc-pack-styles` condicional tras `erpc-styles`)
-- **Afecta a**: kalimete (dev lab), preprod sitios WP
+- **Afecta a**: Kalimete (dev lab), preprod sitios WP
 - **Causa**: Armada Templates agent detectó packs faltantes (tech, neutral) y enqueue `erpc-pack-styles` ausente — completados para que Zion CRM 2.0.0 tenga los 3 packs vendibles (default/tech, restaurant, neutral/servicios)
 - **Estado**: ✅ completado — ZIP limpio regenerado `zion-crm-2.0.0-clean.zip` (10,059,849 B, sha256 `a4762290…`, 2450 archivos, sin secrets, CERO referencias a negocios)
 - **Notas**: (1) Pack `tech` (overlay frío #2563eb) para tecnología/SaaS, `neutral` (overlay neutro #475569) para servicios profesionales, `restaurant` (overlay cálido #d64545) existente. (2) Cada pack registrado con `colors` (primary/secondary), `dir`, `url`, `hero`, `cta`, `vertical`. (3) `Main.php` encola `erpc-pack-styles` condicional tras `erpc-styles` si pack activo ≠ default. (4) ZIP limpio verificado: CERO referencias a `micaserogou`/`MaganTech`/`magan`.
 
 ### [23:45] - Mantenimiento: hardening WordPress + Alfredo Ecomm; upstream ERP 100% al día; Woodly PAUSADO
-- **Tipo**: servicio | sync | docs (TARGET=kalimete local)
+- **Tipo**: servicio | sync | docs (TARGET=Kalimete local)
 - **Modificado**:
   - **WordPress** (commit WP `040682a`): restaurados `SiteBackup/storage/.htaccess`+`web.config` (borrados sin commit desde oct-09, verificados disco+container vía bind-mount); regresión **19/19 PASS**; self-heal confirmado (key `features` ausente → defaults-ON por código); ZIP 5.3.1 verificado (2.201.803 bytes, sha256 `d018a73b…`) con gap documentado (excluye storage/); docs agente+harness sync a WP 7.1.3 / plugin 5.3.1 / ping-erp ~250-300ms
   - **Alfredo Ecomm** (commit `b6d9e70`): smoke.sh 4→5 checks (añadido categories, verificado 5/5); **healthchecks docker-compose** api (`wget --spider /health`) + redis (`redis-cli ping`) — recreate sin `--build`, los 3 containers `(healthy)`; **drifts conciliados**: schema 11-vs-12 era falso positivo (`_prisma_migrations`), imagen build 2026-10-01 IN SYNC con src (solo dist/ local stale, gitignored); docs agente+harness actualizadas
   - **ERP Dev** (solo lectura + fetch): upstream Juan Carlos verificado — **0 commits de main nos faltan** (PR #14 suyo ya integró nuestra Fase 2/3); **G6 corregido por NOSOTROS** (`ff64301`) y live en preprod — `ajusteInventario` ya responde; G1-G4 implementados y pushed (solo G5 pendiente); docs erp-dev.md+harness curadas (HEAD `2306b64`, tabla `business_instances`, key ecomm-test-customer stale 401, latencia `/up` ~130ms directo vs 490-1140ms TLS, mailpit 7.41% CPU anomalía)
   - **Woodly**: PAUSADO por owner — nota en `agents/woodly.md` + `paused: true` en harness (con backups .bkup)
-- **Afecta a**: kalimete local (stacks WP :8091, alfredo-ecomm :3004, erpipo :8100); repo armada-sync (5 docs + 3 harness)
+- **Afecta a**: Kalimete local (stacks WP :8091, alfredo-ecomm :3004, erpipo :8100); repo armada-sync (5 docs + 3 harness)
 - **Causa**: orden del owner — revisar y aplicar mejoras en WordPress y Alfredo Ecomm, validar upstream GitHub de Juan Carlos, descartar Woodly por ahora
 - **Estado**: ✅ todo verificado LIVE (smoke 5/5, regresión 19/19, 3 containers healthy, fetch upstream OK, JSON harness válidos)
-- **Notas**: pendientes para el owner: (1) git remote GitHub privado para alfredo-pro-ecomm (hoy solo vive en kalimete); (2) gap ZIP 5.3.1 storage/ → corregir inclusión en próximo release (NO regenerar el liberado); (3) deuda P3 espejo `tenant.api_key` — bloqueada hasta que el ERP lea solo `public.api_key`; (4) mailpit 7.41% CPU + latencia preprod → investigar lado ERP Dev/Juan Carlos; (5) del ERP solo queda G5 (teléfono/stock-sucursal/detalle). Subagentes WordPress y Alfredo Ecomm alcanzaron límite de pasos 2× cada uno — la parte editorial de docs la completó kalimete como hub (patrón reporta→aplica).
+- **Notas**: pendientes para el owner: (1) git remote GitHub privado para alfredo-pro-ecomm (hoy solo vive en Kalimete); (2) gap ZIP 5.3.1 storage/ → corregir inclusión en próximo release (NO regenerar el liberado); (3) deuda P3 espejo `tenant.api_key` — bloqueada hasta que el ERP lea solo `public.api_key`; (4) mailpit 7.41% CPU + latencia preprod → investigar lado ERP Dev/Juan Carlos; (5) del ERP solo queda G5 (teléfono/stock-sucursal/detalle). Subagentes WordPress y Alfredo Ecomm alcanzaron límite de pasos 2× cada uno — la parte editorial de docs la completó Kalimete como hub (patrón reporta→aplica).
 
 ## 2026-10-09
 
@@ -2564,8 +2579,8 @@
 
 ### [23:45] - Departamento Ethical Hacking: audit completo + reparaciones (wpscan, metasploit, limpieza 887MB)
 - **Tipo**: infra | seguridad | herramientas
-- **Modificado**: wpscan 3.8.28→4.1.0 (reparado gem dependency addressable), metasploit-framework 6.5.3 (instalado, reemplaza framework2 roto), outputs Intigriti limpiados (250 dominios BMW, 887MB liberados), trufflehog (pip 2.2.1 incompatible con Py3.13 → pendiente), kalimetehunt.sh framework bug bounty verificado
-- **Afecta a**: kalimete (dev/ethical-hacking)
+- **Modificado**: wpscan 3.8.28→4.1.0 (reparado gem dependency addressable), metasploit-framework 6.5.3 (instalado, reemplaza framework2 roto), outputs Intigriti limpiados (250 dominios BMW, 887MB liberados), trufflehog (pip 2.2.1 incompatible con Py3.13 → pendiente), Kalimetehunt.sh framework bug bounty verificado
+- **Afecta a**: Kalimete (dev/ethical-hacking)
 - **Causa**: Preparar el departamento de ethical hacking para reanudar proyectos Intigriti. wpscan rota por gem conflict (opt_parse_validator/cms_scanner), metasploit ausente (solo framework2 roto), outputs antiguos acumulados sin uso desde Feb 2026.
 - **Cambios realizados**:
   - ✅ wpscan: `gem install addressable` + `apt-get install --reinstall wpscan` → v4.1.0 Automattic OK
@@ -2575,7 +2590,7 @@
   - ✅ Prueba de fuego: 20 herramientas verificadas (nuclei v3.11.0/13326 templates, ffuf 2.1.0, feroxbuster 2.13.1, sqlmap 1.10.6, dalfox 2.9.3, hashcat 7.1.2, crackmapexec, burpsuite 2026.3.2, zaproxy 2.17.0, amass 3.19.2, subfinder 2.11.0, httpx, katana 1.7.0, puredns 2.1.1, naabu 2.3.7, gobuster 3.8.2, gitleaks 8.30.1, mitmproxy 12.2.3, nikto, wfuzz, dirb, arjun 2.2.7, bandit, safety, scapy, impacket, hashcat, john, crunch → TODAS OK)
   - ✅ pm3 (Proxmark3): instalado, sin dispositivo USB → marcado como "dejar sin tocar" (usuario confirmó)
 - **Estado**: ✅ sincronizado (todo OK excepto trufflehog py)
-- **Notas**: kalimetehunt.sh framework está listo pero carpetas vacías (recon/, scanning/, exploitation/, reports/, targets/, logs/) — sin actividad desde Feb 2026. Cron de hacking: ninguno (solo sync.sh cada 5 min). Listo para iniciar caza en Intigriti.
+- **Notas**: Kalimetehunt.sh framework está listo pero carpetas vacías (recon/, scanning/, exploitation/, reports/, targets/, logs/) — sin actividad desde Feb 2026. Cron de hacking: ninguno (solo sync.sh cada 5 min). Listo para iniciar caza en Intigriti.
 
 ## 2026-09-27
 
@@ -2585,12 +2600,12 @@
 - **Afecta**: prod magantech.com.do (chatbot activo sin config LLM) + roadmap del plugin (Armada Suite)
 - **Causa**: owner reportó seguir viendo "Configura el endpoint LLM en Ajustes → Asistente IA..." y pidió evaluar configurar los parámetros con las herramientas que ofrece Victoria Server
 - **Estado**: ✅ diagnóstico cerrado (output literal de prod capturado); ⚠️ fix de prod pendiente (ventana + key)
-- **Notas**: Veredicto: prod corre plugin 5.4.2 (ZIP del 10-18) SIN el fix del mensaje (vive solo en source+preprod) y SIN config LLM → produce el texto viejo exacto; preprod :8093 OK (LLM real, ambas entradas). BLOQUEO: `Remote/Guard.php::blocked_subkeys()` deniega SIEMPRE `ia.api_url/api_key/model` vía ops → la directiva "configurar con las herramientas" requiere cambio de código Armada Suite (api_url/model editables con dry-run+confirm; api_key write-only que jamás se lea de vuelta). Victoria (solo-lectura): gateway sano LAN (0.03s) + público (3.4s); model canónico `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` (pinear explícito — el gateway normaliza el id en la respuesta); key `kalimete` activa pero COMPARTIDA (2 slots concurrentes — riesgo 503 mutuo chatbot↔kalimete) → recomendada key dedicada `magantech` (rol services) que solo el owner crea en panel LAN victoria.local/admin; tool_call del gateway verificado funcional (visión MCP viable; faltan manifest de tools + auth por negocio + gates de escritura). Deriva detectada en Environment.php get_llm_model() (default sin -A3B ni -normal) — fix Armada Suite. Fix HOY de prod (manual, sin deploy): wp-admin prod → Ajustes → Asistente IA (URL https://victoria.armada.do/v1 + key + model -normal) — el código viejo con ia completa en DB funciona.
+- **Notas**: Veredicto: prod corre plugin 5.4.2 (ZIP del 10-18) SIN el fix del mensaje (vive solo en source+preprod) y SIN config LLM → produce el texto viejo exacto; preprod :8093 OK (LLM real, ambas entradas). BLOQUEO: `Remote/Guard.php::blocked_subkeys()` deniega SIEMPRE `ia.api_url/api_key/model` vía ops → la directiva "configurar con las herramientas" requiere cambio de código Armada Suite (api_url/model editables con dry-run+confirm; api_key write-only que jamás se lea de vuelta). Victoria (solo-lectura): gateway sano LAN (0.03s) + público (3.4s); model canónico `nvidia/Qwen3.6-35B-A3B-NVFP4-normal` (pinear explícito — el gateway normaliza el id en la respuesta); key `kalimete` activa pero COMPARTIDA (2 slots concurrentes — riesgo 503 mutuo chatbot↔Kalimete) → recomendada key dedicada `magantech` (rol services) que solo el owner crea en panel LAN victoria.local/admin; tool_call del gateway verificado funcional (visión MCP viable; faltan manifest de tools + auth por negocio + gates de escritura). Deriva detectada en Environment.php get_llm_model() (default sin -A3B ni -normal) — fix Armada Suite. Fix HOY de prod (manual, sin deploy): wp-admin prod → Ajustes → Asistente IA (URL https://victoria.armada.do/v1 + key + model -normal) — el código viejo con ia completa en DB funciona.
 
 ### [23:35] - Star Fox: enemigos Kenney reales + Arwing (screenshot combate)
 - **Tipo**: feature/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (3 enemy.tscn con OBJ, player revert a Arwing)
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: racer Kenney ilegible de cerca; mix final: jugador Arwing + enemigos Kenney
 - **Estado**: ✅ verificado (screenshot Arwing vs nave Kenney + score por combate, log limpio)
 - **Notas**: Kenney Space Kit CC0 en models/ (cero IP). Detalle en `docs/CHANGELOG.md` + `docs/ASSETS.md`.
@@ -2600,7 +2615,7 @@
 ### [23:30] - erp-chatbot v1.1.9: anti-eco (el bot ya no se escucha a sí mismo)
 - **Tipo**: proyecto | fix | voz | wordpress
 - **Modificado**: erp-chatbot 1.1.8→1.1.9 (~/dev/wordpress: half-duplex mic/voz, barge-in solo manual, filtro anti-eco por texto). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, modo teléfono del chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, modo teléfono del chatbot)
 - **Causa**: Usuario: el agente se escuchaba mientras respondía (eco por bocinas → se respondía solo).
 - **Solución**: mic detenido mientras el bot habla + reanude al terminar; tap manual = única interrupción; filtro que ignora transcripciones que repiten lo dicho (≥60% overlap) o ruido.
 - **Verificación**: batería anti-eco 5/5 ✅; node --check OK.
@@ -2617,17 +2632,17 @@
 ### [23:30] - Plugin NUEVO erp-chatbot v1.0.0: Agente de Negocio Personalizable (IA + voz + ventas reales)
 - **Tipo**: proyecto | feature | IA | wordpress
 - **Modificado**: plugin NUEVO ~/dev/wordpress/wp-content/plugins/erp-chatbot/ (core + engine + admin + widget JS/CSS + changelog). Activado en wordpress-local. **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + gateway LLM victoria 10.0.0.5:8010)
+- **Afecta a**: Kalimete (wordpress-local :8091 + gateway LLM victoria 10.0.0.5:8010)
 - **Causa**: Usuario pidió bot vendedor: chat + voz streaming tipo teléfono (no videntes), que use SOLO lo que el ecomm maneja (no adivino), cierre de venta PENDIENTE para verificación del manager. Diseño del usuario: el plugin ES el bot completo, OpenAI-compatible (URL+key+modelo configurables), identidad configurable (nombre/foto/perfil).
 - **Solución**: motor PHP con protocolo de herramientas JSON (servidor: buscar_productos/info_tienda contra el ERP real; navegador: carrito interop localStorage + checkout vía erpc_checkout → venta PENDIENTE con nota del manager); admin con tabs (IA/Identidad/Voz/Ventas, foto vía media library); widget con avatar, chat, TTS es-DO, STT streaming continuo con barge-in, modo teléfono, Alt+C, aria; rate limit 20/min; key server-side solo.
 - **Verificación**: php -l 3/3 + node --check OK; activado; widget cargando en la home; E2E del motor (con key operativa, no persistida): "busca una impresora" → bot respondió con 3 productos REALES del ERP con precios y stock reales (EcoTank L1250 RD$9,500, Canon PIXMA G1110 RD$9,000, Brother DCPT730DW RD$17,000) ✅; manejo de error 403 key readonly → mensaje claro al usuario ✅; fix del parseo del catálogo (ERP devuelve clave `productos`, precio string).
-- **Estado**: ⚠️ la key del usuario (vllm-key-9977…) es rol `readonly` en el gateway victoria → 403 model_forbidden para LLM. Opciones: (a) cambiar rol de la key en victoria.local/admin, (b) crear key nueva con permiso llm, (c) autorizar a kalimete a actualizar el rol. Prueba del usuario en navegador pendiente (voz requiere micrófono).
+- **Estado**: ⚠️ la key del usuario (vllm-key-9977…) es rol `readonly` en el gateway victoria → 403 model_forbidden para LLM. Opciones: (a) cambiar rol de la key en victoria.local/admin, (b) crear key nueva con permiso llm, (c) autorizar a Kalimete a actualizar el rol. Prueba del usuario en navegador pendiente (voz requiere micrófono).
 
 ### [23:30] - LIMPIEZA ZIP: Zion CRM 2.0.0-clean (cero referencias a negocios específicos)
 
 - **Tipo**: plugin | fix | limpieza
 - **Modificado**: `export/zion-crm-2.0.0-clean.zip` (10,052,868 B, sha256 `56768880...`) — eliminadas todas las referencias a `micaserogou`, `MaganTech` en comentarios/docs de: `pack.css`, `footer-shop.php`, `ApiClient.php`, `Shortcodes.php`, `TemplatePacks.php`, `connector.css`
-- **Afecta a**: kalimete (dev lab), preprod sitios WP
+- **Afecta a**: Kalimete (dev lab), preprod sitios WP
 - **Causa**: El ZIP original `zion-crm-2.0.0.zip` contenía referencias hardcodeadas a `micaserogou`/`MaganTech` en comentarios/docs — violaba el requisito de plugin genérico sin referencias a negocios específicos
 - **Estado**: ✅ verificado — `unzip -l` + `grep` confirman CERO referencias a `micaserogou`/`MaganTech`/`magan` en el ZIP limpio
 - **Notas**: (1) Referencias eliminadas de: `pack.css` (comentario verificación), `footer-shop.php` (ejemplo MaganTech), `ApiClient.php` (comentario flujo site-level), `Shortcodes.php` (contrato flujo), `TemplatePacks.php` (ejemplos MaganTech), `connector.css` (comentarios fix site-level). (2) ZIP limpio listo para deploy a CUALQUIER cliente sin contaminación de datos de referencia. (3) El plugin unificado `zion-crm` v2.0.0 es ahora 100% genérico.
@@ -2648,7 +2663,7 @@
       - `05-iniciar-sesion---registro.json` → `[erpc_login]`
       - `06-mi-cuenta---perfil.json` → `[erpc_profile]`
     - `site-settings.json` — Config global (colores, tipografía, Elementor Canvas)
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: Usuario pidió **un solo import** + nombres genéricos (reutilizable para cualquier e-commerce, sin marca "MaganTech")
 - **Estado**: ✅ Kit ZIP limpio (8 archivos), JSON validado con Elementor 4.x (`prepare_import_template_data()`)
 - **Notas**:
@@ -2662,7 +2677,7 @@
 ### [23:30] - ERP Commerce Suite 4.1.0: admin consolidado (1 menú, 8 tabs reales) + fix crítico register_setting
 - **Tipo**: proyecto | feature | refactor | wordpress
 - **Modificado**: erp-commerce-suite 4.0.1→4.1.0. AdminMenu con 8 tabs reales (split de render_page legacy: ERPC_Admin→6 métodos, ERPCBot_Admin→5 métodos, ambos singleton); sanitize_unificado por marcador erpsuite_form en AdminMenu::register_settings (ÚNICO registro); Main::get_api_url sellado vía Environment; ApiClient image host vía Environment; Compat/Legacy.php retirado; mu-plugin erpc-local.php retirado (queda solo disable-mcp-host-guard.php)
-- **Afecta a**: kalimete (wordpress-local), producción futura
+- **Afecta a**: Kalimete (wordpress-local), producción futura
 - **Causa**: spec original usuario (1 plugin, panel minimalista por tabs) + items pendientes 4.1 documentados
 - **Fix crítico**: ambos admin legacy registraban register_setting sobre la MISMA option con sanitizers distintos — el último pisaba al otro y guardar desde una página BORRABA los campos de la otra (latente desde 4.0.0). Verificado con 3 escenarios: preservación mutua OK
 - **Validación**: php -l 50/50; regresión 8/8; 8 tabs render OK (form+nonce+marker); menú único (erp-chatbot eliminado, slug erp-suite sin conflicto); front/productos 200; REST 403; debug.log 404. Incidente durante el trabajo: restore temporal del admin original con Main ya en singletons → sitio caído ~2 min, reparado con el split correcto (lección: prep range off-by-one)
@@ -2684,7 +2699,7 @@
 ## 2026-09-10
 
 ### [23:27] - ZionV CRM 1.56.2: validación dónde quedamos + higiene desinstalación + agente/harness curados
-- **Tipo**: auditoría | fix | docs (TARGET=kalimete local; repos warcold/zionv-crm + armada-sync)
+- **Tipo**: auditoría | fix | docs (TARGET=Kalimete local; repos warcold/zionv-crm + armada-sync)
 - **Modificado**:
   - **Dónde quedamos**: plugin en 1.56.1 (`2601191`) con config unificada `/crm/configuracion/` (sidebar PHP 9 secciones/26 items + 6 tabs) + bundle parcheado (`__zionCfgUnified`); live healthy (Up 29h/34h), DB 1.24.0, 43 tablas, pretty, 302 sin sesión; GitHub al día; zips hasta 1.56.1.
   - **Por qué "escribir sobre el compilado"**: verificado exhaustivo (explore) — NO existe frontend React/TSX en ningún disco/ZIP/git (0 tsx/ts/vite.config/package.json, 0 sourcemaps, manifests huérfanos, fósiles jo-crm-root/localhost:8888; import 1.53.1 ya entró solo con `dist/`). El backend PHP SÍ está completo (1.5M, 24 migraciones, 34 controllers/123 rutas, auth 100%, sanitización por Service). Conclusión: continuar lo hecho ES correcto en PHP; en frontend la única vía temporal era el parche del bundle — la vía correcta a futuro es nuevo `admin-app/` Vite que consuma `zion-crm/v1` + manifest y retire `config_route_patched`.
@@ -2695,14 +2710,14 @@
 - **Estado**: ✅ verificado (live 302, 1.56.2 activo, DB 1.24.0, marker 1, JSON válido, push OK, ZIP sin secrets)
 - **Notas**: deudas priorizadas documentadas (exports streaming, prune system_logs, RateLimiter REMOTE_ADDR, throttle ai/chat, args schema REST, tests/php/, AppShell split, import CSV duro). Próximo paso propuesto (con Plan del owner): `admin-app/` Vite reproducible.
 
-### [23:22] - kalimete: fix Bluetooth Intel AX201 (hci0) — autosuspend crónico
+### [23:22] - Kalimete: fix Bluetooth Intel AX201 (hci0) — autosuspend crónico
 
 - **Tipo**: infra | hardware
-- **Modificado**: kalimete.local (Intel AX201 BT 8087:0026, bus 3-10)
+- **Modificado**: Kalimete.local (Intel AX201 BT 8087:0026, bus 3-10)
   - `/etc/modprobe.d/btusb.conf` — `options btusb enable_autosuspend=0`
   - `/etc/udev/rules.d/99-bluetooth-ax201.rules` — `power/control=on` para vendor 8087:product 0026 y puerto 3-10
   - `update-initramfs -u` — incluye `/etc/modprobe.d/btusb.conf` en initrd
-- **Afecta a**: kalimete (adaptador BT interno)
+- **Afecta a**: Kalimete (adaptador BT interno)
 - **Causa**: el chip Intel AX201 se suspende por autosuspend USB → firmware deja de responder → `hciconfig hci0 up` falla con `Operation not permitted (1)`, `dmesg` muestra `Opcode 0x0c03 failed: -110` (ETIMEDOUT). El bug se activaba tras desconexión del Oculus Quest 3S (mismo puerto USB 3-10) que colgaba el controlador.
 - **Estado**: ✅ `hciconfig hci0` → UP RUNNING PSCAN · `bluetoothctl` → Powered: yes · `hcitool inq` → detecta 4 dispositivos · `power/control=on` · `enable_autosuspend=N` · initramfs actualizado · estable tras 15s sin re-suspensión
 - **Notas**: verificación de estabilidad recomendada en ~30min y tras reboot. El fix es persistente (modprobe + udev + initramfs).
@@ -2710,7 +2725,7 @@
 ### [23:20] - Star Fox: assets integrados (OST 8 OGG + 12 voces + 7 SFX + Arwing procedural)
 - **Tipo**: feature/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (audio completo, Audio autoload, música/SFX cableados, 4 escenas con visuales propios)
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: orden "sí, procede" (opción 1 adaptada: modelos originales bloqueados por login/CF)
 - **Estado**: ✅ verificado (humo 4/4, 18/18 escenas, 27 audios importados, screenshot Arwing + combate en vivo)
 - **Notas**: khinsider con token por pista; SFX generados con python stdlib; naves procedurales = cero riesgo IP. Detalle en `docs/CHANGELOG.md` + `docs/ASSETS.md`.
@@ -2730,7 +2745,7 @@
       - `checkout` → `[erpc_checkout]` (2 cols + resumen sticky)
       - `login` → `[erpc_login]` (Tabs login/registro + iconos)
       - `mi-cuenta` → `[erpc_profile]` (Sidebar + contenido + órdenes + lealtad)
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: Usuario pidió **un solo import** + nombres genéricos (reutilizable para cualquier e-commerce, no solo tech)
 - **Estado**: ✅ Kit ZIP válido (manifest + 6 templates + site-settings), JSON validado con Elementor 4.x
 - **Notas**:
@@ -2743,7 +2758,7 @@
 ### [23:15] - WordPress local: connector v3.9.6 — títulos sin duplicar + carrito auditado responsive
 - **Tipo**: proyecto | fix | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (shortcodes: flag `force_content_only` en 5 renders de contenido; cart/checkout/auth/profile: h1 condicionales; CSS links huérfanos; bump 3.9.6, commit `f451621`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.6); repo padre commit
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech: carrito, checkout, login, mi-cuenta)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech: carrito, checkout, login, mi-cuenta)
 - **Causa**: Usuario: "Tu carrito de compras" no centrado en /carrito/ + auditar todo en móvil. Raíz: doble título apilado (heading Elementor centrado + h1 interno del plugin a la izquierda); mismo patrón en checkout ("Finalizar compra"/"Finalizar pedido"), login ("Bienvenido..."/marca) y mi-cuenta ("Mi cuenta"×2).
 - **Implementado**: Regla v3.9.6 — todo shortcode de contenido marca render embebido; los templates suprimen su h1 interno embebido (el título lo pone Elementor) y lo conservan en standalone (modo plugin). Header vacío no se imprime; link huérfano a la derecha por CSS. Profile conserva subtítulo; orders/loyalty intactos (eran títulos de sección, no duplicados).
 - **Verificación**: 1 solo h1 (centrado) en las 4 páginas modo elementor; h1 standalone intacto en modo plugin (switch). CDP con carrito vacío + lleno real (cookie Y localStorage sembrados, IDs reales) en 1280/768/375: 0 overflow horizontal; tabla 692px→353px sin romper; thead visible; empty state centrado sin hueco; footer 1 fila→apilado; qty/checkout/continue OK. Hallazgo de test (no bug real): el JS rinde desde localStorage y oculta la tabla si está vacío — el flujo real mantiene ambos en sync vía `erpc_sync_cart`. Screenshots /tmp/opencode/val-carrito-{empty,full}-*.png.
@@ -2763,7 +2778,7 @@
 
 ### [23:10] - micaserogou: template restaurante — mejoras completas (reservas reales, categorías ERP, datos reales, CTA sticky)
 - **Tipo**: servicio | frontend | api-integracion
-- **Modificado**: preprod micaserogou.kalimete.local (:8094) — páginas WordPress (id 2, 5, 6, 11, 12) + mu-plugins + assets en wp-content/uploads/erpc/
+- **Modificado**: preprod micaserogou.Kalimete.local (:8094) — páginas WordPress (id 2, 5, 6, 11, 12) + mu-plugins + assets en wp-content/uploads/erpc/
 - **Afecta a**: sitio web del restaurante Mi Casa Rogou / Michelle Casero y Gourmet (tenant 3 del ERP)
 - **Causa**: el template migró de tienda de piezas de computo a restaurante; necesitaba reservas de mesas, categorías y productos reales del ERP, y CTA de conversión apropiados para restaurante
 - **Estado**: ✅ implementado y verificado en preprod
@@ -2797,7 +2812,7 @@
    - `erpc-contacto-template.php`: intercepta /contacto/ con `template_redirect` para servir HTML personalizado (el plugin Armada Suite interceptaba esta página)
 
 7. **API del ERP verificada (tenant 3):**
-   - `GET /api/products` → 85 productos con precios DOP, stock, imágenes en `erp.kalimete.local/storage/productos/`
+   - `GET /api/products` → 85 productos con precios DOP, stock, imágenes en `erp.Kalimete.local/storage/productos/`
    - `GET /api/tables` → 15 mesas con estado, capacidad, ubicación
    - `POST /api/reservations` → creación de reservas
    - `GET /api/categories` → 500 Server Error (bug del ERP reportado; workaround implementado)
@@ -2818,11 +2833,11 @@
 
 ### [23:10] - Kalimete PTT: agente + harness + home de proyecto (voz push-to-talk)
 - **Tipo**: agente | docs
-- **Modificado**: agents/kalimete-ptt.md (nuevo) + harness/kalimete-ptt.harness.json (nuevo) + agents/kalimete.md (25→26 subagentes, allow task, tabla delegación) + harness/kalimete.harness.json (flota 26 + entrada subagente) + ~/dev/apps/kalimete-ptt/ (home nuevo: CHANGELOG.md + STATE.md, git init)
-- **Afecta a**: kalimete (cliente PTT ~/.local/bin/kalimete-ptt, systemd --user) + victoria :18810 (solo lectura)
+- **Modificado**: agents/Kalimete-ptt.md (nuevo) + harness/Kalimete-ptt.harness.json (nuevo) + agents/Kalimete.md (25→26 subagentes, allow task, tabla delegación) + harness/Kalimete.harness.json (flota 26 + entrada subagente) + ~/dev/apps/Kalimete-ptt/ (home nuevo: CHANGELOG.md + STATE.md, git init)
+- **Afecta a**: Kalimete (cliente PTT ~/.local/bin/Kalimete-ptt, systemd --user) + victoria :18810 (solo lectura)
 - **Causa**: owner pidió changelog + regla de contexto siempre actualizado + análisis del flujo de voz (bugs: transcripción en árabe/ruso/francés por language=None hardcodeado en el servidor + cliente que no envía PTT_LANGUAGE; autorización "no me entiende" por _YES_RE estricta que rechaza "Sí, procede.")
 - **Estado**: ✅ agente+harness+home creados y commiteados · ⏳ fixes de código pendientes de OK del owner (doble lado: victoria requiere autorización de escritura)
-- **Notas**: restaurado agents/kalimete-dashboard.md (el cron sync 22:50 lo borró como zombie — se había commiteado sin symlink en ~/.config/opencode/agent/; ahora con symlink). Lección: TODO agente nuevo del repo lleva su symlink inmediato.
+- **Notas**: restaurado agents/Kalimete-dashboard.md (el cron sync 22:50 lo borró como zombie — se había commiteado sin symlink en ~/.config/opencode/agent/; ahora con symlink). Lección: TODO agente nuevo del repo lleva su symlink inmediato.
 
 ## 2026-10-19
 
@@ -2830,7 +2845,7 @@
 
 - **Tipo**: plugin | feature | arquitectura | fusión
 - **Modificado**: Plugin unificado `zion-crm` v2.0.0 (DB 2.0.0) — fusiona ZionV CRM 1.57.0 + Armada Suite 5.9.1 en un solo plugin
-- **Afecta a**: kalimete (dev lab), preprod sitios WP (MaganTech, Micaserogou), ERP erpipos
+- **Afecta a**: Kalimete (dev lab), preprod sitios WP (MaganTech, Micaserogou), ERP erpipos
 - **Causa**: owner pidió unificar ambos plugins en uno solo llamado "Zion CRM" con autores Jordan Diaz + Alfredo Armada (me@alfredo.pro), manteniendo toda la funcionalidad CRM + ERP integrada
 - **Estado**: ✅ completado — PHP lint OK; ZIP generado `zion-crm-2.0.0.zip` (10,045,291 B, sha256 `12d16561…`, 2447 archivos, sin secrets); incluye módulos CRM (16+) + ERP (catálogo/checkout, sync erpipos, IA, AiBridge, SiteBackup, Ops, Templates) + fusión de formularios tipo reserva + sync contactos + endpoint REST reservas + selector modo negocio
 - **Notas**:
@@ -2853,7 +2868,7 @@
   - `~/Desktop/MaganTech-Connector-Deploy/template/` — 6 JSON válidos (formato Elementor 4.x)
   - `magantech-elementor-templates.zip` — 6 templates + guía (3.9K)
   - `erp-ecmm-connector.zip` — Plugin v2.5.0 (51K)
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: El template JSON anterior era inválido (formato incorrecto). Se corrigió al formato exacto de Elementor 4.x (`content` root, `elType` camelCase, `widgetType`, `version: 0.4`).
 - **Estado**: ✅ JSON validado con `prepare_import_template_data()` de Elementor, plugin crea 6 páginas auto, Elementor Canvas aplicado
 - **Notas**:
@@ -2866,7 +2881,7 @@
 ### [22:45] - erp-chatbot v1.4.2: brevedad + fix nav impresoras + telemetría
 - **Tipo**: proyecto | fix+feature | UX conversacional | wordpress
 - **Modificado**: erp-chatbot 1.4.1→1.4.2 (~/dev/wordpress: regla 3 brevedad — voz 2 frases/40 palabras, texto 80, máx 3 productos; max_tokens default 1024→350; TTS habla solo 2 primeras frases; al_llegar tope 600→350; ver_categorias fija término de tienda vía termino_desde_categorias; armar_ir_a singulariza término — impresoras→impresora, ERP busca literal; aviso ya_estas en vez de silencio anti-loop; telemetría erpcbot_last_turns máx 20 rotativo; fix puntuar_producto categoria/subcategoria array del ERP — bonus +2/+1 recuperado).
-- **Afecta a**: kalimete (wordpress-local :8091, widget voz/texto)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget voz/texto)
 - **Causa**: Usuario: (1) el bot habla mucho, cortar diálogo para rapidez; (2) pidió catálogo de impresoras y no lo llevó.
 - **Diagnóstico**: regla de brevedad con excepción que se tragaba la regla + max_tokens 1024 + TTS leía todo; nav fallaba porque ver_categorias no fijaba término (ir_a=null), plural rompía búsqueda literal del ERP, y anti-loop suprimía en silencio.
 - **Verificación**: baterías docker (singular OK, ya_estas 2/2, scoring array PASS, telemetría rotativa 20) + suite 7/7 PASS ✅; php -l + node --check OK.
@@ -2874,8 +2889,8 @@
 
 ### [22:45] - WP connector v3.12.1: imágenes visibles vía normalize_image_url + lección mount rancio
 - **Tipo**: proyecto | fix | wordpress-dev | infra
-- **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector` (solo nuestro): `normalize_image_url()` en `class-erpc-api.php` (reescribe host a `https://erp.kalimete.local`, override `ERPC_IMAGE_HOST`, PHP 7.4 OK) usado en `normalize_producto()`; bump 3.12.1 + CHANGELOG plugin; purgados transients `erpc_c_*`. `REGLAS.md`: regla bind-mount (no reemplazar `preprod.env`, verificar md5) + regla secrets ajenos.
-- **Afecta a**: kalimete (wordpress-local + erpipo-preprod)
+- **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector` (solo nuestro): `normalize_image_url()` en `class-erpc-api.php` (reescribe host a `https://erp.Kalimete.local`, override `ERPC_IMAGE_HOST`, PHP 7.4 OK) usado en `normalize_producto()`; bump 3.12.1 + CHANGELOG plugin; purgados transients `erpc_c_*`. `REGLAS.md`: regla bind-mount (no reemplazar `preprod.env`, verificar md5) + regla secrets ajenos.
+- **Afecta a**: Kalimete (wordpress-local + erpipo-preprod)
 - **Causa**: Usuario: mejorar todo sin tocar secrets ajenos. Imágenes WP rotas (ERP devolvía host del request). Incidente: `perl -i` cambió el inode de `preprod.env` → contenedor con clave vieja → Access denied; fix con `--force-recreate` + md5.
 - **Verificación**: API magantech 200; página WP 200 con 8 URLs al host válido (200 estricto); `php -l` OK; repo ERP limpio 0/0 (cero archivos de Juan tocados).
 - **Estado**: ✅ sincronizado
@@ -2884,11 +2899,11 @@
 
 ### [22:45] - EccoSuite DESPLEGADO en producción: https://suit.eccoqualita.com + agente Ecco Suit operativo (21 subagentes)
 - **Tipo**: infra | servicio | agente
-- **Modificado**: VPS 62.171.144.58 (todo el stack) + agents/ecco-suit.md + agents/kalimete.md (allowlist + conteo 21) + MAPA.md (host sección 8 + tabla subagentes) + ~/.ssh/config (alias `ecco`)
-- **Afecta a**: VPS Ecco Qualitá (nueva en flota); kalimete (delegación)
+- **Modificado**: VPS 62.171.144.58 (todo el stack) + agents/ecco-suit.md + agents/Kalimete.md (allowlist + conteo 21) + MAPA.md (host sección 8 + tabla subagentes) + ~/.ssh/config (alias `ecco`)
+- **Afecta a**: VPS Ecco Qualitá (nueva en flota); Kalimete (delegación)
 - **Causa**: owner — "usa el vps como servidor para ellos y dentro via docker dockerizemos servidores pequeños... suit.eccoqualita.com ya apunta al ip"
 - **Estado**: ✅ end-to-end verificado — health `{"status":"ok","app":"up","database":"up"}` por HTTPS; login 200; cert Let's Encrypt (renueva auto)
-- **Despliegue**: Docker 29.9.1 + swap 2G + UFW(22/80/443) + fail2ban + llave SSH kalimete (alias `ssh ecco`, password aún ON por confirmación pendiente). Patrón host multi-servicio: `/opt/eccoqualita/{proxy,eccosuit}`, red compartida `eccoqualita-proxy`, Caddy publica 80/443 (TLS auto), postgres:18 + app Next.js 16.4 SIN puertos públicos. Bootstrap roles (ecco_owner/ecco_app, ALLOW_BOOTSTRAP one-shot) + 22 migraciones (57 tablas) vía contenedor tools (etapa build). Secretos generados EN la VPS (.env/.env.postgres 600).
+- **Despliegue**: Docker 29.9.1 + swap 2G + UFW(22/80/443) + fail2ban + llave SSH Kalimete (alias `ssh ecco`, password aún ON por confirmación pendiente). Patrón host multi-servicio: `/opt/eccoqualita/{proxy,eccosuit}`, red compartida `eccoqualita-proxy`, Caddy publica 80/443 (TLS auto), postgres:18 + app Next.js 16.4 SIN puertos públicos. Bootstrap roles (ecco_owner/ecco_app, ALLOW_BOOTSTRAP one-shot) + 22 migraciones (57 tablas) vía contenedor tools (etapa build). Secretos generados EN la VPS (.env/.env.postgres 600).
 - **Notas**: 2 lecciones de rsync documentadas en el agente: excludes SIEMPRE anclados (`/storage` — sin `/` borró src/platform/storage y mató el build) y excluir `/docker-compose.yml` (el sync sobrescribía el compose prod con el del repo). Corrección de la entrada [22:15]: el write del agente falló silenciosamente esa vez (el commit bf19773 solo contenía CHANGELOG); hoy el fichero existe verificado (148 líneas) + symlink opencode. Pendientes: apagar PasswordAuthentication (orden owner), cron respaldos, monitoreo.
 
 ### [22:45] - Authentik↔Nextcloud: fix REAL "Client authentication failed" (secret en DB, no appconfig)
@@ -2916,9 +2931,9 @@
 - **Notas**: (1) Lección de operación: `docker compose build 2>&1 | tail` retiene el canal ssh abierto tras terminar (pipe sin EOF) → el wrapper local vio timeout a 15 min aunque el build+up remoto SÍ completó (~9 min); verificar siempre estado real (`docker images`/`docker ps`) antes de reintentar. (2) Para builds largos usar `nohup … > log 2>&1 &` + polling. (3) rsync: ~110 archivos actualizados + rutas del módulo ISO eliminadas; `.env*`, `docker-compose.yml` y `.bkup*` intactos.
 
 ### [22:35] - Preprod ERP sincronizado con PR #14 de Juan Carlos (dev/ecomm-erp → 7a4060f) + smoke E2E PASS
-- **Tipo**: infra | servicio | integración (TARGET=kalimete local; repo upstream soycarlosjerez-hub/sistema-facturacion)
+- **Tipo**: infra | servicio | integración (TARGET=Kalimete local; repo upstream soycarlosjerez-hub/sistema-facturacion)
 - **Modificado**: `~/dev/erpipo-preprod/code/sistema-facturacion` rama `dev/ecomm-erp` (pull 00a255e→7a4060f: merge PR #14 + commit "Update" de Juan — refactor ventas SaleService/SaleCancelService/SaleStockService, VentaController API+web, landing, migración corregida `almacen_id` nullable en venta_detalles, tests nuevos VentaAnulacionTest/VentaIndexTest)
-- **Afecta a**: erpipo-preprod (kalimete docker) + plugin Armada Suite 5.3.0 (consumidor del API)
+- **Afecta a**: erpipo-preprod (Kalimete docker) + plugin Armada Suite 5.3.0 (consumidor del API)
 - **Causa**: validación de owner: confirmar que TODO nuestro trabajo (Fase 2 ecomm 9 commits + docs RECOMENDACIONES-FASE2/FASE3 + G6) llegó a Juan Carlos → verificado: PR #14 MERGED hoy 20:10, nada pendiente de push (ahead 0); faltaba traer los 2 commits nuevos del remoto
 - **Estado**: ✅ verificado E2E: schema `venta_detalles.almacen_id` nullable (IS_NULLABLE=YES, coincide con migración corregida — sin mutación de DB requerida); housekeeping composer dump-autoload + view:clear + queue:restart (worker Up 16min con código nuevo); smoke: ERP `/up` ok db+redis, `tienda/config` 200 tenant 10 MaganTech, ping-erp desde plugin POST admin → 200 ok:true 182ms key_fp 0b0e33e7, home + /productos/ renderizan, rutas Fase 2 (`orders/{id}`) registradas, admin-ajax catálogo protegido por nonce (CSRF OK)
 - **Notas**: el -1 de admin-ajax sin nonce = check_ajax_referer funcionando (no es bug). Los tests nuevos de Juan no se corren en preprod (su CI). Plugin 5.3.0 listo para adoptar Fase 2 (orders/{id}, checkout sin caja, /up, webhooks) — ya materializada en main del ERP.
@@ -2926,7 +2941,7 @@
 ### [22:30] - erp-chatbot v1.1.8: voz humana (normalización para habla natural)
 - **Tipo**: proyecto | feature | voz TTS | wordpress
 - **Modificado**: erp-chatbot 1.1.7→1.1.8 (~/dev/wordpress: textoParaVoz + numeroAPalabras/dineroAPalabras en el widget). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, voz del chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, voz del chatbot)
 - **Causa**: Usuario: el agente lee números dígito por dígito y menciona asteriscos/signos — pidió habla humana ("$1,000.00 → mil pesos").
 - **Solución**: capa de normalización aplicada a todo lo que habla el bot (markdown/emojis fuera, dinero y números en palabras, símbolos hablados, modelos y fechas intactos).
 - **Verificación**: batería de casos reales del checkout en node — ejemplos exactos del usuario perfectos ✅; node --check OK.
@@ -2935,7 +2950,7 @@
 ### [22:30] - Star Fox: guía de assets originales (docs/ASSETS.md) + aviso IP
 - **Tipo**: investigación/docs
 - **Modificado**: `~/dev/godot/armada-starfox/docs/ASSETS.md` (nuevo)
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: pedido "assets tal cual en vez de placeholders"
 - **Estado**: ✅ fuentes localizadas (Models/Spriters/Sounds-Resource, Sketchfab CC, voces, OST) + alternativa legal Kenney CC0 + pipeline Godot
 - **Notas**: prototipo con originales → release con CC0 (IP Nintendo). Pendiente decisión/descarga.
@@ -2960,7 +2975,7 @@
 ### [22:30] - ERP: revertido todo lo tocado de Juan + fusionado su refactor sin perder ecomm
 - **Tipo**: proyecto | revert | merge | reglas
 - **Modificado**: `dev/ecomm-erp` (`174b1d3` revert: `.env`/`.env.dev`/`.env.backup_audit`, `releases/`, views compilados, líneas `attributes()` y accessor imagen restaurados byte-idénticos a Juan; luego `e76b0c3`: `SaleCreateService.php` fusionado a mano — su `esTipoComprobantePermitido()` centralizado + nuestro `tenantIdFromContext()` ecomm). `REGLAS.md`: regla file-level no-tocar-lo-de-Juan + no-directivas.
-- **Afecta a**: kalimete (erpipo-preprod) + repo GitHub de Juan Carlos
+- **Afecta a**: Kalimete (erpipo-preprod) + repo GitHub de Juan Carlos
 - **Causa**: Usuario: no tocar lo de Juan (ni sus archivos ni darle directivas). Hallado: mi `checkout HEAD` en el merge había pisado su refactor de comprobantes en `SaleCreateService.php` (único de los 6 archivos ecomm que él sí tocó); resto intacto verificado archivo por archivo.
 - **Verificación**: 0/0 con origin; 31 rutas ecomm; `php -l` OK; push `174b1d3..e76b0c3` solo a `dev/ecomm-erp` (main no tocado).
 - **Estado**: ✅ sincronizado
@@ -2968,7 +2983,7 @@
 ### [22:24] - ERP E-Commerce Connector: plugin reescrito (WordPress frontend + ERP backend)
 - **Tipo**: proyecto | wordpress | api
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: Reemplazo del plugin MaganTech antiguo (erpecomm-alfredo-pro) por nuevo connector genérico multi-tenant
 - **Estado**: ✅ activado, conectado al ERP
 - **Notas**:
@@ -2996,12 +3011,12 @@
 - **Verificado**: /api/status gateway ok; /api/chat SSE con tokens en vivo ("Hola…"); /api/tts → WAV 24kHz 122KB; /api/stt round-trip EXACTO ("Hola papá, aquí está tu interfaz gráfica." → mismo texto de vuelta); página sirve con el layout completo; instancia de prueba cerrada limpia.
 - **Uso**: `victoria-gui` (abre el navegador solo) o clic en "Victoria GUI" del menú de apps. Parar: `pkill -f victoria-gui`.
 - **Impacto**: +~/.local/bin/victoria-gui + lanzador .desktop. Sin tocar tui/ptt (comparten env+historial).
-- **Docs**: changelog kalimete (esta entrada) + referencia en CHANGELOG general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + referencia en CHANGELOG general de victoria.
 
 ### [22:15] - Star Fox Fase 2 tanda 1: bomba, spawner+enemigos, HUD y pausa en niveles (humo 8/8)
 - **Tipo**: feature/fix/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (player_ship.tscn, spawn_manager, 3 enemy.tscn, level_01 dict, hud.tscn+hud.gd, HUD en 5 niveles)
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: orden "procede" (pendientes Fase 2)
 - **Estado**: ✅ verificado (humo 8/8, 18/18 escenas, 500 frames sin errores, screenshot en vivo: HUD + enemigo + score por combate real)
 - **Notas**: fix global_position/add_child; pausa con panel; overlay F3 queda solo-debug. Pendiente: fuego amigo entre enemigos, jefe N1, minimapa, audio, export. Detalle en `docs/CHANGELOG.md` del proyecto.
@@ -3016,8 +3031,8 @@
 
 ### [22:10] - micaserogou: key ERP prod GUARDADA Y FUNCIONANDO + preprod 5.5.0 con template restaurante (Fase D completa)
 - **Tipo**: servicio | config
-- **Modificado**: PROD micaserogou.com (key ERP productiva tenant 3 guardada por el owner vía form wp-admin — ping-erp 200 OK, key_fp 8c280a49, catálogo prod sirviendo productos reales del ERP: "1 PIEZA DE POLLO FRITO" $75 con imágenes erpipos.armada.do/storage/productos/); PREPROD micaserogou.kalimete.local (plugin armada-suite 5.4.2→5.5.0 instalado desde ZIP con hash verificado be52ac…, backup armada-suite.bkup-5.4.2/, setting tenant.template_pack=restaurant, sync manual erpsuite_auto_sync_run() → erp_config LLENO con marca real "Michelle Casero y Gourmet" + config_fetched_at fresco)
-- **Afecta a**: producción micaserogou.com + preprod micaserogou.kalimete.local
+- **Modificado**: PROD micaserogou.com (key ERP productiva tenant 3 guardada por el owner vía form wp-admin — ping-erp 200 OK, key_fp 8c280a49, catálogo prod sirviendo productos reales del ERP: "1 PIEZA DE POLLO FRITO" $75 con imágenes erpipos.armada.do/storage/productos/); PREPROD micaserogou.Kalimete.local (plugin armada-suite 5.4.2→5.5.0 instalado desde ZIP con hash verificado be52ac…, backup armada-suite.bkup-5.4.2/, setting tenant.template_pack=restaurant, sync manual erpsuite_auto_sync_run() → erp_config LLENO con marca real "Michelle Casero y Gourmet" + config_fetched_at fresco)
+- **Afecta a**: producción micaserogou.com + preprod micaserogou.Kalimete.local
 - **Causa**: owner entregó key productiva tenant 3 y ordenó configurar prod; investigación previa (sesiones 2-3 del agente) probó que la entrada remota de secrets es imposible POR DISEÑO (kill-switch ai_mode solo-humano, Guard deny-by-default para public.*, admin-ajax vía options.php+nonce) → pegado manual del owner en wp-admin
 - **Estado**: ✅ prod: key activa y conectada (el mensaje "falta la llave" del botón Verificar conexión = bug de diagnóstico config_hint de 5.4.2 que lee el espejo legacy — corregido en 5.5.0) · ✅ preprod: 5.5.0 activa sin fatals, pack restaurante validado (h1 "Comida casera y gourmet", marca 6x, fotos pack, footer Menú, 0 rastros "Computadoras", smoke / /productos/ /contacto/ 200) · ⏳ pendientes owner: Fetch config en prod (aplica marca al frontend) + clic permalinks (Ajustes→Enlaces permanentes→Nombre de la entrada) · ⏳ catálogo ERP prod ~1 producto vs 85 preprod (Juan Carlos) · ⏳ ZIP 5.5.0 a prod cuando owner decida
 - **Notas**: hallazgo cerrado del AJAX productos-0 en preprod: NO es bug — filtro erpc_con_stock() (Main.php:663, desde v3.9.12) muestra solo stock>1; hoy 76/84 productos del ERP preprod están en stock=0 (ayer 38 visibles → el stock del ERP fue tocado entre evaluaciones, confirmar con ERP Dev si fue intencional); el "0 productos" previo fue falso negativo del parser del agente (leía data.productos, el handler devuelve data.products). Audit log prod registra el intento REST rechazado por el Guard (correcto). Rollback preprod documentado (mv bkup + unset template_pack).
@@ -3025,7 +3040,7 @@
 ### [22:10] - WordPress local: home con 4 destacados en 1 línea + CTA centrado (contenido, sin bump)
 - **Tipo**: proyecto | contenido | ux | wordpress-dev
 - **Modificado**: `_elementor_data` home (backup: postmeta `_elementor_data_bak_v395` + `backups/elementor/page-8-home-*.json` commiteado al repo padre para trazabilidad)
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech)
 - **Causa**: Usuario: "Explora el catálogo completo..." descentrado (h1 y botón center, texto no); 4 destacados en 1 línea en vez de 6.
 - **Implementado**: CTA text `text-align:center`; home `[erpc_products columns='4' per_page='4' show_more='0']` + botón a la tienda intacto.
 - **Verificación**: home 200; CDP 4 cards en DOM (1280 y 375), sección 1640→1162px, 0 overflow. Screenshots /tmp/opencode/val-home-*.png. Sin cambios de código → no requiere bump de versión ni regenerar ZIP.
@@ -3034,7 +3049,7 @@
 ### [22:10] - WP connector v3.13.2: resumen del pedido rediseñado + Ubuntu total + responsive checkout
 - **Tipo**: proyecto | UI/UX | wordpress
 - **Modificado**: plugin erp-ecomm-connector 3.13.1→3.13.2 (~/dev/wordpress: connector.js render de items + erpcEsc, connector.css rediseño summary + responsive + regla Ubuntu body *). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, página /checkout/)
+- **Afecta a**: Kalimete (wordpress-local :8091, página /checkout/)
 - **Causa**: Usuario: items del "Resumen del pedido" con letras muy grandes y sin estilo; pidió texto más pequeño, mejor sección, responsive en todos los dispositivos y Ubuntu en TODO (WP + plugin, todas las páginas).
 - **Hallazgo**: el JS renderizaba items como <tr><td> sin clases pero el CSS esperaba .erpc-summary-item (flex) → sin estilo. La regla Ubuntu anterior no cubría todo el DOM.
 - **Verificación**: node --check OK; php -l OK; CSS 3.13.2 en el sitio con regla body * y estilos nuevos. Prueba visual (desktop + móvil) pendiente del usuario.
@@ -3056,7 +3071,7 @@
 ### [22:00] - ERP preprod: rotación APP_KEY+DB_PASSWORD, limpieza backups 3.4G→985M
 - **Tipo**: seguridad | mantenimiento | infra
 - **Modificado**: `preprod.env` (+backup `.bkup-20260921`), `docker-compose.yml` (+backup, MYSQL_PASSWORD igualado), repo `.env` (key nueva); `storage/app/backups/`: borrados 10 dumps viejos + 4 stubs fallidos + 15 txt (quedan 2 full Sep17-18); `REGLAS.md` actualizado.
-- **Afecta a**: kalimete (erpipo-preprod; sesiones/cookies invalidadas por key nueva, sin datos cifrados en BD — verificado 0 casts encrypted)
+- **Afecta a**: Kalimete (erpipo-preprod; sesiones/cookies invalidadas por key nueva, sin datos cifrados en BD — verificado 0 casts encrypted)
 - **Causa**: Usuario ordenó proceder. Secrets estaban expuestos en historial GitHub (commits de Juan). Incidentes en el camino: mount `.env` rancio (fix: restart app), 502 por resolver nginx rancio (fix: restart nginx), compose con password truncado (fix: reescrito desde preprod.env verificado).
 - **Verificación**: migrate 0 pendientes; ERP :8100 200; API magantech 200; WP 200 con imágenes; docker 8/8 up; 0 fatales; login DB con clave nueva OK.
 - **Notas**: PENDIENTE Juan rote sus secrets. Job auto-backup roto (stubs 98B, conecta a 127.0.0.1) — flag, no tocado.
@@ -3066,7 +3081,7 @@
 
 - **Tipo**: arquitectura | docs | integración
 - **Modificado**: docs/ARQUITECTURA-INTEGRACION-HIBRIDA.md en micaserogou AS (2732 líneas, secciones 1-13 + 3 appendices) · docs/ARQUITECTURA-INTEGRACION-HIBRIDA.md en erpipo-preprod (891 líneas, API Changes para el ERP)
-- **Afecta a**: kalimete (dev lab), ERP erpipos (:8100), ambos plugins (AS + ZionV)
+- **Afecta a**: Kalimete (dev lab), ERP erpipos (:8100), ambos plugins (AS + ZionV)
 - **Causa**: owner pidió analizar cómo fusionar AS y ZionV CRM manteniendo la flexibilidad de activar/desactivar el ERP sin perder datos ni funcionalidad; validar que ZionV no tiene inventario (no lo tiene); definir qué módulos se sincronizan y cómo
 - **Estado**: ✅ documentado — 3 agentes delegados (Armada Suite, ZionV CRM, ERP Dev), documentación completa
 - **Notas**:
@@ -3094,16 +3109,16 @@
   - **Commits autorizados (owner "Haz commit")**: armada-suite `af871dd` (release 5.4.0) + `a2db7f5` (infra reorg: compose pin, changelog, gitignore backups/, stubs SiteBackup restaurados) + `11b2784` (release 5.4.1) + docs CHANGELOG raíz; zionv `a1288fe` (docs rutas). Sin push (armada sin remote; zionv push pendiente autorización owner).
   - **Método canónico** (agente WordPress; `~/dev/wordpress/docs/CONEXION-METODO.md` = LA referencia única, sin discrepancia): dev lab/preprod = **bash + wp-cli sidecar** (MCP = vía muerta documentada — revivirlo es decisión owner); prod cliente = **App Password usuario dedicado + jaula erpsuite/v1/ops + deploys manuales de ZIP**. Respuesta explícita al owner: **"no editar prod directamente" SÍ es la manera correcta** (staging-first respaldado por developer.wordpress.org/make.wordpress.org/wp-cli/Kinsta 2026; App Passwords SIN scoping en WP core → nuestra jaula server-side es la mitigación correcta).
   - **Tooling**: `scripts/plugin-preprod.sh` (202 líneas, probado EN VIVO contra magantech preprod: PASS idempotente, backup tar.gz + rollback automático + smoke integrado) — instalación/actualización canónica de plugins en websites/; README-HUB + NUEVO-WEBSITE-TEMPLATE actualizados apuntando al método canónico.
-  - **Release 5.4.1** (agente Armada Suite): template del tema activo editable vía ops — live reads en safe (`scope=live`), live-writes en work mode con gates encadenados fail-closed (sandbox realpath + Guard + allowlist ext + syntax check PHP + backup antes de escribir + preview/confirm/anti-drift); `/ops/rollback` file-aware; REMOTE-OPS.md con política owner 2026-10-17. **Fix bug real v4.3.0**: ids de backup mixed-case vs búsqueda sanitize_key → TODOS los /ops/rollback fallaban "Backup no encontrado" desde v4.3.0 — corregido (impacta clientes prod: los rollbacks ahora funcionan de verdad). **Fix SiteBackup**: cron `ai1wm_storage_cleanup` del AIOWPM vendored borraba storage/.htaccess+web.config >24h (causa raíz de los stubs borrados) — añadidos al exclude. Regresión **25/25** (re-verificada por kalimete). ZIP `export/armada-suite-5.4.1.zip` (2.225.650 B, sha256 `4bb2fa2c…`).
+  - **Release 5.4.1** (agente Armada Suite): template del tema activo editable vía ops — live reads en safe (`scope=live`), live-writes en work mode con gates encadenados fail-closed (sandbox realpath + Guard + allowlist ext + syntax check PHP + backup antes de escribir + preview/confirm/anti-drift); `/ops/rollback` file-aware; REMOTE-OPS.md con política owner 2026-10-17. **Fix bug real v4.3.0**: ids de backup mixed-case vs búsqueda sanitize_key → TODOS los /ops/rollback fallaban "Backup no encontrado" desde v4.3.0 — corregido (impacta clientes prod: los rollbacks ahora funcionan de verdad). **Fix SiteBackup**: cron `ai1wm_storage_cleanup` del AIOWPM vendored borraba storage/.htaccess+web.config >24h (causa raíz de los stubs borrados) — añadidos al exclude. Regresión **25/25** (re-verificada por Kalimete). ZIP `export/armada-suite-5.4.1.zip` (2.225.650 B, sha256 `4bb2fa2c…`).
 - **Afecta a**: plugin armada-suite (5.4.1 listo para deploy manual), operación remota de clientes (rollbacks reparados), docs del hub
 - **Causa**: owner: "no quiero discrepancia — el mejor método de conexión, full control local, instalar nuestros plugins, validar si no editar prod es correcto; haz commit y procede con los cambios"
-- **Estado**: ✅ verificado (25/25 re-run kalimete, ZIP sha verificado, LIVE read/write/rollback en :8091, script preprod PASS en vivo)
+- **Estado**: ✅ verificado (25/25 re-run Kalimete, ZIP sha verificado, LIVE read/write/rollback en :8091, script preprod PASS en vivo)
 - **Notas**: Hardening prod pendiente para próxima ventana de deploy (DISALLOW_FILE_MODS + filtro `wp_is_application_passwords_available_for_user` + rotación 90 días) — decisión owner, NO auto-aplicar. ⚠️ App Password Victoria pendiente de rotar (circuló por chat). Deploy 5.4.1 al cliente = manual per DEPLOY-GUIA. En prod endurecido con DISALLOW_FILE_EDIT/MODS el live-write del template queda bloqueado por diseño (documentado REMOTE-OPS §4).
 
 ### [21:45] - WordPress local: connector v3.9.5 — home 6 destacados + botón tienda + hero centrado
 - **Tipo**: proyecto | feature | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (shortcodes + products-content.php: attr `show_more`; connector.css `.erpc-el-featured`; bump 3.9.5, commit `c9c29b5`, push main OK); `_elementor_data` home (backup `_elementor_data_bak_v394` + /tmp); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.5); repo padre commit
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech)
 - **Causa**: Usuario: hero con subtítulo descentrado (h1 centrado vs p sin centrar); home con 6 destacados + botón a la tienda en vez de "cargar más".
 - **Implementado**: (1) Hero subtitle `text-align:center` (patrón /cotizar/). (2) Home `[erpc_products columns='3' per_page='6' show_more='0']` (2×3) + botón "Ver todos los productos"→/productos/. (3) `show_more` default 1: /productos/ conserva su load-more, cero regresión.
 - **Verificación**: home 200 con load-more ausente + botón presente + subtítulo centrado (HTML); CDP 6 cards en DOM (1280/375), 0 overflow. Screenshots /tmp/opencode/val-home-*.png.
@@ -3115,45 +3130,45 @@
 - **Afecta a**: juego Record of Ragnarok — MULTIPLAYER JUGABLE de punta a punta en LAN
 - **Causa**: orden del owner "procede hasta dejar el juego jugable multiplayer"
 - **Estado**: ✅ smoke test 2 clientes ONLINE=2 (ambos se ven) · ✅ combate real verificado (Poring 11 dmg con fórmulas RO) · ✅ EXP persistida en chars JSON · ✅ screenshot render verificado · ✅ tests fórmulas 32/32
-- **Notas**: la tool task no reconoció al agente Record of Ragnarok (cache de sesión) — kalimete ejecutó directo con el blueprint. Pendientes próximos: Postgres + deploy Docker (0.5b), inventario/loot/party (fase 3), skills/job change/boss Thor (fase 4), assets 3D granja (fase 5), builds + landing descarga (fase 6).
+- **Notas**: la tool task no reconoció al agente Record of Ragnarok (cache de sesión) — Kalimete ejecutó directo con el blueprint. Pendientes próximos: Postgres + deploy Docker (0.5b), inventario/loot/party (fase 3), skills/job change/boss Thor (fase 4), assets 3D granja (fase 5), builds + landing descarga (fase 6).
 
 ### [21:40] - Star Fox GameLogger + Parte C (matriz 15/15 VERDE, log con traza, 0 errores)
-- **Tipo**: feature/test (subagente Godot: logger + instrumentación; kalimete: validación final)
+- **Tipo**: feature/test (subagente Godot: logger + instrumentación; Kalimete: validación final)
 - **Modificado**: `~/dev/godot/armada-starfox/` (game_logger.gd nuevo autoload, project.godot+bkup, 8 scripts, docs)
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: pedido "logger para errores + validar que funciona para humanos"
 - **Estado**: ✅ verificado (25/25 scripts, import limpio, 18/18 escenas, matriz 15/15, game.log 16 eventos/0 ERROR, screenshots en vivo, temporales borrados)
 - **Notas**: fix Continue→level_select path; overlay F3 solo debug; log en `~/.local/share/godot/app_userdata/Armada Star Fox/logs/game.log`. Detalle en `docs/CHANGELOG.md` del proyecto.
 
 ### [21:40] - ERP Commerce Suite 4.0.1: auditoría de seguridad completa + hardening (16 hallazgos)
 - **Tipo**: proyecto | seguridad | wordpress
-- **Modificado**: erp-commerce-suite 4.0.0→4.0.1 (webhook WhatsApp 403 sin app_secret; init garantiza .htaccess+index.php en logs dir; secrets admin enmascarados value=""+preserve-if-empty verificado; capability manage_options en erpc_log_read/list/clear y MCP transport; erpc_client_ip anti-spoof XFF→X-Real-IP solo de proxy confiable; chat RL usa client_ip; erpc_log_error RL 30/min+cap 20; LogViewer basename guard; sslverify modo-aware; ajax_test_connection respeta modo sellado; uninstall transients propios). Stack: nginx wordpress.kalimete.local.conf +deny debug.log y uploads/erp-suite-connector/ (bkup .bkup-20260929)
-- **Afecta a**: kalimete (wordpress-local), producción futura (el ZIP de deploy lleva todo el hardening)
+- **Modificado**: erp-commerce-suite 4.0.0→4.0.1 (webhook WhatsApp 403 sin app_secret; init garantiza .htaccess+index.php en logs dir; secrets admin enmascarados value=""+preserve-if-empty verificado; capability manage_options en erpc_log_read/list/clear y MCP transport; erpc_client_ip anti-spoof XFF→X-Real-IP solo de proxy confiable; chat RL usa client_ip; erpc_log_error RL 30/min+cap 20; LogViewer basename guard; sslverify modo-aware; ajax_test_connection respeta modo sellado; uninstall transients propios). Stack: nginx wordpress.Kalimete.local.conf +deny debug.log y uploads/erp-suite-connector/ (bkup .bkup-20260929)
+- **Afecta a**: Kalimete (wordpress-local), producción futura (el ZIP de deploy lleva todo el hardening)
 - **Causa**: Usuario: procede con mejores prácticas, seguridad, nada expuesto en plano, no explotable
 - **Validación**: probes antes/después — debug.log 200→404, logs dir servido→404, webhook POST sin secret → 403 erpsuite_wa_sin_secreto (E2E con enabled=1 temporal), chat/log AJAX sin nonce bloqueados, sanitize preserve-if-empty PRESERVED OK (ia.api_key, tenant.api_key, smtp_pass), php -l 51/51, regresión 8/8, front/productos 200
 - **Estado**: ✅ sincronizado (repo suite push 4.0.1). Aceptado/documentado: secrets en wp_options plaintext (estándar WP, cifrado 4.2), sink .html() connector.js (disciplina de escape mantenida)
-- **Notas**: auditoría por wordpress-dev (16 hallazgos con file:line) + probes y fixes por kalimete. Hallazgo #2 confirmado en runtime: logs servidos por HTTP (el .htaccess nunca existía porque el Logger no está cableado — además nginx ignora .htaccess, doble capa aplicada)
+- **Notas**: auditoría por wordpress-dev (16 hallazgos con file:line) + probes y fixes por Kalimete. Hallazgo #2 confirmado en runtime: logs servidos por HTTP (el .htaccess nunca existía porque el Logger no está cableado — además nginx ignora .htaccess, doble capa aplicada)
 
 ### [21:35] - WP connector v3.13.1 + ERP v3.13.1-local: Ubuntu global, perfil completo del cliente, dinero con comas
 - **Tipo**: proyecto | servicio | wordpress + erp-local
 - **Modificado**: plugin erp-ecomm-connector 3.13.0→3.13.1 (~/dev/wordpress: enqueue fuente, connector.css, api, auth, form.php, profile.php, connector.js, 3 templates de precios). ERP sistema-facturacion (~/dev/erpipo-preprod: ClienteAuthController@register valida direccion/ciudad/provincia). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Afecta a**: Kalimete (wordpress-local :8091 + erpipo-preprod :8100)
 - **Causa**: Usuario pidió (1) fuente Ubuntu de Google para todo el template y WordPress, (2) que todos los datos del cliente queden guardados en el ERP al registrarse/actualizar perfil, (3) valores con separador de miles ($1,000.00).
 - **Hallazgos de auditoría**: el registro pedía dirección pero register_account() no la enviaba y el ERP no la validaba (se perdía); el perfil no enviaba ciudad/provincia; lo corregido en checkout no se guardaba en el perfil; todos los montos sin separador de miles (JS toFixed, PHP number_format).
 - **Verificación**: node --check OK; php -l 8/8 plugin + ERP OK; E2E ERP: register con direccion/ciudad/provincia → /me persistidos ✅, PUT profile cambia ciudad/provincia ✅; fuente Ubuntu encolada en el HTML del sitio ✅. Prueba navegador pendiente del usuario.
 - **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
 
-### [21:35] - Skill art para agentes opencode + E2E generación desde kalimete + victoria-tui blindada
-- **Tipo**: feature + verificación (ronda de cierre, TARGET=kalimete verificado)
-- **Que**: (a) **skill `art`** instalada para los agentes opencode de kalimete: `~/armada-sync/skills/art/SKILL.md` (repo, se sincroniza a GitHub) + `~/.config/opencode/skills/art/SKILL.md` (live) — enseña a generar imágenes vía la art API del gateway de Victoria (templates z-image-turbo/flux-schnell/sd15-realistic, flujo async 202→poll→download, cola 429=reintentar, extracción de llave anti-leak por regex del opencode.jsonc); (b) **E2E REAL**: la llave `kalimete` (coder + multi-tier llm/art/xtts/whisper aplicado hoy desde el panel) generó "robot barista retro-futurista" vía `POST 10.0.0.5:8010/v1/images` → poll → imagen descargada a `~/Desktop/robot-barista.png` (671KB) — el caso "genera y ponla en mi escritorio" funciona; (c) **victoria-tui blindada**: handlers SIGTERM/SIGHUP (cierre brusco de terminal ahora restaura el daemon kalimete-ptt — verificado: timeout-kill → daemon volvió a `active`) + UI interactiva verificada por pseudo-TTY (corrió viva 8s dibujando; el owner la usa con `victoria-tui` en su terminal).
-- **Verificado**: submit `patched:True` con llave kalimete; imagen en Desktop; TUI exit 124 (viva) + daemon restaurado; skill en repo+config con md5 igual.
+### [21:35] - Skill art para agentes opencode + E2E generación desde Kalimete + victoria-tui blindada
+- **Tipo**: feature + verificación (ronda de cierre, TARGET=Kalimete verificado)
+- **Que**: (a) **skill `art`** instalada para los agentes opencode de Kalimete: `~/armada-sync/skills/art/SKILL.md` (repo, se sincroniza a GitHub) + `~/.config/opencode/skills/art/SKILL.md` (live) — enseña a generar imágenes vía la art API del gateway de Victoria (templates z-image-turbo/flux-schnell/sd15-realistic, flujo async 202→poll→download, cola 429=reintentar, extracción de llave anti-leak por regex del opencode.jsonc); (b) **E2E REAL**: la llave `kalimete` (coder + multi-tier llm/art/xtts/whisper aplicado hoy desde el panel) generó "robot barista retro-futurista" vía `POST 10.0.0.5:8010/v1/images` → poll → imagen descargada a `~/Desktop/robot-barista.png` (671KB) — el caso "genera y ponla en mi escritorio" funciona; (c) **victoria-tui blindada**: handlers SIGTERM/SIGHUP (cierre brusco de terminal ahora restaura el daemon Kalimete-ptt — verificado: timeout-kill → daemon volvió a `active`) + UI interactiva verificada por pseudo-TTY (corrió viva 8s dibujando; el owner la usa con `victoria-tui` en su terminal).
+- **Verificado**: submit `patched:True` con llave Kalimete; imagen en Desktop; TUI exit 124 (viva) + daemon restaurado; skill en repo+config con md5 igual.
 - **Impacto**: +skills/art (repo+config), victoria-tui actualizado, ~/Desktop/robot-barista.png (prueba). El sync.sh existente ya cubre skills/.
-- **Docs**: changelog kalimete (esta entrada) + CHANGELOG general victoria (referencia).
+- **Docs**: changelog Kalimete (esta entrada) + CHANGELOG general victoria (referencia).
 
 ### [21:30] - erp-chatbot v1.1.7: separación a prueba de todo (:has puro + 36px)
 - **Tipo**: proyecto | fix | UI | wordpress
 - **Modificado**: erp-chatbot 1.1.6→1.1.7 (~/dev/wordpress: regla body:has para el apilado sin depender del JS, aire 36px desktop/móvil, divisor siempre en DOM). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, flotantes del sitio)
+- **Afecta a**: Kalimete (wordpress-local :8091, flotantes del sitio)
 - **Causa**: Usuario: en desktop/laptop aún juntos, pidió al menos 10px.
 - **Verificación**: captura propia — chat, línea, carrito con aire generoso ✅; node --check OK.
 - **Estado**: ⚠️ pendiente de prueba del usuario (Ctrl+F5 por caché) → luego commit
@@ -3162,7 +3177,7 @@
 
 - **Tipo**: plugin | feature | fix | integración
 - **Modificado**: ZionV CRM `src/Core/CrmSettingsPage.php` (commit `3830088` + push GitHub `183fe6a..3830088` — fix fatal `submit_button()` en 7 tabs de `/crm/configuracion/` + cierre body/html; ZIP regenerado sha256 `4b056b58…`) · Armada Suite 5.8.0 (commit `1d0639b`: `tenant.business_mode` none|zion_crm|erp_pos|both, tab Entorno, gate erp_sync vía filtro, test 36, ZIP `5fa5306b…`) · Armada Suite 5.9.0 (commits `6c2e028`+`93ab8bf`: `tenant.template_mode` valor `default` — theme intacto, tab Negocio, helper `erpc_theme_intact`, test 37, ZIP `12307394…` 2.602.429 B) · docs agentes + harnesses de ambos (vivo_2026_10_28, .bkup-20261028)
-- **Afecta a**: kalimete (dev lab :8091/:8092/:8093/:8094); producción NO tocada
+- **Afecta a**: Kalimete (dev lab :8091/:8092/:8093/:8094); producción NO tocada
 - **Causa**: owner reportó errores en sección configuración de ZionV + pidió evaluar integración ZionV↔Armada Suite con selectores por tenant (template local vs default; CRM Zion vs ERP&POS vs ambos), sin "ERP LOCAL"
 - **Estado**: ✅ verificado — ZionV 7/7 tabs 200/0 errores + wp-admin OK + REST 10/10; Armada regresión 37/37 exit 0 + smoke (default: theme manda, frame 0, shortcodes rinden; none/zion_crm: degradación limpia WP_Error; erp_pos: recuperación OK); elementor backward-compat intacto; "ERP LOCAL" NEGATIVO en ambos plugins (grep definitivo); credenciales debug revocadas (0 app passwords, 0 sesiones)
 - **Notas**: (1) Convivencia ZionV↔Armada verificada sin conflictos duros — único cuidado: slugs `crm`/`reservar` vs mapa del router Armada. (2) CONTRATO-COMPANION no aplica a ZionV (es visual; ZionV = plugin peer funcional; contrato funcional nuevo a futuro si se integra data). (3) Vía de prueba en producción: preprod websites → ZIP → ventana manual (ops API NO instala plugins, deny-list por diseño). (4) WP_DEBUG quedó activo en stack zionv dev (recomendado mantener). (5) Lección e2e: cookie `secure_auth` vía nginx. (6) Pendiente owner: decidir bump de versión ZionV con el fix (regla del repo) y dónde vio "ERP LOCAL" (no está en ZionV).
@@ -3179,13 +3194,13 @@
 - **Recomendacion**: para subagentes operativos (WordPress release/commit), el local (vllm-lan, Qwen) responde en segundos; NIM glm-max para razonamiento pesado (ahora con 30 min de aire).
 - **Estado**: en sincronizacion (hub cada 5 min)
 
-### [21:30] - ERP+WP: imagenes de productos visibles en wordpress.kalimete.local + fix fatal v3
+### [21:30] - ERP+WP: imagenes de productos visibles en wordpress.Kalimete.local + fix fatal v3
 - **Tipo**: proyecto | fix | ecomm | wordpress
 - **Modificado**: `dev/ecomm-erp` (`a0f79a3`, solo nuestra rama): `Producto::getImagenUrlAttribute` ahora usa `config(app.url)` en vez de `asset()`; `EcommController::resolveTenantId` corregido (`attributes()` inexistente → `attributes`, 2 líneas, era de Juan `7ab4431`). WP: purgados transients `erpc_c_*` con URLs viejas (`erpipos.armada.do`, `https://IP:8100`).
-- **Afecta a**: kalimete (erpipo-preprod + wordpress-local)
+- **Afecta a**: Kalimete (erpipo-preprod + wordpress-local)
 - **Causa**: Usuario: sin imágenes en WP. Hallado: 1) ERP generaba `https://10.0.0.106:8100/...` (puerto HTTP-only → ERR_SSL_PROTOCOL_ERROR); 2) caché WP con URLs de `erpipos.armada.do`; 3) `erpipos/v3/*` caído con 500 por `BadMethodCallException`.
-- **Verificación**: API devuelve `https://erp.kalimete.local/storage/...` (200 estricto); página WP con 15/15 imgs al host válido; `v3/products` 200 con llave magantech; `php -l` OK; push `a5c6495..a0f79a3` a `origin/dev/ecomm-erp`.
-- **Notas**: Ver el ERP UI preferiblemente por `https://erp.kalimete.local` (las imágenes ahora salen con ese host). `main` no tocado (de Juan).
+- **Verificación**: API devuelve `https://erp.Kalimete.local/storage/...` (200 estricto); página WP con 15/15 imgs al host válido; `v3/products` 200 con llave magantech; `php -l` OK; push `a5c6495..a0f79a3` a `origin/dev/ecomm-erp`.
+- **Notas**: Ver el ERP UI preferiblemente por `https://erp.Kalimete.local` (las imágenes ahora salen con ese host). `main` no tocado (de Juan).
 - **Estado**: ✅ sincronizado
 
 ### [21:14] - IA nativa Victoria por defecto en armada-suite + chatbot MaganTech preprod funcional (template multi-tenant)
@@ -3199,7 +3214,7 @@
 ### [21:10] - WordPress local: connector v3.9.4 — home optimizada (items, textos, huecos)
 - **Tipo**: proyecto | feature | ux | wordpress-dev
 - **Modificado**: `_elementor_data` página 8 home (backup: postmeta `_elementor_data_bak_v393` + /tmp/elementor-8-bak-v393.json — el JSON de home ya era válido, el alerta de "char 742" quedó obsoleta tras la reestructuración del 09-18); plugin `erp-ecomm-connector` (connector.css, landing.php, bump 3.9.4, commit `9f01b66`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.4); repo padre commit
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, home en ambos modos)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech, home en ambos modos)
 - **Causa**: Usuario: reducir items de la home, textos acordes a imágenes, espacios grandes por falta de texto. CDP: 12 productos (sección 2172px), USP imagen 825px vs texto corto (hueco gigante), textos genéricos vs imagen de componentes/tarjetas de video.
 - **Implementado**: (1) `[erpc_products per_page='8']` (2 filas de 4; landing.php ya renderizaba 8 → consistencia ambos templates). (2) USP: heading+intro+5 items acordes a la imagen + botón "Ver componentes". (3) CSS img cap 420px/280px (sección 965→577px). (4) Hero/destacados/CTA con textos concretos. (5) landing.php default subtitle alineado (tagline tenant manda).
 - **Verificación**: CDP 8 cards en DOM (1280/375), USP img 420/280px, 0 overflow horizontal, 200 en modo plugin y elementor. Screenshots /tmp/opencode/val-home-*.png.
@@ -3208,7 +3223,7 @@
 ### [21:10] - TEST Star Fox en vivo display :1 (render OK, inputmap 10/10, XTEST roto)
 - **Tipo**: test (sin cambios de código)
 - **Modificado**: ninguno
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: orden "compila el juego y ábrelo para probar"
 - **Estado**: ✅ parcial (menú+nivel renderizan, log limpio; input sintético imposible en esta sesión X)
 - **Notas**: correr desde fuente compila todo; export release pendiente (falta descarga templates ~1GB + preset). Detalle en `docs/CHANGELOG.md` del proyecto.
@@ -3216,7 +3231,7 @@
 ### [21:00] - erp-chatbot v1.4.1: fix checkout voz no pide datos del perfil + mejoras
 - **Tipo**: proyecto | fix+feature | wordpress
 - **Modificado**: erp-chatbot 1.4.0→1.4.1 (~/dev/wordpress: enriquecimiento server-side del cliente vía ERPC_API::me() con erpc_token — fusión solo-vacíos, regla 8 prompt no-repreguntar si logueado, refrescarCliente() JS antes de confirmar, erpc_token en ambos POST; tienda_url() unificada con mapa del sitio; comentarios puerto 8090→8091; suite tests/regression.php 7 tests; limpieza 46 .bkup viejos del connector; docs WHATSAPP-ACTIVACION.md + FASE2-VOZ-IMAGEN.md).
-- **Afecta a**: kalimete (wordpress-local :8091, checkout voz)
+- **Afecta a**: Kalimete (wordpress-local :8091, checkout voz)
 - **Causa**: Usuario: al continuar por voz al checkout pedía datos ya grabados en el perfil. Causa raíz: motor armaba cliente solo de localStorage stale, nunca leía sesión ERP; prompt sin excepción logueado; sin WooCommerce el perfil canónico vive en el ERP.
 - **Verificación**: batería 3/3 (me existe, tienda_url desde mapa, regla en prompt) + suite 7/7 PASS ✅; php -l + node --check OK.
 - **Estado**: ✅ sincronizado (pendiente prueba del usuario: checkout voz con sesión — debe precargar sin preguntar)
@@ -3224,7 +3239,7 @@
 ### [21:00] - WP connector v3.13.9 + ERP v3.13.9-local: zonas de cobertura del ERP en el checkout
 - **Tipo**: proyecto | feature | multitenant | wordpress + erp-local
 - **Modificado**: plugin erp-ecomm-connector 3.13.8→3.13.9 (~/dev/wordpress: checkout.php select zona, connector.js fee/ETA/validación, api+shortcodes pasan delivery_zone_id). ERP sistema-facturacion (~/dev/erpipo-preprod: TiendaApiController expone delivery_zones; EcommCheckoutController valida zona por tenant + persiste delivery_fee; fix use $zone). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Afecta a**: Kalimete (wordpress-local :8091 + erpipo-preprod :8100)
 - **Causa**: Usuario: solo se deben poder usar zonas de cobertura disponibles en el ERP. Diagnóstico: delivery_zones existía en el ERP (por tenant) pero no se exponía ni validaba por tenant (exists global = fuga) y el checkout WP no tenía selector.
 - **Solución**: config expone zonas activas del tenant; checkout WP exige zona del ERP (con costo en el label + ETA); ERP valida contra tenant (422 invalid_zone cross-tenant) y persiste delivery_fee = tarifa_base (gratis por mínimo de zona).
 - **Verificación**: config 4 zonas MaganTech ✅; checkout zona 3 → venta 276 fee 250.00 ✅; zona de otra instancia 422 ✅; node --check + php -l 6/6 OK. Prueba del usuario pendiente.
@@ -3233,7 +3248,7 @@
 ### [21:00] - ERP sistema-facturacion: merge de 13 commits de Juan en dev/ecomm-erp, ecomm preservado, sync 0/0
 - **Tipo**: proyecto | sync | merge | seguridad
 - **Modificado**: `dev/ecomm-erp` local + `origin/dev/ecomm-erp` (merge `a5c6495`): trae soporte/tickets, landing Erp&Pos, DataTables, roles de Juan; preserva ecomm nuestro (6 archivos restaurados de HEAD tras detectar que el auto-merge tomó versiones revertidas de Juan); conflictos resueltos: `.env` (mantener borrado), 2 views compilados (borrados), `.gitignore` (nuestro bloque); migraciones soporte corridas en docker; push normal sin force.
-- **Afecta a**: kalimete (erpipo-preprod) + repo GitHub de Juan Carlos
+- **Afecta a**: Kalimete (erpipo-preprod) + repo GitHub de Juan Carlos
 - **Causa**: Usuario: actualizarse con commits de Juan quedando iguales, sin dañar ecomm de WordPress. Autoría verificada: secrets (`.env`/`.env.dev` con keys reales) y `releases/` los commiteó Carlos Jerez (`1807f68`, `7d40ccf`); nuestra limpieza `0b502c7` solo los removió.
 - **Verificación**: local↔remoto 0/0; 31 rutas ecomm; 0 OTP; `php -l` OK; migrate soporte DONE (4 tablas); docker operativo.
 - **Notas**: PENDIENTE rotar APP_KEY/DB_PASSWORD expuestos en historial. Rama `main` local aún en 363821c (behind 11, FF pendiente, fuera de alcance pedido).
@@ -3241,7 +3256,7 @@
 
 ### [20:55] - micaserogou: chatbot E2E funcionando en preprod con la key armada-micaserogou (gateway victoria)
 - **Tipo**: servicio
-- **Modificado**: preprod micaserogou.kalimete.local — erp_suite_settings.ia configurado: api_url=http://10.0.0.5:8010/v1 (IP directa — el contenedor no resuelve victoria.local por mDNS), api_key=armada-micaserogou (secrets/, 600), model=nvidia/Qwen3.6-35B-A3B-NVFP4-normal (default del plugin, sin reasoning)
+- **Modificado**: preprod micaserogou.Kalimete.local — erp_suite_settings.ia configurado: api_url=http://10.0.0.5:8010/v1 (IP directa — el contenedor no resuelve victoria.local por mDNS), api_key=armada-micaserogou (secrets/, 600), model=nvidia/Qwen3.6-35B-A3B-NVFP4-normal (default del plugin, sin reasoning)
 - **Afecta a**: chatbot del preprod (prod pendiente: owner pega la key en wp-admin → Ajustes → Asistente IA — ia.* bloqueado para ops por el Guard, solo humano)
 - **Causa**: owner reportó "El asistente IA no está disponible" en prod — ia.api_key vacía (la URL victoria.armada.do/v1 y el modelo ya son defaults del plugin 5.5.5; solo faltaba la key). Key provisionada por el agente Victoria Server (POST /v1/provision-key, rol services, caps [llm], E2E 200 contra la URL exacta del bot)
 - **Estado**: ✅ preprod E2E verificado: conversar("hola, tienen arroz?") → "Tenemos arroz Grande a RD$200 y Pequeño a RD$100, pero lamentablemente ambos están agotados en este momento." (4,1s, precios reales del ERP, respuesta corta hasta el punto) + botón "Ver en tienda →" con filtro ?buscar=arroz (navegación al menú filtrado OK) · ⏳ prod: owner pega la key de secrets/armada-micaserogou.key en wp-admin → ERP Suite → Ajustes → Asistente IA (campo API key; URL y modelo ya defaults)
@@ -3252,9 +3267,9 @@
 - **Contexto**: owner — "Tenemos acceso al github donde Juan Carlos tiene el proyecto, manejamos el branch dev/ecomm-erp… ahi hacemos los updates y todo lo que necesitamos para que Armada Suite funcione correctamente, Juan Carlos mas despues desde ese branch el hace el merge a main y pasa a produccion no nosotros, asi que documenta todo esto en el agente del proyecto… en adicional valida que el agente tanto como el harness de este proyecto este correcto".
 - **Modificado**:
   - **Workflow GitHub definitivo (owner 2026-10-18) documentado en el agente del proyecto ERP**: acceso pleno a `soycarlosjerez-hub/sistema-facturacion`; **`dev/ecomm-erp` = NUESTRA rama de trabajo** (push = flujo normal, autorización permanente del owner) para todo lo que Armada Suite necesita; **Juan Carlos mergea a main y despliega a prod — NUNCA nosotros**; `main`/`develop` read-only. Aplicado en `agents/erp-dev.md` (description, modelo de ownership, workflow, regla 4, sección Producción, Vivo 2026-10-18, regla upstream, pin_note `upstream_drk`) + `harness/erp-dev.harness.json` (scope, ownership, git.regla, head_verificado, vivo_2026_10_18, decision_owner_2026_10_18).
-  - **Live verificado (kalimete)**: clon `~/dev/erpipo-preprod/code/sistema-facturacion` en `dev/ecomm-erp` @`34de630` = `origin/dev/ecomm-erp` (ls-remote); `origin/main` @`bd1a879` — 8 commits nuestros esperando el merge de Juan; 8/8 containers erpipo Up 10h (db/redis/mailpit healthy); `/up` ok (database+redis true); tree local limpio.
+  - **Live verificado (Kalimete)**: clon `~/dev/erpipo-preprod/code/sistema-facturacion` en `dev/ecomm-erp` @`34de630` = `origin/dev/ecomm-erp` (ls-remote); `origin/main` @`bd1a879` — 8 commits nuestros esperando el merge de Juan; 8/8 containers erpipo Up 10h (db/redis/mailpit healthy); `/up` ok (database+redis true); tree local limpio.
   - **Armada Suite (delegado, agente)**: workflow ERP upstream añadido a `agents/armada-suite.md` (nueva sección "ERP upstream — workflow GitHub (regla owner 2026-10-18)" + cláusula en Vivo) + `harness/armada-suite.harness.json` (scope 5.4.2, upstream.erp_upstream, vivo_2026_10_18, zip_5_4_2 canónico, changelog). **Validación doc-vs-live 9/9**: stack Up, versión 5.4.2 triple fuente (header+define+readme), ZIP sha exacto, DEPLOY-GUIA línea ZIP actual, **regresión 25/25 PASS**, auto-sync presente (hook `:285` + deactivation `:291` + checkbox `:599` + UX `:276` + sanitize `:117`), CONTRATO-ECOMM-CONFIG.md existe, entradas .md correctas, JSON válido. Fixes de docs stale: label checkbox → "Auto-sync diario", línea Check 19/19→25/25, harness version 5.4.1→5.4.2, zip_5_4_1 destronado.
-  - **Release 5.4.2 commiteada local** (kalimete, patrón de release): `e2c86ed` (7 archivos, 314 inserciones — auto-sync + contrato ecomm + UX + bump); claims "sin commitear" actualizadas a `e2c86ed` en .md + harness.
+  - **Release 5.4.2 commiteada local** (Kalimete, patrón de release): `e2c86ed` (7 archivos, 314 inserciones — auto-sync + contrato ecomm + UX + bump); claims "sin commitear" actualizadas a `e2c86ed` en .md + harness.
 - **Afecta a**: agentes ERP Dev + Armada Suite (docs/harnesses), repo del plugin (commit local `e2c86ed`)
 - **Causa**: owner (fijar workflow GitHub del ERP + documentar en el agente + validar agente/harness)
 - **Estado**: ✅ verificado (ls-remote, docker ps, /up, regresión 25/25, json.tool OK ×2, sha256 ZIP)
@@ -3262,37 +3277,37 @@
 
 ### [20:46] - victoria: llave de negocio armada-micaserogou provisionada para el chatbot de micaserogou.com (E2E 200 via tunel)
 - **Tipo**: infra | servicio
-- **Modificado**: (victoria, SOLO via API de provisioning) DB gateway: api_keys +`armada-micaserogou` (rol services, caps [llm], rate 120/min, 2 slots, max_tokens 32K, sin budget/expiry) + provision_log id 3; (kalimete, docs) agents/victoria-server.md (linea de llaves curada + seccion 2026-10-21), harness/victoria-server.harness.json, CHANGELOG.md; (kalimete, secrets) `websites/micaserogou.com/secrets/armada-micaserogou.key` + `.meta.json` (600)
+- **Modificado**: (victoria, SOLO via API de provisioning) DB gateway: api_keys +`armada-micaserogou` (rol services, caps [llm], rate 120/min, 2 slots, max_tokens 32K, sin budget/expiry) + provision_log id 3; (Kalimete, docs) agents/victoria-server.md (linea de llaves curada + seccion 2026-10-21), harness/victoria-server.harness.json, CHANGELOG.md; (Kalimete, secrets) `websites/micaserogou.com/secrets/armada-micaserogou.key` + `.meta.json` (600)
 - **Afecta a**: chatbot erpcbot de micaserogou.com (prod cPanel, Armada Suite 5.5.5 — daba "El asistente IA no esta disponible" por ia.api_key vacia) + preprod :8094
-- **Causa**: delegacion de kalimete a victoria-server a peticion del owner: el bot necesita llave propia del gateway (estandar 1-llave-por-negocio armada-<slug>)
+- **Causa**: delegacion de Kalimete a victoria-server a peticion del owner: el bot necesita llave propia del gateway (estandar 1-llave-por-negocio armada-<slug>)
 - **Estado**: ✅ E2E 2026-10-21 20:38-20:45 — gateway sano (health LAN 200 + tunel 200; victoria-llm-gateway/cloudflared/nginx active; GPU 45C 0%) · POST /v1/provision-key 201 (slug micaserogou → name forzado armada-micaserogou, owner "Micaserogou (micaserogou.com)") · chat de prueba 200 OK via https://victoria.armada.do/v1, model nvidia/Qwen3.6-35B-A3B-NVFP4-normal (gateway normaliza el id; finish stop, 19 tokens) · DB: armada-micaserogou|services|active=1 · provision_log id 3 (kalimete→armada-micaserogou, 10.0.0.106)
-- **Notas**: plaintext devuelto UNA vez, guardado SOLO en kalimete `~/dev/wordpress/websites/micaserogou.com/secrets/` (600; fp sha256-16 c48066a582502dd1; meta json con settings al lado) — victoria FS intocable por contrato y `~/.victoria-custom/secrets/` verificado NO accesible a warcold (lectura/escritura denegadas); si se quiere copia en victoria, la coloca Victoria manualmente (patron armada-magantech). Budget mensual NO configurable via provisioning (PROVISION_MAX_BUDGET=0 = sin tope; metering por llave en DB). PENDIENTE (kalimete/owner): pegar la key en wp-admin prod → Ajustes → Asistente IA (o env ERPCBOT_LLM_KEY) — api_url y model -normal ya son defaults del plugin. Hallazgo DB: key `erp-bot` (readonly, active) preexistente — evaluar revocacion en panel si es residuo. Drift curado en doc de llaves: faltaban `vaclaaw` (coder) y las armada-*.
+- **Notas**: plaintext devuelto UNA vez, guardado SOLO en Kalimete `~/dev/wordpress/websites/micaserogou.com/secrets/` (600; fp sha256-16 c48066a582502dd1; meta json con settings al lado) — victoria FS intocable por contrato y `~/.victoria-custom/secrets/` verificado NO accesible a warcold (lectura/escritura denegadas); si se quiere copia en victoria, la coloca Victoria manualmente (patron armada-magantech). Budget mensual NO configurable via provisioning (PROVISION_MAX_BUDGET=0 = sin tope; metering por llave en DB). PENDIENTE (kalimete/owner): pegar la key en wp-admin prod → Ajustes → Asistente IA (o env ERPCBOT_LLM_KEY) — api_url y model -normal ya son defaults del plugin. Hallazgo DB: key `erp-bot` (readonly, active) preexistente — evaluar revocacion en panel si es residuo. Drift curado en doc de llaves: faltaban `vaclaaw` (coder) y las armada-*.
 
 ## 2026-10-20
 
 ### [20:45] - Checkout delivery/pickup + autofill cliente + correos por instancia (WP ↔ ERP local)
 - **Tipo**: proyecto | servicio | wordpress-dev + erp-local
 - **Modificado**: plugin erp-ecomm-connector 3.12.10→3.13.0 (~/dev/wordpress: connector.js, checkout.php, api, auth, shortcodes, css, CHANGELOG; backups `.bkup-20260923d`). ERP sistema-facturacion rama dev/ecomm-erp (~/dev/erpipo-preprod: EcommCheckoutController, TiendaApiController, Venta.php, migración 5 columnas ventas EJECUTADA, trait ConfiguresInstanceMail, ClienteVerifyEmail/ClienteResetPassword; changelog propio). **SIN COMMIT en el ERP (regla nueva del usuario: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Afecta a**: Kalimete (wordpress-local :8091 + erpipo-preprod :8100)
 - **Causa**: Usuario: el checkout volvía a pedir datos del cliente ya registrados (loop percibido), no había selector delivery/recoger, y los correos de registro debían salir desde el correo de cada instancia (no global, sin mezclar clientelas).
 - **Cambios clave**: contrato `delivery_type` (delivery: address/city/province; pickup: branch_id/pickup_time/pickup_contact) en ambos lados; autofill del checkout vía GET /ecomm/me; proxy público `erpc_store_config` (sucursales/delivery/pickup); sesión expirada → mensaje claro + /login/?redirect=/checkout/ (rompe el loop); correos con From de la instancia (SystemSetting por tenant_id, fallback global + warning); fix fuga cross-tenant en customer.id del checkout.
 - **Verificación**: ERP: config 200, register 201 + From instancia en mailpit (`MaganTech Store <pedidos@magantech.test>`), checkout delivery 200 (venta 270), pickup 200 (venta 271, sucursal 6), branch inválido 422, log limpio. Plugin: node --check OK, php -l 5/5 OK, proxy erpc_store_config E2E OK (branches/delivery/pickup llegan al navegador). Prueba E2E en navegador PENDIENTE por el usuario.
 - **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit del ERP
-- **Notas**: agente wordpress-dev falló 2 veces (reporte vacío, solo backups) — implementación del plugin la hizo kalimete directamente. `pickup.hours` por sucursal = null (no existe columna horario). Datos de test en DB preprod (sucursal 6, mail config tenant 10, cliente test) — eliminar si no se quieren.
+- **Notas**: agente wordpress-dev falló 2 veces (reporte vacío, solo backups) — implementación del plugin la hizo Kalimete directamente. `pickup.hours` por sucursal = null (no existe columna horario). Datos de test en DB preprod (sucursal 6, mail config tenant 10, cliente test) — eliminar si no se quieren.
 
-### [20:35] - victoria-tui: version grafica del kalimete-ptt (chat streaming + PTT + config)
-- **Tipo**: feature (pedido del owner: "version grafica del kalimete-ptt donde pueda hacer streaming chat live o push to talk, tambien configurarlo" — construido por Victoria @ victoria.local, TARGET=kalimete verificado)
-- **Que**: `~/.local/bin/victoria-tui` (TUI curses, ~700 líneas, stdlib+requests+evdev): (a) **chat en vivo** con Victoria — respuestas STREAMING token a token (SSE del gateway :8010), historial persistente en `~/.local/share/victoria-tui/history.jsonl` (carga los últimos 60 al abrir); (b) **push-to-talk** — mantener Right Ctrl (o tecla configurada) graba por ffmpeg+PulseAudio, soltar → STT Whisper (:18810) → envía → respuesta streaming + VOZ de Victoria (Qwen3-TTS → paplay); usa evdev con grab exclusivo (hold real, no toggle); fallback F9 toggle si no hay evdev; (c) **config** (F3): voz ON/OFF, idioma es/en, modelo normal/thinking, endpoint LAN/público, tecla PTT, voz victoria/usuario — se guarda en el MISMO `~/.config/kalimete-ptt/env` (single source, el ptt global hereda); (d) F2 voz rápida, F4 callar (barge-in), PgUp/PgDn scroll; (e) mientras corre, el daemon global kalimete-ptt se PAUSA (misma tecla) y se reactiva solo al salir; (f) modos auxiliares: `--check` (valida config+gateway+evdev+ffmpeg) y `--say "texto"` (one-shot streaming+voz).
+### [20:35] - victoria-tui: version grafica del Kalimete-ptt (chat streaming + PTT + config)
+- **Tipo**: feature (pedido del owner: "version grafica del Kalimete-ptt donde pueda hacer streaming chat live o push to talk, tambien configurarlo" — construido por Victoria @ victoria.local, TARGET=Kalimete verificado)
+- **Que**: `~/.local/bin/victoria-tui` (TUI curses, ~700 líneas, stdlib+requests+evdev): (a) **chat en vivo** con Victoria — respuestas STREAMING token a token (SSE del gateway :8010), historial persistente en `~/.local/share/victoria-tui/history.jsonl` (carga los últimos 60 al abrir); (b) **push-to-talk** — mantener Right Ctrl (o tecla configurada) graba por ffmpeg+PulseAudio, soltar → STT Whisper (:18810) → envía → respuesta streaming + VOZ de Victoria (Qwen3-TTS → paplay); usa evdev con grab exclusivo (hold real, no toggle); fallback F9 toggle si no hay evdev; (c) **config** (F3): voz ON/OFF, idioma es/en, modelo normal/thinking, endpoint LAN/público, tecla PTT, voz victoria/usuario — se guarda en el MISMO `~/.config/Kalimete-ptt/env` (single source, el ptt global hereda); (d) F2 voz rápida, F4 callar (barge-in), PgUp/PgDn scroll; (e) mientras corre, el daemon global Kalimete-ptt se PAUSA (misma tecla) y se reactiva solo al salir; (f) modos auxiliares: `--check` (valida config+gateway+evdev+ffmpeg) y `--say "texto"` (one-shot streaming+voz).
 - **Verificado**: `--check` TODO OK (gateway 200, evdev 16 dispositivos, ffmpeg/paplay); `--say` E2E streaming OK ("Hola papá, aquí estoy..." + "Listo, papá.", exit 0); py_compile OK; instalado 755 en ~/.local/bin/. La UI interactiva requiere terminal del escritorio (curses) — el owner la prueba con `victoria-tui`.
-- **Impacto**: solo añade ~/.local/bin/victoria-tui + ~/.local/share/victoria-tui/; NO toca kalimete-ptt (comparte su env, se pausa/reanima solo); sin cambios en opencode/agents.
-- **Docs**: changelog kalimete (esta entrada) + CHANGELOG general de victoria (referencia).
+- **Impacto**: solo añade ~/.local/bin/victoria-tui + ~/.local/share/victoria-tui/; NO toca Kalimete-ptt (comparte su env, se pausa/reanima solo); sin cambios en opencode/agents.
+- **Docs**: changelog Kalimete (esta entrada) + CHANGELOG general de victoria (referencia).
 
 ## 2026-10-02
 
 ### [20:30] - erp-chatbot v1.1.6: búsqueda inteligente por keywords + categorías (mejor práctica)
 - **Tipo**: proyecto | feature | IA search | wordpress
 - **Modificado**: erp-chatbot 1.1.5→1.1.6 (~/dev/wordpress: tool_buscar_productos en 2 capas con scoring local, ver_categorias, prompt). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, motor del chatbot web + WhatsApp)
+- **Afecta a**: Kalimete (wordpress-local :8091, motor del chatbot web + WhatsApp)
 - **Causa**: Usuario: búsqueda por keywords o ver el inventario — ¿mejores prácticas? Diagnóstico: el LLM adivinaba 1 palabra contra el buscador literal del ERP; con 162 productos/18 categorías lo correcto es matching server-side con scoring.
 - **Solución**: capa 1 search ERP con variantes; capa 2 matching local (tokens - stopwords + singular + scoring exacta/substring/categoría/sub/typo, stock primero); nueva tool ver_categorias.
 - **Verificación**: plural/frase con ruido/typo/categoría → resultados reales en los 4 casos ✅; 18 categorías ✅; php -l OK.
@@ -3309,7 +3324,7 @@
 ### [20:30] - ERP sistema-facturacion: sync con GitHub de Juan Carlos, rama dev/ecomm-erp, limpieza OTP + secrets
 - **Tipo**: proyecto | sync | seguridad | limpieza
 - **Modificado**: repo `soycarlosjerez-hub/sistema-facturacion` rama `dev/ecomm-erp` (origen único junto a local `~/dev/erpipo-preprod/code/sistema-facturacion/`); eliminado remote `preprod` (warcold/erpipo-preprod, ya no existe); revert en `origin/main` del commit ecomm subido por error (main limpio para Juan); OTP removido de `dev/ecomm-erp` (`ClienteOtpController.php`, `ClienteOtpCode.php`, 4 rutas `api/ecomm/auth/*` — login queda por email+password); SECURITY untrack `.env`, `.env.backup_audit`, `.env.dev` (tenían APP_KEY y DB_PASSWORD reales); `.gitignore` blindado (agrega `.env`/`.env.dev`, saca `.env.example` del ignore, corrige backups a `/storage/app/backups/`, reglas anti-WordPress); eliminado `releases/20260911_212141` (snapshot duplicado 48MB, 2466 archivos); untrack 15 views Blade compilados; `.env.example` documenta integración plugin WP vía Instance API Key (sin secrets).
-- **Afecta a**: kalimete (stack erpipo-preprod) + repo GitHub de Juan Carlos (colaborador)
+- **Afecta a**: Kalimete (stack erpipo-preprod) + repo GitHub de Juan Carlos (colaborador)
 - **Causa**: Usuario: repo de Juan es el principal, sync bidireccional, sin duplicados, plugin WP nunca se sube, ERP listo para deploy de Juan. Hallado: 2 remotes divergentes, secrets en git, OTP muerto, junk trackeado.
 - **Verificación**: local↔origin 0 commits desfasados, status limpio; 31 rutas ecomm registradas (login/register/cart/checkout/orders/tienda/config); 0 archivos WP en git; docker 8 servicios up; Laravel 12.16.0 sin errores; php -l OK.
 - **Notas**: ROTAR secrets expuestos en historial (APP_KEY, DB_PASSWORD de facturacion_db) — el untrack no borra el historial. Backups locales `storage/app/backups/` (3.4GB) NO tocados, solo reportados.
@@ -3330,10 +3345,10 @@
   - **Decisión owner 2026-10-17**: hub `~/dev/wordpress/` reorganizado — `plugins/` (proyectos con sus dev labs) + `websites/` (un ambiente por CLIENTE nombrado por dominio: preprod local + conexión prod + agente + harness + docs). Pipeline oficial: dev lab :8091 (source) → ZIP canónico → preprod del cliente (instala el ZIP) → prod (deploy manual + ops remota erpsuite/v1).
   - **Moves verificados** (playbook: dump pre-move → down → mv → up → smoke → volúmenes sin huérfanos): armada-suite → `plugins/armada-suite` (dump 606K; git HEAD b4c2a89 intacto + 14 archivos 5.4.0 sin commitear; smoke-8091 verde; regresión 24/24; :8091 200) · zionv-crm → `plugins/zionv-crm` (dump 967K; git del plugin HEAD 5d3efab intacto; smoke-8092 verde; docs internos corregidos).
   - **NUEVO `websites/magantech.com.do/`** (agente Armada Suite): preprod :8093/:3309 (compose `magantech`, imagen wordpress:7.1.3-php8.3-apache ESPEJO EXACTO de prod, red erpipo-dev-network → ERP local tenant 10), plugin 5.4.0 desde ZIP release, /productos/ 15 cards + colores ERP #1a73e8/#34a853 verificados, sync identidad applied=6 + snapshot, smoke-8093 100% verde, secrets/ (prod-connection.md + preprod-admin.md, 600/700), README con inventario REAL de prod (tema Hello Elementor; armada-suite 5.4.0 + JetBackup 3.1.23.6 + Mantenimiento web 0.15; 2 admins; 16 páginas; 1 post, 0 media), docs/PROCEDURES.md con learnings (wp-cli sidecar: env vars DB + WP_ENVIRONMENT_TYPE=local; binds www-data → chown antes de unzip).
-  - **NUEVO agente `Magantech`** (kalimete): agents/magantech.md + harness/magantech.harness.json + symlink en ~/.config/opencode/agent/ + permission.task de kalimete — primer agente por-cliente de la red de websites.
+  - **NUEVO agente `Magantech`** (Kalimete): agents/magantech.md + harness/magantech.harness.json + symlink en ~/.config/opencode/agent/ + permission.task de Kalimete — primer agente por-cliente de la red de websites.
   - **Docs hub** (agente WordPress): README-HUB.md reescrito al nuevo layout; NUEVO docs/NUEVO-WEBSITE-TEMPLATE.md (playbook replicable de alta de clientes, convención puertos 809X/330X ascendente — próximo 8094/3310); PROBAR-PLUGIN-EN-8091 + NUEVO-PLUGIN-TEMPLATE + plugins-disponibles/* actualizados; grep de rutas viejas = 0.
   - **Fleet**: paths curados (replaceAll + .bkup-20261017-pluginsmove) en agents/{armada-suite,zionv-crm,wordpress-dev}.md + harness/{armada-suite,zionv-crm,wordpress-dev}.harness.json; MAPA.md sección WP reescrita (labs + websites + prod magantech + pipeline); vivo_2026_10_17 en harnesses.
-- **Afecta a**: kalimete dev (rutas nuevas), cliente MaganTech (preprod + agente dedicado), futuros clientes (template replicable)
+- **Afecta a**: Kalimete dev (rutas nuevas), cliente MaganTech (preprod + agente dedicado), futuros clientes (template replicable)
 - **Causa**: owner: "plugins en plugins/, websites de clientes en websites/ con su agente cada uno — empezando con magantech.com.do; trabajo local + conexión a producción"
 - **Estado**: ✅ verificado (smokes 8091/8092/8093 verdes, regresión 24/24, volúmenes sin huérfanos, greps limpios, JSONs válidos)
 - **Notas**: ⚠️ ROTAR la App Password de prod del usuario Victoria (circuló por chat 2026-10-17). Pendientes: Parte 3 (template vía ops — allowlist de themes en OpsMotor + bump 5.4.1) DIFERIDA a tarea posterior; decisión owner: repos git del hub padre y de websites/; commits de los working trees (5.4.0 de armada sin commitear); webhooks ERP→preprod opcionales.
@@ -3341,7 +3356,7 @@
 ### [20:15] - FIX Star Fox "no puedo jugar": disparo + fuego amigo + pausa (smoke 7/7)
 - **Tipo**: fix/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (player_ship.gd, bullet.gd)
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: reporte owner; humo headless reprodujo el fallo (fuego no salía; luego balas se autodestruían)
 - **Estado**: ✅ verificado (smoke 7/7 VERDE, runner borrado, escenas tocadas re-corridas OK)
 - **Notas**: fire_timer peleado entre _process/_physics → fire_cooldown único; balas ignoran grupo player + spawn fuera del casco; pausa sin soft-lock. Detalle en `docs/CHANGELOG.md` del proyecto.
@@ -3350,14 +3365,14 @@
 
 - **Tipo**: plugin | validación | docs
 - **Modificado**: repo plugin `~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin` (push `5d3efab..183fe6a` — 3 commits docs: dominio MaganTech, .gitignore *.bkup*, rutas reorg) · `export/zionv-crm-1.56.3.zip` regenerado (7.568.991 B, 1932 archivos, sha256 `bacba37b…a9d74`, unzip -t OK, sin secrets) · `agents/zionv-crm.md` (controllers 34→35, conteo real) + `harness/zionv-crm.harness.json` (vivo_2026_10_27) con `.bkup-20261027-validacion`
-- **Afecta a**: kalimete (plugin ZionV CRM); GitHub warcold/zionv-crm ahora sync 100%
+- **Afecta a**: Kalimete (plugin ZionV CRM); GitHub warcold/zionv-crm ahora sync 100%
 - **Causa**: owner pidió validar plugin local+GitHub, crear ZIP de instalación y evaluar agente/harness
 - **Estado**: ✅ verificado — php -l 1437/1437 OK; versiones coherentes 1.56.3 (header=readme=CHANGELOG=DB); DB 1.24.0 con 43 tablas; stack zionv-local+zionv-db Up 7d healthy; wp-json TLS 200; SPA dist marker __zionCfgUnified=1; git status limpio y local=origin/main tras push
 - **Notas**: (1) Deriva doc detectada y corregida: doc decía "34 controllers", conteo real grep = 35 (123 rutas REST exactas ✓). (2) ZIP usa convención canónica del repo (raíz `zionv-crm-plugin/`, header es lo que importa para WP). (3) 6 archivos .bkup de docs en el repo quedan ignorados por git — limpieza opcional pendiente decisión owner. (4) Repo GitHub es privado (API 404 sin auth, fetch SSH OK).
 
 ### [20:05] - Uplift flota: Docs oficiales en 19 agent files + docs_oficiales en 19 harnesses (aplicado por Victoria, autorizacion del owner)
-- **Tipo**: docs | flota | victoria-cross (TARGET=kalimete, hostname verificado; autorizacion expresa del owner 2026-10-08)
-- **Modificado**: ~/armada-sync/agents/*.md (19/19: seccion Docs oficiales antes de Upstream; kalimete.md ademas +Upstream que faltaba) + ~/armada-sync/harness/*.json (19/19: bloque docs_oficiales); backups .bkup-20261008-docs por archivo; /tmp limpio
+- **Tipo**: docs | flota | victoria-cross (TARGET=Kalimete, hostname verificado; autorizacion expresa del owner 2026-10-08)
+- **Modificado**: ~/armada-sync/agents/*.md (19/19: seccion Docs oficiales antes de Upstream; Kalimete.md ademas +Upstream que faltaba) + ~/armada-sync/harness/*.json (19/19: bloque docs_oficiales); backups .bkup-20261008-docs por archivo; /tmp limpio
 - **Afecta a**: los 19 agentes (docs de referencia para programar segun estandares de los creadores, sin adivinar); frontmatter y operativa intactos
 - **Causa**: directiva del owner — patron vLLM de victoria aplicado a TODA la flota sin excepcion, impecable en ambos hosts
 - **Estado**: verificado opencode agent list 1 primary + 18 exactos, 0 duplicados; harnesses 19/19 JSON validos; doc-fresh y revision de la primaria pendientes
@@ -3389,7 +3404,7 @@
 ### [19:50] - WordPress local: connector v3.9.3 — cards automáticos en páginas de texto
 - **Tipo**: proyecto | feature | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (static.php + connector.css, bump 3.9.3, commit `bdb535d`, push main OK); `_elementor_data` página 61 /cotizar/ (backup doble: postmeta + /tmp); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.3); repo padre commit
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech)
 - **Causa**: Usuario pidió "cuadritos" con la info dentro en vez de texto plano en todas las landings, como quedó /contacto/, en ambos templates (plugin default y Elementor).
 - **Implementado**: (1) Sistema de cards automático en static.php: contenido dividido por secciones `<h2>`, cada sección = card; grid 2 col desktop si todas las secciones son cortas (≤700 chars, última impar full-width), apiladas si hay largas, render clásico sin h2 — cubre sobre-nosotros, terminos, privacidad, cookies, envios, devoluciones, faq y cualquier página futura, en modo plugin Y elementor (fallback v3.9.1). (2) CSS cards con vars (3 presets) + alias `.erpc-info-card`. (3) /cotizar/ reestructurada con el patrón de contacto: hero pagehero + grid 40/60 (info "Cómo funciona" + [erpc_quote]).
 - **Verificación CDP**: sobre 1280 = 5 cards 2×2 + última 780px (regla impar), 375 = apiladas 311px; terminos 1280 = 9 cards grid; cotizar = info 412px + form 628px (desktop) / apilados (móvil); contacto 375 sin regresión; 0 overflow horizontal en todas; 200 en modo plugin Y elementor (switch ida/vuelta). Screenshots /tmp/opencode/val-{sobre,terminos,cotizar,contacto}-*.png.
@@ -3398,9 +3413,9 @@
 ### [19:50] - ERP Commerce Suite 4.0.0: 3 plugins → 1 plugin unificado, activo y verificado
 - **Tipo**: proyecto | feature | consolidación | wordpress
 - **Modificado**: ~/dev/wordpress/wp-content/plugins/erp-commerce-suite/ (NUEVO, 51 PHP files): unifica erp-chatbot 1.4.6 + erp-ecomm-connector 3.15.2 + mcp-basic-auth 1.1. Entry + Core/{Environment,Main,Logger,Activator} + Store/{ApiClient,Auth,CartCheckout,Customer,Forms,Templates,Shortcodes} + AI/{ChatEngine,Bootstrap,Channels/WhatsApp} + Infra + Admin/{AdminMenu,LegacyConnectorAdmin,LegacyChatbotAdmin,LogViewer} + Compat/Legacy + 22 templates + assets + tests.
-- **Afecta a**: kalimete (wordpress-local :8091), GitHub warcold (3 repos borrados, 1 nuevo)
+- **Afecta a**: Kalimete (wordpress-local :8091), GitHub warcold (3 repos borrados, 1 nuevo)
 - **Causa**: Usuario: unificar todo en 1 plugin sin roles (manage_options), modo dev/público sellado, borrar rastro de los 3 plugins local + GitHub
-- **Validación**: activada en WP (active_plugins = emcp-tools + suite + mcp-adapter); migración erpc_settings+erpcbot_settings→erp_suite_settings con backup erpsuite_legacy_backup; php -l 51/51; regresión 8/8; front/productos 200 con grid real del ERP local (172.19.0.1:8100); widget carga; REST erpsuite/v1/whatsapp existe (403 sin challenge, esperado); api_url dev=172.19.0.1:8100/api, llm=10.0.0.5:8010/v1, img=erp.kalimete.local, tenant 10 + api_key migradas
+- **Validación**: activada en WP (active_plugins = emcp-tools + suite + mcp-adapter); migración erpc_settings+erpcbot_settings→erp_suite_settings con backup erpsuite_legacy_backup; php -l 51/51; regresión 8/8; front/productos 200 con grid real del ERP local (172.19.0.1:8100); widget carga; REST erpsuite/v1/whatsapp existe (403 sin challenge, esperado); api_url dev=172.19.0.1:8100/api, llm=10.0.0.5:8010/v1, img=erp.Kalimete.local, tenant 10 + api_key migradas
 - **Estado**: ✅ sincronizado. GitHub: erp-chatbot + erp-ecomm-connector + erp-ecmm-connector BORRADOS; creado warcold/erp-commerce-suite (private) con push inicial + docs
 - **Notas**: fixes post-build del subagente (murió por rate limit a mitad): porté Main.php + AI/Bootstrap.php de los entries viejos, corregí alias invertido erpc()/erpsuite() (fatal), recursión infinita en Environment::get_api_url (apply_filters + alias Compat), image_host dev apuntaba a prod, 16 archivos con constantes legacy (ERPC_PLUGIN_DIR etc.), ERPSUITE_DEFAULT_HERO sin definir. Rastros en cuarentena /tmp/opencode/erp-suite-deleted-20260929/ (recuperable). Pendiente 4.1: consolidar renders admin legacy en los 8 tabs del menú ERP Suite (hoy 3 menús funcionales), retirar aliases Compat y mu-plugin erpc-local.php. ERP local clavado a main puro de Juan 5c6ca70 (sin edits, rama dev/ecomm-erp local preservada con nuestro commit 7d1e885 sin push).
 
@@ -3410,12 +3425,12 @@
 - **Afecta a**: vps-preprod (stack ragnarok eliminado), landing ragnarok.armada.do (nueva infra), juego Record of Ragnarok (data port listo), flota (agente Record of Ragnarok ahora existe de verdad)
 - **Causa**: orden del owner — limpiar todo lo que no se necesita del VPS y reciclar lo que sí; proceder con los siguientes pasos del juego (Fase 0.5)
 - **Estado**: ✅ landing HTTP 200 vía ror-landing (proxy por nombre, patrón docuseal) · ✅ resto de dominios del VPS intactos (auth/nextcloud 302, docuseal/pets/scriberr 200) · ✅ data port 31/31 tests (Poring 1002, attr_fix Water→Fire 150, job_exp 99 niveles) · ✅ DNS cp eliminado y verificado
-- **Notas**: el agente Record of Ragnarok no cargaba como task type (symlink roto → archivo .md inexistente); recreado el .md — la tool task lo reconocerá en la próxima sesión de opencode (cachea agentes al arranque). La Fase 0.5 la ejecutó kalimete directamente por esa razón. Token cloudflare spring-dream-d681 dio error 9109 (restricción IP) — el subagente usó el token DNS opencode-dns-cleanup; pendiente owner actualizar IPs permitidas del token de cuenta si quiere usarlo desde kalimete.
+- **Notas**: el agente Record of Ragnarok no cargaba como task type (symlink roto → archivo .md inexistente); recreado el .md — la tool task lo reconocerá en la próxima sesión de opencode (cachea agentes al arranque). La Fase 0.5 la ejecutó Kalimete directamente por esa razón. Token cloudflare spring-dream-d681 dio error 9109 (restricción IP) — el subagente usó el token DNS opencode-dns-cleanup; pendiente owner actualizar IPs permitidas del token de cuenta si quiere usarlo desde Kalimete.
 
 ### [19:45] - REPARACIÓN TOTAL Armada Star Fox validada (plan A1-E1, 18/18 escenas OK)
 - **Tipo**: fix/game-dev
 - **Modificado**: `~/dev/godot/armada-starfox/` (12 scripts, project.godot, 5 reescritas, 16 nuevos)
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: validación headless Godot 4.7.2: 8 errores compilación + 5 archivos inválidos + 8 refs rotas
 - **Estado**: ✅ verificado (check-only limpio, import limpio, 18/18 escenas 30 frames sin errores)
 - **Notas**: input re-mapeado (E/Q + Shift solo boost); level_select y niveles 2-5 como stubs jugables; PT→ES total; fases de boss corregidas; detalle en `docs/CHANGELOG.md` del proyecto.
@@ -3425,9 +3440,9 @@
 - **Tipo**: servicio | feature | seo | artefacto
 - **Modificado**: repo `~/dev/wordpress/websites/micaserogou.com` commit `54c715a` — 3 mu-plugins NUEVOS (`erpc-page-cache.php`, `erpc-sitemap-direct.php`, `erpc-jsonld-restaurant.php`) + config `uploads/erpc/jsonld-restaurant.json` + `export/micaserogou-site-fixes-1.0.4.zip` (15.639 B, sha256 `36e4bf3da44f0019e5cd187331fef414df7376e46630eafe2a13aac8630c75a0`, consolida reservas 1.0.3 + mejoras nuevas) + installer/site-fixes-build actualizado + CHANGELOG del sitio
 - **Afecta a**: preprod micaserogou (validado e2e); producción NO tocada (espera upload del owner)
-- **Causa**: owner aprobó proceder con las mejoras de la auditoría del 10-27 excepto #1 (gateway de pago → scope ERP Dev). La delegación al subagente Micaserogou falló 3× (1 max-steps + 2 timeouts sin artefactos) → kalimete ejecutó directo bajo la skill wp-templates (plugin compartido intocado, todo site-level)
+- **Causa**: owner aprobó proceder con las mejoras de la auditoría del 10-27 excepto #1 (gateway de pago → scope ERP Dev). La delegación al subagente Micaserogou falló 3× (1 max-steps + 2 timeouts sin artefactos) → Kalimete ejecutó directo bajo la skill wp-templates (plugin compartido intocado, todo site-level)
 - **Estado**: ✅ verificado — cache HIT 0.54s vs MISS 1.54s (preprod), BYPASS correctos (carrito/checkout/login/mi-cuenta/reservas/query/sitemaps), kill-switch operativo, /sitemap.xml 200 XML directo (antes 301), JSON-LD Restaurant enriquecido con email verificado, stock-0 correctamente excluido del catálogo (pitfall #12), 11 páginas 200, docker logs limpios, php -l 3/3
-- **Notas**: (1) Diagnóstico #2 honesto: prod rápida con --resolve (0.26-0.42s) — los 3s de la auditoría eran DNS desde kalimete; el cache es resiliencia ante varianza del shared hosting, no fix de bottleneck. (2) Pitfalls nuevos: hijackers de página a template_redirect prio 1 obligan cache a prio 0; en WP 7.x el query var del sitemap es `sitemap=index` (no `sitemap=sitemap`). (3) Pendientes externos: upload del owner (1 ZIP: 1.0.4), stock real + teléfono/dirección/redes del cliente (JSON-LD se completa vía ops sin nuevo upload), upgrade plugin 5.5.10→5.7.0 (blocker iak tenant 3), #1 gateway → ERP Dev. (4) El teléfono 18095550123 del sitio es placeholder 555 — NO se propagó al schema.
+- **Notas**: (1) Diagnóstico #2 honesto: prod rápida con --resolve (0.26-0.42s) — los 3s de la auditoría eran DNS desde Kalimete; el cache es resiliencia ante varianza del shared hosting, no fix de bottleneck. (2) Pitfalls nuevos: hijackers de página a template_redirect prio 1 obligan cache a prio 0; en WP 7.x el query var del sitemap es `sitemap=index` (no `sitemap=sitemap`). (3) Pendientes externos: upload del owner (1 ZIP: 1.0.4), stock real + teléfono/dirección/redes del cliente (JSON-LD se completa vía ops sin nuevo upload), upgrade plugin 5.5.10→5.7.0 (blocker iak tenant 3), #1 gateway → ERP Dev. (4) El teléfono 18095550123 del sitio es placeholder 555 — NO se propagó al schema.
 
 ### [19:45] - AUDITORÍA migración proxy→vps-preprod: NO EJECUTADA — vps-proxy sigue siendo el único proxy (NO borrar todavía)
 - **Tipo**: infra | docs
@@ -3456,7 +3471,7 @@
 - **Afecta a**: producción micaserogou.com
 - **Causa**: owner pidió que prod cargue igual que preprod; la homepage mostraba el blog default del hosting
 - **Estado**: ✅ aplicado y verificado (HTTP 200, body class page-id-7 erpc-store, 160 refs erpc, nombre en RSS links) · ⏳ pendientes: permalinks /%postname%/ (1 clic owner — permalink_structure fuera del schema REST, se ignora en silencio), key ERP productiva tenant 3 (Juan Carlos), entrada key+tenant_id=3 en wp-admin, llave LLM armada-micaserogou, secret webhooks
-- **Notas**: hallazgos de la ventana: REST settings usa `title` no `blogname` y devuelve 200 ante unknowns (éxito falso); ops/settings deny-by-default para public.* (por diseño, apply exige ai_mode=work); api_url fallback ya = erpipos.armada.do/api (preload redundante); JetBackup 3.1.23.6 activo en prod (antes no documentado); rollback documentado en la sesión del agente Micaserogou. Evaluación completa del stack hoy: WordPress (reporte vacío, completado por kalimete vía REST), Armada Suite (root-cause: copy demo PC-store hardcodeado + erp_config vacío por cron muerto), ERP Dev (tenant 3 sano: 85 productos, 8 categorías, webhook vivo, stack 8/8)
+- **Notas**: hallazgos de la ventana: REST settings usa `title` no `blogname` y devuelve 200 ante unknowns (éxito falso); ops/settings deny-by-default para public.* (por diseño, apply exige ai_mode=work); api_url fallback ya = erpipos.armada.do/api (preload redundante); JetBackup 3.1.23.6 activo en prod (antes no documentado); rollback documentado en la sesión del agente Micaserogou. Evaluación completa del stack hoy: WordPress (reporte vacío, completado por Kalimete vía REST), Armada Suite (root-cause: copy demo PC-store hardcodeado + erp_config vacío por cron muerto), ERP Dev (tenant 3 sano: 85 productos, 8 categorías, webhook vivo, stack 8/8)
 
 ### [19:35] - micaserogou 5.5.4: rebranding a "Michelle Casero y Gourmet" (nombre correcto del negocio) + fix iconos admin bar + imágenes de comida generadas
 - **Tipo**: servicio | release | fix
@@ -3469,7 +3484,7 @@
 ### [19:30] - erp-chatbot v1.1.5: voz con pitch + búsqueda tolerante + divisor entre flotantes
 - **Tipo**: proyecto | fix | voz + búsqueda + UI | wordpress
 - **Modificado**: erp-chatbot 1.1.4→1.1.5 (~/dev/wordpress: pitch por género × tono admin, normalizador de búsqueda con reintentos, prompt en singular, div divisor entre flotantes). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget del chatbot)
 - **Causa**: Usuario: voz femenina suena igual que masculina; bot decía no hay impresoras habiendo stock; chat aún pegado al carrito (pidió div divisor).
 - **Diagnóstico**: una sola voz español = elegir por nombre no cambia nada (pitch lo garantiza); ERP busca literal plural≠singular; 28px sin elemento visual se leía pegado.
 - **Verificación**: "buscando impresoras" → 3 reales ✅; node + php OK; archivos 1.1.5 sirviéndose; captura propia del divisor ✅. Prueba en navegador pendiente.
@@ -3478,24 +3493,24 @@
 ### [19:30] - WP connector v3.13.8: gestión de métodos de pago + panel admin con tabs
 - **Tipo**: proyecto | feature | UI admin | wordpress
 - **Modificado**: plugin erp-ecomm-connector 3.13.7→3.13.8 (~/dev/wordpress: class-erpc-admin.php tabs + sección métodos de pago + sanitize; erp-ecomm-connector.php get_all_payment_methods + override local). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, admin del plugin + /checkout/)
+- **Afecta a**: Kalimete (wordpress-local :8091, admin del plugin + /checkout/)
 - **Causa**: Usuario: poder activar/desactivar formas de pago para el cliente; reorganizar el panel admin con tabs y compactar secciones afines separadas.
 - **Solución**: 5 tabs (Conexión / Apariencia / Tienda / Contacto y correo / Shortcodes) — secciones de marca+tema y contacto+SMTP compactadas; nueva sección Métodos de pago con toggles (7 métodos, ERP v3.13.3+ los acepta todos); override local > config ERP > fallback; tab activo persiste en localStorage.
 - **Verificación**: php -l OK; tabs balanceados; E2E: override ['efectivo','tarjeta'] → checkout solo muestra esos 2 ✅; restaurado → fallback 5 ✅. Prueba visual del admin pendiente del usuario.
 - **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
 
-### [19:25] - kalimete-ptt v4: transcripción a tecla APARTE (F9) + Ctrl_R solo Victoria + fixes de la prueba física (Yes/markdown)
+### [19:25] - Kalimete-ptt v4: transcripción a tecla APARTE (F9) + Ctrl_R solo Victoria + fixes de la prueba física (Yes/markdown)
 - **Tipo**: servicio | infra
-- **Modificado**: ~/.local/bin/kalimete-ptt (v4; .bak.20261020-modos conserva v2/v3); servicio reiniciado
-- **Afecta a**: kalimete (PTT local) — flujo de voz kalimete↔victoria
+- **Modificado**: ~/.local/bin/Kalimete-ptt (v4; .bak.20261020-modos conserva v2/v3); servicio reiniciado
+- **Afecta a**: Kalimete (PTT local) — flujo de voz Kalimete↔victoria
 - **Causa**: owner probó v3 físicamente y "se rompe". Diagnóstico en logs (19:07-19:09): (1) respondió "Yes." y el _YES_RE solo aceptaba español → confirmación nunca matcheaba → loop de re-preguntas; (2) Whisper autodetecta idioma (server ignora el hint) y con audio dudoso alucinó francés/ruso ("C'est...", "И вам отраз кривит"); (3) Victoria respondió el estado CON MARKDOWN (asteriscos leídos por TTS). Diseño v4 del owner: quitar transcripción del flujo de Victoria → tecla APARTE (PTT_TRANS_KEY, default F9, verificada en capabilities del teclado físico) para dictado directo sin LLM; Ctrl_R queda SOLO para hablar con Victoria con acceso completo (el dictado a ventana se pide hablando: "escribe X en la ventana" → type_text con confirmación)
 - **Estado**: ✅ servicio active (running), F9 presente en AT Translated Set 2 keyboard · ✅ _YES_RE/_NO_RE multi-idioma (yes/yeah/oui/da/nyet/non...) · ✅ VICTORIA_SYSTEM anti-markdown reforzado (respuesta directa a sintetizador) · ✅ transcribe_mode/coach/exit REMOVIDOS · ✅ tests E2E gateway real 5/5: multi-idioma OK, tools = machine_status+run_command+type_text, "dame estado"→hablado natural sin markdown, "escribe en la ventana"→type_text→"Yes."→pega+Enter→"Listo, ya mandé el mensaje a opencode", _dictate pega directo sin LLM
 - **Notas**: _listen ahora escucha DOS keycodes (PTT + TRANS) con _active = None|"ptt"|"trans"; _stop_rec(dest) enruta a _transcribe (Victoria) o _dictate (pegar directo); _stt_text factorizado. ydotoold virtual device (event15) sigue excluido por has_phys — crítico: escucharlo crearía eco del Ctrl+Shift+V del paste. F9 puede requerir FnLock en modo función. Pendiente owner: prueba física (Ctrl_R=Victoria, F9=dictado directo).
 
 ### [19:10] - ZionV CRM 1.56.0: UNA sola configuración — página unificada en /crm/configuracion/
-- **Tipo**: release | ui | arquitectura | plugin (TARGET=kalimete local; repo GitHub warcold/zionv-crm)
+- **Tipo**: release | ui | arquitectura | plugin (TARGET=Kalimete local; repo GitHub warcold/zionv-crm)
 - **Modificado**: plugin 1.55.2→**1.56.0** (13 archivos, commit `bc03874` pushed): NUEVO `Core/CrmSettingsPage` (extiende SystemStatusPage) — la ruta Configuración del panel la sirve PHP con look del CRM (Outfit, tema claro/oscuro anti-flash, color de marca, tabs píldora) y las 6 pestañas completas: General (negocio+slug+zona+logo upload+color), Antispam (Turnstile+límites), Correo (presets+prueba), Calendario (selector+Google+MS365+Nextcloud), HubSpot, Asistente de IA; NUEVO `tools/patch-config-route.sh` (parche idempotente del bundle: la ruta /configuracion del React Router recarga una vez → PHP sirve la unificada; backup *.orig; banner puente solo como fallback sin parche); SystemStatusPage no-final + protected + page_url() sobreescribible + tabs General/Antispam replicadas del panel original; handlers zion_crm_config_* con redirect a la ruta CRM; OAuth MS365 → /crm/configuracion/?tab=calendario; ZIP `export/zionv-crm-1.56.0.zip` (sha256 `1bdfd252…`, bundle YA parcheado, script de parche incluido)
-- **Afecta a**: zionv-local (kalimete :8092), repo GitHub warcold/zionv-crm
+- **Afecta a**: zionv-local (Kalimete :8092), repo GitHub warcold/zionv-crm
 - **Causa**: feedback del owner — "todo debe ser el mismo plugin, no 2 configuraciones; la idea es mejorar lo que tenemos". La config del panel React está compilada sin source; la solución: interceptar la ruta en PHP + parche reproducible del bundle para que el sidebar también llegue a la unificada
 - **Estado**: ✅ verificado e2e: 6 tabs 200; POST de guardado → 302 a /crm/configuracion/?tab=general con dato persistido (business_name); dashboard SPA 200 intacto; bundle servido con marker; 0 fatales
 - **Notas**: LECCIONES: (1) propiedades private del padre son INVISIBLES para la subclass en PHP — el hijo crea una dinámica null silenciosa ("on null"); usar protected desde el diseño si habrá herencia; (2) clase final bloquea extends — SystemStatusPage dejó de ser final; (3) el parche del bundle es la única vía para redirigir navegación client-side del React Router sin source — idempotente, con backup y con fallback (banner) si se pierde en un update upstream. Estado del sistema (wp-admin) queda como diagnóstico técnico; la configuración vive en el panel.
@@ -3503,7 +3518,7 @@
 ### [19:00] - WP connector v3.12.7: categorías tiempo real + total exacto + nocache
 - **Tipo**: proyecto | fix | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/`: `erp-ecomm-connector.php` (nocache_headers frontend + placeholder en erpc_cfg), `assets/js/connector.js` (click handler defensivo + fallback AJAX si caché filtra 0), `includes/class-erpc-shortcodes.php` (ajax_get_products: fetch-all páginas ERP + stock antes de paginar + total desde meta.total), bump 3.12.6→3.12.7 + CHANGELOG plugin; commit plugin `4e81d4d`.
-- **Afecta a**: kalimete (wordpress-local, /productos/)
+- **Afecta a**: Kalimete (wordpress-local, /productos/)
 - **Causa**: Usuario: "cambio de categoría no actualiza en tiempo real, debo refrescar". Diagnóstico: en headless el click SÍ funcionaba — fallo del usuario = JS viejo cacheado (HTML sin Cache-Control → caché heurística del navegador → ver viejo con bug ERPCLog mataba el handler). Extra: AJAX devolvía totales incorrectos (return del ERP trae total en meta.total, no 'total'; filtro de stock DESPUÉS de paginar → Cables 5 de 7 reales, sin "cargar más").
 - **Verificación**: Playwright headless — AJAX Cables 7 (antes 5)/Monitores 10/Impresoras 22 has_more=true/Computadoras 5 ✅; click sin refresh actualiza grilla + URL, 0 errores JS ✅; fallback caché incompleta → 7 ✅; regresión carrito v3.12.5 OK ✅.
 - **Estado**: ✅ sincronizado
@@ -3520,14 +3535,14 @@
 
 ### [18:45] - Auditoria Victoria: BillyCode 8/8 OK + higiene + pasos victoria ejecutados
 - **Tipo**: auditoria externa + docs (owner: "valida los cambios... aplica mejoras... procede con los proximos pasos")
-- **Que**: (1) Validacion: 8/8 checks, serve 1.18.34 vivo, .env correcto (llave kalimete, URLs con path), withPath() defensivo bien hecho, guardrails D7 asentados, voice-pipeline.ts revisado (barge-in 2 niveles, stop-words con limites). (2) Mejora aplicada: apps/tui/voice.py ELIMINADO — era placeholder muerto que contradecia el ledger (F2 esta en apps/server, nadie importaba voice.py; tests siguen 8/8). (3) Pasos victoria ejecutados: caps single-source en sense_auth.py, ensure-loop reinicia bridges por md5 (verificado en vivo), git commit a6139aa, victoria-server.md al dia (sin 120K/xtts).
-- **Pendiente owner**: readme.txt (handoff temporal) — borrar cuando confirme. F3 branding pendiente. kalimete-ptt: retiro sigue SOLO tras confirmacion.
-- **Docs**: changelog kalimete (esta) + ledger billycode + victoria-server.md + changelogs de victoria.
+- **Que**: (1) Validacion: 8/8 checks, serve 1.18.34 vivo, .env correcto (llave Kalimete, URLs con path), withPath() defensivo bien hecho, guardrails D7 asentados, voice-pipeline.ts revisado (barge-in 2 niveles, stop-words con limites). (2) Mejora aplicada: apps/tui/voice.py ELIMINADO — era placeholder muerto que contradecia el ledger (F2 esta en apps/server, nadie importaba voice.py; tests siguen 8/8). (3) Pasos victoria ejecutados: caps single-source en sense_auth.py, ensure-loop reinicia bridges por md5 (verificado en vivo), git commit a6139aa, victoria-server.md al dia (sin 120K/xtts).
+- **Pendiente owner**: readme.txt (handoff temporal) — borrar cuando confirme. F3 branding pendiente. Kalimete-ptt: retiro sigue SOLO tras confirmacion.
+- **Docs**: changelog Kalimete (esta) + ledger billycode + victoria-server.md + changelogs de victoria.
 
 ### [18:40] - erp-chatbot v1.1.4: separación generosa entre flotantes (verificado con captura)
 - **Tipo**: proyecto | fix | UI | wordpress
 - **Modificado**: erp-chatbot 1.1.3→1.1.4 (~/dev/wordpress: aire entre flotantes a 28px desktop/móvil). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, flotantes del sitio)
+- **Afecta a**: Kalimete (wordpress-local :8091, flotantes del sitio)
 - **Causa**: Usuario: carrito y chat aún se veían montados, pidió más separación.
 - **Diagnóstico** (captura headless con Chromium propio): el apilado v1.1.3 funcionaba pero con solo ~14px de aire. Verificado visualmente tras el fix: separación limpia. El logo del header carga bien (era timing del headless).
 - **Estado**: ⚠️ pendiente de prueba del usuario → luego commit
@@ -3535,23 +3550,23 @@
 ### [18:40] - WordPress local: connector v3.9.2 — /contacto/ reestructurada con validación CDP
 - **Tipo**: proyecto | fix | ux | wordpress-dev
 - **Modificado**: `_elementor_data` página 17 (backup doble: postmeta `_elementor_data_bak_v391` + archivo /tmp); plugin `erp-ecomm-connector` (connector.css, bump 3.9.2, commit `edab089`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.2, 48 archivos); repo padre commit
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech)
 - **Causa**: Usuario reportó /contacto/ mal estructurada tras v3.9.1. Validación programática nueva (chromium headless + CDP vía Node 22 WebSocket, métricas DOM reales en 1280/768/375) confirmó 3 defectos: (1) `\n` literales visibles en pantalla, (2) blob de texto full-width 658px con líneas de ~1265px (ilegible), (3) form flotando solo sin jerarquía.
 - **Implementado**: Reestructura con el patrón de /cotizar/ (schema JSON copiado de página construida por el editor Elementor — garantiza compatibilidad editor): hero `.erpc-el-pagehero` (h1 "Contáctanos" + subtítulo, gradiente primary→dark) + grid 2 columnas `.erpc-el-contact-grid` (info card 40% + form 60%, apila <767px) + shortcodes header/footer intactos. CSS con vars (3 presets).
 - **Verificación**: CDP post-fix: 0 overflow horizontal en 1280/768/375 (solo honeypot offscreen intencional); `\n` literales 0; form 628px col derecha (desktop) / 408px (tablet) / 323px full-width (móvil); inputs ~100% del card; 200 en modo plugin Y elementor (switch ida/vuelta); /cotizar/ y /sobre-nosotros/ re-validadas limpias. Screenshots: /tmp/opencode/val-{contacto,sobre,cotizar}-*.png.
-- **Notas**: Herramienta de validación reutilizable: /tmp/opencode/validate.mjs + run-validation.sh (CDP sin puppeteer, Node 22 WebSocket global). El modelo de kalimete no soporta input de imagen — la confirmación visual es por métricas DOM + screenshots para revisión del usuario.
+- **Notas**: Herramienta de validación reutilizable: /tmp/opencode/validate.mjs + run-validation.sh (CDP sin puppeteer, Node 22 WebSocket global). El modelo de Kalimete no soporta input de imagen — la confirmación visual es por métricas DOM + screenshots para revisión del usuario.
 - **Estado**: ✅ sincronizado
 
-### [18:31] - Borrado completo: proyectos Alfredo Ecomm + Woodly eliminados (kalimete, vps-preprod, DNS, GitHub, flota 21→19)
+### [18:31] - Borrado completo: proyectos Alfredo Ecomm + Woodly eliminados (Kalimete, vps-preprod, DNS, GitHub, flota 21→19)
 - **Tipo**: infra | servicio | agente | red | seguridad
 - **Modificado**:
-  - **kalimete local**: docker `alfredo-ecomm-*` down -v (3 contenedores :3004/:5432/:6379, 2 volúmenes seed-only, red backend_erp-network); imágenes backend-api + 5 dangling + postgres:16-alpine + node:20-bullseye-slim (~2.46GB); rm repos `~/dev/webs/alfredo-pro-ecomm` (142MB, .env secrets incl.) + `~/dev/apps/woodly.deleted-20261015` (178MB) + `~/dev/webs/woodly` (175MB); imágenes woodly-backend + staging-woodly (1.4GB) + 3 volúmenes staging (0 usuarios verificados); vhost nginx + certs mkcert woodly.kalimete.local; token /etc/hosts (línea compartida intacta, .bkup previo); dev-tunnel.sh, ops/apps/woodly (creds texto plano), Escritorio/erp-migration/02-woodly.md; `~/dev/webs/` eliminada (quedó vacía); cáscara root-owned `~/projects/alfredo-pro-ecomm.archived-20261005` (sudo); 10 archivos compartidos editados con .bkup-20261015 (dev.sh, deploy.sh ×2 —incl. drift ops/scripts/deploy.sh—, setup-dev-proxy.sh, apps/kalimete/index.html, infra/nextcloud-stack Caddyfile+README+CHANGELOG, ops/README.md, ops/agents/backups/AGENTS.md)
+  - **Kalimete local**: docker `alfredo-ecomm-*` down -v (3 contenedores :3004/:5432/:6379, 2 volúmenes seed-only, red backend_erp-network); imágenes backend-api + 5 dangling + postgres:16-alpine + node:20-bullseye-slim (~2.46GB); rm repos `~/dev/webs/alfredo-pro-ecomm` (142MB, .env secrets incl.) + `~/dev/apps/woodly.deleted-20261015` (178MB) + `~/dev/webs/woodly` (175MB); imágenes woodly-backend + staging-woodly (1.4GB) + 3 volúmenes staging (0 usuarios verificados); vhost nginx + certs mkcert woodly.Kalimete.local; token /etc/hosts (línea compartida intacta, .bkup previo); dev-tunnel.sh, ops/apps/woodly (creds texto plano), Escritorio/erp-migration/02-woodly.md; `~/dev/webs/` eliminada (quedó vacía); cáscara root-owned `~/projects/alfredo-pro-ecomm.archived-20261005` (sudo); 10 archivos compartidos editados con .bkup-20261015 (dev.sh, deploy.sh ×2 —incl. drift ops/scripts/deploy.sh—, setup-dev-proxy.sh, apps/kalimete/index.html, infra/nextcloud-stack Caddyfile+README+CHANGELOG, ops/README.md, ops/agents/backups/AGENTS.md)
   - **vps-preprod (TARGET verificado auth.armada.do)**: contenedor woodly-woodly-1 down + volumen woodly_pgdata rm manual (47MB, SIN dump por orden owner); imagen woodly-woodly (93MB); /opt/woodly (4.3MB, .env); /opt/backups/woodly*; bloque Caddy woodly.armada.do (.bkup previo) + restart caddy — vecinos OK (auth 302, pets 200); backup-vps.sh l.13 (rsync bug ragnarok→woodly) + l.24 refs (.bkup previo, bash -n OK)
   - **WordPress**: Application Password `alfredo-ecomm` REVOCADA (user admin, uuid 892f927b; probe 200→401) + `secrets/app-password-alfredo-ecomm.txt` borrado; stack healthy
   - **Cloudflare**: registro DNS `woodly.armada.do` (A proxied → 154.53.35.102, id c273e3ac…) ELIMINADO de zona armada.do — verificado 0 registros
   - **GitHub**: repos `warcold/woodly` + `warcold/alfredo-pro-ecomm` ELIMINADOS (gh, verificado not-found)
-  - **Flota 21→19**: agents/alfredo-ecomm.md + woodly.md + 9 .bkup + symlinks ~/.config/opencode/agent/ ELIMINADOS; harness alfredo-ecomm/woodly .json + 6 .bkup ELIMINADOS; `kalimete.harness.json` curado (subagentes 19 con Armada Suite/ZionV CRM — drift pre-split corregido, updated 2026-10-15); `agents/kalimete.md` (permission.task -2, flota 19, tabla delegación, creativos); `MAPA.md` (docker 7 containers, app-passwords, servicios/DNS vps, 2 líneas NUEVO stale, 2 filas agentes); `agents/wordpress-dev.md` (auth curada); `upstream/state.json` (-eco-woodly, -eco-alfredo-ecomm); `configs/INVENTARIO.md` + copia local cloudflare-map (-fila woodly); `skills/cloudflare/SKILL.md` (nota ELIMINADO, certs, timers backups) + copia local; copia local ecosistema-map/MAPA.md sincronizada; agents/vps.md + harness/vps.harness.json (woodly fuera de servicios/contenedores/DNS/caddy); harness wordpress-dev/armada-suite/erp-dev curados (app-password revocada, curls del secrets file borrado → placeholder, ownership WP/Armada Suite)
-- **Afecta a**: kalimete (flota 19, ~/dev reorganizado), vps-preprod (caddy, backups), Cloudflare DNS, GitHub, ecosistema WP (INTACTO — verificado cero dependencias :3004/:5173 en compose/nginx/plugins/DB/cron)
+  - **Flota 21→19**: agents/alfredo-ecomm.md + woodly.md + 9 .bkup + symlinks ~/.config/opencode/agent/ ELIMINADOS; harness alfredo-ecomm/woodly .json + 6 .bkup ELIMINADOS; `Kalimete.harness.json` curado (subagentes 19 con Armada Suite/ZionV CRM — drift pre-split corregido, updated 2026-10-15); `agents/Kalimete.md` (permission.task -2, flota 19, tabla delegación, creativos); `MAPA.md` (docker 7 containers, app-passwords, servicios/DNS vps, 2 líneas NUEVO stale, 2 filas agentes); `agents/wordpress-dev.md` (auth curada); `upstream/state.json` (-eco-woodly, -eco-alfredo-ecomm); `configs/INVENTARIO.md` + copia local cloudflare-map (-fila woodly); `skills/cloudflare/SKILL.md` (nota ELIMINADO, certs, timers backups) + copia local; copia local ecosistema-map/MAPA.md sincronizada; agents/vps.md + harness/vps.harness.json (woodly fuera de servicios/contenedores/DNS/caddy); harness wordpress-dev/armada-suite/erp-dev curados (app-password revocada, curls del secrets file borrado → placeholder, ownership WP/Armada Suite)
+- **Afecta a**: Kalimete (flota 19, ~/dev reorganizado), vps-preprod (caddy, backups), Cloudflare DNS, GitHub, ecosistema WP (INTACTO — verificado cero dependencias :3004/:5173 en compose/nginx/plugins/DB/cron)
 - **Causa**: orden del owner — Alfredo Ecomm no encaja con el ecosistema WordPress+plugins; no habrá trabajo con Woodly; SIN backups (pérdida aceptada: commit f8df738 docs + stash abril + DB woodly_pgdata 47MB)
 - **Estado**: ✅ verificado (docker 0 restos local+VPS, puertos 3004/5432/6379/5173 libres, DNS borrado, gh not-found, WP 200, caddy vecinos 200/302, JSONs válidos)
 - **Notas**: MAPA corregía claim stale "Ecomm ERP en vps-preprod" (nunca existió ahí). Pendientes owner: registro A `woodly.alfredo.pro` en banahosting (manual cPanel); backups jonas `/srv/backups/vps/woodly/` (inverificable, jonas caído); token CF `spring-dream-d681` auth error 10000 (restricción IP — operación completada con token opencode-dns-cleanup); follow-up: dump ragnarok-db de backup-vps.sh l.12 ahora muere en $TMP sin destino. Higiene WP pendiente (pase aparte): UPDATE-ERP-AMIGO/ mal ubicado, backups/ 167MB en git, comentario :3004 armada-suite.php L26, branding "Alfredo Ecomm" en AiBridge.
@@ -3567,7 +3582,7 @@
 ### [18:30] - WP connector v3.13.7: data del usuario migrada a su cliente correcto + cache fresco del ERP
 - **Tipo**: proyecto | fix | multitenant | wordpress + erp-local
 - **Modificado**: plugin erp-ecomm-connector 3.13.6→3.13.7 (~/dev/wordpress: connector.js refresca cache tras guardar perfil). DB facturacion_db: migración de datos del usuario (direccion/ciudad/provincia) del cliente 37 (tenant 2) → 183 (MaganTech/tenant 10). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Afecta a**: Kalimete (wordpress-local :8091 + erpipo-preprod :8100)
 - **Causa**: Usuario no veía su data al logearse. Diagnóstico: la data estaba en el ERP pero en el cliente de OTRA instancia (37, tenant 2) — la guardó cuando su sesión apuntaba ahí (login global pre-v3.13.4); el login tenant-aware actual entrega el 183 (tenant 10) que estaba vacío. Misma raíz multitenant del reset (v3.13.6).
 - **Solución**: migración de SU propia data al cliente correcto de su tienda (37 intacto); tras guardar perfil, el WP refresca el cache local con la respuesta del ERP (única fuente de verdad = ERP).
 - **Verificación E2E**: login tenant-aware → /me data ERP → PUT /profile → /me persistido ✅; node --check OK. Usuario debe ver dirección/ciudad/provincia en /mi-cuenta/ y /checkout/.
@@ -3588,17 +3603,17 @@
 - **Notas**: prod NUNCA modificado (solo GET). Pendiente owner: clic «Sincronizar configuración» en prod (marca Tienda→MaganTech; smoke-prod lo verificará). Recomendación no aplicada: git init del dir del sitio (decisión estructural del owner). Los 5 mensajes de prueba que cayeron en el mailpit de erpipo quedan ahí (simulador, efímero — sin acción).
 
 ### [18:20] - ZionV CRM 1.55.2: banner puente Configuración → Estado del sistema
-- **Tipo**: release | ui | plugin (TARGET=kalimete local; repo GitHub warcold/zionv-crm)
+- **Tipo**: release | ui | plugin (TARGET=Kalimete local; repo GitHub warcold/zionv-crm)
 - **Modificado**: plugin 1.55.1→**1.55.2** (commit `49b5756` pushed): AppShell — aviso permanente al inicio de `/crm/configuracion/` con links directos a las tabs Calendario/HubSpot/Asistente de IA de Estado del sistema (estilos adaptativos light/dark, tipografía Outfit); ZIP `export/zionv-crm-1.55.2.zip` (sha256 `e857046c…`)
-- **Afecta a**: zionv-local (kalimete :8092), repo GitHub warcold/zionv-crm
+- **Afecta a**: zionv-local (Kalimete :8092), repo GitHub warcold/zionv-crm
 - **Causa**: feedback del owner — "sigo viendo el tab Google Calendar en configuración, no veo Nextcloud/Microsoft ni dónde está el chat/IA". ROOT CAUSE: el owner navega la Configuración de la SPA React (`/crm/configuracion/`), cuyas tabs (General/Antispam/SMTP/Google Calendar) están COMPILADAS en `index-cdQZuApB.js` — no modificables sin el source TSX. Las integraciones nuevas viven en wp-admin → Estado del sistema, pero nada lo decía desde el panel
 - **Estado**: ✅ verificado: banner renderiza en `/crm/configuracion/` (200, links a las 3 tabs); lint OK
 - **Notas**: LECCIÓN — al añadir features fuera del panel React (PHP clásico), SIEMPRE debe existir un puente de descubrimiento desde el panel: el usuario vive en la SPA, no en wp-admin. La tab "Google Calendar" de la SPA seguirá existiendo (es del plugin original compilado) — el banner explica que las integraciones completas están en Estado del sistema.
 
-### [18:10] - kalimete-ptt v3: simplificación del owner — Victoria router natural (removido tap=estado y keywords), FIX crash UnboundLocalError
+### [18:10] - Kalimete-ptt v3: simplificación del owner — Victoria router natural (removido tap=estado y keywords), FIX crash UnboundLocalError
 - **Tipo**: servicio | infra
-- **Modificado**: ~/.local/bin/kalimete-ptt (v3; .bak.20261020-modos conserva la v2); servicio reiniciado
-- **Afecta a**: kalimete (PTT local) — flujo de voz kalimete↔victoria
+- **Modificado**: ~/.local/bin/Kalimete-ptt (v3; .bak.20261020-modos conserva la v2); servicio reiniciado
+- **Afecta a**: Kalimete (PTT local) — flujo de voz Kalimete↔victoria
 - **Causa**: owner probó la v2 físicamente y reportó experiencia mala. Diagnóstico en logs (17:43): (1) BUG CRÍTICO — `UnboundLocalError: MODE` en _transcribe (asignaba MODE sin `global` → Python la marcaba local → crash silencioso del thread al hablar → Victoria quedaba muda); (2) el tap disparaba el estado automático (no deseado); (3) keywords rígidas fallaban con STT real ("vibecoding" se oye como "byte coding"). Diseño v3 del owner: REMOVER tap=estado y clasificadores → Victoria (LLM) interpreta la intención naturalmente con tools: machine_status ("dame estado" → saluda + resume), transcribe_mode ("vamos a transcribir" → pregunta "¿quieres que transcriba?" → el owner decide sí/no), run_command/type_text (órdenes de acción con confirmación de mutantes). En transcripción: dictado puro + coach vocal CORTO (≤15 palabras, solo si hay mejora clara, silencio si está bien). Tap = solo callar/cancelar/salir de transcripción. Salida de transcripción por voz: "vibecoding"/"byte coding" (frase corta) o tap
 - **Estado**: ✅ servicio active (running) · ✅ FIX global MODE aplicado · ✅ tests E2E gateway real: "dame estado"→saludo+resumen hablado, "vamos a transcribir"→tool directo→pregunta sí/no, sí→modo activo, coach (vago→"Agrega detalles sobre el error y el entorno" / personal→silencio), salida por voz byte coding OK, docker ps directo, mutante→confirma→no→"Cancelado. ¿Qué necesitas?" · ✅ anti-narración en system prompt (LLM llama tools directo, no anuncia por texto)
 - **Notas**: coach: el LLM a veces pega "(nada)" tras el consejo — se recorta el sufijo en vez de descartar la respuesta. SAFE_PREFIXES += "opencode sessions"/"opencode list" (lectura). El STT transcribe español largo con excelente calidad (validado con dictado real del owner). Pendiente owner: prueba física v3 (mantener+hablar para todo; tap solo para callar).
@@ -3607,7 +3622,7 @@
 - **Tipo**: docs + higiene (orden owner: "analiza el trabajo, higieniza bugs/código muerto/discrepancias, actualiza agentes/docs/subagentes/changelogs")
 - **Que**: (1) Higiene live: red docker huérfana `backend_alfredo-ecomm` ELIMINADA (0 containers, creada Sep 5); 5 `*.bkup-20261003` untracked del repo erpipo MOVIDOS a `~/dev/erpipo-preprod/backups-bkup-20261003/` (tree limpio, nada borrado). (2) `agents/alfredo-ecomm.md` + harness: paths canónicos `~/dev/webs/alfredo-pro-ecomm` (cáscara `~/projects/...archived-20261005` documentada como NO-TOUCH), Woodly real `~/dev/apps/woodly` (React 19, mock-only, NO Vue), git baseline `01fe048`+`e39fa99`, seguridad rotada 2026-10-05, CORS final, drift src↔dist, schema 12 tablas DB vs 11 modelos (conciliar). (3) `agents/wordpress-dev.md` + harness: Armada Suite 5.2.0 super-plugin (WP 7.1.2) como plugin ÚNICO; Elementor/EMCP/MCP Adapter declarados HISTÓRICOS no-live (mcp-proxy.mod.js existe como archivo pero bridge NO funcional sin plugin); auth REST = App Passwords con receta de rotación corregida (`$new[0]`, no `$new[1]`); ZIP 5.2.0 con sha256; ping-erp verificado; permalinks plain. (4) `agents/erp-dev.md` + harness: modelo ownership explícito (upstream Juan Carlos, sandbox local, push solo con autorización owner), política rama única `dev/ecomm-erp` (sin remote preprod en el clon), app SIN :8101 (9000 interno) + mailpit :8025, migraciones 653/b149, dump `db.sql` 553MB en `~/dev/erpipo-preprod/`, secrets DB removidos del doc (referencia a preprod.env), contrato ecomm verificado + gotchas (tenant_id, telefono unique, orders sin ruta individual, sesion_cajas), candidatos Fase 2 listados.
 - **Verificado**: 3 harness JSON válidos (python json.tool); 0 refs a paths muertos (`~/projects/alfredo-pro-ecomm/backend`), versiones viejas (`erp-commerce-suite v4.4.1`) y secrets inline (`preprodroot123`/`devpass123`/`:8101`) en los docs curados.
-- **Docs**: changelog kalimete (esta) + 3 agent docs + 3 harness (los symlinks de `~/.config/opencode/agent/` propagan automáticamente).
+- **Docs**: changelog Kalimete (esta) + 3 agent docs + 3 harness (los symlinks de `~/.config/opencode/agent/` propagan automáticamente).
 
 ### [18:10] - Authentik: integración OIDC centralizada (Nextcloud + DocuSeal)
 - **Tipo**: infra | sso | oidc | seguridad
@@ -3643,14 +3658,14 @@
 ### [18:00] - Validación exhaustiva anti-duplicados plugin 4.4.2: LIMPIO (veredicto: navegador del owner)
 - **Tipo**: diagnóstico | wordpress
 - **Reporte del owner**: "en todos los tabs: botones duplicados, textos montados". Segunda ronda de validación (la primera por HTML estático no bastó).
-- **Método**: Selenium headless real (chromedriver) con login real + análisis DOM programático (bounding boxes, contadores de nodos visibles) — ni el subagente ni kalimete pueden ver imágenes (modelos sin input visual), por eso evidencia numérica.
+- **Método**: Selenium headless real (chromedriver) con login real + análisis DOM programático (bounding boxes, contadores de nodos visibles) — ni el subagente ni Kalimete pueden ver imágenes (modelos sin input visual), por eso evidencia numérica.
 - **Resultados (los 9 tabs)**:
   - Navegación por URL: 1 nav, 1 sección visible, 0 botones duplicados, 0 solapes >30% (1366px y 780px)
   - **Navegación por CLICKS, 2 pasadas** (gap cubierto): 1 sección visible por tab, 0 duplicados, 0 acumulación — el JS no clona al interactuar
   - Umbral de solape bajado a >8%: **0 pares** en los 9 tabs
   - Zoom 125%: limpio; zoom 150%: 1 falso positivo (bounding-box de spans inline que wrappean, glifos no se montan; script linecheck.py quedó en /tmp sin ejecutar)
   - Doble registro de menús: descartado (1 add_menu_page, AdminMenu.php:36; LegacyConnectorAdmin es wrapper llamado por diseño)
-  - Doble enqueue: descartado (3 handles, 1 vez cada uno; ver=ERPSUITE_VERSION dinámico → cache-bust OK, servido como ?ver=4.4.2 en localhost:8091 Y wordpress.kalimete.local)
+  - Doble enqueue: descartado (3 handles, 1 vez cada uno; ver=ERPSUITE_VERSION dinámico → cache-bust OK, servido como ?ver=4.4.2 en localhost:8091 Y wordpress.Kalimete.local)
   - erpsuite_remote_nonce x3 y _wpnonce x9: patrón WP legítimo (un nonce por form)
   - Inyección del connector.css VIEJO (pre-fix): rompe fuentes/íconos pero NO produce botones duplicados → ni siquiera el bug original explica el síntoma actual
 - **Veredicto**: el sitio servido 4.4.2 está CORRECTO; no existe bug reproducible de duplicación. Lo que el owner ve = estado de su navegador (pestaña abierta pre-fix / cache de disco). NO se aplicaron fixes inventados (regla respetada).
@@ -3663,7 +3678,7 @@
 - **Fix**: selectores re-scopeados a `body:not(.wp-admin)` + contenedores propios (`.wp-admin .erpsuite-wrap`, `.erpc-section`) — frontend intacto, admin nativo protegido, plugin conserva su look. `connector.css.bkup` previo.
 - **Modificado**: `connector.css` (+15/-4), bump **4.4.1 → 4.4.2** (header + ERPSUITE_VERSION + readme Stable tag), CHANGELOG del plugin + `~/dev/wordpress/CHANGELOG.md`. NUEVO `~/dev/wordpress/export/erp-commerce-suite-4.4.2.zip` (780K, 103 archivos, `unzip -t` OK; el 4.4.1.zip se conserva histórico).
 - **Commits locales** en `warcold/erp-commerce-suite` (master, SIN push — pendiente owner): `d5d58c5` feat: switch Local/Público 4.4.1 (+acumulado 4.3.0-4.4.0), `94c6737` fix(admin): scope connector.css (4.4.2), `4cc098e` docs. Working tree limpio.
-- **Afecta a**: kalimete (plugin + artefacto). CERO producción (el owner sube el 4.4.2.zip cuando quiera).
+- **Afecta a**: Kalimete (plugin + artefacto). CERO producción (el owner sube el 4.4.2.zip cuando quiera).
 - **Verificado**: `tests/regression.php` 14/14 PASS post-bump; CSS servido via HTTP muestra selectores corregidos; switch Local/Público intacto.
 - **Estado**: ✅ sincronizado
 - **Notas**: Owner debe hacer **Ctrl+F5** en wp-admin para ver el fix (cache-bust `?ver=4.4.2` ayuda). Si quiere historia git pristina (4.4.1 puro separado del bump 4.4.2) requiere `git rebase -i` — no hecho sin autorización. Push del repo plugin sigue pendiente a decisión del owner.
@@ -3680,25 +3695,25 @@
 
 ### [17:48] - Fase 1 integracion WP<->ERP local COMPLETA (Armada Suite 5.2.0 + erpipo preprod + Alfredo Ecomm endurecido)
 - **Tipo**: infra + servicio (plan owner: validar e2e local antes de recomendar updates a Juan Carlos via branch dev/ecomm-erp; erpipo = repo de Juan, copia local = sandbox)
-- **Que**: (1) WordPress (nuestro): regresion 14/14 + smoke 5/5 + php -l 13/13; commits 67ed6d4 (feat: stack TLS CA bundle mkcert) + be15cab (chore: gitignore excluye secrets/); ZIP canonico export/armada-suite-5.2.0.zip (498 archivos, ~2.1MB, sha256 b4e5348d30397e9b74ca1b2c1857a8b7b366aab7fb0297c5f60731aa41bc30b9, sin .env/secrets); App Password "alfredo-ecomm" creada y ROTADA (leak parcial 20/24 chars en transcript de subagente; nueva en secrets/ 600, user admin). (2) Alfredo Ecomm (nuestro): compose canonico ~/dev/webs/alfredo-pro-ecomm/backend curado (bind mount src vacio ELIMINADO, name: backend); cascara ~/projects/alfredo-pro-ecomm archivada como .archived-20261005 (sudo mv, nada borrado); git init baseline 01fe048 + smoke e39fa99 (master local, sin remote); JWT_SECRET/JWT_REFRESH/DB_PASSWORD rotados (ALTER USER + .env en cadena atomica); CORS alineado (localhost:5173, 127.0.0.1:5173, woodly.kalimete.local, erp.kalimete.local, localhost:8091); scripts/smoke.sh 4/4 OK. (3) ERP preprod (sandbox de Juan Carlos, SIN cambios de codigo, sin push): contrato ecomm validado e2e con la key del plugin (tenant 10 MaganTech, iak activa): 3 bases 200 (incluida 172.19.0.1:8100 critica para WP), register->verify-email->login->me OK (cliente test 208), cart->checkout->venta V-281 creada (stock producto 383: 200->199), promociones/validar 400 invalid_code correcto, imagenes webp 200; keys file ~/dev/erpipo-preprod/keys/ecomm-test-customer.txt (600).
-- **Verificado**: ping-erp del plugin 200/ok:true (119ms, api_host 172.19.0.1:8100, key_fp 0b0e33e7); catalogo via plugin (AJAX erpc_get_products_json) 200 con 55 productos reales del ERP; audit WP con entrada ping-erp ok; REST ops 200 auth / 403 anon (App Password nueva); 13 containers Up (alfredo 3, wordpress 2, erpipo 8), WP:8091 200, erp.kalimete.local 200, alfredo:3004/health 200.
+- **Que**: (1) WordPress (nuestro): regresion 14/14 + smoke 5/5 + php -l 13/13; commits 67ed6d4 (feat: stack TLS CA bundle mkcert) + be15cab (chore: gitignore excluye secrets/); ZIP canonico export/armada-suite-5.2.0.zip (498 archivos, ~2.1MB, sha256 b4e5348d30397e9b74ca1b2c1857a8b7b366aab7fb0297c5f60731aa41bc30b9, sin .env/secrets); App Password "alfredo-ecomm" creada y ROTADA (leak parcial 20/24 chars en transcript de subagente; nueva en secrets/ 600, user admin). (2) Alfredo Ecomm (nuestro): compose canonico ~/dev/webs/alfredo-pro-ecomm/backend curado (bind mount src vacio ELIMINADO, name: backend); cascara ~/projects/alfredo-pro-ecomm archivada como .archived-20261005 (sudo mv, nada borrado); git init baseline 01fe048 + smoke e39fa99 (master local, sin remote); JWT_SECRET/JWT_REFRESH/DB_PASSWORD rotados (ALTER USER + .env en cadena atomica); CORS alineado (localhost:5173, 127.0.0.1:5173, woodly.Kalimete.local, erp.Kalimete.local, localhost:8091); scripts/smoke.sh 4/4 OK. (3) ERP preprod (sandbox de Juan Carlos, SIN cambios de codigo, sin push): contrato ecomm validado e2e con la key del plugin (tenant 10 MaganTech, iak activa): 3 bases 200 (incluida 172.19.0.1:8100 critica para WP), register->verify-email->login->me OK (cliente test 208), cart->checkout->venta V-281 creada (stock producto 383: 200->199), promociones/validar 400 invalid_code correcto, imagenes webp 200; keys file ~/dev/erpipo-preprod/keys/ecomm-test-customer.txt (600).
+- **Verificado**: ping-erp del plugin 200/ok:true (119ms, api_host 172.19.0.1:8100, key_fp 0b0e33e7); catalogo via plugin (AJAX erpc_get_products_json) 200 con 55 productos reales del ERP; audit WP con entrada ping-erp ok; REST ops 200 auth / 403 anon (App Password nueva); 13 containers Up (alfredo 3, wordpress 2, erpipo 8), WP:8091 200, erp.Kalimete.local 200, alfredo:3004/health 200.
 - **Candidatos Fase 2 (recomendaciones a Juan Carlos via dev/ecomm-erp, NO implementados)**: webhooks ERP->WP (stock.updated, price.updated, order.created/paid, invoice.issued con HMAC); desacoplar checkout ecomm de SesionCaja (hoy 500 si no hay caja abierta); anadir GET /ecomm/orders/{id} individual (hoy solo listado ?customer_id); register ecomm derivar tenant de la API key (hoy default tenant 3 = cliente fuera de tenant); unique global de telefono -> scope por tenant; /up JSON real para monitoreo; fix LogErrorToDatabase (cascada Connection refused).
-- **Hallazgos integracion WP (contrato)**: catalogo total en meta.total (162 total / 73 in_stock); imagenes = URLs absolutas a erp.kalimete.local (WP debe proxy/rehost); register requiere tenant_id explicito 10; no hay ruta individual de orders; throttles 10/30/60 por minuto; extraccion de key: grep "const LOCAL_API_KEY" (44 chars).
+- **Hallazgos integracion WP (contrato)**: catalogo total en meta.total (162 total / 73 in_stock); imagenes = URLs absolutas a erp.Kalimete.local (WP debe proxy/rehost); register requiere tenant_id explicito 10; no hay ruta individual de orders; throttles 10/30/60 por minuto; extraccion de key: grep "const LOCAL_API_KEY" (44 chars).
 - **Pendiente**: cura de deriva docs — alfredo-ecomm (harness + agent md siguen con paths ~/projects/...) y wordpress (doc dice erp-commerce-suite 4.4.1 + Elementor/EMCP/MCP, live es Armada Suite 5.2.0 super-plugin sin esos modulos).
-- **Docs**: changelog kalimete (esta).
+- **Docs**: changelog Kalimete (esta).
 
 ### [17:47] - Organizacion del home: proyectos en ~/dev/, limpieza de basura, eliminar armada-arcade
-- **Tipo**: infra | organizacion (TARGET=kalimete, local; autorizado por el owner)
-- **Que**: (a) `armada-arcade/` borrado del home (el juego se hara en Godot, no se necesita); (b) `armada-godot/` renombrado/movido a `~/dev/godot/` (carpeta para proyectos Godot); (c) proyectos movidos a `~/dev/`: `tapmap-data/`, `ragnarok-staging/`, `projects/alfredo-pro-ecomm/ → dev/webs/`, `projects/woodly/ → dev/webs/`; (d) herramientas movidas: `~/tools/ → dev/hacking/tools/`, `~/scripts/ → dev/hacking/scripts/`, `~/go/ → dev/go/`, `~/bin/ → ~/.local/bin/`; (e) unificado `.victoria/` + `.victoria-custom/` → `.victoria/custom/` (+ `/victoria/platform-v1/` al custom); (f) borradas carpetas basura: `123123/`, `qasdasdasd/`, `projects/`, `Projects/`, `agendas con las agenda.`, `cloduflare data armada.do`, `pm 3`, `.qasdasdasd.kate-swp`; (g) borrados temporales: `landing-*.html`, `melina-form-eq.txt`, `ecco-urls.txt`, `woodley-park-restaurants.json`, `te lo dije.png`, `dumpkeys.bin`, `repostocheck`, `alfredo_backup_2026_agentes.tar.gz` (1.1GB → movido a ~/backups/); (h) eliminados symlinks rotos en `~/.local/bin/` (dork-engine, nano-pdf, camsnap, goplaces, himalaya, wacli, intigriti, summarize, osint); (i) eliminados symlinks rotos en home (.steampath → .steam/sdk32/steam, .steampid → .steam/steam.pid); (j) eliminado duplicado `~/~` (directorio ~ dentro del home); (k) subagentes de kalimete: 19→18 (quitado Armada Arcade); (l) MCP Godot actualizado: opencode.jsonc apunta a `~/dev/godot/armada-godot/` (proyecto real); (m) todas las refs de `armada-godot`→`dev/godot/armada-godot`, `armada-arcade` eliminadas en agents/, harness/, MAPA.md, sync.sh, bin/.
+- **Tipo**: infra | organizacion (TARGET=Kalimete, local; autorizado por el owner)
+- **Que**: (a) `armada-arcade/` borrado del home (el juego se hara en Godot, no se necesita); (b) `armada-godot/` renombrado/movido a `~/dev/godot/` (carpeta para proyectos Godot); (c) proyectos movidos a `~/dev/`: `tapmap-data/`, `ragnarok-staging/`, `projects/alfredo-pro-ecomm/ → dev/webs/`, `projects/woodly/ → dev/webs/`; (d) herramientas movidas: `~/tools/ → dev/hacking/tools/`, `~/scripts/ → dev/hacking/scripts/`, `~/go/ → dev/go/`, `~/bin/ → ~/.local/bin/`; (e) unificado `.victoria/` + `.victoria-custom/` → `.victoria/custom/` (+ `/victoria/platform-v1/` al custom); (f) borradas carpetas basura: `123123/`, `qasdasdasd/`, `projects/`, `Projects/`, `agendas con las agenda.`, `cloduflare data armada.do`, `pm 3`, `.qasdasdasd.kate-swp`; (g) borrados temporales: `landing-*.html`, `melina-form-eq.txt`, `ecco-urls.txt`, `woodley-park-restaurants.json`, `te lo dije.png`, `dumpkeys.bin`, `repostocheck`, `alfredo_backup_2026_agentes.tar.gz` (1.1GB → movido a ~/backups/); (h) eliminados symlinks rotos en `~/.local/bin/` (dork-engine, nano-pdf, camsnap, goplaces, himalaya, wacli, intigriti, summarize, osint); (i) eliminados symlinks rotos en home (.steampath → .steam/sdk32/steam, .steampid → .steam/steam.pid); (j) eliminado duplicado `~/~` (directorio ~ dentro del home); (k) subagentes de Kalimete: 19→18 (quitado Armada Arcade); (l) MCP Godot actualizado: opencode.jsonc apunta a `~/dev/godot/armada-godot/` (proyecto real); (m) todas las refs de `armada-godot`→`dev/godot/armada-godot`, `armada-arcade` eliminadas en agents/, harness/, MAPA.md, sync.sh, bin/.
 - **Rutas nuevas**: `~/dev/godot/` (proyectos Godot), `~/dev/webs/` (webs), `~/dev/hacking/` (hacking), `~/dev/games/` (games), `~/dev/go/` (Go), `~/dev/cybersec/` (cybersec - creada pero vacia), `~/.victoria/custom/` (unificado), `~/.local/bin/` (scripts propios), `~/backups/` (archivos de backup).
-- **Afecta a**: kalimete (estructura de home), agents/godot-dev.md, agents/kalimete.md, harness/godot-dev.harness.json, harness/kalimete.harness.json, sync.sh, bin/doc-fresh.sh, bin/upstream-kalimete-check.py, MAPA.md, opencode.jsonc (MCP), upstream/state.json.
+- **Afecta a**: Kalimete (estructura de home), agents/godot-dev.md, agents/Kalimete.md, harness/godot-dev.harness.json, harness/Kalimete.harness.json, sync.sh, bin/doc-fresh.sh, bin/upstream-Kalimete-check.py, MAPA.md, opencode.jsonc (MCP), upstream/state.json.
 - **Notas**: `~/dev/ethical-hacking/` ya existia; `~/dev/hacking/` es nuevo para kenshin/tools. `~/dev/` ya tenia estructura existente (apps/, infra/, ops/, etc.) que se mantiene. El MCP godot requiere opencode reiniciado para tomar la nueva ruta.
 - **Estado**: ✅ sincronizado (push hub)
 
 ### [17:40] - ZionV CRM 1.55.1: tab Calendario unificada + fix use latente
-- **Tipo**: release | ui | fix | plugin (TARGET=kalimete local; repo GitHub warcold/zionv-crm)
+- **Tipo**: release | ui | fix | plugin (TARGET=Kalimete local; repo GitHub warcold/zionv-crm)
 - **Modificado**: plugin 1.55.0→**1.55.1** (5 archivos, commit `bc376ec` pushed): SystemStatusPage — las tabs Google Calendar/MS365/Nextcloud se unifican en una sola **"Calendario"** (selector de proveedor arriba + las 3 integraciones como secciones con el mismo estilo: h2.title + hr + form-table + regular-text + submit_button); Diagnóstico muestra el proveedor activo como check informativo; OAuth MS365 y test Nextcloud regresan a la tab calendario; **FIX latente**: faltaba `use ZionCrm\Modules\Ms365\Ms365Settings` en SystemStatusPage (la tab ms365 individual nunca se probó renderizada en 1.55.0 — detectado al unificar); ZIP `export/zionv-crm-1.55.1.zip` (sha256 `568954cd…`)
-- **Afecta a**: zionv-local (kalimete :8092), repo GitHub warcold/zionv-crm
+- **Afecta a**: zionv-local (Kalimete :8092), repo GitHub warcold/zionv-crm
 - **Causa**: feedback del owner — "solo veo un tab que dice Google Calendar, debería decir Calendario y ahí seleccionar la integración; validar que el CSS sea igual para todo"
 - **Estado**: ✅ verificado: tab calendario 200 con selector + 3 forms (Google/MS365/Nextcloud completos); diagnóstico/correo/hubspot/ia 200; 0 fatales; estilo consistente (mismas clases wp-admin en todo lo nuevo)
 - **Notas**: LECCIÓN — cada tab NUEVA debe probarse RENDERIZADA (no solo que exista en el menú): el use faltante de Ms365Settings pasó el smoke de 1.55.0 porque solo se verificaron los labels del nav. El smoke ahora incluye el contenido de cada tab.
@@ -3706,16 +3721,16 @@
 ### [17:40] - WP connector v3.13.6 + ERP v3.13.6-local: fix reset de clave tocaba cliente de otra instancia
 - **Tipo**: proyecto | fix | multitenant | seguridad | wordpress + erp-local
 - **Modificado**: plugin erp-ecomm-connector 3.13.5→3.13.6 (~/dev/wordpress: request_password_reset/reset_password envían tenant_id). ERP sistema-facturacion (~/dev/erpipo-preprod: ClienteAuthController — forgotPassword/resetPassword/resendVerification tenant-aware). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Afecta a**: Kalimete (wordpress-local :8091 + erpipo-preprod :8100)
 - **Causa**: Usuario restableció la clave de warcold@gmail.com y el login falló. Diagnóstico: ese email existe en 4 clientes (3 en tenant 2, 1 en MaganTech/tenant 10 con acceso_api=0); el forgot/reset GLOBAL generó el token y cambió la clave del cliente de OTRA instancia (id 37, tenant 2); el login tenant-aware de la tienda busca en tenant 10 → clave vieja → "credenciales incorrectas".
 - **Solución**: forgot/reset/resend tenant-aware (body tenant_id > Bearer iak_ > global); WP envía tenant_id en ambos pasos; reset devuelve 400 si no hay cliente del tenant en vez de tocar otro.
 - **Verificación E2E** (email duplicado en tenants 10 y 2): token para el cliente correcto ✅, correo From instancia + link tienda ✅, reset 200 ✅, login clave nueva OK ✅, cliente del otro tenant intacto ✅, php -l OK.
 - **Estado**: ⚠️ pendiente: el usuario debe repetir el reset desde el WP (ahora tocará su cliente 183 y activará acceso_api) → luego commit
 
-### [17:35] - kalimete-ptt v2: rediseño UX del owner — tap=estado/menú, modos TRANSCRIBE/VIBE por voz, vibecoding con tools + confirmación explícita
+### [17:35] - Kalimete-ptt v2: rediseño UX del owner — tap=estado/menú, modos TRANSCRIBE/VIBE por voz, vibecoding con tools + confirmación explícita
 - **Tipo**: servicio | infra
-- **Modificado**: ~/.local/bin/kalimete-ptt (rewrite del flujo de interacción; .bak.20261020-modos); servicio reiniciado
-- **Afecta a**: kalimete (PTT local) — flujo de voz kalimete↔victoria completo
+- **Modificado**: ~/.local/bin/Kalimete-ptt (rewrite del flujo de interacción; .bak.20261020-modos); servicio reiniciado
+- **Afecta a**: Kalimete (PTT local) — flujo de voz Kalimete↔victoria completo
 - **Causa**: owner — el flujo viejo mezclaba 2 modos en 1 botón (pegaba texto Y respondía por voz a la vez). Diseño nuevo del owner: (1) tap Ctrl_R = saludo con ESTADO de máquina hablado + menú "¿transcribir o vibecoding?"; (2) tap mientras Victoria habla = barge-in TOTAL (calla voz + aborta acción pendiente, sin estado); (3) selección de modo por VOZ tras el estado; (4) TRANSCRIBE = dictado puro (pega sin responder); (5) VIBE = conversación con manejo de máquina (function calling: run_command bash + type_text pegar en ventana activa ej: opencode) con REGLA: toda acción mutante pide confirmación por voz ("sí"/"no") antes de ejecutar — default-deny, el script decide, no bypasseable por el LLM
 - **Estado**: ✅ servicio active (running), logs limpios, "Modo inicial: VIBE" · ✅ gateway :8010 soporta function calling nativo (validado curl: finish_reason=tool_calls) · ✅ 23 tests unit OK (clasificadores 11, seguridad comandos 22, status) · ✅ 6 tests E2E contra gateway real: lectura ejecuta directo+resume hablado, mutante deja PENDING+pregunta, sí ejecuta, no cancela FIRME (0 re-intentos), sin doble pregunta (LLM llama tool directo), fecha dinámica inyectada en system prompt
 - **Notas**: seguridad en 2 capas: whitelist de lectura (docker ps/systemctl status/git log/curl GET...) ejecuta directo; TODO lo demás (rm, docker restart, git push, pip, sed -i, curl POST...) → PENDING + confirmación por voz; type_text SIEMPRE confirma. Historial VIBE se limpia con cada tap (reset predecible); truncado alineado a turnos user (no rompe pares tool_call/result). Clasificador de modo: solo frases CORTAS (≤5 palabras) con keyword cambian de modo — instrucción larga con "transcribir" adentro NO cambia. uptime traducido a español para TTS. Pendiente owner: prueba física del botón (tap=estado, mantener=vibe/transcribe, confirmaciones sí/no).
@@ -3733,18 +3748,18 @@
 ### [17:20] - WordPress local: connector v3.9.1 — forms responsive + newsletter funcional + cero páginas huérfanas
 - **Tipo**: proyecto | fix | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (6 archivos, commit `5d969b1`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.1, 48 archivos); repo padre 2 commits (`8b37c3e` + `a18bd63`, este último arrastra pendientes de sesiones previas: compose loopback 8091 + limpieza assets tema); `erpc_settings.tenant.contact_email` seteado en DB local
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, ambos modos de template)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech, ambos modos de template)
 - **Causa**: Usuario reportó /sobre-nosotros/ y /contacto/ sin responsive/diseño y form "roto". Causas raíz: (1) inputs del form a ancho default del navegador (~150px) y sin contenedor/notice styling — cero reglas .erpc-form en CSS; (2) router apagado por completo en modo elementor → sobre-nosotros (Gutenberg, sin meta Elementor) quedaba huérfana sin chrome; (3) newsletter del footer con submit muerto (input sin name, sin handler); (4) contact_email ausente.
 - **Implementado**: (1) CSS: card centrada + inputs 100%/box-sizing + notice .erpc-ok/.erpc-err + media 768/480, solo vars (3 presets). (2) Router v3.9.1: en modo elementor, estáticas mapeadas SIN diseño Elementor reciben chrome del plugin (flag `erpc_router_hijacked` + `erpc_should_print_frame()` imprime frame en hijack); guard v3.8.0 (builder manda) intacto. (3) Newsletter: AJAX `erpc_newsletter_submit` (nonce+rate limit, opción `erpc_newsletter_subscribers` tope 5000, notifica a contact_email) + JS + feedback visible. (4) contact_email explícito. (5) Commit incluye v3.9.0 (auth OTP real ERP) que estaba deployado sin commit.
 - **Verificación**: php -l ×4 + node --check OK; ambas páginas 200 en modo elementor Y plugin (switch ida/vuelta), sobre-nosotros con trustbar+topbar+static+footer en ambos modos; AJAX contacto/newsletter success:true end-to-end, suscriptor persistido, SMTP wp_mail OK; sin regresión home/productos/carrito/cotizar; assets cache-bust ver=3.9.1; screenshots móviles en /tmp/opencode/resp-{contacto,sobre}-*.png.
-- **Notas**: Subagente wordpress-dev agotó 3×15 pasos en diagnóstico — implementado directo por kalimete (mismo criterio que v3.8.1). Home ID 8 intacta (orden respetada). Pendiente conocido: JSON inválido en `_elementor_data` de home (reparar por editor, no SQL).
+- **Notas**: Subagente wordpress-dev agotó 3×15 pasos en diagnóstico — implementado directo por Kalimete (mismo criterio que v3.8.1). Home ID 8 intacta (orden respetada). Pendiente conocido: JSON inválido en `_elementor_data` de home (reparar por editor, no SQL).
 - **Estado**: ✅ sincronizado
 
 ### [17:20] - Cap de voz renombrada xtts->tts en el gateway de Victoria (sin impacto cliente)
-- **Tipo**: docs + verificacion (Victoria ejecuto el cambio de codigo; kalimete solo referencia)
-- **Que**: la capacidad/rol xtts dejo de existir: ahora es tts (llm-gateway.py, sense_auth.py, panel, landing, DB). La llave kalimete quedo ["llm","art","tts","whisper"] — misma llave, mismos permisos, cero cambio de config en kalimete (la cap vive en la DB de Victoria). Docs alineadas: victoria-server.md roster, billycode victoria.ts comentarios + ledger.
-- **Verificado**: E2E desde kalimete con la llave kalimete: LLM 200 OK + TTS WAV 222KB + STT roundtrip OK.
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Tipo**: docs + verificacion (Victoria ejecuto el cambio de codigo; Kalimete solo referencia)
+- **Que**: la capacidad/rol xtts dejo de existir: ahora es tts (llm-gateway.py, sense_auth.py, panel, landing, DB). La llave Kalimete quedo ["llm","art","tts","whisper"] — misma llave, mismos permisos, cero cambio de config en Kalimete (la cap vive en la DB de Victoria). Docs alineadas: victoria-server.md roster, billycode victoria.ts comentarios + ledger.
+- **Verificado**: E2E desde Kalimete con la llave Kalimete: LLM 200 OK + TTS WAV 222KB + STT roundtrip OK.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [17:15] - RELEASE 5.3.0 + REVIEW JUAN LISTA (pasos 1 y 2; woodly fuera por orden owner)
 - **Tipo**: release + revisión (owner: "procede con 1 y 2, no toquemos woodly")
@@ -3776,7 +3791,7 @@
   - **Micaserogou** (preprod :8094): regresión **35/35** con 5.6.0 + smoke 7/7 + matriz 21/21 re-validada (home móvil 440/380 — estándar 5.6.0 aceptado, resto 480); **causa forense del "vacío de categorías 25-10"**: ERP sano (8 categorías live), el plugin cacheó la respuesta vacía del ERP 15 min (TTL 900s = el "self-heal") — nota upstream: no cachear respuestas vacías; flush v22→v23 + encadenado chat verificado; bkup-5.4.2 reubicado fuera del scan de plugins (riesgo 🔴 cerrado); curas de docs (header mu-plugin 1.6.0, sobre-nosotros.html muerto→deprecated).
   - **ERP Dev**: `docs/CONTRATO-DATOS-TEMPLATES.md` NUEVO (254 líneas, commit `cc17d79` pushed a dev/ecomm-erp — endpoints+shapes verificados, stock 0/-1/99, webhooks HMAC, multi-tenant, gaps upstream); **webhook tenant 3 reparado** (secret mismatch alineado, 3 deliveries failed→sent/200, backup SQL); **webhook tenant 10 re-apuntado** (dev-lab→magantech-local, e2e sent/200); gap featured/best_seller confirmado (no existen en schema — recomendación upstream Juan Carlos).
   - **WordPress (gobernanza)**: `docs/GOBERNANZA-ECOSISTEMA.md` NUEVO (constitución: ownership, anti-duplicación, flujo cross-tenant); `NUEVO-WEBSITE-TEMPLATE.md` actualizado (arquitectura 3 capas + orden de alta 6 pasos + puertos fixeados); `~/dev/wordpress/CHANGELOG.md` creado (changelog del hub).
-  - **Flota**: agente `armada-templates.md` + harness `armada-templates.harness.json` NUEVOS en armada-sync (subagente 27, hidden false, temp 0.6); kalimete.md actualizado (permission.task + flota 26→27); harness armada-suite curado (5.4.2→5.6.0, zips, checks 35/35).
+  - **Flota**: agente `armada-templates.md` + harness `armada-templates.harness.json` NUEVOS en armada-sync (subagente 27, hidden false, temp 0.6); Kalimete.md actualizado (permission.task + flota 26→27); harness armada-suite curado (5.4.2→5.6.0, zips, checks 35/35).
 - **Afecta a**: todo el ecosistema WP (plugin compartido, 2 preprods, dev-lab, ERP preprod, docs del hub, flota de agentes)
 - **Causa**: orden del owner "Procede con todo... dejando nuestro plugin Armada Suite listo para todo terreno y categoría... cada template, plugin y sistema debe de tener y manejar su agente, subagente, harness y documentación con sus changelogs"
 - **Estado**: ✅ todo verificado live (regresiones, matrices, e2e webhooks, commits); prod INTACTA en todos los frentes
@@ -3786,8 +3801,8 @@
 
 ### [17:10] - micaserogou: preprod alineado 100% a restaurante + ZIP de release + checklist de deploy (producción sin tocar)
 - **Tipo**: servicio | docs | release
-- **Modificado**: ~/dev/wordpress/websites/micaserogou.com/ (preprod local :8094 / https://micaserogou.kalimete.local) — DB adaptada (12 actualizaciones: blogdescription, erp_suite_settings brand="Mi Casa Rogou"/tagline/business_type="restaurante", páginas legales e-commerce→restaurante, Sobre Nosotros, post Hello world→menú del día, comentario genérico→Carolina M., Sample Page→Reservas), flush de transientes _transient_erpsuite* (brand name renderizado corregido de "Michelle Casero y Gourmet" a "Mi Casa Rogou", 0 residuos); export/armada-suite-micaserogou-restaurant-20261021.zip (23,9 MB: tema twentytwentyfive, plugins armada-suite 5.5.1+akismet+hello, mu-plugins, dump DB fresco 184 KB, backups/); docs/PROD-DEPLOY-CHECKLIST.md (nuevo, 7 prerrequisitos, orden de deploy, rollback con armada-suite-5.4.1.zip vía erpsuite/v1/ops, advertencia NUNCA tocar prod sin ventana autorizada)
-- **Afecta a**: preprod micaserogou.kalimete.local (100% restaurante, smoke 7/7 OK, cero "Hello world"/"Sample Page"/texto tecnología); producción micaserogou.com SIN CAMBIOS (sigue mixto tecnología+restaurante, REST API 404, solo lectura verificada 200)
+- **Modificado**: ~/dev/wordpress/websites/micaserogou.com/ (preprod local :8094 / https://micaserogou.Kalimete.local) — DB adaptada (12 actualizaciones: blogdescription, erp_suite_settings brand="Mi Casa Rogou"/tagline/business_type="restaurante", páginas legales e-commerce→restaurante, Sobre Nosotros, post Hello world→menú del día, comentario genérico→Carolina M., Sample Page→Reservas), flush de transientes _transient_erpsuite* (brand name renderizado corregido de "Michelle Casero y Gourmet" a "Mi Casa Rogou", 0 residuos); export/armada-suite-micaserogou-restaurant-20261021.zip (23,9 MB: tema twentytwentyfive, plugins armada-suite 5.5.1+akismet+hello, mu-plugins, dump DB fresco 184 KB, backups/); docs/PROD-DEPLOY-CHECKLIST.md (nuevo, 7 prerrequisitos, orden de deploy, rollback con armada-suite-5.4.1.zip vía erpsuite/v1/ops, advertencia NUNCA tocar prod sin ventana autorizada)
+- **Afecta a**: preprod micaserogou.Kalimete.local (100% restaurante, smoke 7/7 OK, cero "Hello world"/"Sample Page"/texto tecnología); producción micaserogou.com SIN CAMBIOS (sigue mixto tecnología+restaurante, REST API 404, solo lectura verificada 200)
 - **Causa**: usuario pidió evaluar y alinear ambos templates a tipo restaurante, usando inventario ERP tenant 3 para textos del landing
 - **Estado**: ✅ preprod alineado y verificado · ✅ ZIP de release generado · ✅ checklist de deploy documentado · ⏳ producción pendiente de ventana autorizada del usuario (API key ERP productiva tenant 3 de Juan Carlos, usuario WP administrator + App Password, permalinks /%postname%/, home/siteurl=https://micaserogou.com, snapshot cPanel)
 - **Notas**: Backups previos en backups/ (DB, plugin, tema, mu-plugins, armada-suite). Cero secrets impresos; key ERP en secrets/erp-tenant3-preprod.key (chmod 600, no leída). Directorio de micaserogou no es git repo; este CHANGELOG es el registro del cambio.
@@ -3817,7 +3832,7 @@
 
 ### [17:00] - CORRECCIÓN: vps-proxy NO fue reinstalada (fue reboot por kernel upgrade) + evaluación consolidación
 - **Tipo**: docs
-- **Modificado**: agents/proxy.md, agents/kalimete.md, MAPA.md (+ copia local), harness/proxy.harness.json, harness/kalimete.harness.json — se retira la marca errónea "RECONSTRUIDA 2026-10-19" de la entrada [16:40]
+- **Modificado**: agents/proxy.md, agents/Kalimete.md, MAPA.md (+ copia local), harness/proxy.harness.json, harness/Kalimete.harness.json — se retira la marca errónea "RECONSTRUIDA 2026-10-19" de la entrada [16:40]
 - **Afecta a**: documentación de la flota
 - **Causa**: verificación profunda con evidencia (wtmp con boots de 2025, apt history.log.11.gz de Nov-2025, certs LE de julio intactos, kernel 6.8.0-147 instalado por unattended-upgrades el 8-oct): la caja es la MISMA instalación desde siempre; el 19-oct fue su primer reboot en 260 días (desde Feb-2026) para activar el kernel nuevo. El 21-oct 16:31→16:40 hubo shutdown+boot limpio adicional (causa por confirmar con owner — ¿panel Contabo?)
 - **Estado**: ✅ docs corregidas con la historia real
@@ -3826,7 +3841,7 @@
 ### [17:00] - Alfredo Pro Ecomm: nuevo backend ERP + integración con Woodly
 - **Tipo**: infra | proyecto | backend | docker
 - **Modificado**: `~/projects/alfredo-pro-ecomm/` + `~/projects/woodly/` (frontend)
-- **Afecta a**: kalimete, vps-preprod
+- **Afecta a**: Kalimete, vps-preprod
 - **Causa**: Necesitamos backend propio para e-commerce multi-tenant (antes el API era de terceros FlowHub)
 - **Estado**: ✅ Backend operativo en Docker (API :3004, Postgres:5432, Redis:6379)
 - **Notas**: 
@@ -3859,7 +3874,7 @@
 ## 2026-09-03
 - **Tipo**: proyecto | plugin | wordpress | api
 - **Modificado**: `/home/warcold/dev/wordpress/wp-content/plugins/erpecomm-alfredo-pro/`
-- **Afecta a**: kalimete (WordPress local, localhost:8090)
+- **Afecta a**: Kalimete (WordPress local, localhost:8090)
 - **Causa**: Validar login/registro de usuarios — el usuario creía que el ERPipos tenía endpoints de auth
 - **Estado**: ✅ flujo completo funcionando
 - **Hallazgos críticos del ERPipos (erpipos.armada.do)**:
@@ -3901,7 +3916,7 @@ EOF又是
 - **Tipo**: seguridad | proxy
 - **Modificado**: vps-preprod `/etc/fail2ban/jail.d/squid.local` (backup `.bkup-20261022`): sección `[squid]` `enabled = true` → `enabled = false` + comentario explicativo. Jails `sshd` intactas; fail2ban completo sigue activo. Docs: `agents/proxy.md` (tabla servicios + sección fail2ban), `harness/proxy.harness.json`.
 - **Afecta a**: vps-preprod (fail2ban), cliente jovtransport (181.36.176.87) — recupera navegación completa
-- **Causa**: orden del owner — la jail squid interpretaba los 407 NORMALES de las apps Windows del cliente (CONNECT sin auth pre-emptiva: Skype/login.live, MS telemetry, updater EdrawSoft, update.googleapis; ráfagas de 8 en <1s) como brute-force → baneo all-ports (`iptables-allports chain=FORWARD`) → el cliente perdía la navegación COMPLETA. Baneado 2x el mismo día (14:29 y 15:00); también baneó a kalimete (69.143.73.120) a las 07:45 durante la validación de la migración (el `ignoreip` de la jail squid pisaba al `ignoreip` DEFAULT)
+- **Causa**: orden del owner — la jail squid interpretaba los 407 NORMALES de las apps Windows del cliente (CONNECT sin auth pre-emptiva: Skype/login.live, MS telemetry, updater EdrawSoft, update.googleapis; ráfagas de 8 en <1s) como brute-force → baneo all-ports (`iptables-allports chain=FORWARD`) → el cliente perdía la navegación COMPLETA. Baneado 2x el mismo día (14:29 y 15:00); también baneó a Kalimete (69.143.73.120) a las 07:45 durante la validación de la migración (el `ignoreip` de la jail squid pisaba al `ignoreip` DEFAULT)
 - **Estado**: ✅ Verificado: unban 181.36.176.87 OK + chain `f2b-squid` fuera de FORWARD + 0 refs nftables + jail sshd intacta + probe HTTP 407 (Squid vivo pidiendo auth) + SOCKS5 abierto + túneles `TCP_TUNNEL/200` fluyendo (jovtransport + admin)
 - **Notas**: El proxy conserva auth NCSA obligatoria + filtros de contenido; fail2ban sigue protegiendo SSH (:1333). Precedente: vps-proxy corrió 228 días con fail2ban solo sshd sin problemas — la postura actual replica esa estabilidad. Si el owner quisiera anti-bruteforce del proxy en el futuro: reactivar con `maxretry` alto (20+) o `ignoreip` de IPs cliente (frágil por IP dinámica). Dato menor: unban manual previo de 181.36.176.87 a las 14:57 (alguien lo desbaneó a mano antes de la intervención). El PC del cliente reconectará solo cuando sus apps reintenten (backoff post-ban).
 
@@ -3909,65 +3924,65 @@ EOF又是
 - **Tipo**: docs (autorizacion owner; victoria = solo lectura, curado remoto)
 - **Que**: agents/victoria-server.md: Voice server XTTS v2 -> Qwen3-TTS 0.6B-Base (clonacion ICL) + Whisper small; vLLM contexto 160K -> 256K nativo; gateway prompt 120K -> 220K; flags max-model-len 262144 + max-num-seqs 3; roster de llaves completo (nombres+roles, sin secrets). Billycode: fallback XTTS eliminado en docs/vcc/03-tecnologias.md, comentarios de voz aclaran llave valida (services o coder+xtts/whisper), ledger con nota xtts=TTS Qwen3.
 - **Verificado**: engine live qwen3 en :18810/health; wrappers victoria-tts/whisper-cli sanos; sin refs XTTS vivas fuera de historial.
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [16:45] - micaserogou: paleta restaurante cálida aplicada (rojo tomate + ámbar) — cero azul tech en el local
 - **Tipo**: servicio | release
-- **Modificado**: erp_suite_settings.tenant.brand.color_primary #1a73e8→#d64545 (rojo tomate) y color_secondary #34a853→#f59f00 (ámbar dorado) en preprod micaserogou.kalimete.local; ZIP export/armada-suite-micaserogou-restaurant-20261021.zip regenerado (23,9 MB, dump con colores, about.php del pack dentro); backup previo uploads/erp-settings-bkup-20261021-colors.txt (settings completos con el azul viejo)
-- **Afecta a**: preprod micaserogou.kalimete.local — producción SIN CAMBIOS
+- **Modificado**: erp_suite_settings.tenant.brand.color_primary #1a73e8→#d64545 (rojo tomate) y color_secondary #34a853→#f59f00 (ámbar dorado) en preprod micaserogou.Kalimete.local; ZIP export/armada-suite-micaserogou-restaurant-20261021.zip regenerado (23,9 MB, dump con colores, about.php del pack dentro); backup previo uploads/erp-settings-bkup-20261021-colors.txt (settings completos con el azul viejo)
+- **Afecta a**: preprod micaserogou.Kalimete.local — producción SIN CAMBIOS
 - **Causa**: owner confirmó el template local correcto en contenido y pidió mejores colores para diferenciarlo del default tech. Mecánica settings-based (Main.php get_theme_colors(): pickers custom ganan al preset; dark/light se derivan solos con erpc_hex_adjust) — cero código tocado
 - **Estado**: ✅ CSS inline renderizado en home/sobre-nosotros/productos/contacto: --erpc-primary:#d64545, --erpc-primary-dark:#af3939, --erpc-primary-light:#fae9e9, --erpc-secondary:#f59f00 · ✅ grep "1a73e8" = 0 · ✅ smoke 7/7 · ✅ ZIP regenerado · ⏳ deploy a producción pendiente de ventana autorizada
-- **Notas**: Explicación de las discrepancias local vs prod confirmada al owner: producción corre armada-suite 5.4.2 (el pack restaurant llegó en 5.5.x) → renderiza defaults de tecnología mezclados con los productos reales del ERP tenant 3; el deploy nunca se ejecutó (pendiente ventana + prerrequisitos del docs/PROD-DEPLOY-CHECKLIST.md). Falsa alarma 503: el subagente vio un 503 transitorio de micaserogou.com durante su sesión; verificado desde kalimete 3/3 intentos → 200 (blip del hosting, no caída persistente).
+- **Notas**: Explicación de las discrepancias local vs prod confirmada al owner: producción corre armada-suite 5.4.2 (el pack restaurant llegó en 5.5.x) → renderiza defaults de tecnología mezclados con los productos reales del ERP tenant 3; el deploy nunca se ejecutó (pendiente ventana + prerrequisitos del docs/PROD-DEPLOY-CHECKLIST.md). Falsa alarma 503: el subagente vio un 503 transitorio de micaserogou.com durante su sesión; verificado desde Kalimete 3/3 intentos → 200 (blip del hosting, no caída persistente).
 
-### [16:45] - Auditoria flota (Victoria→kalimete): Arcade a 0.6 como decia el changelog + kalimete.md a la realidad
-- **Tipo**: fix | config | docs (TARGET=kalimete verificado; pedido del owner: "valida y ajusta todo el ecosistema")
-- **Que**: (a) `Armada Arcade` temperature 0.1 → **0.6 + top_p 0.95** en AMBAS copias (`~/armada-arcade/agents/armada-arcade.md` canonica + replica `armada-sync/agents/`) — la entrada 15:00 listaba 12 creativos pero live habia 11 (arcade quedo en 0.1); (b) `kalimete.md` curado: frontmatter "subagentes ocultos" → visibles en @ (desde 10-01), `name: kalimete` explicito, linea corrupta "loopstream propio..." reconstruida, doctrina sampling actualizada (12 creativos 0.6/0.95 + infra 0.1 + kalimete 0.2), seccion "rotos eco-*" reemplazada (renombrados 10-01), tabla activos con display names (Armada Arcade, WordPress, ERP Dev, Godot); (c) datos de victoria actualizados: 256K nativo + seqs 3 (era 160K/4), driver 580.173.02, llaves 11 (era 7; +kalimete coder 10-02, +kalimete-ptt services 10-03), prompt 220K (era 120K), key opencode kalimete (era alfredo), warnings resueltos (nginx -t OK, sin :3389, sin ufw → ip6tables); (d) `opencode.jsonc`: `"model"` default `vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal` (sesiones nuevas arrancan en el cerebro local — antes sin default caian al free opencode, origen de los rate-limit kills del forense 10-02); en casa seguir cambiando a `vllm-lan` (backup `.bkup-20261003-defaultmodel`); (e) plugin `victoria-voice-live.js`: linea de comentario duplicada eliminada (mismo fix aplicado en victoria — md5 vuelve a ser identico entre maquinas); (f) CHANGELOG: header duplicado "## 2026-10-03" eliminado (esta misma pasada).
-- **Verificado**: grep 12× `temperature: 0.6` + 12× `top_p: 0.95` en los 20 agentes; python3 json.load(opencode.jsonc) OK; hostname=kalimete verificado ANTES de mutar; sampling validado contra la model card oficial nvidia/Qwen3.6-35B-A3B-NVFP4 (SciCode/coding = 0.6/0.95, general = 1.0/0.95) + voz E2E re-verificada desde victoria (TTS es ref nativa → STT exacto).
-- **Docs**: este changelog (kalimete) + general de Victoria referencia (regla de procedencia). NOTA: reiniciar TUI opencode para cargar temps/model default.
+### [16:45] - Auditoria flota (Victoria→Kalimete): Arcade a 0.6 como decia el changelog + Kalimete.md a la realidad
+- **Tipo**: fix | config | docs (TARGET=Kalimete verificado; pedido del owner: "valida y ajusta todo el ecosistema")
+- **Que**: (a) `Armada Arcade` temperature 0.1 → **0.6 + top_p 0.95** en AMBAS copias (`~/armada-arcade/agents/armada-arcade.md` canonica + replica `armada-sync/agents/`) — la entrada 15:00 listaba 12 creativos pero live habia 11 (arcade quedo en 0.1); (b) `Kalimete.md` curado: frontmatter "subagentes ocultos" → visibles en @ (desde 10-01), `name: Kalimete` explicito, linea corrupta "loopstream propio..." reconstruida, doctrina sampling actualizada (12 creativos 0.6/0.95 + infra 0.1 + Kalimete 0.2), seccion "rotos eco-*" reemplazada (renombrados 10-01), tabla activos con display names (Armada Arcade, WordPress, ERP Dev, Godot); (c) datos de victoria actualizados: 256K nativo + seqs 3 (era 160K/4), driver 580.173.02, llaves 11 (era 7; +Kalimete coder 10-02, +Kalimete-ptt services 10-03), prompt 220K (era 120K), key opencode Kalimete (era alfredo), warnings resueltos (nginx -t OK, sin :3389, sin ufw → ip6tables); (d) `opencode.jsonc`: `"model"` default `vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal` (sesiones nuevas arrancan en el cerebro local — antes sin default caian al free opencode, origen de los rate-limit kills del forense 10-02); en casa seguir cambiando a `vllm-lan` (backup `.bkup-20261003-defaultmodel`); (e) plugin `victoria-voice-live.js`: linea de comentario duplicada eliminada (mismo fix aplicado en victoria — md5 vuelve a ser identico entre maquinas); (f) CHANGELOG: header duplicado "## 2026-10-03" eliminado (esta misma pasada).
+- **Verificado**: grep 12× `temperature: 0.6` + 12× `top_p: 0.95` en los 20 agentes; python3 json.load(opencode.jsonc) OK; hostname=Kalimete verificado ANTES de mutar; sampling validado contra la model card oficial nvidia/Qwen3.6-35B-A3B-NVFP4 (SciCode/coding = 0.6/0.95, general = 1.0/0.95) + voz E2E re-verificada desde victoria (TTS es ref nativa → STT exacto).
+- **Docs**: este changelog (Kalimete) + general de Victoria referencia (regla de procedencia). NOTA: reiniciar TUI opencode para cargar temps/model default.
 - **Estado**: ✅ sincronizado (push hub)
 
 ### [16:41] - Armada Suite 5.4.0: el sync APLICA los datos del negocio del ERP a la tienda (paridad dev/público) + fix payment_methods falsos
 - **Tipo**: servicio | feature | fix
 - **Modificado**:
-  - **Evaluación kalimete (LIVE, ambos ERPs)**: el fetch de config NO tenía gate dev/público (0 usos de is_dev en el path) — la asimetría que percibía el owner era de DATOS+APLICACIÓN: (1) `normalize_config` descartaba contact/policies/store/branches/delivery/pickup/delivery_zones/seo; (2) `/ecomm/tienda/config` no trae payment_methods → se guardaban 5 defaults hardcodeados COMO si fueran del ERP (probado en BD local: guardaba los 5; el tenant 10 real solo tiene `efectivo`); (3) `get_brand` merge local-wins → el ERP nunca pisaba valores locales seteados (en local "se veía actualizar" solo el logo porque estaba vacío); (4) `ajax_fetch_config` sin bump de caché (catálogo hasta 15 min stale); (5) save-probe escribía `config_fetched_at` en la raíz (invisible para `prep_tenant`) y descartaba erp_config.
-  - **Fix 5.4.0** (implementó subagente Armada Suite; verificó kalimete): **apply-on-sync** — al sincronizar (botón "Obtener configuración" y save-probe de Conexión) se APLICAN brand (name/logo/colores/tagline/favicon), contacto y payment_methods SOLO con valores no-vacíos del ERP; nunca toca hero_image/smtp/api_key/per_page/cart_ttl/theme/template/ia/whatsapp/env_mode. Snapshot previo en `erpsuite_identity_backup` + rollback 1-click (AJAX `erpsuite_restore_identity`, manage_options+nonce, botón en tab Conexión). payment_methods completados desde `/tienda/config` (merge no-bloqueante) y parseados objetos `{id,label}`/strings; sin dato → `[]` (nunca inventados). `normalize_config` conserva el negocio completo (claves aditivas). Fix path `tenant.config_fetched_at` + guardado de erp_config en el probe. Bump `erpsuite_cache_v` al sincronizar. **Reversión del SSOT-local de 5.3.3 para datos provistos por el ERP (decisión owner 2026-10-17).**
+  - **Evaluación Kalimete (LIVE, ambos ERPs)**: el fetch de config NO tenía gate dev/público (0 usos de is_dev en el path) — la asimetría que percibía el owner era de DATOS+APLICACIÓN: (1) `normalize_config` descartaba contact/policies/store/branches/delivery/pickup/delivery_zones/seo; (2) `/ecomm/tienda/config` no trae payment_methods → se guardaban 5 defaults hardcodeados COMO si fueran del ERP (probado en BD local: guardaba los 5; el tenant 10 real solo tiene `efectivo`); (3) `get_brand` merge local-wins → el ERP nunca pisaba valores locales seteados (en local "se veía actualizar" solo el logo porque estaba vacío); (4) `ajax_fetch_config` sin bump de caché (catálogo hasta 15 min stale); (5) save-probe escribía `config_fetched_at` en la raíz (invisible para `prep_tenant`) y descartaba erp_config.
+  - **Fix 5.4.0** (implementó subagente Armada Suite; verificó Kalimete): **apply-on-sync** — al sincronizar (botón "Obtener configuración" y save-probe de Conexión) se APLICAN brand (name/logo/colores/tagline/favicon), contacto y payment_methods SOLO con valores no-vacíos del ERP; nunca toca hero_image/smtp/api_key/per_page/cart_ttl/theme/template/ia/whatsapp/env_mode. Snapshot previo en `erpsuite_identity_backup` + rollback 1-click (AJAX `erpsuite_restore_identity`, manage_options+nonce, botón en tab Conexión). payment_methods completados desde `/tienda/config` (merge no-bloqueante) y parseados objetos `{id,label}`/strings; sin dato → `[]` (nunca inventados). `normalize_config` conserva el negocio completo (claves aditivas). Fix path `tenant.config_fetched_at` + guardado de erp_config en el probe. Bump `erpsuite_cache_v` al sincronizar. **Reversión del SSOT-local de 5.3.3 para datos provistos por el ERP (decisión owner 2026-10-17).**
   - **Verificación**: php -l OK (4 archivos); regresión **24/24 PASS** (19 originales + 5 nuevos: parse payment, conservación de campos, apply+snapshot, rollback, paridad shapes dev/prod); LIVE contra ERP real :8100 — apply de 6 campos (brand.name "MaganTech Store"→"MaganTech", logo vacío→ERP, colores #465d7c/#b575c2→#1a73e8/#34a853, tagline, payment ["transferencia"]→["efectivo"] dato REAL) + rollback restauró 6/6 y consumió el snapshot. **ZIP canónico** `export/armada-suite-5.4.0.zip` 2.216.778 B sha256 `24b4255c10a7410f76b8ac00da699f5031ead5fbb2a0de08e721c0835cb0e939`; verif secrets vacío + storage stubs OK.
 - **Afecta a**: producción WP del cliente MaganTech (cPanel, tenant 10 contra erpipos.armada.do) — deployar 5.4.0 y sincronizar; el sync ahora actualiza la web con los datos del negocio del ERP en público igual que en local
 - **Causa**: owner: "así como se actualiza al momento de sincronizar con el local, también debe poder hacerlo con el público — evaluar y mejorar"
 - **Estado**: ✅ verificado (24/24 + LIVE apply/rollback + ZIP verificado)
 - **Notas**: WP local restaurado a su estado original tras la demo (snapshot consumido). Repo del plugin SIN commit aún (working tree listo si el owner autoriza). Para el cliente: subir 5.4.0 → Conexión ERP → sincronizar → identidad aplicada + payment_methods reales; rollback disponible. La key `iak_mti5…` del tenant 10 fue validada LIVE contra prod (config completa + 238 productos) — el ERP está sano.
 
-### [16:40] - kalimete-ptt REPARADO: servicio en loop de reinicios (6067+) por módulos Python huérfanos tras upgrade 3.13→3.14
+### [16:40] - Kalimete-ptt REPARADO: servicio en loop de reinicios (6067+) por módulos Python huérfanos tras upgrade 3.13→3.14
 - **Tipo**: servicio | infra
-- **Modificado**: pip --user de kalimete (instalados `evdev` 2.0.0 + `pyudev` 0.24.5 con --break-system-packages); servicio systemd --user kalimete-ptt.service reiniciado
-- **Afecta a**: kalimete (PTT local) — pipeline de voz kalimete↔victoria completo
-- **Causa**: Python del sistema pasó de 3.13 a 3.14 (evidencia: `~/.local/bin/__pycache__/kalimete-pttcpython-313.pyc` viejo vs wheels cp314 hoy); los módulos pip quedaron huérfanos. Doble fallo encadenado: (1) `import evdev` en main() → exit 1 → systemd reiniciaba en loop infinito (NRestarts=6067); (2) tras instalar evdev, `import pyudev` fallaba en `_hotplug()` — que es el ÚNICO bloqueo del main (los threads _listen son daemon=True) → main retornaba → proceso moría "limpio" (exit 0) en 880ms → servicio "inactive (dead)" sin reinicio
+- **Modificado**: pip --user de Kalimete (instalados `evdev` 2.0.0 + `pyudev` 0.24.5 con --break-system-packages); servicio systemd --user Kalimete-ptt.service reiniciado
+- **Afecta a**: Kalimete (PTT local) — pipeline de voz Kalimete↔victoria completo
+- **Causa**: Python del sistema pasó de 3.13 a 3.14 (evidencia: `~/.local/bin/__pycache__/Kalimete-pttcpython-313.pyc` viejo vs wheels cp314 hoy); los módulos pip quedaron huérfanos. Doble fallo encadenado: (1) `import evdev` en main() → exit 1 → systemd reiniciaba en loop infinito (NRestarts=6067); (2) tras instalar evdev, `import pyudev` fallaba en `_hotplug()` — que es el ÚNICO bloqueo del main (los threads _listen son daemon=True) → main retornaba → proceso moría "limpio" (exit 0) en 880ms → servicio "inactive (dead)" sin reinicio
 - **Estado**: ✅ servicio active (running), NRestarts=0, estable, escuchando /dev/input/event0 + hotplug activo · ✅ STT :18810/stt HTTP 200 (WAV crudo en body, 0.3s) · ✅ LLM :8010 HTTP 200 (respuesta del modelo OK) · ✅ TTS :18810/tts HTTP 200 (WAV 24kHz 1.8s, 84KB) — key services PTT_VOICE_KEY válida en los 3
-- **Notas**: el server STT de Victoria espera el audio WAV CRUDO en el body (Content-Type: audio/wav), NO multipart — un curl -F produce 500 (ffmpeg detecta image2/rawvideo en el .raw guardado). Formato correcto = el del script real (`requests.post(data=audio_bytes)`). El wrapper kalimete-ptt-wrapper.sh propaga TODAS las vars del env por `set -a; source` (las asignaciones explícitas en /usr/bin/env son redundales). Pendiente del owner: probar PTT físico (Ctrl_R) de punta a punta.
+- **Notas**: el server STT de Victoria espera el audio WAV CRUDO en el body (Content-Type: audio/wav), NO multipart — un curl -F produce 500 (ffmpeg detecta image2/rawvideo en el .raw guardado). Formato correcto = el del script real (`requests.post(data=audio_bytes)`). El wrapper Kalimete-ptt-wrapper.sh propaga TODAS las vars del env por `set -a; source` (las asignaciones explícitas en /usr/bin/env son redundales). Pendiente del owner: probar PTT físico (Ctrl_R) de punta a punta.
 
-### [16:40] - NVIDIA NIM: auth.json en kalimete + sistema de rotación + llaves separadas
+### [16:40] - NVIDIA NIM: auth.json en Kalimete + sistema de rotación + llaves separadas
 - **Tipo**: infra | config | opencode | seguridad
-- **Modificado**: `~/.local/share/opencode/auth.json` (nuevo en kalimete), `~/.armada-custom/secrets/nvapi-keys.json` (nuevo), `~/.armada-custom/bin/nvapi-rotate.sh` (nuevo)
-- **Afecta a**: kalimete (opencode provider nvidia), victoria (sin cambios — su llave intacta)
-- **Causa**: El provider `nvidia` en opencode usa `auth.json` (no apiKey en JSONC). Victoria tenía su auth.json pero kalimete no — opencode no podía autenticar contra NVIDIA NIM. Cada nodo ahora usa su propia llave NVIDIA: kalimete = victoria-1 (me@alfredo.pro, nvapi-AuHob...), victoria = victoria-2 (warcold@gmail.com, nvapi-vZ9w...). Se replicó el script de rotación `nvapi-rotate.sh` a kalimete con `--resolve` (DNS jonas caído) y probes en paralelo.
-- **Verificación**: Ambas keys dan HTTP 200 al POST `chat/completions` desde kalimete (modelo `openai/gpt-oss-20b` como probe, 3 modelos de NIM dan 404/timeout desde kalimete por restricción regional). auth.json legible, permisos 600 warcold:warcold.
+- **Modificado**: `~/.local/share/opencode/auth.json` (nuevo en Kalimete), `~/.armada-custom/secrets/nvapi-keys.json` (nuevo), `~/.armada-custom/bin/nvapi-rotate.sh` (nuevo)
+- **Afecta a**: Kalimete (opencode provider nvidia), victoria (sin cambios — su llave intacta)
+- **Causa**: El provider `nvidia` en opencode usa `auth.json` (no apiKey en JSONC). Victoria tenía su auth.json pero Kalimete no — opencode no podía autenticar contra NVIDIA NIM. Cada nodo ahora usa su propia llave NVIDIA: Kalimete = victoria-1 (me@alfredo.pro, nvapi-AuHob...), victoria = victoria-2 (warcold@gmail.com, nvapi-vZ9w...). Se replicó el script de rotación `nvapi-rotate.sh` a Kalimete con `--resolve` (DNS jonas caído) y probes en paralelo.
+- **Verificación**: Ambas keys dan HTTP 200 al POST `chat/completions` desde Kalimete (modelo `openai/gpt-oss-20b` como probe, 3 modelos de NIM dan 404/timeout desde Kalimete por restricción regional). auth.json legible, permisos 600 warcold:warcold.
 - **Estado**: ✅ sincronizado
-- **Notas**: Modelo de prueba cambiado de `moonshotai/kimi-k3` a `openai/gpt-oss-20b` (el único que responde 200 consistentemente desde kalimete). Sistema de rotación: `nvapi-rotate.sh status|test|rotate|auto` en kalimete. 3 llaves disponibles, rotación automática si falla la activa.
+- **Notas**: Modelo de prueba cambiado de `moonshotai/kimi-k3` a `openai/gpt-oss-20b` (el único que responde 200 consistentemente desde Kalimete). Sistema de rotación: `nvapi-rotate.sh status|test|rotate|auto` en Kalimete. 3 llaves disponibles, rotación automática si falla la activa.
 
 ## 2026-09-14
 
 ### [16:40] - IRC TLS renovado (opción C replicada) + docs corregidas: vps-proxy reconstruida
 - **Tipo**: servicio | infra | docs
-- **Modificado**: vps-preprod (certbot 2.9.0, cert el.colador.de.alfredo.pro emitido 2026-10-21 expira 2027-01-19, hooks pre/post/deploy en /etc/letsencrypt/renewal-hooks/, certbot.timer enabled); docs: agents/irc.md (sección Renovación TLS), agents/proxy.md (reconstrucción 2026-10-19), agents/kalimete.md (tabla red), MAPA.md (nodos 3-4) + copia local ecosistema-map, harness/irc.harness.json + proxy.harness.json + kalimete.harness.json
-- **Afecta a**: vps-preprod (IRC El Corito TLS), vps-proxy (doc actualizada), kalimete (docs)
+- **Modificado**: vps-preprod (certbot 2.9.0, cert el.colador.de.alfredo.pro emitido 2026-10-21 expira 2027-01-19, hooks pre/post/deploy en /etc/letsencrypt/renewal-hooks/, certbot.timer enabled); docs: agents/irc.md (sección Renovación TLS), agents/proxy.md (reconstrucción 2026-10-19), agents/Kalimete.md (tabla red), MAPA.md (nodos 3-4) + copia local ecosistema-map, harness/irc.harness.json + proxy.harness.json + Kalimete.harness.json
+- **Afecta a**: vps-preprod (IRC El Corito TLS), vps-proxy (doc actualizada), Kalimete (docs)
 - **Causa**: owner ordenó opción C (replicar flujo de renovación original de certbot standalone) + corregir discrepancias: la vps-proxy vieja ya no existe (reconstruida 2026-10-19) y el proxy NO vive en vps-preprod
-- **Estado**: ✅ Cert nuevo servido por InspIRCd en 6697 (verificado externo desde kalimete, serial 05D42A47…) · ✅ Auto-renovación completa: certbot.timer → pre hook (REDIRECT 80→8088) → challenge → post hook (limpieza) → deploy hook (copia + USR1) · ✅ 0 reglas transitorias residuales · ✅ Docs corregidas con estado live verificado
+- **Estado**: ✅ Cert nuevo servido por InspIRCd en 6697 (verificado externo desde Kalimete, serial 05D42A47…) · ✅ Auto-renovación completa: certbot.timer → pre hook (REDIRECT 80→8088) → challenge → post hook (limpieza) → deploy hook (copia + USR1) · ✅ 0 reglas transitorias residuales · ✅ Docs corregidas con estado live verificado
 - **Notas**: Causa raíz del fallo inicial de emisión: los hooks de directorio solo corren en RENOVACIONES, no en emisión inicial → se pasan por CLI en certonly (quedaron grabados en el renewal conf). Método probado empíricamente antes de emitir (HTTP 200 por la ruta REDIRECT 80→8088). La nueva vps-proxy conserva renewal confs de 2 certs expirados cuyos dominios apuntan a otras IPs (el.colador → vps-preprod, ya resuelto; colador.union-chat.online → IPs de terceros 104.219.250.37/2.59.170.20, pendiente owner). Discrepancia flaggeada al owner: el proxy corre en la nueva vps-proxy (31.220.102.176, reconstruida), NO en vps-preprod — si quiere moverlo, tarea aparte. Backups: certs.bkup-20261021-155925 (vps-preprod) + 7 .bkup-20261021-irc en repo.
 
 ### [16:30] - ZionV CRM 1.55.0: Nextcloud (CalDAV) + HubSpot + selector de calendario + Teams + automatización IA
-- **Tipo**: release | feature | plugin (TARGET=kalimete local; repo GitHub warcold/zionv-crm)
+- **Tipo**: release | feature | plugin (TARGET=Kalimete local; repo GitHub warcold/zionv-crm)
 - **Modificado**: plugin 1.54.0→**1.55.0** (22 archivos, commit `44596ba` pushed): NUEVO módulo **Nextcloud** (`src/Modules/Nextcloud/`, 4 archivos: CalDAV RFC 4791 contra `remote.php/dav`, app password cifrada, eventos VCALENDAR UTC con UID determinista `zion-crm-booking-{id}@{host}`, PROPFIND de prueba; migración 1.24.0 columna `nextcloud_event_id`); NUEVO módulo **HubSpot** (`src/Modules/Hubspot/`, 4 archivos: push CRM-to-CRM por hooks existentes — contactos upsert por email, deals upsert por propiedad única `zioncrm_opportunity_id`; unidireccional, no bloqueante, errores al Logger); **selector de proveedor de calendario** (`calendar_provider` all|google|ms365|nextcloud|none en Settings, respetado por BookingService en crear/reprogramar/cancelar); **MS365 Teams links** (`isOnlineMeeting`+`teamsForBusiness` en eventos, mismo permiso Calendars.ReadWrite — docs MS Graph leídas); **automatización IA** (acción `ai_prompt` en ActionRegistry/Executor: prompt con variables {{contact_name}} vía Mailer::replace_variables, respuesta guardable como nota en activities, skip seguro si IA desactivada); SystemStatusPage: 7 tabs + selector en Diagnóstico; README.md (tabla de integraciones) + DEPLOY-GUIA.md (Nextcloud/HubSpot/verificación) actualizados; ZIP `export/zionv-crm-1.55.0.zip` (7.3MB, 1928 archivos, sha256 `b3edf46f…`)
-- **Afecta a**: zionv-local (kalimete :8092), repo GitHub warcold/zionv-crm
+- **Afecta a**: zionv-local (Kalimete :8092), repo GitHub warcold/zionv-crm
 - **Causa**: pedido del owner — IA con Victoria PUBLIC (openai-compat, nuestros recursos), poder ELEGIR entre MS/Google/self-hosted (Nextcloud) para calendarios, integrar también HubSpot, leer docs de cada herramienta y proceder bajo mejores prácticas, cerrar pendientes (Teams links, automatización IA), mejorar toda la documentación
 - **Estado**: ✅ verificado e2e: lint 14/14; migración 1.24.0 auto-aplicada; Estado del sistema 200 con 7 tabs + selector; REST settings/nextcloud + settings/hubspot (401 sin nonce); **IA re-apuntada a Victoria PUBLIC `https://victoria.armada.do/v1` (212ms vía túnel Cloudflare, modelo Qwen3.6)**; **acción ai_prompt e2e OK** ({{contact_name}} reemplazado, respuesta real del LLM en español); docs oficiales consultadas antes de programar (MS Graph calendar-post-events, HubSpot CRM v3 contacts/upsert, CalDAV RFC 4791)
 - **Notas**: Docs leídas y aplicadas: MS Graph Example 2 (isOnlineMeeting+teamsForBusiness genera joinUrl con Calendars.ReadWrite — sin scope extra); HubSpot v3 batch/upsert con idProperty=email (contactos) y propiedad custom única (deals — el admin la crea una vez); Nextcloud CalDAV estándar con app password (nunca la contraseña principal). El push HubSpot usa los hooks existentes del plugin (contact_created/opportunity_created/*_stage_changed) — cero cambios en los servicios core. LECCIÓN: ninguna nueva (el pipeline dump-autoload + restart + smoke de 1.54.0 funcionó a la primera).
@@ -3975,7 +3990,7 @@ EOF又是
 ### [16:30] - WP connector v3.13.5: /contacto compacta + logo footer 150x150
 - **Tipo**: proyecto | UI/UX | wordpress
 - **Modificado**: plugin erp-ecomm-connector 3.13.4→3.13.5 (~/dev/wordpress: connector.css — compactación scoped de /contacto y logo footer 150x150). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, /contacto/ + footer de todo el sitio)
+- **Afecta a**: Kalimete (wordpress-local :8091, /contacto/ + footer de todo el sitio)
 - **Causa**: Usuario: demasiado espacio en blanco entre secciones de /contacto (compactar sin eliminar) y el logo del footer muy pequeño (pedía ~150x150; la imagen fuente es 3000x3000).
 - **Solución**: hero 96→56px, secciones 56→30px (móvil 22px), scoped a .erpc-contacto-page (home intacta); logo footer 48→150x150 con object-fit contain (móvil 110px).
 - **Verificación**: CSS 3.13.5 sirviéndose con ambas reglas; /contacto renderiza; php -l OK. Prueba visual pendiente del usuario.
@@ -3991,7 +4006,7 @@ EOF又是
   - Docs: `~/dev/wordpress/export/DEPLOY-GUIA.md` (header canónico), `~/dev/wordpress/DEPLOY-PRODUCCION.md` (bloque de ruta canónica), `~/dev/wordpress/CHANGELOG.md` (entrada `[ruta-canonica-dist]`).
   - `agents/wordpress-dev.md`: regla de ruta canónica en Docker Stack + plugin actualizado a **v4.4.1 con switch Local/Público** + backend local = erpipos :8100 tenant 10.
   - `harness/wordpress-dev.harness.json`: nuevo bloque `rutas_canonicas` (proyecto / artefactos_zip / plugin / erp_local) + docs extra. JSON validado.
-- **Afecta a**: kalimete (docs/organización). CERO producción.
+- **Afecta a**: Kalimete (docs/organización). CERO producción.
 - **Verificado**: `export/` final = 5 archivos (DEPLOY-GUIA + 4 zips); `dist/` y export interno del plugin eliminados; `unzip -t` del 4.4.1 = sin errores tras el move.
 - **Estado**: ✅ sincronizado
 - **Notas**: ⚠️ Pendiente del owner: el repo del plugin tiene SIN COMMITEAR todo el código del switch 4.4.1 (Environment.php, Main.php, AdminMenu.php, LegacyConnectorAdmin.php + untracked includes/Remote/, readme.txt, erpsuite-remote.js). Solo se commiteó el `.gitignore`. Recomendado: `git add -A` (los .bkup ya están ignorados) + push de la 4.4.1.
@@ -4007,11 +4022,11 @@ EOF又是
 
 ### [16:30] - Fix ERR_SSL_PROTOCOL_ERROR: puerto 8090 cedido a nginx-TLS (redirects envenenados)
 - **Tipo**: infra | red | seguridad
-- **Modificado**: `/etc/nginx/sites-available/wordpress.kalimete.local.conf` (bkup `.bkup-20260917`); `~/dev/wordpress/docker-compose.yml` (bkup, `127.0.0.1:8091:80`)
-- **Afecta a**: kalimete (stack wordpress-local)
-- **Causa**: Chrome del usuario redirigía solo a `https://wordpress.kalimete.local:8090` → ERR_SSL_PROTOCOL_ERROR. Causa raíz: el 8090 era el backend HTTP directo del container; en la época del bounce de login el servidor emitió URLs con `:8090` que quedaron cacheadas/autocompletadas en el browser. El 8090 hablaba HTTP plano → handshake TLS imposible.
+- **Modificado**: `/etc/nginx/sites-available/wordpress.Kalimete.local.conf` (bkup `.bkup-20260917`); `~/dev/wordpress/docker-compose.yml` (bkup, `127.0.0.1:8091:80`)
+- **Afecta a**: Kalimete (stack wordpress-local)
+- **Causa**: Chrome del usuario redirigía solo a `https://wordpress.Kalimete.local:8090` → ERR_SSL_PROTOCOL_ERROR. Causa raíz: el 8090 era el backend HTTP directo del container; en la época del bounce de login el servidor emitió URLs con `:8090` que quedaron cacheadas/autocompletadas en el browser. El 8090 hablaba HTTP plano → handshake TLS imposible.
 - **Fix**: (1) compose re-bind a `127.0.0.1:8091` (backend solo loopback); (2) nginx ahora escucha TLS en 8090/443/80 con el mismo cert mkcert → la URL envenenada responde 200 con TLS válido y WP canoniza al dominio sin puerto (redirect_to de wp-admin verificado limpio).
-- **Verificación**: `https://wordpress.kalimete.local:8090/` → 200 con verificación TLS completa (sin -k); headless Chrome renderiza MaganTech por 8090; principal 200 sin regresión; loopback 8091 200; `nginx -t` OK; container healthy.
+- **Verificación**: `https://wordpress.Kalimete.local:8090/` → 200 con verificación TLS completa (sin -k); headless Chrome renderiza MaganTech por 8090; principal 200 sin regresión; loopback 8091 200; `nginx -t` OK; container healthy.
 - **Estado**: ✅ sincronizado
 - **Notas**: Ambas URLs (con y sin puerto) funcionan ahora. Limpieza previa: 4 transients erpc_* borrados (solo proyecto). Si el usuario sigue viendo el error: perfil Chrome (21 extensiones) — probar incógnito.
 
@@ -4052,7 +4067,7 @@ EOF又是
 ### [16:10] - micaserogou: pack restaurant COMPLETO (about.php nuevo) + legales reescritas — cero tecnología en todo el sitio local
 - **Tipo**: servicio | release
 - **Modificado**: ~/dev/wordpress/websites/micaserogou.com/wp-content/plugins/armada-suite/templates/packs/restaurant/partials/about.php (NUEVO, 5.1 KB — misión/visión/valores/equipo restaurante, mismas clases que el default, hero con get_hero_image()); post_content de 7 páginas reescrito con copy restaurante correcto (IDs 12 contacto "Atención al cliente", 13 términos, 16 envíos→"Delivery y Entregas", 17 devoluciones→reclamos 2h/reposición, 14 privacidad, 15 cookies, 18 FAQ completa con reservas/eventos); revisiones WP purgadas (3, residuos "pedidor"/"perfiln"/"deliverys" solo vivían ahí); ZIP export/armada-suite-micaserogou-restaurant-20261021.zip regenerado (23,9 MB, 1623 archivos, about.php del pack verificado dentro, dump DB limpio 172K)
-- **Afecta a**: preprod micaserogou.kalimete.local — producción SIN CAMBIOS
+- **Afecta a**: preprod micaserogou.Kalimete.local — producción SIN CAMBIOS
 - **Causa**: usuario reportó seguir viendo "Componentes, cables y accesorios para tu PC y oficina" en el template. Root cause: el router del plugin (includes/Store/Templates.php) hijackea /sobre-nosotros/ por slug → [erpc_about] → partial default de TECNOLOGÍA porque el pack restaurant NO tenía about.php (el post_content es ignorado por el router — por eso el fix anterior de la DB fue inerte). Además el str_ireplace automático de la sesión anterior dejó textos mangled ("pedidor", "una pedido", "deliverys", "licencias de software" en devoluciones, "platos perfiln", "Soporte técnico" en contacto, tiempos/pesos/seguimientos de courier en envíos/FAQ)
 - **Estado**: ✅ /sobre-nosotros/ renderiza "Mi Casa Rogou — sazón de casa, hecha al momento" (grep "tecnolog" = 0) · ✅ barrido 16 páginas + post con word boundaries: 0 tecnología real (2 falsos positivos documentados: "aplicables" contiene "cables", "almuerzos de oficina" legítimo) · ✅ smoke 7/7 · ✅ ZIP regenerado · ⏳ producción pendiente de ventana autorizada
 - **Notas**: Regla arquitectónica respetada: NO se tocaron los defaults de tecnología (templates/partials/*) — son fallback compartido multi-tenant (MaganTech es tecnología); el mecanismo correcto es el pack restaurant completo. PENDIENTE agente Armada Suite: el pack restaurant (7 partials) vive SOLO en la copia de micaserogou; la fuente canónica ~/dev/wordpress/plugins/armada-suite/ NO lo tiene — sincronizar en la próxima iteración del plugin para que no se pierda en updates. Backups: post-content-bkup-20261021-legal.txt (uploads/) + backups/ DB completa previa. Defaults de tecnología intactos: el texto "Componentes, cables..." que citó el usuario es el fallback del default compartido, invisible para micaserogou ahora que el pack está completo.
@@ -4082,12 +4097,12 @@ EOF又是
 - **Afecta a**: ninguno (artefacto de distribución; el owner lo sube a prod manualmente)
 - **Causa**: owner: "¿dónde está el plugin .zip para subirlo a producción y probar la parte de producción?"
 - **Estado**: ✅ listo para subir
-- **Notas**: ⚠️ `includes/Core/Environment.php` lleva HARDCODEADO el perfil LOCAL sellado (API URL `172.19.0.1:8100`, tenant 10 y key `iak_` local de dev) — por diseño del owner queda en el ZIP; la key local es inútil fuera de la red de kalimete, pero si el repo fuera público o el zip se comparte, conviene refactor futuro a constante inyectada vía wp-config. En PROD el admin debe: switch → PÚBLICO → tab Conexión → meter URL/tenant/key reales de erpipos prod (las keys de prod viajan en wp_options de prod, NUNCA en el zip). Instrucciones completas entregadas al owner en el chat.
+- **Notas**: ⚠️ `includes/Core/Environment.php` lleva HARDCODEADO el perfil LOCAL sellado (API URL `172.19.0.1:8100`, tenant 10 y key `iak_` local de dev) — por diseño del owner queda en el ZIP; la key local es inútil fuera de la red de Kalimete, pero si el repo fuera público o el zip se comparte, conviene refactor futuro a constante inyectada vía wp-config. En PROD el admin debe: switch → PÚBLICO → tab Conexión → meter URL/tenant/key reales de erpipos prod (las keys de prod viajan en wp_options de prod, NUNCA en el zip). Instrucciones completas entregadas al owner en el chat.
 
 ### [16:05] - MaganTech Store: revalidación ERP tras fixes del backend (v2.2)
 - **Tipo**: proyecto | api | wordpress
 - **Modificado**: `/home/warcold/dev/wordpress/wp-content/plugins/erpecomm-alfredo-pro/`
-- **Afecta a**: kalimete (localhost:8090)
+- **Afecta a**: Kalimete (localhost:8090)
 - **Causa**: El dueño del ERPipos reportó haber corregido los issues reportados
 - **Estado**: ✅ flujo completo validado
 
@@ -4126,13 +4141,13 @@ EOF又是
 - **Modificado**: iptables INPUT en vps-preprod (3 reglas ACCEPT insertadas posiciones 5/6/7) + `/etc/iptables/rules.v4` persistido vía `netfilter-persistent save` (ya instalado, enabled al boot)
 - **Afecta a**: vps-preprod (servicio IRC El Corito, InspIRCd v4.7.0)
 - **Causa**: política DROP en INPUT sin reglas IRC → todo tráfico silent-drop, clientes en timeout, 0 conexiones (diagnóstico agente IRC, ejecución autorizada por owner)
-- **Estado**: ✅ Firewall abierto y persistido · ✅ Verificado desde kalimete: nc OK en 6667/6697/7209 · ✅ InspIRCd activo sin reinicios · 🔴 PENDIENTE cert TLS el.colador.de.alfredo.pro expirado 2026-10-02 (handshake 6697 sirve cert vencido; sin cliente ACME en el VPS, HTTP-01 bloqueado por firewall+Caddy nextcloud, zona alfredo.pro fuera de la cuenta CF — requiere decisión owner) · ⏸️ crontab renovación pendiente del cert
+- **Estado**: ✅ Firewall abierto y persistido · ✅ Verificado desde Kalimete: nc OK en 6667/6697/7209 · ✅ InspIRCd activo sin reinicios · 🔴 PENDIENTE cert TLS el.colador.de.alfredo.pro expirado 2026-10-02 (handshake 6697 sirve cert vencido; sin cliente ACME en el VPS, HTTP-01 bloqueado por firewall+Caddy nextcloud, zona alfredo.pro fuera de la cuenta CF — requiere decisión owner) · ⏸️ crontab renovación pendiente del cert
 - **Notas**: Backups: `/root/iptables.bkup-20261021-154345` + `/etc/iptables/rules.v4.bkup-20261021-154345` (rollback: `iptables-restore < /root/iptables.bkup-20261021-154345`). Enlace S2S a irc.elcorito.org inestable (~2h, posible lado remoto — solo observado). deploy-ssl.sh resultó ser hook de ejemplo de InspIRCd con rutas placeholder, NO flujo real de renovación. Plaintext 6667 ya operativo para clientes.
 
 ### [15:45] - ZionV CRM 1.54.0: instalación sin fricción + MS365 + asistente IA OpenAI-compat + Estado del sistema
-- **Tipo**: release | feature | plugin (TARGET=kalimete local; repo GitHub warcold/zionv-crm)
+- **Tipo**: release | feature | plugin (TARGET=Kalimete local; repo GitHub warcold/zionv-crm)
 - **Modificado**: plugin 1.53.1→**1.54.0** (24 archivos: 12 nuevos + 12 modificados, commit `ffde9a7` pushed): NUEVO módulo **Ai** (endpoint OpenAI-compatible configurable — OpenAI/vLLM/Ollama/LiteLLM/Groq —, API key cifrada en servidor, proxy server-side `ai/chat`, test que lista modelos; REST `settings/ai` + `settings/ai/test`); NUEVO módulo **Ms365** (calendario Outlook vía Microsoft Graph: OAuth Azure AD, tokens cifrados, sync de reservaciones en paralelo a Google; migraciones 1.22.0 tabla `ms365_connection` + 1.23.0 columna `ms365_event_id` en bookings); NUEVO **SystemStatusPage** (wp-admin → Zion CRM → Estado del sistema: diagnóstico completo + tabs Correo/Google/MS365/IA en PHP clásico + presets SMTP Gmail/Outlook/Zoho/Brevo/SendGrid/cPanel + pruebas de envío/conexión); **Activator** auto-activa permalinks `/%postname%/` si el sitio no tiene estructura (fix definitivo del bug admin→frontend) + **WelcomeNotice** post-activación; BookingService sync paralelo Google+MS365; **DEPLOY-GUIA.md** (procedimiento instalación remota por el plugin manager); ZIP producción `export/zionv-crm-1.54.0.zip` (7.3MB, 1917 archivos, sha256 `0fa5769c…`)
-- **Afecta a**: zionv-local (kalimete :8092), repo GitHub warcold/zionv-crm
+- **Afecta a**: zionv-local (Kalimete :8092), repo GitHub warcold/zionv-crm
 - **Causa**: pedido del owner — instalación remota sin dolor de cabeza por el plugin manager con BD automática + configuración de producción + integraciones configurables (Google, MS365, OpenAI-compat para poder cambiar Victoria por cualquier API compatible) + correos funcionando
 - **Estado**: ✅ verificado e2e: lint 14/14 limpio; migraciones 1.22.0+1.23.0 auto-aplicadas (tabla + columna en DB live); home 200; SPA CRM 200; Estado del sistema renderiza 5 tabs; REST nuevos 401 sin nonce (seguros); **IA e2e contra Victoria vLLM: test 29ms lista Qwen3.6-35B-A3B-NVFP4 + chat real responde en español**; ZIP sin .git/bkup
 - **Notas**: LECCIONES: (1) composer `optimize-autoloader` genera classmap estático — al añadir clases nuevas hay que correr `composer dump-autoload -o` dentro del contenedor o el plugin muere con "Class not found"; (2) OPcache puede servir el autoload viejo tras el dump → docker restart; (3) los `use` de clases Core nuevas en Plugin.php son obligatorios (namespace ZionCrm vs ZionCrm\Core); (4) WP manda a wp-admin/upgrade.php tras bump de versión del plugin — resolver con `wp core update-db`. El source React/TSX del frontend sigue sin estar disponible (solo assets/dist) — la configuración nueva vive en PHP clásico a propósito.
@@ -4140,7 +4155,7 @@ EOF又是
 ### [15:45] - WP connector v3.13.4 + ERP v3.13.4-local: fix validation.unique (unique por tenant)
 - **Tipo**: proyecto | fix | multitenant | wordpress + erp-local
 - **Modificado**: plugin erp-ecomm-connector 3.13.3→3.13.4 (~/dev/wordpress: login_password envía tenant_id, traducción de validation.unique). ERP sistema-facturacion (~/dev/erpipo-preprod: ClienteAuthController — updateProfile/register/login con unique por tenant, helper tenantFromApiKey). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Afecta a**: Kalimete (wordpress-local :8091 + erpipo-preprod :8100)
 - **Causa**: Usuario: "validation.unique" al guardar el perfil en /mi-cuenta tras completar campos vacíos. Diagnóstico: unique de telefono/email GLOBAL en el ERP — DB tiene teléfonos duplicados cross-tenant (8090000001 en tenants 2 y 10) → cualquier teléfono de otra instancia bloqueaba el update.
 - **Solución**: unique por (tenant_id, valor) en updateProfile (ignora propio id, nullable) y register (tenant resuelto antes de validar, incl. Bearer iak_); login tenant-aware (mismo email puede coexistir en varias instancias); WP envía tenant_id en login y traduce el mensaje crudo.
 - **Verificación**: update cross-tenant 200 (antes 422) ✅; duplicado en mismo tenant 422 correcto ✅; register mismo email en 2 tenants 201 coexistiendo ✅; login tenant-aware ✅; php -l OK. Prueba del usuario pendiente.
@@ -4150,7 +4165,7 @@ EOF又是
 ### [15:30] - erp-chatbot v1.1.3: iconos apilados + voz configurable y confiable
 - **Tipo**: proyecto | fix | UI/UX + voz | wordpress
 - **Modificado**: erp-chatbot 1.1.2→1.1.3 (~/dev/wordpress: chat apilado sobre el carrito con detección, botón Probar voz en admin, espera de voces en primer habla, listas limpias). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget del chatbot)
 - **Causa**: Usuario: icono carrito y chat superpuestos; voz de varón con agente de nombre femenino.
 - **Diagnóstico**: ambos flotantes en el mismo punto (right:22/bottom:22); getVoices vacío al inicio + listas con duplicados/ambiguas.
 - **Verificación**: node --check + php -l OK; CSS 1.1.3 con apilado sirviéndose. Prueba en navegador pendiente (posición + voz según dispositivo del usuario).
@@ -4161,7 +4176,7 @@ EOF又是
 - **Modificado**: /home/warcold/dev/wordpress/erp-ecmm-deploy.zip
   - `deploy-package/erp-ecmm-connector.zip` — Plugin completo v2.4.0 listo para instalar (48K)
   - `deploy-package/DEPLOY-GUIA.md` — Guía de instalación en 3 pasos para cualquier WordPress
-- **Afecta a**: kalimete (WordPress dev)
+- **Afecta a**: Kalimete (WordPress dev)
 - **Causa**: Facilitar deploy rápido a producción sin Elementor ni configuraciones manuales.
 - **Estado**: ✅ package listo, ZIP descargable
 - **Notas**:
@@ -4175,7 +4190,7 @@ EOF又是
 ### [15:30] - START PROJECT: Armada Star Fox (Godot 4.x — Star Fox clone)
 - **Tipo**: feature/game-dev
 - **Modificado**: proyecto completo `armada-starfox/` (Godot 4.7.2)
-- **Afecta a**: kalimete/godot
+- **Afecta a**: Kalimete/godot
 - **Causa**: Nuevo proyecto Godot — clone de Star Fox (SNES/N64)
 - **Estado**: ✅ Foundation completa (Fase 1)
 - **Notas**:
@@ -4196,7 +4211,7 @@ EOF又是
   - **Git preservado**: historial Armada 5.3.5 `b4c2a89` en `armada-suite/.git` (mv del tree; padre hub sin git propio, pendiente decisión owner). Subrepo ZionV intacto (`origin warcold/zionv-crm`, HEAD 1.56.3).
   - **Validación post-move**: 4 containers healthy; regresión Armada **19/19 PASS**; smoke-8091 (front/login/REST 200, `/%postname%/`, armada-suite activo) + smoke-8092 (front 301, wp-login 302, REST 200, `/crm/dashboard/` 302, pretty ON, zionv activo, 43 tablas, db_version 1.24.0) 100% verde; `wordpress-local` re-verificado en `erpipo-dev-network`.
   - **Higiene docs completa** (9 archivos con .bkup-20261016-hubmove): rutas `~/dev/zionv-crm/` → `~/dev/wordpress/zionv-crm/` y `~/dev/wordpress/{wp-content,export,certs,secrets,docker-compose}` → bajo `armada-suite/` en agents/wordpress-dev.md, agents/armada-suite.md, agents/zionv-crm.md + 3 harness JSON (validados); versión 5.3.2→5.3.5 en estado actual (historial preservado); permalinks PLAIN→`/%postname%/` (live); DEPLOY-GUIA de ambos plugins a rutas nuevas (ZionV bump 1.56.2→1.56.3); template NUEVO-PLUGIN + PROBAR-PLUGIN-EN-8091 al layout hub; smoke-8091.sh (STACK nuevo) + smoke-8092.sh creado (check OR regex reparado) + plugins-disponibles/*.txt actualizados; README-HUB.md nuevo.
-- **Afecta a**: kalimete dev únicamente (puertos/dominios/vhosts/redes sin cambios; ERP y prod intactos)
+- **Afecta a**: Kalimete dev únicamente (puertos/dominios/vhosts/redes sin cambios; ERP y prod intactos)
 - **Causa**: owner: el nombre `wordpress` para UNO de los dos stacks confundía; quiere hub padre con nombres reales de plugins
 - **Estado**: ✅ verificado (smokes + regresión + vols + estructura final limpia)
 - **Notas**: symlink legacy `~/dev/zionv-crm` NO creado (decisión: no necesario). Pendiente decisión owner: crear repo git para el hub padre (hoy sin .git) y si los subagentes deben migrar sus paths hardcodeados restantes en herramientas propias.
@@ -4205,23 +4220,23 @@ EOF又是
 
 ### [15:05] - Gaming: arquitectura per-proyecto + nombre corregido "Record of Ragnarok" + flota gaming reorganizada
 - **Tipo**: agente | config | docs
-- **Modificado**: NUEVO agents/record-of-ragnarok.md + harness + symlink (agente DEDICADO del juego); agents/ragnarok.md → ragnarok-server.md (rename anti-colisión + symlink + harness); agents/godot-dev.md RETIRADO (+symlink+harness+bkups); agents/kalimete.md (allowlist -Godot +Record of Ragnarok, Ragnarok→Ragnarok Server; tabla; MCPs); MAPA.md (MCP godot-ror, fila record-of-ragnarok, fila ragnarok-server); agents/game-studio.md (arquitectura per-proyecto); harness/blender.harness.json (scope); opencode.jsonc (MCP godot-studio → godot-ror → ~/dev/games/record-of-ragnarok); ~/dev/games/ restructurado (juego top-level self-contained con reference/ 19M adentro; disueltos godot/studio/, _starter, current); juego: nombre corregido + AGENTS.md + docs/CHANGELOG.md propios (commit ff028b0)
-- **Afecta a**: flota gaming completa (kalimete, Record of Ragnarok, Ragnarok Server, Game Studio, Blender) + dominio ~/dev/games/
+- **Modificado**: NUEVO agents/record-of-ragnarok.md + harness + symlink (agente DEDICADO del juego); agents/ragnarok.md → ragnarok-server.md (rename anti-colisión + symlink + harness); agents/godot-dev.md RETIRADO (+symlink+harness+bkups); agents/Kalimete.md (allowlist -Godot +Record of Ragnarok, Ragnarok→Ragnarok Server; tabla; MCPs); MAPA.md (MCP godot-ror, fila record-of-ragnarok, fila ragnarok-server); agents/game-studio.md (arquitectura per-proyecto); harness/blender.harness.json (scope); opencode.jsonc (MCP godot-studio → godot-ror → ~/dev/games/record-of-ragnarok); ~/dev/games/ restructurado (juego top-level self-contained con reference/ 19M adentro; disueltos godot/studio/, _starter, current); juego: nombre corregido + AGENTS.md + docs/CHANGELOG.md propios (commit ff028b0)
+- **Afecta a**: flota gaming completa (Kalimete, Record of Ragnarok, Ragnarok Server, Game Studio, Blender) + dominio ~/dev/games/
 - **Causa**: owner — aclarar si el agente Ragnarok maneja el juego (NO: es el SERVIDOR rAthena de vps-preprod), limpiar discrepancias, arquitectura per-proyecto (cada juego = agente+harness+MCP+carpeta self-contained), corregir nombre del anime (verificado: "Record of Ragnarok" SIN "s" — Wikipedia/Viz Media)
 - **Estado**: ✅ todo aplicado; sesiones nuevas cargan la flota nueva (24 subagentes)
 - **Notas**: Patrón per-proyecto: juego top-level ~/dev/games/<slug>/ + agente dedicado + harness + MCP godot-<slug>. Game Studio queda como fábrica de juegos nuevos; agente Godot retirado (redundante); Ragnarok Server renombrado para eliminar la colisión con el juego.
 
 ### [15:00] - Sampling Qwen3.6 por rol: 12 agentes creativos a temp 0.6/top_p 0.95 (docs+expertos)
-- **Tipo**: config | agentes | best-practices (TARGET=kalimete, local; autorización explícita del owner)
-- **Que**: 12 agentes de desarrollo/creativo (godot, wordpress, arcade, woodly, alfredo-ecomm, erp-dev, petsuite, taohemps, ragnarok, nextcloud, docuseal, scriberr): `temperature: 0.1 → 0.6` + `top_p: 0.95` (Qwen oficial thinking-precise-coding; backup `*.bkup-20261003-temp06`). Se mantienen en 0.1 (tool-use determinista, literatura agentes): cloudflare, irc, proxy, vps, victoria-server, authentik, proxmark (API/SSH/SSO/hardware físico) + kalimete 0.2 (routing/TARGET). `todos.*`/`sidebar.*` NO se tocan: no existen en schema oficial (romperían arranque).
-- **Verificado**: 12× temp 0.6 + 12× top_p 0.95 (grep); 7× infra en 0.1; kalimete 0.2 intacto.
-- **Docs**: este changelog (kalimete). NOTA: reiniciar TUI opencode (temps e instructions se cargan al inicio).
+- **Tipo**: config | agentes | best-practices (TARGET=Kalimete, local; autorización explícita del owner)
+- **Que**: 12 agentes de desarrollo/creativo (godot, wordpress, arcade, woodly, alfredo-ecomm, erp-dev, petsuite, taohemps, ragnarok, nextcloud, docuseal, scriberr): `temperature: 0.1 → 0.6` + `top_p: 0.95` (Qwen oficial thinking-precise-coding; backup `*.bkup-20261003-temp06`). Se mantienen en 0.1 (tool-use determinista, literatura agentes): cloudflare, irc, proxy, vps, victoria-server, authentik, proxmark (API/SSH/SSO/hardware físico) + Kalimete 0.2 (routing/TARGET). `todos.*`/`sidebar.*` NO se tocan: no existen en schema oficial (romperían arranque).
+- **Verificado**: 12× temp 0.6 + 12× top_p 0.95 (grep); 7× infra en 0.1; Kalimete 0.2 intacto.
+- **Docs**: este changelog (Kalimete). NOTA: reiniciar TUI opencode (temps e instructions se cargan al inicio).
 - **Estado**: ✅ sincronizado (push hub)
 
 ### [15:00] - Plugin v3.4.0: deploy multi-tenant + spec formal para el admin ERP
 - **Tipo**: proyecto | feature | wordpress-dev
 - **Modificado**: repo `github.com/warcold/erp-ecomm-connector` (commit `a423734`, 11 archivos); gitlink padre actualizado
-- **Afecta a**: kalimete (modelo ZIP+llave=tienda por cliente)
+- **Afecta a**: Kalimete (modelo ZIP+llave=tienda por cliente)
 - **Causa**: Visión producto: cada cliente ERP despliega su WordPress + plugin + su key. Faltaba hardening tenant + spec para completar funciones del lado ERP.
 - **Verificación**: `php -l` limpio; fallback por shortcode probado en vivo (página tmp-* renderizó carrito, eliminada); override por tema probado en harness; home/productos/carrito/checkout/login/mi-cuenta todos 200; push OK.
 - **Estado**: ✅ sincronizado
@@ -4230,11 +4245,11 @@ EOF又是
 ### [14:55] - Tienda MaganTech v3.8.1: carrito flotante + hero desktop + centrado (UX)
 - **Tipo**: proyecto | feature | fix | ux | wordpress-dev
 - **Modificado**: `~/dev/wordpress/wp-content/plugins/erp-ecomm-connector/` (connector.css, connector.js, footer.php, nuevo parcial cart-float.php, bump 3.8.1); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.8.1, 48 archivos, top-level estándar)
-- **Afecta a**: kalimete (tienda MaganTech, modos plugin + Elementor)
+- **Afecta a**: Kalimete (tienda MaganTech, modos plugin + Elementor)
 - **Causa**: Usuario pidió: (1) hero desktop con blancos excesivos (mobile bien); (2) carrito flotante con contador visible siempre; (3) productos/catálogo/textos sin centrar
 - **Implementado**: (1) Float fixed inferior-derecha con icono + badge en vivo (fuente real localStorage, sincronizado vía updateCartBadge), 1x por página con guard global (cubre shortcodes Elementor). (2) Fix bloque v2.7.0 (overlay absolute, min-height, contenido 760px centrado); .erpc-el-hero 56px desktop / 90px mobile. (3) Centrado cards, hero+buscador catálogo (sin CSS antes), section headers.
 - **Verificación**: 200 en /, /productos/, /carrito/, /checkout/; 1 header + 1 footer + 1 float por página; php -l + node --check limpios; sin fatales; commit `665d7d4` push main OK
-- **Notas**: (1) wordpress-dev (subagente) agotó 2×15 pasos solo explorando — implementado directo por kalimete. (2) `_elementor_data` de home ID 8 tiene JSON inválido (char 742): NO se tocó por SQL (riesgo); el fix del hero Elementor fue solo CSS. Pendiente reparar ese JSON por editor. (3) Catálogo sigue en 0 por bloqueo ERP impago (alerta 10:30 vigente) — verificación fue estructural.
+- **Notas**: (1) wordpress-dev (subagente) agotó 2×15 pasos solo explorando — implementado directo por Kalimete. (2) `_elementor_data` de home ID 8 tiene JSON inválido (char 742): NO se tocó por SQL (riesgo); el fix del hero Elementor fue solo CSS. Pendiente reparar ese JSON por editor. (3) Catálogo sigue en 0 por bloqueo ERP impago (alerta 10:30 vigente) — verificación fue estructural.
 - **Estado**: ✅ sincronizado
 
 ## 2026-09-17
@@ -4245,7 +4260,7 @@ EOF又是
   - `/opt/proxmark3/` — compilado desde fuente: Iceman/master/v4.21611-1575-g64b5db4dd (2026-09-13)
   - `pm3-flash-all` — flash completo exitoso (bootrom + armsrc + FPGA)
   - `/home/warcold/bin/cfmb25` — rutas corregidas: `~/.proxmark3/dumps/` (antes apuntaba a `/home/warcold/.victoria/pm3-dumps/` que ya no existe); binario actualizado a `/opt/proxmark3/client/proxmark3` (antes `/usr/bin/proxmark3` viejo de Kali); fix bug `grep -c || echo 0` (doble "0" rompía comparaciones numéricas)
-- **Afecta a**: kalimete (pm3 en /dev/ttyACM0)
+- **Afecta a**: Kalimete (pm3 en /dev/ttyACM0)
 - **Causa**: El pm3 estaba en ciclo de reinicio (EPROTO, bootloader corrupto) — no respondía por serial. Tras flash quedó 100% operativo (hw ping 1ms, antena LF/HF ok).
 - **Validación**: `cfmb25` clonó FMB25 a la tarjeta actual → 64/64 bloques OK, 0 auth errors, 0 fail. Dump FMB25 verificado (UID 32 95 B6 7B, md5 dbb0aa91... idéntico en 3 copias).
 - **Estado**: ✅ sincronizado
@@ -4263,24 +4278,24 @@ EOF又是
 - **Notas**: política de contraseñas del sistema = 12–128 chars; aplica al CAMBIAR contraseña, no al sign-in (verificado empíricamente: la clave de 11 chars entra). Schema tiene must_change_password (cambio forzado) — no activado para no frenar el acceso.
 
 ### [14:45] - Todowrite Discipline: fix lista zombie + doc modelos Qwen3.6 (mejores prácticas)
-- **Tipo**: config | agente | best-practices (TARGET=kalimete, local)
-- **Que**: (a) nuevo `~/.config/opencode/todowrite-discipline.md` cargado como 2º `instructions` en `opencode.jsonc` (backup `.bkup-20261003-todowrite`; JSON validado OK): dueño SIEMPRE kalimete (subagentes no escriben en lista del padre, issue #12938), merge manual tras cada `task`, item final de verificación obligatorio, vaciado explícito al cerrar; (b) doc modelos: Qwen3.6-35B-A3B-NVFP4 recomienda 0.6-1.0 según modo, nuestro stack usa 0.2/0.1 INTENCIONAL (determinismo infra > creatividad; Godot 0.4-0.6 queda propuesto, NO aplicado); (c) verificado contra schema en vivo: NO existen `todos.*`/`sidebar.*`/`subagents.enableTodos` — agregarlos rompería el arranque.
+- **Tipo**: config | agente | best-practices (TARGET=Kalimete, local)
+- **Que**: (a) nuevo `~/.config/opencode/todowrite-discipline.md` cargado como 2º `instructions` en `opencode.jsonc` (backup `.bkup-20261003-todowrite`; JSON validado OK): dueño SIEMPRE Kalimete (subagentes no escriben en lista del padre, issue #12938), merge manual tras cada `task`, item final de verificación obligatorio, vaciado explícito al cerrar; (b) doc modelos: Qwen3.6-35B-A3B-NVFP4 recomienda 0.6-1.0 según modo, nuestro stack usa 0.2/0.1 INTENCIONAL (determinismo infra > creatividad; Godot 0.4-0.6 queda propuesto, NO aplicado); (c) verificado contra schema en vivo: NO existen `todos.*`/`sidebar.*`/`subagents.enableTodos` — agregarlos rompería el arranque.
 - **Verificado**: `python3 json.load(opencode.jsonc)` OK; docs: HF nvidia/Qwen3.6-35B-A3B-NVFP4, unsloth, RedHatAI, NGC + issues opencode #28961/#12938/#44221/#20484.
-- **Docs**: este changelog (kalimete). NOTA: reiniciar TUI opencode para cargar la nueva instruction.
+- **Docs**: este changelog (Kalimete). NOTA: reiniciar TUI opencode para cargar la nueva instruction.
 - **Estado**: ✅ sincronizado (push hub)
 
 ### [14:35] - Contexto 144000 -> 220000 (vLLM 256K nativo + seqs 3) — menos compactacion
 - **Tipo**: config | cross-machine
 - **Modificado**: `~/.config/opencode/opencode.jsonc`: `"context": 144000` -> `220000` en los 4 modelos (vllm publica + vllm-lan).
 - **Causa**: owner (via Victoria): evaluacion con 14 dias de data — las 4 secuencias del vLLM NUNCA se usaron (pico 3, 0.17%) -> se canjeo una carril por el contexto NATIVO completo (256K + seqs 3 en victoria). Trigger de compactacion: ~102K -> ~178K (+74%): el coding (Godot etc.) compacta mucho menos.
-- **Evaluacion de agentes (mismo pedido)**: kalimete SANO — AGENTS.md global 2.5KB (~700 tokens, sin necesidad de summary), subagentes 0.6-2K tokens c/u, primary 5.8K. El ruidoso era el MCP godot (+60K/tool call) ya mitigado (higiene + steps 50 + ledger ~/armada-godot/AGENTS.md).
-- **Verificado en victoria**: E2E prompt 140K reales 200 OK; cerebro sandbox OK; en kalimete requiere restart del TUI.
+- **Evaluacion de agentes (mismo pedido)**: Kalimete SANO — AGENTS.md global 2.5KB (~700 tokens, sin necesidad de summary), subagentes 0.6-2K tokens c/u, primary 5.8K. El ruidoso era el MCP godot (+60K/tool call) ya mitigado (higiene + steps 50 + ledger ~/armada-godot/AGENTS.md).
+- **Verificado en victoria**: E2E prompt 140K reales 200 OK; cerebro sandbox OK; en Kalimete requiere restart del TUI.
 - **Estado**: en sincronizacion (hub cada 5 min)
 
 ### [14:30] - erp-chatbot v1.1.2: texto del chat visible + voz con género configurable
 - **Tipo**: proyecto | fix | UI/UX + voz | wordpress
 - **Modificado**: erp-chatbot 1.1.1→1.1.2 (~/dev/wordpress: clase msg-bubble propia en CSS+JS; admin Voz con selector Femenina/Masculina + sanitize; JS elegirVoz con onvoiceschanged y heurística es). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget del chatbot)
 - **Causa**: Usuario: texto invisible en el box del chat; bot con voz de hombre teniendo nombre de mujer — pidió opciones varón/hembra.
 - **Diagnóstico**: colisión de clases (mensajes con la clase del botón flotante: fixed 62x62 círculo); hablar() tomaba la primera voz es sin criterio de género (o la default si getVoices vacío).
 - **Verificación**: node --check + php -l OK; genero femenina en el cfg del sitio; CSS/JS 1.1.2 sirviéndose con los cambios. Prueba visual y de voz en navegador pendiente (la voz depende del dispositivo del usuario).
@@ -4293,7 +4308,7 @@ EOF又是
 - **Modificado**:
   - **Plugin erp-commerce-suite 4.4.0 → 4.4.1** (wordpress-local :8091): `includes/Core/Environment.php` (reescrito — perfil LOCAL sellado: `http://172.19.0.1:8100/api`, tenant_id 10, key iak_* como constantes; accessors `get_api_url/get_api_key/get_tenant_id`; modo persiste en `wp_options.erpsuite_env_mode`), `includes/Core/Main.php` (delega a Environment), `includes/Admin/AdminMenu.php` (badge LOCAL|PÚBLICO, `tab_entorno()` muestra "Perfil Local (sellado)" en local — datos NO visibles, `sanitize_unified()` solo persiste conexión si switch=Público en namespace `erp_suite_settings[public][...]`), `includes/Admin/LegacyConnectorAdmin.php` (`render_tab_conexion()` gateado por modo: local=cero inputs de conexión, público=inputs editables; health check usa accessor). Backups `.bkup` ×4 + `/tmp/wp_options_backup_20261001_134829.sql.gz`.
   - **Docs**: `~/dev/wordpress/CHANGELOG.md` (SSL_FIX v2 + credenciales reales + 4.4.1), CHANGELOG propio del plugin, `agents/alfredo-ecomm.md` (endpoint /categories = mejora general del ecosistema, NO fix de MaganTech; CORS :8091 = cortesía; nueva sección "Vecindad — no confundir": erpipos :8100 Laravel ≠ alfredo-ecomm :3004 Node; deploy a prod = requiere autorización explícita).
-- **Afecta a**: kalimete local únicamente (wordpress-local, docs armada-sync). CERO producción.
+- **Afecta a**: Kalimete local únicamente (wordpress-local, docs armada-sync). CERO producción.
 - **Causa**: owner definió la arquitectura y pidió mejoras del admin del plugin + separación local/público estricta.
 - **Verificado**:
   - `php -l` 4/4 archivos OK; **`tests/regression.php` 14/14 PASS**
@@ -4306,16 +4321,16 @@ EOF又是
 - **Notas**: Doc drift corregido en agente erp-dev (live: push directo a `origin dev/ecomm-erp`, NO existe remote `preprod`/`warcold/erpipo-preprod`; merge a main = Juan Carlos). Pendientes: push de los 5 commits docs de erpipos (decidir con owner); smoke test del modo Público del switch (guardar campos public_* y flip; requiere llaves reales de prod — NO hacer sin autorización); apagar Xdebug en erpipo-preprod-app (ruido en logs); alinear título "Doc drift agente erp-dev" cuando se reescriba su sección Acceso/Workflow.
 
 ### [14:15] - ZionV CRM: FIX bug admin→frontend + GitHub privado + mejoras stack (cierre del día)
-- **Tipo**: fix | infra | repos (TARGET=kalimete local)
-- **Modificado**: WP zionv `permalink_structure` (plain→`/%postname%/` + rewrite flush); `~/dev/zionv-crm/docker-compose.yml` (WP-CLI persistente `bin/wp-cli.phar` montado ro, CA bundle `certs/ca-bundle-full.crt` 142 certs, `extra_hosts zionv.kalimete.local:host-gateway`; .bkup-20261013-mejoras); NUEVO repo **GitHub privado `warcold/zionv-crm`** (rama main, import 1.53.1: 1642 archivos con vendor/, README.md, CHANGELOG.md 70 versiones, .gitignore); `agents/zionv-crm.md` + `harness/zionv-crm.harness.json` curados con estado verificado
-- **Afecta a**: kalimete (zionv :8092), flota (subagente ZionV CRM operativo)
+- **Tipo**: fix | infra | repos (TARGET=Kalimete local)
+- **Modificado**: WP zionv `permalink_structure` (plain→`/%postname%/` + rewrite flush); `~/dev/zionv-crm/docker-compose.yml` (WP-CLI persistente `bin/wp-cli.phar` montado ro, CA bundle `certs/ca-bundle-full.crt` 142 certs, `extra_hosts zionv.Kalimete.local:host-gateway`; .bkup-20261013-mejoras); NUEVO repo **GitHub privado `warcold/zionv-crm`** (rama main, import 1.53.1: 1642 archivos con vendor/, README.md, CHANGELOG.md 70 versiones, .gitignore); `agents/zionv-crm.md` + `harness/zionv-crm.harness.json` curados con estado verificado
+- **Afecta a**: Kalimete (zionv :8092), flota (subagente ZionV CRM operativo)
 - **Causa**: reporte del owner — "al intentar usar el plugin en el panel admin me envía al frontend"; pedido de subir el plugin a GitHub privado con readme/changelog y validar todo el setup como los demás proyectos
 - **Estado**: ✅ verificado e2e: login admin → 302 `/crm/dashboard/` → SPA 200 (bundle React carga); REST 200; migraciones DB 1.21.0 (tablas `zionv_zion_crm_*`); curl interno contenedor→host TLS 200; ambos stacks simultáneos (8091 armada + 8092 zionv healthy); `gh repo view` = PRIVATE/main
-- **Notas**: ROOT CAUSE del bug: la SPA del CRM vive en `/crm/` vía rewrite rules (`Rewrite.php`) y con permalinks plain esas rutas no existen — el menú admin "Zion CRM" es solo un redirect a `dashboard_url()` y caía en el home. LECCIONES: (1) permalinks pretty son requisito DURO del plugin; (2) kalimete tiene CA mkcert DUAL (warcold + root — los certs generados con `sudo mkcert` los firma el de root; el bundle del contenedor necesita AMBOS); (3) WP-CLI instalado in-container se pierde al recrear el volumen → montar phar persistente; (4) el source React/TSX del frontend NO está en el ZIP (solo assets/dist compilado) — documentado en README.
+- **Notas**: ROOT CAUSE del bug: la SPA del CRM vive en `/crm/` vía rewrite rules (`Rewrite.php`) y con permalinks plain esas rutas no existen — el menú admin "Zion CRM" es solo un redirect a `dashboard_url()` y caía en el home. LECCIONES: (1) permalinks pretty son requisito DURO del plugin; (2) Kalimete tiene CA mkcert DUAL (warcold + root — los certs generados con `sudo mkcert` los firma el de root; el bundle del contenedor necesita AMBOS); (3) WP-CLI instalado in-container se pierde al recrear el volumen → montar phar persistente; (4) el source React/TSX del frontend NO está en el ZIP (solo assets/dist compilado) — documentado en README.
 
 ### [14:02] - Micaserogou: WP_HOME promovido a dominio local + fix vhost nginx front-door + deriva prod (plugin activo sin deploy)
 - **Tipo**: servicio | config | docs
-- **Modificado**: ~/dev/wordpress/websites/micaserogou.com/docker-compose.yml (WP_HOME/WP_SITEURL → https://micaserogou.kalimete.local + snippet X-Forwarded-Proto→HTTPS con escape `$$`; .bkup-20261020); /etc/nginx/sites-enabled/micaserogou.kalimete.local.conf (front-door → proxy estándar; .bkup-20261020-frontdoor) + sites-available sincronizado; scripts/smoke-8094.sh (BASE → dominio canónico; .bkup-20261020); DB micaserogou (search-replace http://localhost:8094: 2 posts default + options siteurl/home → 0/0/0; dump backups/db-posts-options-before-searchreplace-20261020.sql); agents/micaserogou.md + harness/micaserogou.harness.json (.bkup-20261020-wphome)
+- **Modificado**: ~/dev/wordpress/websites/micaserogou.com/docker-compose.yml (WP_HOME/WP_SITEURL → https://micaserogou.Kalimete.local + snippet X-Forwarded-Proto→HTTPS con escape `$$`; .bkup-20261020); /etc/nginx/sites-enabled/micaserogou.Kalimete.local.conf (front-door → proxy estándar; .bkup-20261020-frontdoor) + sites-available sincronizado; scripts/smoke-8094.sh (BASE → dominio canónico; .bkup-20261020); DB micaserogou (search-replace http://localhost:8094: 2 posts default + options siteurl/home → 0/0/0; dump backups/db-posts-options-before-searchreplace-20261020.sql); agents/micaserogou.md + harness/micaserogou.harness.json (.bkup-20261020-wphome)
 - **Afecta a**: preprod micaserogou (visibilidad del sitio para el owner y LAN) + docs del agente
 - **Causa**: owner reportó no ver el proyecto ni local ni público. LIVE: WP emitía TODOS los links/assets como http://localhost:8094 (mixed content bloqueado en https + inaccesible desde otras máquinas). Causa raíz doble: (1) constantes compose WP_HOME=localhost:8094; (2) vhost sites-enabled era un FRONT-DOOR workaround de ese estado viejo (forzaba Host "localhost:8094", sin scheme headers → tras promover WP_HOME, WP canonicalizaba subpáginas 301 a http://localhost/). DERIVA doc↔live: sites-available stale (proxy_pass 192.168.16.2 inexistente) y doc decía "prod sin plugin" cuando el plugin 5.4.2 YA está ACTIVO en prod (verificado 15:41 vía scripts encolados + REST 403 erpsuite_forbidden) con contenido default "Cats And Dogs" — deploy incompleto, uploader desconocido.
 - **Estado**: ✅ front y subpáginas 200 vía dominio (sin redirects, sin mixed content, imágenes ERP cargando) · ✅ grep localhost:8094 en HTML = 0 · ✅ smoke 7/7 · ✅ webhook id 4 intacto (facturacion_db.webhook_endpoints; endpoint POST unsigned → 400) · ✅ erp_suite_settings intacto (public, tenant 3) · ✅ docs+harness curados · ⚠️ prod NO tocado (solo documentado)
@@ -4324,7 +4339,7 @@ EOF又是
 ### [14:00] - Plugin v3.3.9: Mis Pedidos reales + catálogo server-side + caché + rate limiting
 - **Tipo**: proyecto | feature | wordpress-dev
 - **Modificado**: repo `github.com/warcold/erp-ecomm-connector` (commit `319aab7`, 8 archivos); gitlink padre actualizado
-- **Afecta a**: kalimete (tienda MaganTech viva)
+- **Afecta a**: Kalimete (tienda MaganTech viva)
 - **Causa**: Mapeo real del API ERP (solo GETs read-only): `/orders` y `/ecomm/carts/:id` SÍ existen; `search/categoria_id/page/limit` funcionan server-side; `?email=` se ignora en `/orders` y `/customers`
 - **Verificación**: `/productos/` 200 "Mostrando 15 de 157"; transients `erpc_c_*_v1` creados en DB; harness unitario OK (normalizadores + rate limit 5p/1b); `php -l` limpio; push GitHub OK
 - **Estado**: ✅ sincronizado
@@ -4342,7 +4357,7 @@ EOF又是
   - `includes/class-erpc-templates.php` — checkout/login/mi-cuenta envueltos con header/footer
   - `includes/class-erpc-shortcodes.php` — nuevo shortcode `[erpc_landing]`
   - `assets/css/connector.css` — estilos para todas las páginas nuevas
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: Solo productos y carrito tenían estilo. Checkout, login, mi-cuenta, órdenes y lealtad se veían "peladas" (sin header/footer del plugin).
 - **Estado**: ✅ rediseño completo, PHP syntax OK, todas las páginas HTTP 200, JS IDs intactos
 - **Notas**:
@@ -4381,7 +4396,7 @@ EOF又是
 ### [13:30] - erp-chatbot v1.1.1: cumplimiento Meta (firma, async, Graph v23, UTF-8)
 - **Tipo**: proyecto | seguridad | cumplimiento API | wordpress
 - **Modificado**: erp-chatbot 1.1.0→1.1.1 (~/dev/wordpress: App Secret + firma X-Hub-Signature-256, webhook async con cola+cron, Graph version configurable v23.0, split UTF-8, recipient_type, mark-read, error 131047, admin). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, webhook /wp-json/erpcbot/v1/whatsapp)
+- **Afecta a**: Kalimete (wordpress-local :8091, webhook /wp-json/erpcbot/v1/whatsapp)
 - **Causa**: Usuario: validar todo contra documentación oficial, no violar términos de APIs/tokens, confirmar que es real/funciona/mejores prácticas.
 - **Diagnóstico** (docs Meta revisadas): verify GET exacto ✅, ventana 24h respetada ✅ (solo reactivo), tokens server-side ✅; FALLOS: sin verificación de firma (cualquiera posteaba al webhook), LLM síncrono en webhook (Meta reintenta → duplicados), Graph v21.0 vieja, str_split rompía emojis.
 - **Verificación**: php -l 4/4 OK; firma OK→200+cola, firma mala→403 ✅; cola→cron→cerebro con productos reales ✅; regresión web ✅; verify GET ✅. Config de test limpiada (WA deshabilitado).
@@ -4391,16 +4406,16 @@ EOF又是
 ### [13:30] - Plugin erp-ecomm-connector con repo GitHub propio + baseline best-practices
 - **Tipo**: proyecto | git | wordpress-dev
 - **Modificado**: nuevo repo `github.com/warcold/erp-ecomm-connector` (privado, rama `main`); `MAPA.md` (línea repo plugin)
-- **Afecta a**: kalimete (`~/dev/wordpress/wp-content/plugins/erp-ecomm-connector`, gitlink actualizado en repo padre)
+- **Afecta a**: Kalimete (`~/dev/wordpress/wp-content/plugins/erp-ecomm-connector`, gitlink actualizado en repo padre)
 - **Causa**: El plugin solo existía en disco local + volumen Docker + ZIP (riesgo documentado 13:10). Ahora con remoto, README, uninstall.php, .distignore.
 - **Verificación**: push OK (commits `c616677` + `2b43d78`); sitio post-cambio `/` 200, `/wp-json/` 200; `php -l` limpio en archivos tocados.
 - **Estado**: ✅ sincronizado
 - **Notas**: Incluye fix real (cart TTL ignoraba el ajuste por `$GLOBALS` indefinido). Auditoría completa + roadmap entregados en chat. Riesgo remanente: auth solo-email sin verificación (propuesta OTP) y sin rate limiting — ver roadmap.
 
 ### [13:25] - Nuevo stack WordPress independiente para ZionV CRM (plugin/zionv-crm)
-- **Tipo**: infra | config | agente (TARGET=kalimete local)
+- **Tipo**: infra | config | agente (TARGET=Kalimete local)
 - **Modificado**: `~/dev/zionv-crm/` (NUEVO: docker-compose.yml, .gitignore, nginx.conf, ZIP plugin), `agents/zionv-crm.md` (NUEVO), `harness/zionv-crm.harness.json` (NUEVO), CHANGELOG.md
-- **Afecta a**: kalimete.local (nuevos puertos 8092, 3308, nuevo host zionv.kalimete.local)
+- **Afecta a**: Kalimete.local (nuevos puertos 8092, 3308, nuevo host zionv.Kalimete.local)
 - **Causa**: pedido del owner — nuevo plugin ZionV CRM que necesita stack independiente para NO confliger con Armada Suite (8091). Plugin CRM completo (28+ REST endpoints, React/Vite admin SPA, Google Calendar, automatizaciones, formularios, vendor composer ~5MB).
 - **Estado**: ✅ docker-compose up OK (zionv-local + zionv-db healthy); mkcert emitido (expira 2029); nginx deploy + reload OK; WP install (admin) + plugin 1.53.1 activo; migraciones 1.21.0 aplicadas
 - **Notas**: Stack aislado con red propia zionv-net. No tocar wordpress-local (8091 ni armada-suite). Agent zionv-crm creado con temp 0.6, steps 15. ZIP movido de Downloads a ~/dev/zionv-crm/. Plugin version 1.53.1, DB 1.21.0 (21 migraciones).
@@ -4424,7 +4439,7 @@ EOF又是
 - **Modificado**: vps-preprod: logrotate `/etc/logrotate.d/fail2ban` (diario, 28 rotaciones, compress, postrotate reload fail2ban); health check proxy `/usr/local/bin/proxy-healthcheck.sh` + cron `*/5 * * * *` (Squid + SOCKS5 vía dominios, alerta systemd-cat); cron mensual `0 3 1 * * docker builder prune -f` (log en `/var/log/docker-builder-prune.log`); logrotate fail2ban ya instalado (verificado).
 - **Verificaciones**: certs TLS todos vigentes (auth/nextcloud/docuseal/pets/scriberr/ragnarok/whiteboard: dic-2026; taohemps: ene-2027; IRC el.colador.de.alfredo.pro: ene-2027; proxy HTTP plano sin TLS); Nextcloud 33.0.3 sano (maintenance=false, no upgrade pendiente); Authentik 4/4 contenedores healthy (server/worker/redis/db, workers procesando tareas celery OK); IRC certbot auto-renueva ene-2027; taohemps LE ene-2027; proxy HTTP plano (sin TLS, termina en cliente).
 - **Pendientes heredados documentados** (no ejecutados, requieren decisión owner):
-  1. **Backups rotos** (CRÍTICO): `backup-vps.timer` 03:20 → jonas (10.0.0.20) caído desde sep-2026; nextcloud-db/taohemps/petsuite/infra sin backups. Opciones: reparar jonas / repuntar a kalimete/victoria / nuevo NAS.
+  1. **Backups rotos** (CRÍTICO): `backup-vps.timer` 03:20 → jonas (10.0.0.20) caído desde sep-2026; nextcloud-db/taohemps/petsuite/infra sin backups. Opciones: reparar jonas / repuntar a Kalimete/victoria / nuevo NAS.
   2. **Cancelar vps-proxy** (ALTO): gracia 2-3 días laborables RD para jovtransport (hostname vs IP hardcodeada 31.220.102.176); fallback intacto.
   3. **Dependencia telecomm**: confirmar si servidores 207.244.236.223 usan `proxy.us-east` (hostname transparente / IP hardcodeada rota).
   4. **Shutdown Contabo 21-oct 16:31**: causa por confirmar (¿panel?).
@@ -4439,11 +4454,11 @@ EOF又是
 ### [13:11] - Fix bug categorías MaganTech (redirect HTTPS WordPress) + nuevo endpoint /categories en ERP Ecomm + CORS
 - **Tipo**: fix | api | wordpress | infra | diagnóstico
 - **Modificado**:
-  - **WordPress (kalimete :8091)**: `wp-config.php` reescrito (SSL_FIX_INJECTED v2 — HTTPS solo tras `X-Forwarded-Proto` del nginx, `WP_HOME`/`WP_SITEURL` dinámicos desde `HTTP_HOST`, removidos 3 bloques duplicados de `$_SERVER['HTTPS']='on'` + `FORCE_SSL_ADMIN` condicional). Backup `/tmp/wp-config.php.bkup_20261001_124405`. Backup DB `/tmp/wp_backup_20261001_124109.sql.gz`.
-  - **ERP Ecomm (kalimete :3004)**: `backend/src/routes/stores.ts` — NUEVO `GET /v1/stores/:slug/categories` (SQL raw GROUP BY, excluye inactivos/vacíos; colocado ANTES de `/:slug` por shadowing de Express). `docker-compose.yaml` — `CORS_ORIGIN` ahora `${CORS_ORIGIN:-...}` con defaults + `localhost:8091` + `mantantech.kalimete.local`; eliminado `version: "3.8"` obsoleto. `.env.example` + `README.md` documentados. Backups `.bkup`.
+  - **WordPress (Kalimete :8091)**: `wp-config.php` reescrito (SSL_FIX_INJECTED v2 — HTTPS solo tras `X-Forwarded-Proto` del nginx, `WP_HOME`/`WP_SITEURL` dinámicos desde `HTTP_HOST`, removidos 3 bloques duplicados de `$_SERVER['HTTPS']='on'` + `FORCE_SSL_ADMIN` condicional). Backup `/tmp/wp-config.php.bkup_20261001_124405`. Backup DB `/tmp/wp_backup_20261001_124109.sql.gz`.
+  - **ERP Ecomm (Kalimete :3004)**: `backend/src/routes/stores.ts` — NUEVO `GET /v1/stores/:slug/categories` (SQL raw GROUP BY, excluye inactivos/vacíos; colocado ANTES de `/:slug` por shadowing de Express). `docker-compose.yaml` — `CORS_ORIGIN` ahora `${CORS_ORIGIN:-...}` con defaults + `localhost:8091` + `mantantech.Kalimete.local`; eliminado `version: "3.8"` obsoleto. `.env.example` + `README.md` documentados. Backups `.bkup`.
   - **Docs**: `agents/alfredo-ecomm.md` (sección cambios 2026-10-01).
-- **Afecta a**: kalimete (`wordpress-local` y `alfredo-ecomm-api` recreados/redeployados localmente). CERO producción (vps-preprod verificado: ERP y WordPress/MaganTech NO viven ahí).
-- **Causa**: Usuario: "click en categorías de la web no cambia de categoría ni en tiempo real". Diagnóstico: (1) **causa raíz del bug = redirect loop HTTPS** — `siteurl` apuntaba a `https://wordpress.kalimete.local` → 301 a `https://localhost/productos/` mataba la página entera (0 bytes, ningún JS corría); (2) no existía endpoint dedicado de categorías en el ERP; (3) CORS no incluía el origen del WordPress.
+- **Afecta a**: Kalimete (`wordpress-local` y `alfredo-ecomm-api` recreados/redeployados localmente). CERO producción (vps-preprod verificado: ERP y WordPress/MaganTech NO viven ahí).
+- **Causa**: Usuario: "click en categorías de la web no cambia de categoría ni en tiempo real". Diagnóstico: (1) **causa raíz del bug = redirect loop HTTPS** — `siteurl` apuntaba a `https://wordpress.Kalimete.local` → 301 a `https://localhost/productos/` mataba la página entera (0 bytes, ningún JS corría); (2) no existía endpoint dedicado de categorías en el ERP; (3) CORS no incluía el origen del WordPress.
 - **Verificado**:
   - `curl -sI http://localhost:8091/productos/` → **200 OK, 66,606 bytes** (antes 301 con 0 bytes) ✅
   - Filtrado funciona vía `admin-ajax.php?action=erpc_get_products&categoria=X` (erp-commerce-suite v4.4.0): `erpc_get_categories` devuelve las **18 categorías reales de MaganTech** (erpipos `:8100` tenant 10); filtro `categoria=Cables` devuelve producto real ✅
@@ -4454,23 +4469,23 @@ EOF又是
 ### [13:10] - WordPress MaganTech: SSL verificado OK + limpieza archivos huérfanos + cadena ERP validada
 - **Tipo**: infra | limpieza | wordpress-dev
 - **Modificado**: `~/dev/wordpress/` (12 archivos eliminados + 3 dirs vacíos/dups); `MAPA.md` (versiones + estado tienda)
-- **Afecta a**: kalimete (stack wordpress-local/wordpress-db)
-- **Causa**: Reporte `ERR_SSL_PROTOCOL_ERROR` en `https://wordpress.kalimete.local` + archivos huérfanos de la saga de debug SSL (Sep 16) + duplicados en `export/`
+- **Afecta a**: Kalimete (stack wordpress-local/wordpress-db)
+- **Causa**: Reporte `ERR_SSL_PROTOCOL_ERROR` en `https://wordpress.Kalimete.local` + archivos huérfanos de la saga de debug SSL (Sep 16) + duplicados en `export/`
 - **Verificación**: Servidor 100% OK — curl 200 con verificación TLS completa; headless Chrome renderiza la tienda sin flags inseguros. Causa del error: perfil Chrome del usuario (proxy/extensión/HSTS en caché), NO el servidor. CA mkcert reinstalada en sistema + NSS (Chrome/Chromium/Firefox). Cadena end-to-end validada: WP "MaganTech Store" → erp-ecomm-connector v3.3.8 → `https://erpipos.armada.do/api` tenant 10 → 18 categorías / 157 productos en vivo. Sitio post-limpieza: `/` 200, `/wp-login.php` 200.
 - **Eliminado** (backup en `/tmp/opencode/wp-cleanup-20260917/`): `00-ssl-fix.conf`, `ssl-fix.conf`, `ssl-fix.php`, `wp-config.php.patched`, `docker-entrypoint-{custom,ssl}.sh` (compose nunca los usó), `debug-{headers,ssl}.php`, `test-headers.php`, `hello.php` (ninguno activo), `magantech-erp-template.zip` (contenido ya importado en vivo), `export/deploy-package/` (dups idénticos por md5), dirs vacíos `erp-validation/`, `export-package/`. Commit local `9f0d7ba` en repo `~/dev/wordpress` (sin remoto).
 - **Conservado**: `backups/magantech/magantech.wpress` (137MB, único DR full-site) + `RESTAURAR.md`, `export/erp-ecmm-connector.zip` (v3.3.8 distribuible), `export/DEPLOY-GUIA.md`, `mcp-proxy*.js` (referenciados por wordpress-dev).
 - **Estado**: ✅ verificado local (sync por cron)
-- **Notas**: (1) Solo `elementor` + `erp-ecomm-connector` activos. (2) El `wp-config.php` vivo (volumen Docker) tiene bloques SSL inyectados duplicados pero funcionales; ante recreate del volumen el bloque stock de la imagen oficial + `WORDPRESS_CONFIG_EXTRA` cubren HTTPS. (3) RIESGO: el plugin no tiene remoto git — código solo en disco kalimete + volumen Docker + zip export. Recomendado push a GitHub. (4) `RESTAURAR.md` documenta credencial dev admin/admin123 en texto plano.
+- **Notas**: (1) Solo `elementor` + `erp-ecomm-connector` activos. (2) El `wp-config.php` vivo (volumen Docker) tiene bloques SSL inyectados duplicados pero funcionales; ante recreate del volumen el bloque stock de la imagen oficial + `WORDPRESS_CONFIG_EXTRA` cubren HTTPS. (3) RIESGO: el plugin no tiene remoto git — código solo en disco Kalimete + volumen Docker + zip export. Recomendado push a GitHub. (4) `RESTAURAR.md` documenta credencial dev admin/admin123 en texto plano.
 
-### [13:05] - MaganTech: espejo 1:1 prod→preprod + correo simulado (mailpit) + acceso LAN a `*.kalimete.local` resuelto
+### [13:05] - MaganTech: espejo 1:1 prod→preprod + correo simulado (mailpit) + acceso LAN a `*.Kalimete.local` resuelto
 - **Tipo**: infra | red | servicio | docs
 - **Contexto**: owner — "validar el proyecto online y local; no puedo entrar desde otra máquina; todo debe ser reflejo de su producción, excepto el correo (local = simulador)".
 - **Modificado**:
-  - **Acceso LAN (causa raíz)**: los clientes de la red recibían `127.0.0.1` porque las entradas de `/etc/hosts` GANAN a `address=` en dnsmasq 2.93. Fix: `/etc/dnsmasq.d/local-dns.conf` → `no-hosts` + wildcard `address=/kalimete.local/10.0.0.106` (+ línea muerta `wordpress` eliminada); `/usr/local/bin/publish-kalimete-subdomains.sh` → mDNS + `magantech zionv erp`. Restart OK (backups `.bkup-20261018`). CA root publicado para clientes: `/home/warcold/dev/apps/kalimete/kalimete-rootCA.pem` (`http://kalimete.local/kalimete-rootCA.pem`, fp `6F:25:…`, root CAROOT `root@victoria`).
+  - **Acceso LAN (causa raíz)**: los clientes de la red recibían `127.0.0.1` porque las entradas de `/etc/hosts` GANAN a `address=` en dnsmasq 2.93. Fix: `/etc/dnsmasq.d/local-dns.conf` → `no-hosts` + wildcard `address=/Kalimete.local/10.0.0.106` (+ línea muerta `wordpress` eliminada); `/usr/local/bin/publish-Kalimete-subdomains.sh` → mDNS + `magantech zionv erp`. Restart OK (backups `.bkup-20261018`). CA root publicado para clientes: `/home/warcold/dev/apps/kalimete/Kalimete-rootCA.pem` (`http://Kalimete.local/Kalimete-rootCA.pem`, fp `6F:25:…`, root CAROOT `root@victoria`).
   - **Espejo preprod MaganTech :8093** (agente MaganTech; captura read-only de prod → `backups/prod-content-20261018/`): tema hello-elementor 3.5.1, título/desc, front `/inicio/`, 16 páginas 1:1 (`magantech-inicio` recreada; sobre-nosotros/contacto portadas; ERP por shortcode intacto), meta `elementor_canvas` en las 6 ERP, sin menús WP (= prod). Plugins 5/5 espejo: JetBackup `backup` 3.1.23.6 + mantenimiento-web 0.15 instalados y activos (versiones exactas).
   - **Correo simulado**: servicio `mailpit` en el compose (`magantech-mailpit`, healthy; UI `127.0.0.1:8026`, SMTP 1025 interno) + mu-plugin `zz-magantech-local-mail.php` (`phpmailer_init` → mailpit; probado `wp_mail` real → mensaje en API). Correo real JAMÁS sale; prod de correo intacto.
   - **Docs**: `README.md` (sección "Espejo local de producción"), `docs/PROCEDURES.md` (§(f) LAN, §(g) mailpit, §(h) sincronización prod→local), `NOTES.md` (fase 3) — backups `.bkup-20261018`; `agents/magantech.md`, `MAPA.md`, `harness/magantech.harness.json`.
-- **Afecta a**: kalimete (DNS/mDNS/CA LAN), preprod MaganTech, agentes MaganTech, WordPress, Armada Suite (docs)
+- **Afecta a**: Kalimete (DNS/mDNS/CA LAN), preprod MaganTech, agentes MaganTech, WordPress, Armada Suite (docs)
 - **Causa**: owner (validación online+local; acceso LAN; reflejo de producción; correo simulador)
 - **Estado**: ✅ verificado (dig desde LAN: `*` → 10.0.0.106; front-door 200 magantech/zionv/erp; smoke 100%; títulos/theme idénticos prod↔local; mailpit con mensaje)
 - **Notas**: prod NUNCA modificado (capturas solo GET). Pendiente owner: importar CA en las otras máquinas + rotar App Password Victoria. Rollback = `.bkup-20261018` de cada archivo.
@@ -4498,7 +4513,7 @@ EOF又是
   - `includes/class-erpc-shortcodes.php` — nuevo endpoint `erpc_get_products_json` (133 productos)
   - `erp-ecomm-connector.php` — añadido `placeholder` al config
   - `assets/css/connector.css` — toast, botón agregado, skeleton
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: El flujo anterior hacía múltiples round-trips AJAX por acción y cada consulta al carrito llamaba a la ERP. Navegación lenta y sin actualización en tiempo real.
 - **Estado**: ✅ optimización completa, PHP/JS syntax OK, página HTTP 200, endpoint JSON devuelve 133 productos
 - **Notas**:
@@ -4512,28 +4527,28 @@ EOF又是
 ### [12:55] - opencode.jsonc context 120000 -> 144000 (upgrade de contexto victoria 192K)
 - **Tipo**: config | cross-machine
 - **Modificado**: `~/.config/opencode/opencode.jsonc` (backup `.bkup-20261001-144k`): `"context": 120000` -> `144000` en los 4 modelos (providers vllm publica + vllm-lan LAN).
-- **Afecta a**: kalimete TUI: el techo real de compactacion sube de ~78K a ~102K (+31%) — menos amnesia de sesion en proyectos largos (Godot MCP). El vLLM de victoria ahora sirve 192K reales; el gateway capta prompts hasta 144K.
-- **Causa**: owner (via Victoria): "procede al maximo que se pueda sin afectar el ecosistema y configura el opencode.jsonc de victoria y de kalimete". Aplicado desde victoria tras recrear el vLLM (detalle en CHANGELOG victoria / vllm).
-- **Verificado**: victoria E2E (prompts 100K+ reales OK, opencode run OK, cerebro sandbox OK). En kalimete requiere restart del TUI para tomar el cambio.
+- **Afecta a**: Kalimete TUI: el techo real de compactacion sube de ~78K a ~102K (+31%) — menos amnesia de sesion en proyectos largos (Godot MCP). El vLLM de victoria ahora sirve 192K reales; el gateway capta prompts hasta 144K.
+- **Causa**: owner (via Victoria): "procede al maximo que se pueda sin afectar el ecosistema y configura el opencode.jsonc de victoria y de Kalimete". Aplicado desde victoria tras recrear el vLLM (detalle en CHANGELOG victoria / vllm).
+- **Verificado**: victoria E2E (prompts 100K+ reales OK, opencode run OK, cerebro sandbox OK). En Kalimete requiere restart del TUI para tomar el cambio.
 - **Estado**: en sincronizacion (hub cada 5 min)
 
 ### [12:55] - Flota: split agente-plugin — armada-suite creado, wordpress-dev redimensionado a SISTEMA (umbrella)
-- **Tipo**: agente | config | sync (TARGET=kalimete local; repo armada-sync)
+- **Tipo**: agente | config | sync (TARGET=Kalimete local; repo armada-sync)
 - **Modificado**:
   - **Nuevo agente `armada-suite`** (regla owner 2026-10-15: cada plugin WP su agente, así como ZionV CRM): `agents/armada-suite.md` (frontmatter 0.6/0.95/15, edit+write allow) + `harness/armada-suite.harness.json` + symlink `~/.config/opencode/agent/armada-suite.md`. Contenido migrado íntegro desde wordpress-dev: plugin 5.3.2, OpsMotor 15 rutas, webhooks, feature flags, Fases A/B/C, integración ERP (Fases 1/2/3, deuda P3), empaquetado ZIPs, lecciones CLI, releases 5.x. **Nueva sección Multitenant** (modelo por-sitio verificado: un WP = un tenant; receta de alta por negocio; tenants live ERP: magantech=10 activo con key+webhook, micaserogou=3 bloqueado sin key — pendiente provisionar; IA por tenant vive en el plugin, la del ERP es panel-only).
   - **`agents/wordpress-dev.md` redimensionado** a SISTEMA/umbrella: stack WP core, contenedores, compose, certs, secrets, DB, nginx/TLS, deploy. Nueva tabla **Plugins conocidos** (armada-suite ACTIVO / zionv-crm stack aparte :8092 / históricos Elementor-EMCP-MCP sin agente) + regla "wordpress-dev NUNCA desarrolla plugins — delega". Secciones del plugin removidas (migradas a armada-suite). Backup `.bkup-20261015-split`.
   - **`harness/wordpress-dev.harness.json` redimensionado** en espejo: scope sistema-only, `plugins_conocidos[]`, `umbrella`; zip_*/feature_flags/agente_mixto/integracion_erp/lecciones_cli/deuda_p3 → harness armada-suite. Backup `.bkup-20261015-split`.
-  - **`agents/kalimete.md`**: permission.task +`"Armada Suite": allow` +`"ZionV CRM": allow` (ZionV faltaba en el registro — huérfano desde su creación 2026-10-13); lista de flota 19→21 subagentes; tabla de delegación con filas nuevas (WordPress=SISTEMA, Armada Suite=plugin multitenant WP↔ERP, ZionV CRM=plugin CRM :8092); lista creativos/dev + Armada Suite/ZionV CRM. Backup `.bkup-20261015-split`.
+  - **`agents/Kalimete.md`**: permission.task +`"Armada Suite": allow` +`"ZionV CRM": allow` (ZionV faltaba en el registro — huérfano desde su creación 2026-10-13); lista de flota 19→21 subagentes; tabla de delegación con filas nuevas (WordPress=SISTEMA, Armada Suite=plugin multitenant WP↔ERP, ZionV CRM=plugin CRM :8092); lista creativos/dev + Armada Suite/ZionV CRM. Backup `.bkup-20261015-split`.
   - **`MAPA.md` curado**: sección WordPress Dev stale (decía WP 7.1.1 + Elementor + erp-commerce-suite v4.4.0 8/8 + admin:admin123 + repo GitHub) → live real (WP 7.1.3, Armada Suite 5.3.2 19/19, App Passwords, repo local sin remote, rama dev/ecomm-erp @2306b64); tabla subagentes: fila wordpress-dev corregida + filas armada-suite/zionv-crm añadidas + eco-accesos/eco-voice retirados de la tabla activa. Backup `.bkup-20261015-split`.
-- **Afecta a**: kalimete (flota 21 subagentes), delegación futura plugin Armada Suite (antes vía WordPress), registro ZionV CRM
+- **Afecta a**: Kalimete (flota 21 subagentes), delegación futura plugin Armada Suite (antes vía WordPress), registro ZionV CRM
 - **Causa**: orden del owner — WordPress = sistema del mismo, no plugins; cada plugin su agente separado con docs/git/harness conocido por WordPress (umbrella); Armada Suite multitenant WP↔ERP (magantech 1 ejemplo, micaserogou y futuros igual: IA, inventario, comprar, usuarios por tenant)
 - **Estado**: ✅ verificado (symlinks OK, JSON harness válidos, grep flota consistente)
 - **Notas**: evaluación previa en 3 vías (WordPress: split línea a línea + patrón ZionV; ZionV CRM: plantilla referencia + drift de registro detectado; ERP Dev: 10 tenants live, micaserogou=3 pendiente desbloquear+key+webhook). Pendiente owner: provisionar tenant 3 micaserogou lado ERP; extracción del plugin a repo git propio = decisión futura.
 
 ### [12:50] - Proxmark: renombrado proxmark-cards → proxmark
 - **Tipo**: agente | refactor
-- **Modificado**: `agents/proxmark.md`, `agents/kalimete.md`, `AGENTS.md`
-- **Afecta a**: kalimete (opencode)
+- **Modificado**: `agents/proxmark.md`, `agents/Kalimete.md`, `AGENTS.md`
+- **Afecta a**: Kalimete (opencode)
 - **Causa**: El nombre `proxmark-cards` era limitante — el agente cubre tokens, LF 125kHz, sniffing, emulation, data analysis. Mucho más que "cards". Se generaliza el nombre.
 - **Estado**: ✅ sincronizado
 
@@ -4568,12 +4583,12 @@ EOF又是
 ---
 
 ### [12:35] - Plugin Armada Suite 5.3.1: simplificación admin implementada (D1+D2+P1+P2+P3) + ZIP canónico
-- **Tipo**: release | refactor-ui | wordpress-dev (TARGET=kalimete local; repo wordpress sin remoto)
+- **Tipo**: release | refactor-ui | wordpress-dev (TARGET=Kalimete local; repo wordpress sin remoto)
 - **Modificado**: `~/dev/wordpress` commit `819c7e1` (9 archivos, +707/-274): LLM unificado (Puente IA solo-lectura), tab Negocio nuevo, Asistente IA en 3 forms, MCP→Estado del sistema, labels claros, espejo api_key marcado legacy; `export/armada-suite-5.3.1.zip` (2.201.803 bytes, sha256 `d018a73b…3d8bd`); DEPLOY-GUIA + CHANGELOG wordpress al día
-- **Afecta a**: wordpress-local (kalimete :8091, plugin 5.3.1 instalado y verificado en vivo)
+- **Afecta a**: wordpress-local (Kalimete :8091, plugin 5.3.1 instalado y verificado en vivo)
 - **Causa**: pedido del owner — auditoría previa halló 2 duplicados funcionales (D1 credenciales LLM, D2 datos negocio) + tab MCP sin campos + técnicos sin colapsar
 - **Estado**: ✅ php-l 6/6 + render vivo sin fatal + ZIP verificado (versión 5.3.1 en header/define); rollback N-1: 5.3.0
-- **Notas**: detectado y eliminado `includes/includes/` duplicado (artefacto docker cp en bind-mount) antes de empaquetar; trabajo delegado a subagente WordPress (4 sesiones por límite de pasos), cierre directo por kalimete.
+- **Notas**: detectado y eliminado `includes/includes/` duplicado (artefacto docker cp en bind-mount) antes de empaquetar; trabajo delegado a subagente WordPress (4 sesiones por límite de pasos), cierre directo por Kalimete.
 
 ### [12:35] - ERP E-Commerce Connector v3.3.5: sección config imposible de llenar → rehecha como efectiva (local+ERP)
 - **Tipo**: proyecto | wordpress | bugfix
@@ -4606,7 +4621,7 @@ EOF又是
 ### [12:30] - erp-chatbot v1.1.0 + ecomm v3.14.0 + ERP v3.14.0-local: dependencia dura, motor multi-canal, WhatsApp
 - **Tipo**: proyecto | feature | multi-canal | IA | wordpress + erp-local
 - **Modificado**: erp-chatbot 1.0.1→1.1.0 (~/dev/wordpress: dependencia dura ecomm, motor modo web/canal, canal WhatsApp Cloud API + admin tab). ecomm 3.13.9→3.14.0 (checkout_guest con contrato delivery/pickup + origen=chatbot). ERP (~/dev/erpipo-preprod: submitGuest con contrato completo, origen chatbot = pendiente sin pago, tipo_comprobante + tipo_venta). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Afecta a**: Kalimete (wordpress-local :8091 + erpipo-preprod :8100)
 - **Causa**: Usuario: enfocarse en web + WhatsApp (resto después); el agente usa el ecomm para TODO (cero requests directos), no se instala sin él, estructura expandible; plugins como features de venta + SEO del cliente ERP.
 - **Solución**: activación aborta sin ecomm + guards runtime; motor dual (web: tools al JS; canal: todo servidor contra ERPC_API); WhatsApp = webhook REST (verify + receive), sesiones por teléfono 24h, envío Cloud API, notas de voz con respuesta honesta (STT en Fase 2); guest checkout del canal → venta PENDIENTE sin pago.
 - **Verificación**: php -l 6/6 + node OK; webhook verify (challenge/403) ✅; mensaje WA dry_run → productos reales + sesión ✅; pedido canal → **venta 278** pendiente, zone 3, fee 250, total 1650, 0 pagos ✅ (fixes: cart_id en body, tipo_comprobante, tipo_venta, delete pago auto). Canal WA deshabilitado (sin token Meta real).
@@ -4630,30 +4645,30 @@ EOF又是
 ### [12:10] - WP connector v3.12.5: fix carrito "vacío" (carrera add→navegar)
 - **Tipo**: proyecto | fix | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/`: `templates/ecomm/cart.php` (siempre rinde esqueleto completo con visibilidad server-side), `assets/js/connector.js` (renderCartPage robusto con selectores reales, binding qty server, checkout espera sync, re-sync al cargar /carrito/, beacon pagehide), `erp-ecomm-connector.php` (plugin_url en erpc_cfg), bump 3.12.4→3.12.5 + CHANGELOG plugin; commit plugin `a0576e1`. Backups `.bkup-20260922`.
-- **Afecta a**: kalimete (wordpress-local, /carrito/ y /checkout/)
+- **Afecta a**: Kalimete (wordpress-local, /carrito/ y /checkout/)
 - **Causa**: Usuario: "agrego items, las alertas los muestran, pero el carrito dice vacío". Diagnóstico (subagente + repro Playwright): `syncCartToServer` async fire-and-forget → cookie server stale al navegar → `cart.php` rendía rama vacía sin `tbody#erpc-cart-items` → `renderCartPage()` early-return y no repintaba desde localStorage. Agravantes: selectores `#erpc-cart-empty`/`.erpc-total-amount` inexistentes y controles qty server sin binding.
 - **Verificación**: Playwright headless — navegación inmediata: 2 filas, total RD$ 3,110.89 ✅; sync bloqueado (route.abort): items visibles desde localStorage ✅; controles +/-: total 3,110.89→6,127.08→3,110.89 ✅.
 - **Estado**: ✅ sincronizado
 
-### [12:09] - Proxmark3: subagente `proxmark` creado en kalimete
+### [12:09] - Proxmark3: subagente `proxmark` creado en Kalimete
 - **Tipo**: agente | infra
-- **Modificado**: `agents/proxmark.md`, `agents/kalimete.md`, `~/.config/opencode/agent/proxmark.md`
-- **Afecta a**: kalimete (PM3 en /dev/ttyACM0)
-- **Causa**: Proxmark dejó de ser parte de Victoria, ahora es tool local de kalimete. Se crea subagente dedicado con documentación completa de todas las capacidades (cards + tokens + LF + HF + emulation + sniffing). Renombrado de `proxmark-cards` a `proxmark` en sesión misma tarde para reflejar alcance completo del agente.
+- **Modificado**: `agents/proxmark.md`, `agents/Kalimete.md`, `~/.config/opencode/agent/proxmark.md`
+- **Afecta a**: Kalimete (PM3 en /dev/ttyACM0)
+- **Causa**: Proxmark dejó de ser parte de Victoria, ahora es tool local de Kalimete. Se crea subagente dedicado con documentación completa de todas las capacidades (cards + tokens + LF + HF + emulation + sniffing). Renombrado de `proxmark-cards` a `proxmark` en sesión misma tarde para reflejar alcance completo del agente.
 - **Estado**: ✅ sincronizado
 - **Notas**:
   - Dumps migrados: `~/.victoria/pm3-dumps/` → `~/.proxmark3/dumps/` (limpia ref a Victoria)
   - `pm3` alias verificada (`/usr/bin/pm3`)
   - Subagente incluye: MIFARE Classic/Ultralight/DESFire/Plus, HID, EM4100, T55xx, NFC, iClass, Wiegand, EMV, FeliCa, LEGIC, Tesla, Gallagher, trace, hw, data analysis
   - ⚠️ **Bug conocido**: en non-interactive mode, el campo HF se apaga entre invocations → "Can't select card". Solución: encadenar `hf 14a reader ; <comando>`
-  - Agrega `proxmark` al `permission.task` de kalimete
+  - Agrega `proxmark` al `permission.task` de Kalimete
 
-### [12:05] - kalimete vuelve a aparecer como agente primary en opencode (fix selector TAB)
+### [12:05] - Kalimete vuelve a aparecer como agente primary en opencode (fix selector TAB)
 - **Tipo**: infra | config | opencode
-- **Modificado**: `agents/kalimete.md` (frontmatter)
-- **Afecta a**: kalimete (opencode TUI)
-- **Causa**: La clave `"eco-taohemps": allow` estaba duplicada en `permission.task` (líneas 16 y 22). El parser de frontmatter de opencode rechaza el archivo completo ante claves YAML duplicadas: kalimete no aparecía en `opencode agent list` ni en el selector TAB (solo plan/build). Se eliminó la segunda ocurrencia; backup en `~/backups/kalimete.md.bkup-20260917-dupkey`.
-- **Verificación**: `opencode agent list` → `kalimete (primary)`; `opencode debug agent kalimete` → mode primary, temperature 0.2, color, 19 reglas task (`*` deny + allows, `general` denegado).
+- **Modificado**: `agents/Kalimete.md` (frontmatter)
+- **Afecta a**: Kalimete (opencode TUI)
+- **Causa**: La clave `"eco-taohemps": allow` estaba duplicada en `permission.task` (líneas 16 y 22). El parser de frontmatter de opencode rechaza el archivo completo ante claves YAML duplicadas: Kalimete no aparecía en `opencode agent list` ni en el selector TAB (solo plan/build). Se eliminó la segunda ocurrencia; backup en `~/backups/Kalimete.md.bkup-20260917-dupkey`.
+- **Verificación**: `opencode agent list` → `Kalimete (primary)`; `opencode debug agent Kalimete` → mode primary, temperature 0.2, color, 19 reglas task (`*` deny + allows, `general` denegado).
 - **Estado**: ✅ verificado local (sync por cron)
 
 ### [12:05] - ERP E-Commerce Connector v3.3.3: preserva erp_config, categorías robustas + paginación sin repetir + limpieza viejas
@@ -4680,7 +4695,7 @@ EOF又是
   - `assets/js/connector.js` — handlers de categorías, búsqueda debounce, load more con estado
   - `templates/ecomm/products.php` — usa `#erpc-grid` (el que el JS espera)
   - `templates/partials/product-grid.php` — emite solo cards (sin wrapper)
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: El frontend no se veía profesional y las categorías + "cargar más" no funcionaban por desconexión template↔JS
 - **Estado**: ✅ rediseño completo, PHP/JS syntax OK, página HTTP 200, 15 cards server-rendered
 - **Notas**:
@@ -4695,7 +4710,7 @@ EOF又是
 - **Tipo**: proyecto | wordpress | ui | seguridad
 - **Modificado**: /home/warcold/dev/wordpress/wp-content/plugins/erp-ecomm-connector/
   - `includes/class-erpc-admin.php` — Textos profesionales + eliminación de info sensible
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: Mejorar profesionalismo de los textos guía y cuidar la seguridad (no exponer URL del ERP ni detalles internos).
 - **Estado**: ✅ textos actualizados, sin info sensible en admin, PHP syntax OK
 - **Notas**:
@@ -4708,17 +4723,17 @@ EOF又是
 
 ### [11:45] - AUDITORÍA DOCUMENTAL HUB: 27 agents ↔ 27 harness validados, completitud + discrepancias LIVE curadas, CHANGELOG consolidado
 - **Tipo**: docs | infra
-- **Modificado**: `harness/kalimete.harness.json` RECONSTRUIDO (tenía 21 subagentes con 2 inexistentes —Ragnarok/Godot viejos— y sin scope/live_check/upstream/docs/changelog; ahora los 26 reales + campos estándar + vivo de auditoría; backup `.bkup-20261022-audit`); 13 harness con backup `.bkup-20261022-audit`: 9 `vivo` refrescados con LIVE checks reales (authentik, cloudflare, docuseal, nextcloud, petsuite, proxmark, scriberr, taohemps, vps — evidencia: vps-preprod 26 contenedores Up 28h, 7 dominios 200/302, victoria uptime 5d, pm3 presente), kalimete-dashboard +changelog+docs_oficiales+vivo (api/health ok), kalimete-ptt +changelog+docs_oficiales+vivo (servicio active), game-studio +docs_oficiales, micaserogou +live_check; agents: blender, ecco-suit, game-studio, intigriti +docs oficiales +upstream_drk +pointer harness; kalimete-ptt +pointer harness; micaserogou +docs oficiales +pointer harness; `agents/kalimete.md` (vps-proxy DESACTIVADO en tabla red + alias + regla TARGET; rol vps-preprod +proxy clientes); `MAPA.md` (topología 2026-10-22, diagrama vps-proxy DESACTIVADO, sección 4 reescrita: verificado muerto, servicios NINGUNO, DNS repuntado); `AGENTS.md` (referencia a eco-cloudflare-* retirados → Cloudflare); `CHANGELOG.md` consolidado (81 bloques ## → 40 fechas únicas, 314 entradas intactas verificadas por script; backup `.bkup-20261022-audit`)
+- **Modificado**: `harness/Kalimete.harness.json` RECONSTRUIDO (tenía 21 subagentes con 2 inexistentes —Ragnarok/Godot viejos— y sin scope/live_check/upstream/docs/changelog; ahora los 26 reales + campos estándar + vivo de auditoría; backup `.bkup-20261022-audit`); 13 harness con backup `.bkup-20261022-audit`: 9 `vivo` refrescados con LIVE checks reales (authentik, cloudflare, docuseal, nextcloud, petsuite, proxmark, scriberr, taohemps, vps — evidencia: vps-preprod 26 contenedores Up 28h, 7 dominios 200/302, victoria uptime 5d, pm3 presente), Kalimete-dashboard +changelog+docs_oficiales+vivo (api/health ok), Kalimete-ptt +changelog+docs_oficiales+vivo (servicio active), game-studio +docs_oficiales, micaserogou +live_check; agents: blender, ecco-suit, game-studio, intigriti +docs oficiales +upstream_drk +pointer harness; Kalimete-ptt +pointer harness; micaserogou +docs oficiales +pointer harness; `agents/Kalimete.md` (vps-proxy DESACTIVADO en tabla red + alias + regla TARGET; rol vps-preprod +proxy clientes); `MAPA.md` (topología 2026-10-22, diagrama vps-proxy DESACTIVADO, sección 4 reescrita: verificado muerto, servicios NINGUNO, DNS repuntado); `AGENTS.md` (referencia a eco-cloudflare-* retirados → Cloudflare); `CHANGELOG.md` consolidado (81 bloques ## → 40 fechas únicas, 314 entradas intactas verificadas por script; backup `.bkup-20261022-audit`)
 - **Afecta a**: todo el repo armada-sync (documentación); NINGÚN servicio tocado — solo lectura LIVE
 - **Causa**: orden del owner — documentar todo, validar que cada harness tenga la documentación correspondiente del servicio que maneja, limpiar discrepancias ambiguas
-- **Estado**: ✅ 27/27 agents ↔ 27/27 harness match 1:1; todos los harness con scope/live_check/upstream/docs/changelog completos; temperaturas validadas contra política (infra 0.1 / creativos 0.6 / kalimete 0.2); 9 vivo stale del 2026-10-01 refrescados con evidencia de hoy
-- **Notas**: Hallazgos clave: (1) kalimete.harness.json era el MÁS desviado (updated 2026-10-15, subagentes inexistentes, Proxy apuntando al vps-proxy muerto); (2) 9 harness sin verificación viva desde 2026-10-01 (21 días); (3) CHANGELOG acumulaba 41 bloques de fecha duplicados (10-22 ×3, 10-21 ×11, 10-20 ×4, 10-19 ×3, 10-03 ×2 + resto histórico); (4) kalimete.md/MAPA.md decían vps-proxy "✅ activo" pese a estar cancelado hoy. Pendiente menor: los vivo de ragnarok-server, record-of-ragnarok, magantech, armada-suite, erp-dev, zionv-crm, wordpress-dev, victoria-server, irc, blender, ecco-suit, intigriti, game-studio son de fechas intermedias (10-08 a 10-21) — se refrescarán en sus próximas sesiones de servicio.
+- **Estado**: ✅ 27/27 agents ↔ 27/27 harness match 1:1; todos los harness con scope/live_check/upstream/docs/changelog completos; temperaturas validadas contra política (infra 0.1 / creativos 0.6 / Kalimete 0.2); 9 vivo stale del 2026-10-01 refrescados con evidencia de hoy
+- **Notas**: Hallazgos clave: (1) Kalimete.harness.json era el MÁS desviado (updated 2026-10-15, subagentes inexistentes, Proxy apuntando al vps-proxy muerto); (2) 9 harness sin verificación viva desde 2026-10-01 (21 días); (3) CHANGELOG acumulaba 41 bloques de fecha duplicados (10-22 ×3, 10-21 ×11, 10-20 ×4, 10-19 ×3, 10-03 ×2 + resto histórico); (4) Kalimete.md/MAPA.md decían vps-proxy "✅ activo" pese a estar cancelado hoy. Pendiente menor: los vivo de ragnarok-server, record-of-ragnarok, magantech, armada-suite, erp-dev, zionv-crm, wordpress-dev, victoria-server, irc, blender, ecco-suit, intigriti, game-studio son de fechas intermedias (10-08 a 10-21) — se refrescarán en sus próximas sesiones de servicio.
 
-### [11:40] - Voz viva en opencode + kalimete-ptt barge-in (Fase Jarvis, TARGET=kalimete)
+### [11:40] - Voz viva en opencode + Kalimete-ptt barge-in (Fase Jarvis, TARGET=Kalimete)
 - **Tipo**: feature | voz en opencode (autorización del owner)
-- **Que**: (a) plugin `victoria-voice-live.js` en `~/.config/opencode/plugins/` (misma versión opencode 1.18.34): habla respuestas por oraciones + narra tools + barge-in; env en `~/.bashrc` (TTS por LAN + `VICTORIA_VOICE_KEY` desde kalimete-ptt env, single source); verificado E2E (tts ok 119KB + narración); (b) kalimete-ptt: `PTT_SUBMIT` (Enter tras pegar, opt-in) + toque-corto = solo callar + `PTT_BARGE_ABORT` (Esc opt-in); servicio reiniciado y activo.
+- **Que**: (a) plugin `victoria-voice-live.js` en `~/.config/opencode/plugins/` (misma versión opencode 1.18.34): habla respuestas por oraciones + narra tools + barge-in; env en `~/.bashrc` (TTS por LAN + `VICTORIA_VOICE_KEY` desde Kalimete-ptt env, single source); verificado E2E (tts ok 119KB + narración); (b) Kalimete-ptt: `PTT_SUBMIT` (Enter tras pegar, opt-in) + toque-corto = solo callar + `PTT_BARGE_ABORT` (Esc opt-in); servicio reiniciado y activo.
 - **Verificado**: plugin carga + deltas + TTS LAN con llave services; compila OK.
-- **Docs**: este changelog (kalimete) + general de Victoria referencia. NOTA: reiniciar TUI opencode para cargar el plugin.
+- **Docs**: este changelog (Kalimete) + general de Victoria referencia. NOTA: reiniciar TUI opencode para cargar el plugin.
 
 ### [11:40] - Dominio ~/dev/games/ creado: mudanza completa (godot+blender+assets) + agente Blender + 2 MCPs godot + ledger — organización de la fábrica de juegos
 - **Tipo**: infra | docs | agente
@@ -4730,22 +4745,22 @@ EOF又是
   - **Agente `Godot` actualizado**: paths al dominio nuevo, sección MCP con los DOS servers (config live reflejada), fila image→3D en la granja (skill assets-3d → GLB → import nativo), referencia al agente Blender, changelog.
   - **Agente `Game Studio` actualizado**: sección Workspace reescrita (godot-studio dedicado + current/_starter + staging assets/), stack table +fila agente Blender, fase 2 con delegación de retopo/rig a Blender.
   - **Harnesses**: `blender.harness.json` (nuevo), `godot-dev.harness.json` y `game-studio.harness.json` (paths + vivo_2026_10_19 + checks con 3 MCPs + changelog).
-  - **Drifts curados**: `kalimete.md` línea MCPs decía `armada-godot` (inexistente) → MCPs reales de la config; `kalimete.harness.json` scope idem. `start-blender.sh` LOG path migrado (dev/tools → dev/games). `studio/README.md` + `games/README.md` reescritos. **Ledger `~/dev/games/AGENTS.md`** creado (mapa, agentes, decisiones, comandos, pendientes, reglas).
+  - **Drifts curados**: `Kalimete.md` línea MCPs decía `armada-godot` (inexistente) → MCPs reales de la config; `Kalimete.harness.json` scope idem. `start-blender.sh` LOG path migrado (dev/tools → dev/games). `studio/README.md` + `games/README.md` reescritos. **Ledger `~/dev/games/AGENTS.md`** creado (mapa, agentes, decisiones, comandos, pendientes, reglas).
   - **Procesos godot-mcp huérfanos** (2, con el path viejo) matados — respawnean solos con la config nueva en la próxima sesión.
 - **LECCIÓN (sync.sh)**: un agente nuevo scp-eado SOLO al repo dura lo que tarde el cron de 5 min — el collect hace "delete zombies" (repo file sin contraparte local → rm). Regla documentada en el ledger: repo file + symlink EN EL MISMO INSTANTE. blender.md cayó en la ventana y hubo que restaurarlo así.
-- **Afecta a**: kalimete (estructura dev, opencode.jsonc, 3 agentes, 3 harnesses, primario kalimete.md, ledger); cero cambios en victoria (solo consumo HTTP)
+- **Afecta a**: Kalimete (estructura dev, opencode.jsonc, 3 agentes, 3 harnesses, primario Kalimete.md, ledger); cero cambios en victoria (solo consumo HTTP)
 - **Causa**: owner (organizar el dominio de juegos con agentes/harness/documentación por programa)
 - **Estado**: ✅ verificado (JSON config OK, agentes parsean en opencode, blender listener :9876 vivo, git mario-bros intacto, md5 repo↔symlink idénticos)
-- **Notas**: la sesión opencode ACTIVA de kalimete (si hay una abierta) necesita restart para cargar las rutas/MCPs nuevos. Primer juego: delegar "Game Studio, crea un juego 3D de <género>" — él repunta `current` al proyecto nuevo.
+- **Notas**: la sesión opencode ACTIVA de Kalimete (si hay una abierta) necesita restart para cargar las rutas/MCPs nuevos. Primer juego: delegar "Game Studio, crea un juego 3D de <género>" — él repunta `current` al proyecto nuevo.
 
-### [11:33] - Docs: AGENTS.md adelgazado a reglas globales, kalimete.md fuente única operativa + fix eco-alfredo-ecomm
+### [11:33] - Docs: AGENTS.md adelgazado a reglas globales, Kalimete.md fuente única operativa + fix eco-alfredo-ecomm
 - **Tipo**: docs | agente | config
-- **Modificado**: `AGENTS.md` (132→41 líneas), `agents/kalimete.md`, `MAPA.md`
-- **Afecta a**: kalimete (todas las sesiones opencode)
-- **Causa**: AGENTS.md y kalimete.md duplicaban topología, SSH, tabla de agentes y límites de contexto (ya habían derivado: decían 228000/240000 y baseURL por túnel, lo real es 220000/32000 en LAN). MAPA.md tenía fila duplicada y le faltaba proxmark. `eco-alfredo-ecomm` existía en `agents/` pero kalimete no podía delegarle (faltaba en `permission.task` y en la tabla).
+- **Modificado**: `AGENTS.md` (132→41 líneas), `agents/Kalimete.md`, `MAPA.md`
+- **Afecta a**: Kalimete (todas las sesiones opencode)
+- **Causa**: AGENTS.md y Kalimete.md duplicaban topología, SSH, tabla de agentes y límites de contexto (ya habían derivado: decían 228000/240000 y baseURL por túnel, lo real es 220000/32000 en LAN). MAPA.md tenía fila duplicada y le faltaba proxmark. `eco-alfredo-ecomm` existía en `agents/` pero Kalimete no podía delegarle (faltaba en `permission.task` y en la tabla).
 - **Cambios**:
-  - `AGENTS.md` → solo reglas globales + punteros a la fuente única (MAPA.md / kalimete.md / skill cloudflare). Cero tablas duplicadas.
-  - `agents/kalimete.md` → agregado `eco-alfredo-ecomm` a frontmatter + tabla; la lista de permisos ya no se duplica en el cuerpo (vive solo en el frontmatter); snapshot `opencode.jsonc` corregido contra lo real (context 220000/output 32000, `http://victoria.local:8010/v1`); puntero a MAPA.md como fuente de topología.
+  - `AGENTS.md` → solo reglas globales + punteros a la fuente única (MAPA.md / Kalimete.md / skill cloudflare). Cero tablas duplicadas.
+  - `agents/Kalimete.md` → agregado `eco-alfredo-ecomm` a frontmatter + tabla; la lista de permisos ya no se duplica en el cuerpo (vive solo en el frontmatter); snapshot `opencode.jsonc` corregido contra lo real (context 220000/output 32000, `http://victoria.local:8010/v1`); puntero a MAPA.md como fuente de topología.
   - `MAPA.md` → eliminada fila duplicada `eco-micaserogou`, agregada fila `proxmark`, corregido bloque `opencode.jsonc` (3 providers, baseURL LAN, limits).
   - Backups pre-cambio en `~/backups/armada-docs-20260914/` (fuera del repo para no ensuciar el sync).
 - **Estado**: ✅ sincronizado
@@ -4760,7 +4775,7 @@ EOF又是
   - **Validación remota post-update**: ops/status → **plugin 5.4.2, env public, api_host erpipos.armada.do** ✅; smoke-prod → públicos 200 ✅, marca "Tienda" (esperada); hint post-sync → `brand_name:""`, payment_methods [transferencia], DOP, per_page 15 — **el sync corrió y el ERP prod respondió, pero NO trae identidad** (solo moneda/pagos/paginación). El "✅ Conectado y sincronizado" que vio el owner = correcto (la conexión y el sync funcionan).
   - **Diagnóstico confirmado — GAP DE DATOS, no bug**: `apply_business_config` solo copia valores no-vacíos; el perfil de tenant 10 en el ERP prod está VACÍO (nombre, logo, eslogan, contacto). La UI lo dice: "Configuración de la tienda" = "Nombre y logo se gestionan aquí porque el ERP aún no los envía" (`LegacyConnectorAdmin.php:482`; efectivo = **ajuste local > ERP**, `:488-492`); los "Sin definir: escríbelo en tab Negocio…" son guía de la UI, no errores.
   - **Cronología del deploy de Juan**: merge PR #15 = 2026-10-19 01:26 (-0400). Hint `brand_name:""` post-sync → o su deploy del ERP está pendiente, o deployó con `nombre`+`slug`+`empresa_nombre` todos vacíos. Con `34de630` deployado + dato capturado, el sync traería la fuente "ERP".
-  - **Acciones**: (1) **Rápido (owner, 1 min)**: tab Negocio → Identidad del negocio → Nombre del negocio = "MaganTech" → Guardar — el ajuste local GANA al ERP (durable), frontend cambia al instante, kalimete verifica con smoke-prod; (2) **Definitivo (Juan)**: capturar el perfil del negocio en ERP prod (nombre urgente — SQL del update ya enviado; + contacto/logo/eslogan/colores) y verificar su deploy. B2 (ops/settings con modo trabajo) disponible si el owner lo prefiere.
+  - **Acciones**: (1) **Rápido (owner, 1 min)**: tab Negocio → Identidad del negocio → Nombre del negocio = "MaganTech" → Guardar — el ajuste local GANA al ERP (durable), frontend cambia al instante, Kalimete verifica con smoke-prod; (2) **Definitivo (Juan)**: capturar el perfil del negocio en ERP prod (nombre urgente — SQL del update ya enviado; + contacto/logo/eslogan/colores) y verificar su deploy. B2 (ops/settings con modo trabajo) disponible si el owner lo prefiere.
   - **Docs**: PROCEDURES §(i) estado actualizado (B1 como fix rápido + explicación UI v3.3.5).
 - **Afecta a**: prod magantech.com.do (5.4.2 live), docs MaganTech
 - **Causa**: owner (validar por qué los campos no se completaron tras el sync)
@@ -4770,7 +4785,7 @@ EOF又是
 ### [11:30] - ERP local actualizado a origin/dev/ecomm-erp 5c6ca70 + env migrado (MAIN intacto)
 - **Tipo**: proyecto | update | env | erp
 - **Modificado**: ~/dev/erpipo-preprod/code/sistema-facturacion (dev/ecomm-erp e76b0c3 → 5c6ca70 + commit local 7d1e885); preprod DB migrada (0 pending, incluye delivery_pickup + whatsapp/cobranza/auditoria)
-- **Afecta a**: kalimete (erpipo-preprod :8100, erp.kalimete.local); wordpress-dev (contrato config intacto)
+- **Afecta a**: Kalimete (erpipo-preprod :8100, erp.Kalimete.local); wordpress-dev (contrato config intacto)
 - **Causa**: Usuario: actualizar ERP local con última versión de soycarlosjerez-hub/sistema-facturacion (main=prod no tocar, dev/ecomm=nuestra)
 - **Validación**: 2 hosts verificados (LLM configurable vía admin erpcbot_settings→ia.api_url=http://10.0.0.5:8010/v1 DB; ERP prod fijo ERPC_API_URL=https://erpipos.armada.do/api, override solo mu-plugin→172.19.0.1:8100); fetch muestra origin/dev/ecomm-erp==origin/main==5c6ca70 (Juan mergeó PR #10); local main sin tocar; TiendaApiController dedupe 5 keys + sin duplicados; php -l OK; :8100/:8091/:3004 vivos; .bkup-ERP movidos a /tmp/opencode/erp-bkup-20260929 (stash backup conserva original)
 - **Estado**: ✅ sincronizado local. Pendiente confirmación usuario para push a origin/dev/ecomm-erp (ahead 1, Juan acepta)
@@ -4778,24 +4793,24 @@ EOF又是
 
 ### [11:15] - Diagnostico compactaciones agente Godot (MCP ruidoso) + ledger + steps 50 + higiene
 - **Tipo**: diagnostico | agentes | docs
-- **Causa medida (forense gateway victoria)**: sesion del owner desde kalimete (10.0.0.106, key alfredo, modelo local) = 105 requests / 0 fallos / 9 compactaciones detectadas en ~15 min. Techo real de compactacion ~78-88K (NO 120K: el trigger es context120K - output32K - reserved10K ~= 78K, y un solo tool call lo empuja a ~87K). Salto tipico tras compactar: 15K -> 77K en UN turno = tool outputs del MCP godot masivos (+60K tokens c/u: arbol completo/estado editor). Conclusion: NO es fallo del modelo ni del gateway (105/105 OK, latencia media 11s con prompts 80K+, prefix-caching OK).
+- **Causa medida (forense gateway victoria)**: sesion del owner desde Kalimete (10.0.0.106, key alfredo, modelo local) = 105 requests / 0 fallos / 9 compactaciones detectadas en ~15 min. Techo real de compactacion ~78-88K (NO 120K: el trigger es context120K - output32K - reserved10K ~= 78K, y un solo tool call lo empuja a ~87K). Salto tipico tras compactar: 15K -> 77K en UN turno = tool outputs del MCP godot masivos (+60K tokens c/u: arbol completo/estado editor). Conclusion: NO es fallo del modelo ni del gateway (105/105 OK, latencia media 11s con prompts 80K+, prefix-caching OK).
 - **Modificado**: `~/armada-godot/AGENTS.md` CREADO (ledger por proyecto: mapa Mario Bros clone Godot 4.x, comandos headless, higiene, decisiones, pendientes — sobrevive a compactaciones). `agents/godot-dev.md`: `steps: 15 -> 50` (el limite 15 dejaba tareas grandes por mitad) + seccion "Higiene de contexto" (nodos especificos no arbol completo, no screenshots salvo pedido, errores filtrados).
-- **Afecta a**: kalimete (agente Godot); cero impacto en produccion.
-- **Pendiente (decision del owner, reinicio vLLM 5-7 min en victoria)**: subir `--max-model-len` 160000 -> ~196608 + gateway MAX_PROMPT_TOKENS 120K->144K + opencode context 144000 en ambos hosts => espacio de trabajo real 78K -> ~102K (+30%). KV 12GiB lo soporta (4x192K=768K < 945K). Alternativa sin cambios: sesiones maraton via provider NVIDIA NIM (DeepSeek 1M nativo, ya configurado en kalimete).
+- **Afecta a**: Kalimete (agente Godot); cero impacto en produccion.
+- **Pendiente (decision del owner, reinicio vLLM 5-7 min en victoria)**: subir `--max-model-len` 160000 -> ~196608 + gateway MAX_PROMPT_TOKENS 120K->144K + opencode context 144000 en ambos hosts => espacio de trabajo real 78K -> ~102K (+30%). KV 12GiB lo soporta (4x192K=768K < 945K). Alternativa sin cambios: sesiones maraton via provider NVIDIA NIM (DeepSeek 1M nativo, ya configurado en Kalimete).
 - **Estado**: en sincronizacion (hub cada 5 min)
 
-### [11:05] - kalimete-ptt CONVERSACIONAL: Victoria responde por voz + llave services dedicada
-- **Tipo**: feature | voz (Fase Jarvis-Victoria, autorización del owner, TARGET=kalimete verificado)
-- **Que**: (a) `~/.local/bin/kalimete-ptt` mejorado (backup `.bak.20261003-voz`): tras pegar el texto, Victoria RESPONDE HABLANDO (LLM Qwen3.6-35B-normal vía 10.0.0.5:8010 → TTS Qwen3-TTS con su voz vía 10.0.0.5:18810 → `paplay` en parlantes); `PTT_VOICE_REPLY=1` (0 = solo-pegar como antes); persona breve/hablada (60 palabras, sin markdown); docstrings rootsource limpiados (cero refs); (b) llave nueva `kalimete-ptt` rol **services** en gateway Victoria (STT+LLM+TTS, sin panel; least privilege — la admin heredada queda como fallback STT); config en `~/.config/kalimete-ptt/env` (`PTT_VOICE_KEY` + URLs + modelo); servicio `kalimete-ptt` reiniciado.
+### [11:05] - Kalimete-ptt CONVERSACIONAL: Victoria responde por voz + llave services dedicada
+- **Tipo**: feature | voz (Fase Jarvis-Victoria, autorización del owner, TARGET=Kalimete verificado)
+- **Que**: (a) `~/.local/bin/Kalimete-ptt` mejorado (backup `.bak.20261003-voz`): tras pegar el texto, Victoria RESPONDE HABLANDO (LLM Qwen3.6-35B-normal vía 10.0.0.5:8010 → TTS Qwen3-TTS con su voz vía 10.0.0.5:18810 → `paplay` en parlantes); `PTT_VOICE_REPLY=1` (0 = solo-pegar como antes); persona breve/hablada (60 palabras, sin markdown); docstrings rootsource limpiados (cero refs); (b) llave nueva `Kalimete-ptt` rol **services** en gateway Victoria (STT+LLM+TTS, sin panel; least privilege — la admin heredada queda como fallback STT); config en `~/.config/Kalimete-ptt/env` (`PTT_VOICE_KEY` + URLs + modelo); servicio `Kalimete-ptt` reiniciado.
 - **Verificado**: compila OK; servicio active; E2E remoto LLM 200 OK + TTS 200 176KB + PLAY_OK en parlantes. Falta prueba viva del owner (mantener Ctrl, hablar, soltar, escuchar).
-- **Docs**: este changelog (kalimete) + general de Victoria referencia.
+- **Docs**: este changelog (Kalimete) + general de Victoria referencia.
 
 ### [11:00] - WP connector v3.13.3 + ERP v3.13.3-local: fix 422 checkout, botón Guardando, logo footer
 - **Tipo**: proyecto | fix | wordpress + erp-local
 - **Modificado**: plugin erp-ecomm-connector 3.13.2→3.13.3 (~/dev/wordpress: connector.js profile form, erp-ecomm-connector.php localize_remote_logo, footer.php onerror, connector.css logo). ERP sistema-facturacion (~/dev/erpipo-preprod: EcommCheckoutController payment_method ampliado en submit+submitGuest). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091 + erpipo-preprod :8100)
+- **Afecta a**: Kalimete (wordpress-local :8091 + erpipo-preprod :8100)
 - **Causa**: Usuario: 422 al confirmar pedido con perfil completo; /mi-cuenta se queda "Guardando..."; logo de instancia no carga en footer (cuadro blanco) y debe ser más grande.
-- **Diagnóstico**: ERP rechazaba paypal/binance/cheque/otro (in: demasiado corto); bug $(this)=jqXHR en ajax del perfil (botón nunca se restauraba — el guardado sí funcionaba); logo con URL a erp.kalimete.local (no resuelve fuera de LAN) + CSS filter brightness(0) invert(1) que lo convertía en cuadro blanco sólido.
+- **Diagnóstico**: ERP rechazaba paypal/binance/cheque/otro (in: demasiado corto); bug $(this)=jqXHR en ajax del perfil (botón nunca se restauraba — el guardado sí funcionaba); logo con URL a erp.Kalimete.local (no resuelve fuera de LAN) + CSS filter brightness(0) invert(1) que lo convertía en cuadro blanco sólido.
 - **Solución**: ERP acepta los 9 métodos; JS captura $form; nuevo localize_remote_logo() cachea el logo en uploads/erpc/ y lo sirve desde el dominio del WP (cache 24h); footer logo 48px a color real sobre pill blanco + onerror fallback.
 - **Verificación**: checkout paypal → HTTP 200 (venta 272) ✅; logo JPEG real sirviéndose desde /wp-content/uploads/erpc/ en header y footer ✅; node --check + php -l OK. Prueba navegador pendiente del usuario.
 - **Estado**: ⚠️ pendiente de prueba del usuario → recién entonces commit
@@ -4816,17 +4831,17 @@ EOF又是
 
 ### [10:45] - Subagentes RENOMBRADOS a nombres reales (adios prefijo eco-) + name: display + harness alineado
 - **Tipo**: agentes | harness | docs | refactor
-- **Modificado**: 14 archivos `agents/eco-*.md` renombrados con `git mv` (sin prefijo: `authentik.md`, `cloudflare.md`, `docuseal.md`, `irc.md`, `nextcloud.md`, `petsuite.md`, `proxy.md`, `ragnarok.md`, `scriberr.md`, `taohemps.md`, `victoria-server.md`, `vps.md`, `woodly.md`, `alfredo-ecomm.md`); los 19 con `name:` display nuevo (`Authentik`, `Cloudflare`, `DocuSeal`, `IRC`, `Nextcloud`, `PetSuite`, `Proxy`, `Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `Woodly`, `Alfredo Ecomm`, `Armada Arcade`, `ERP Dev`, `Godot`, `Proxmark`, `WordPress`) + linea `> **Frescura**` + ref a su harness. `kalimete.md`: permission.task con claves = display names EXACTOS + scope reescrito + historia eco-cloudflare conservada + tabla. `harness/`: 14 renombrados + los 20 alineados (name/harness id/hidden:false/agent_file/docs) + central (lista subagentes + scope_agentes). Symlinks `~/.config/opencode/agent/` recreados. `bin/doc-fresh.sh` AGENTES -> ids lowercase. `bin/upstream-kalimete-check.py` ids -> lowercase. MAPA.md + configs/MAPA.md + commands/mapa.md + ecosistema-map + cloudflare-map (areas Cloudflare compactadas al agente unico). state/frescura.json remapeado.
-- **Afecta a**: kalimete (TUI): `@` ahora muestra nombres reales identificables (antes eco-*); delegacion Task de kalimete usa los names exactos; cero cambios de produccion/permisos por agente (edit/write deny preservados donde correspondia).
+- **Modificado**: 14 archivos `agents/eco-*.md` renombrados con `git mv` (sin prefijo: `authentik.md`, `cloudflare.md`, `docuseal.md`, `irc.md`, `nextcloud.md`, `petsuite.md`, `proxy.md`, `ragnarok.md`, `scriberr.md`, `taohemps.md`, `victoria-server.md`, `vps.md`, `woodly.md`, `alfredo-ecomm.md`); los 19 con `name:` display nuevo (`Authentik`, `Cloudflare`, `DocuSeal`, `IRC`, `Nextcloud`, `PetSuite`, `Proxy`, `Ragnarok`, `Scriberr`, `Taohemps`, `Victoria Server`, `VPS`, `Woodly`, `Alfredo Ecomm`, `Armada Arcade`, `ERP Dev`, `Godot`, `Proxmark`, `WordPress`) + linea `> **Frescura**` + ref a su harness. `Kalimete.md`: permission.task con claves = display names EXACTOS + scope reescrito + historia eco-cloudflare conservada + tabla. `harness/`: 14 renombrados + los 20 alineados (name/harness id/hidden:false/agent_file/docs) + central (lista subagentes + scope_agentes). Symlinks `~/.config/opencode/agent/` recreados. `bin/doc-fresh.sh` AGENTES -> ids lowercase. `bin/upstream-Kalimete-check.py` ids -> lowercase. MAPA.md + configs/MAPA.md + commands/mapa.md + ecosistema-map + cloudflare-map (areas Cloudflare compactadas al agente unico). state/frescura.json remapeado.
+- **Afecta a**: Kalimete (TUI): `@` ahora muestra nombres reales identificables (antes eco-*); delegacion Task de Kalimete usa los names exactos; cero cambios de produccion/permisos por agente (edit/write deny preservados donde correspondia).
 - **Causa**: owner (via Victoria): "no usemos eco, usemos el nombre bien, ej. Authentik, Cloudflare, DocuSeal, NextCloud, Ragnarok" + cada agente con su harness y su documentacion oficial (mismo estandar Victoria).
-- **Verificado**: `opencode agent list` live: 19 subagentes con nombres reales `(subagent)`, primaries kalimete/plan/build intactos, CERO duplicados; 20 harness JSON validos; backup pre-cambio `~/.config/opencode/bkup-agents/rename-20261001-pre.tar.gz` (70 archivos). Requiere restart del TUI para el autocomplete.
+- **Verificado**: `opencode agent list` live: 19 subagentes con nombres reales `(subagent)`, primaries Kalimete/plan/build intactos, CERO duplicados; 20 harness JSON validos; backup pre-cambio `~/.config/opencode/bkup-agents/rename-20261001-pre.tar.gz` (70 archivos). Requiere restart del TUI para el autocomplete.
 - **Estado**: en sincronizacion (hub cada 5 min — ya publicado)
-- **Notas**: `Victoria Server` (no "Victoria") a proposito: ese subagente GESTIONA el host victoria (solo lectura) — no es hablar CON Victoria. El historial "kalimete antes era eco-cloudflare" (2026-08-12) se conserva con nota. Referencias eco-accesos/eco-voice (muertos) intactas como historia.
+- **Notas**: `Victoria Server` (no "Victoria") a proposito: ese subagente GESTIONA el host victoria (solo lectura) — no es hablar CON Victoria. El historial "Kalimete antes era eco-cloudflare" (2026-08-12) se conserva con nota. Referencias eco-accesos/eco-voice (muertos) intactas como historia.
 
 ### [10:30] - 🚨 ERP BLOQUEÓ AL TENANT (impago) + Plugin v3.8.0: forms + SMTP + hamburguesa
 - **Tipo**: proyecto | feature | fix | alerta-negocio | email
 - **Modificado**: plugin `erp-ecomm-connector` v3.8.0 (commit `3d95c8d`, 9 archivos); páginas contacto/cotizar con diseño; SMTP tenant configurado
-- **Afecta a**: kalimete + NEGOCIO (tienda sin productos hasta resolver pago)
+- **Afecta a**: Kalimete + NEGOCIO (tienda sin productos hasta resolver pago)
 - **🚨 ALERTA**: `GET /tienda/*`, `/orders`, `/customers` responden `{"message":"Esta instancia ha sido bloqueada.","motivo":"Impago de suscripción"}`. Catálogo en 0 (verificado tras flush de caché — antes se veía por caché vieja). El tenant debe pagar la suscripción ERPiPOS. Sumar al PEDIDO-ERP.
 - **Implementado**: (1) Forms `[erpc_contact]`/`[erpc_quote]` con nonce+honeypot+rate, accesibles, email con Reply-To; páginas /contacto/ (form agregado) y /cotizar/ (nueva) con diseño Elementor completo. (2) SMTP propio sin plugins (phpmailer_init + settings + botón de prueba); configurado mail.armada.do:465 con no-reply; **correo de prueba + submit real entregados** (success:true end-to-end). (3) Hamburguesa ≤768px + footer mobile centrado + `.erpc-el-pagehero`. (4) Fix doble-documento en shortcodes embebidos (`erpc_should_print_frame()` + flag) y doble-render en contacto (estáticas Elementor-built se libran). (5) `users_can_register=0`; verificado 0 creación de usuarios WP — arquitectura confirmada: cuentas solo en ERP, WP solo admin.
 - **Casi-incidente**: un round-trip serialize por pipe corrompió `erpc_settings` (solo quedó template_mode) — restaurado desde respaldo + SMTP reconfigurado. REGLA: transforms de options serializados solo en scripts PHP con archivos, jamás pipes.
@@ -4846,9 +4861,9 @@ EOF又是
 - **Notas**: **Prod 5.4.0 sigue esperando el upload del owner** (~1 min, §(b)): wp-admin → Plugins → Añadir nuevo → Subir plugin → `export/armada-suite-5.4.2.zip` → Reemplazar la versión actual. Kalimete verifica al instante post-upload (smoke-prod + ops/status plugin 5.4.2). La marca seguirá "Tienda" hasta el fix de datos de Juan Carlos — el mensaje UX 5.4.2 lo reporta explícito al sincronizar.
 
 ### [10:20] - Sync bidireccional con Juan: su renta-vehículos traído (merge+16 migraciones) — nuestra Fase 3 sigue pendiente de su PR
-- **Tipo**: sync | infra | servicio (TARGET=kalimete; upstream soycarlosjerez-hub/sistema-facturacion)
+- **Tipo**: sync | infra | servicio (TARGET=Kalimete; upstream soycarlosjerez-hub/sistema-facturacion)
 - **Modificado**: ERP `dev/ecomm-erp` — merge `2306b64` de origin/main (bd1a879 de Juan: módulo renta de vehículos, 116 archivos, 8 sub-reportes) + push `8ae9bb2..2306b64`; preprod: 16 migraciones renta aplicadas (5 alter + 10 create + 1 constraint tenant_id, todas DONE), autoload+view:clear+queue:restart
-- **Afecta a**: erpipo preprod (kalimete) — módulo renta inerte sin seeders (tenant 10 MaganTech es tienda; seeders de Juan NO corridos, documentado)
+- **Afecta a**: erpipo preprod (Kalimete) — módulo renta inerte sin seeders (tenant 10 MaganTech es tienda; seeders de Juan NO corridos, documentado)
 - **Causa**: pedido del owner — validar si Juan integró nuestra Fase 3 (NO aún: sin PR #15, se la enviamos anoche) y traer lo nuevo de él (bd1a879 en main, hoy 08:47)
 - **Estado**: ✅ smoke PASS: /up ok db+redis, 0 migraciones pending, 5 rutas Fase 3 vivas (cancel + webhook-endpoints), ping-erp 200 (178ms, key_fp 0b0e33e7); merge sin conflictos (renta no toca ecomm/webhooks)
 - **Notas**: todo a la par salvo el PR de Juan: dev/ecomm-erp = main + Fase 3 + merge. Juan solo: review → PR → queue:restart (sin migrate extra, ya documentado). Seeders renta (ModuloSeeder/PermissionSeeder instance 14) quedan sin correr en preprod — correr si se quiere el catálogo renta visible.
@@ -4856,18 +4871,18 @@ EOF又是
 ### [10:20] - Ecco Suite: hallazgos de auditoría enviados upstream (PR #1 CSP nonce + Issue #2 RLS memberships) — sin aplicar nada
 
 - **Tipo**: servicio | doc
-- **Modificado**: GitHub VincentEQ/EccoSuit — branch `feature/csp-nonce` (commit 890be81, 7 archivos +135/−71) + PR #1 + Issue #2; local kalimete — `~/dev/eccoqualita/EccoSuit-develop` (branch feature/csp-nonce, develop intacto en a4644d6)
+- **Modificado**: GitHub VincentEQ/EccoSuit — branch `feature/csp-nonce` (commit 890be81, 7 archivos +135/−71) + PR #1 + Issue #2; local Kalimete — `~/dev/eccoqualita/EccoSuit-develop` (branch feature/csp-nonce, develop intacto en a4644d6)
 - **Afecta a**: repo upstream VincentEQ/EccoSuit (pendiente de aprobación del admin); NINGUNA aplicación (ni local develop ni producción)
 - **Causa**: auditoría de seguridad de suite.eccoqualita.com (misma fecha) halló 2 mejoras accionables; el owner definió el flujo: nosotros operamos producción, el código lo aprueba el admin upstream — se envían para evaluación, NO se aplican
 - **Estado**: ✅ verificado — PR #1 OPEN (https://github.com/VincentEQ/EccoSuit/pull/1), Issue #2 OPEN (https://github.com/VincentEQ/EccoSuit/issues/2), develop local sin cambios, producción intacta (health OK), procesos de prueba locales detenidos
-- **Notas**: PR #1 implementa el pendiente documentado de ellos (PLAN-INCREMENTO-5 §2-C): CSP con nonce por solicitud, sin 'unsafe-inline' en script-src; validado con build de producción + servidor standalone real (16/16 scripts con nonce, nonce igual header/HTML por petición, distinto entre peticiones, descargas con su CSP propia) + typecheck/lint + 624 tests unitarios (1 fallo preexistente Windows-en-Linux en embedded-recovery). Issue #2 = RLS para memberships/organization_modules (diseño de 3 vías org/usuario/admin, ~20 call sites mapeados) — va como issue porque es cambio arquitectónico que su Planificación debe evaluar. Acceso al repo: warcold con viewerPermission WRITE. Tests locales: puerto 5434 (5433 ocupado por ror-postgres en kalimete; guards de 5433 de ellos hacen skip de 3 suites de bootstrap — en la máquina del dev pasan).
+- **Notas**: PR #1 implementa el pendiente documentado de ellos (PLAN-INCREMENTO-5 §2-C): CSP con nonce por solicitud, sin 'unsafe-inline' en script-src; validado con build de producción + servidor standalone real (16/16 scripts con nonce, nonce igual header/HTML por petición, distinto entre peticiones, descargas con su CSP propia) + typecheck/lint + 624 tests unitarios (1 fallo preexistente Windows-en-Linux en embedded-recovery). Issue #2 = RLS para memberships/organization_modules (diseño de 3 vías org/usuario/admin, ~20 call sites mapeados) — va como issue porque es cambio arquitectónico que su Planificación debe evaluar. Acceso al repo: warcold con viewerPermission WRITE. Tests locales: puerto 5434 (5433 ocupado por ror-postgres en Kalimete; guards de 5433 de ellos hacen skip de 3 suites de bootstrap — en la máquina del dev pasan).
 
 ### [10:10] - Subagentes VISIBLES en autocomplete @ (espejo Victoria, decision del owner)
 - **Tipo**: agentes | config
-- **Modificado**: 19 subagentes (`agents/*.md` + `~/armada-arcade/agents/armada-arcade.md`): frontmatter `hidden: true` -> `hidden: false`. `kalimete.md` INTACTO (mode: primary, color teal, permission.task allowlist completa). `default_agent: kalimete` ya estaba.
-- **Afecta a**: kalimete (TUI opencode): Tab sigue mostrando SOLO kalimete/plan/build (primaries); el autocomplete `@` ahora lista los 19 subagentes (armada-arcade, eco-* x14, erp-dev, godot-dev, proxmark, wordpress-dev) para invocacion directa con `@Nombre`, ademas de la delegacion Task por kalimete.
-- **Causa**: owner (via Victoria): mismo fix aplicado en victoria 2026-10-01 — "quiero verlos todos al escribir @". En kalimete los 19 quedaron hidden:true al montarse la estructura espejo (entrada 02:30); ahora se abren.
-- **Verificado**: `opencode agent list` live: 19 subagentes resuelven `(subagent)`, primaries = kalimete+plan+build (+internos), CERO duplicados, permisos por agente intactos.
+- **Modificado**: 19 subagentes (`agents/*.md` + `~/armada-arcade/agents/armada-arcade.md`): frontmatter `hidden: true` -> `hidden: false`. `Kalimete.md` INTACTO (mode: primary, color teal, permission.task allowlist completa). `default_agent: Kalimete` ya estaba.
+- **Afecta a**: Kalimete (TUI opencode): Tab sigue mostrando SOLO Kalimete/plan/build (primaries); el autocomplete `@` ahora lista los 19 subagentes (armada-arcade, eco-* x14, erp-dev, godot-dev, proxmark, wordpress-dev) para invocacion directa con `@Nombre`, ademas de la delegacion Task por Kalimete.
+- **Causa**: owner (via Victoria): mismo fix aplicado en victoria 2026-10-01 — "quiero verlos todos al escribir @". En Kalimete los 19 quedaron hidden:true al montarse la estructura espejo (entrada 02:30); ahora se abren.
+- **Verificado**: `opencode agent list` live: 19 subagentes resuelven `(subagent)`, primaries = Kalimete+plan+build (+internos), CERO duplicados, permisos por agente intactos.
 - **Estado**: en sincronizacion (hub cada 5 min)
 - **Notas**: backup pre-cambio en `~/.config/opencode/bkup-agents/bkup-20261001-hidden-false/` (21 archivos). El binario opencode no esta en PATH no-interactivo: ruta canonica `/home/warcold/.opencode/bin/opencode`. Se requiere restart del TUI para que el autocomplete tome el cambio.
 
@@ -4878,7 +4893,7 @@ EOF又是
   - `class-erpc-api.php` — endpoints corregidos (sin duplicar /api/ en la URL)
   - `connector.js` — localStorage ahora guarda email + customer_id (no JWT token)
   - `CHANGELOG.md` — documentación completa v1.0.0 → v2.0.0 → v2.1.0
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: La ERP FlowApi NO usa JWT tokens. Los endpoints `/erpipos/v3/auth/login` y `/erpipos/v3/auth/register` retornan 404. Se implementa email-based lookup.
 - **Estado**: ✅ refactor completo, PHP syntax OK, git push OK (2 commits: v2.0.0 + v2.1.0)
 - **Notas**:
@@ -4900,7 +4915,7 @@ EOF又是
 ### [09:30] - Header/footer Elementor a full-width (secciones boxed los encajonaban)
 - **Tipo**: proyecto | fix | elementor | ux
 - **Modificado**: página 8 (home) — secciones de `[erpc_header]` y `[erpc_footer]` a `layout:full` vía MCP `batch-update`
-- **Afecta a**: kalimete (portada en modo elementor)
+- **Afecta a**: Kalimete (portada en modo elementor)
 - **Causa**: El topbar y footer del plugin (fondos sólidos) quedaban dentro de secciones Elementor `boxed` → se veían como caja centrada en PC.
 - **Verificación**: 5 secciones full en el render; fondos pintan a borde de pantalla; screenshot 1440px.
 - **Estado**: ✅ sincronizado
@@ -4908,7 +4923,7 @@ EOF又是
 ### [09:00] - Plugin v3.7.0: desktop full-width + columnas configurables (menos scroll en PC)
 - **Tipo**: proyecto | feature | ux | responsive
 - **Modificado**: plugin `erp-ecomm-connector` v3.7.0 (commit `b163149`, 4 archivos); home Elementor reestructurada
-- **Afecta a**: kalimete (experiencia desktop de la tienda)
+- **Afecta a**: Kalimete (experiencia desktop de la tienda)
 - **Causa**: En PC todo iba en caja ~1140px centrada (mucho scroll, márgenes vacíos). Best practice e-commerce: full-bleed + más columnas en desktop.
 - **Implementado**: (1) `data-columns` cablea el attr `columns` (estaba muerto): ≥1200px → 4/5/6 cols, 993-1199 → 3, resto intacto. (2) Home Elementor: hero/trust/CTA `layout:full`, trust 4 columnas, USP 2 columnas (apilan solas en móvil).
 - **Verificación**: home 200 con 3 secciones full, 12 cards con data-columns=4, CSS 3.7.0 servido con las reglas; screenshots 1440+375; móvil/tablet intactos (media queries existentes).
@@ -4925,34 +4940,34 @@ EOF又是
 ### [08:35] - Ecco Qualitá: rename de host suit → suite (suite.eccoqualita.com) — Caddy, .env de producción y toda la doc
 
 - **Tipo**: infra | red | doc
-- **Modificado**: VPS ecco — `/opt/eccoqualita/proxy/Caddyfile` (site block `suite.eccoqualita.com` + redirect 301 del viejo, cert LE nuevo obtenido) + `/opt/eccoqualita/eccosuit/.env` (`APP_URL`/`BETTER_AUTH_URL` → `https://suite.eccoqualita.com`, app recreada); kalimete — `MAPA.md`, `agents/ecco-suit.md`, `harness/kalimete.harness.json`, `harness/ecco-suit.harness.json`, `~/.config/opencode/ecosistema-map/MAPA.md` (todas las referencias suit→suite)
-- **Afecta a**: ecco (VPS), kalimete (doc local)
+- **Modificado**: VPS ecco — `/opt/eccoqualita/proxy/Caddyfile` (site block `suite.eccoqualita.com` + redirect 301 del viejo, cert LE nuevo obtenido) + `/opt/eccoqualita/eccosuit/.env` (`APP_URL`/`BETTER_AUTH_URL` → `https://suite.eccoqualita.com`, app recreada); Kalimete — `MAPA.md`, `agents/ecco-suit.md`, `harness/Kalimete.harness.json`, `harness/ecco-suit.harness.json`, `~/.config/opencode/ecosistema-map/MAPA.md` (todas las referencias suit→suite)
+- **Afecta a**: ecco (VPS), Kalimete (doc local)
 - **Causa**: el owner renombró el host: ya no es "suit", es "suite" → `suite.eccoqualita.com`; el DNS nuevo ya apuntaba a 62.171.144.58
 - **Estado**: ✅ verificado — health OK en `https://suite.eccoqualita.com/api/health` (`app:up, database:up`), cert Let's Encrypt para suite obtenido por Caddy, dominio viejo `suit.eccoqualita.com` responde **301 → suite** (redirect permanente conservado para links existentes), logs sin errores, cero referencias viejas en doc activa
 - **Notas**: Backups: `Caddyfile.bkup-20261027-rename-suite` + `.env.bkup-20261027-rename-suite` (en el VPS) y `*.bkup-20261027-rename-suite` (locales). El CHANGELOG histórico NO se reescribe (las entradas viejas describen el estado de su fecha). El nombre del agente sigue siendo `Ecco Suit` (identidad del agente, no del dominio). Si el DNS de `suit` se elimina a futuro, el bloque de redirect queda inofensivo.
 
 ### [08:20] - BillyCode: readme.txt handoff de contexto (temporal, el owner lo borra)
 - **Tipo**: docs de traspaso (pedido del owner: "deja instrucciones de lo que entiendes para continuar sin perder contexto")
-- **Que**: `~/dev/billycode/readme.txt` (131 líneas): nombre, visión, arquitectura, máquinas/accesos, inventario verificado, F0 con detalles técnicos (endpoints, formato SSE, prefill 75K, streaming), fases y pendientes, plan kalimete-ptt, 9 reglas operativas, rutas. Ledger AGENTS.md actualizado (línea readme temporal; 49 líneas).
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Que**: `~/dev/billycode/readme.txt` (131 líneas): nombre, visión, arquitectura, máquinas/accesos, inventario verificado, F0 con detalles técnicos (endpoints, formato SSE, prefill 75K, streaming), fases y pendientes, plan Kalimete-ptt, 9 reglas operativas, rutas. Ledger AGENTS.md actualizado (línea readme temporal; 49 líneas).
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [08:10] - BillyCode: nombre final decidido por el owner (era armada-code)
 - **Tipo**: rename de proyecto (orden directa del owner: "se llamara billycode")
 - **Que**: `mv ~/dev/armada-code ~/dev/billycode` + AGENTS.md actualizado (título, decisión de nombre, pendiente marcado [x]). Sin colisiones, sin otros cambios.
 - **Lección operativa (para Victoria)**: NUNCA backticks en comandos SSH remotos con comillas dobles — el zsh remoto los evalúa como sustitución de comandos (ensució la salida con errores, sin daño; el mv sí se aplicó). Usar wording sin backticks o comilla simple remota.
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [08:05] - opencode: había 2 binarios (owner tenía razón) → queda solo el original + proyecto en ~/dev
 - **Tipo**: auditoría + dedup + init de proyecto (reporte del owner: "opencode SÍ estaba instalado")
 - **Hallazgo**: el `which` del F0 falló por PATH no-interactivo, no por ausencia. Rastreo completo: único otro binario en `~/.opencode/bin/opencode` (instalador oficial, 30-sep, 185MB, v1.18.34) — detectado por la pista `export PATH="$HOME/.opencode/bin"` en ~/.zshrc. Nada en .local/bin, /usr/local/bin, /opt, go/bun/bin, pacman, mise. Quedaban 2 solo por el `npm i -g` del F0 (misma versión 1.18.34).
 - **Dedup**: eliminado SOLO el duplicado npm (`npm uninstall -g opencode-ai`); el original intacto. Equipo verificado intacto: 19 subagentes en `agent/` + opencode.jsonc (03-oct) + `agent list` carga permisos OK. Config/agentes/harness NO tocados.
 - **Proyecto**: `~/dev/armada-code/` creado con `AGENTS.md` ledger (48 líneas: qué es, mapa, comandos F0 verificados, 5 decisiones, 5 pendientes, relación con el stack + regla TARGET). Nombre de trabajo `armada-code` (owner decide final; renombrar = un `mv`).
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [08:00] - Home muestra Elementor de verdad + lección SQL/JSON documentada
 - **Tipo**: proyecto | fix | elementor | docs
 - **Modificado**: página 8 (home) con diseño Elementor nativo; modo elementor ACTIVO en el sitio
-- **Afecta a**: kalimete (portada de la tienda)
+- **Afecta a**: Kalimete (portada de la tienda)
 - **Causa**: Usuario veía el template del plugin aun con elementor "activo": (1) el modo seguía en plugin en DB (nunca se guardó el cambio); (2) aunque activo, los tripletes de shortcodes rinden markup del plugin → se veía igual.
 - **Fix**: modo elementor activado (round-trip PHP limpio) + home reconstruida como diseño nativo (hero/trust/productos/USP/CTA + [erpc_header]/[erpc_footer]) con el copy comercial e imágenes del inventario.
 - **Verificación**: home elementor: 74 widgets, hero nativo, 71 cards, USP+CTA, topbar/footer 1x, 1 doctype, 200.
@@ -4961,17 +4976,17 @@ EOF又是
 
 ### [08:00] - F0 SPIKE Armada Code: el cerebro opencode emite eventos en vivo (VIABLE ✅)
 - **Tipo**: spike/prototipo (luz verde del owner para F0; proyecto "nuestro opencode con voz")
-- **Que**: (a) opencode **1.18.34** instalado en kalimete vía `npm i -g opencode-ai` (~/.npm-global/bin; PINNEAR esta versión para F1); (b) `opencode serve --port 4096 --hostname 127.0.0.1` → `/global/health` {"healthy":true}; (c) spec OpenAPI en `/doc`: **162 paths** — están `/session`, `/session/{id}/message`, `/session/{id}/prompt_async`, `/event` (SSE), `/abort`, `/children` (subagentes), `/todo`, permisos; (d) formato SSE real: SIN campo `event:` — el tipo viaja DENTRO del JSON (`{"id":"evt_…","type":"…","properties":{}}`); tipos vistos: server.connected/heartbeat, session.created/updated/status/idle/diff, message.updated, message.part.updated, **message.part.delta**, plugin.added; (e) prueba 1 (texto): sesión + "Responde solo OK" → 200 vía provider `vllm` (gateway local, Qwen; 75K in por el prompt del agente kalimete); (f) prueba 2 (tools): "lista /tmp/oc-spike con bash y cuenta los .json" → el agente usó `bash` de verdad, respondió correcto ("2 archivos .json"), deltas y parts repartidos en 1.18s→5.56s = **STREAMING VIVO** ✅; sin trabas de permisos para `ls` (F1 debe manejar eventos permission de todos modos).
+- **Que**: (a) opencode **1.18.34** instalado en Kalimete vía `npm i -g opencode-ai` (~/.npm-global/bin; PINNEAR esta versión para F1); (b) `opencode serve --port 4096 --hostname 127.0.0.1` → `/global/health` {"healthy":true}; (c) spec OpenAPI en `/doc`: **162 paths** — están `/session`, `/session/{id}/message`, `/session/{id}/prompt_async`, `/event` (SSE), `/abort`, `/children` (subagentes), `/todo`, permisos; (d) formato SSE real: SIN campo `event:` — el tipo viaja DENTRO del JSON (`{"id":"evt_…","type":"…","properties":{}}`); tipos vistos: server.connected/heartbeat, session.created/updated/status/idle/diff, message.updated, message.part.updated, **message.part.delta**, plugin.added; (e) prueba 1 (texto): sesión + "Responde solo OK" → 200 vía provider `vllm` (gateway local, Qwen; 75K in por el prompt del agente Kalimete); (f) prueba 2 (tools): "lista /tmp/oc-spike con bash y cuenta los .json" → el agente usó `bash` de verdad, respondió correcto ("2 archivos .json"), deltas y parts repartidos en 1.18s→5.56s = **STREAMING VIVO** ✅; sin trabas de permisos para `ls` (F1 debe manejar eventos permission de todos modos).
 - **Riesgo retirado**: el bus `/event` sí emite en vivo (el issue de paridad SSE era del REST chat, no del bus que usa la TUI). Riesgo restante: ninguno bloqueante.
 - **Limpieza F0**: serve apagado, scratch /tmp/oc-spike borrado. Huella permanente: solo el binario opencode 1.18.34.
-- **Plan de retiro kalimete-ptt (DOCUMENTADO, NO ejecutado — condición del owner "si lo suplantamos")**: kalimete-ptt SIGUE INTACTO y activo (dictado en TODO el sistema + PTT_VOICE_REPLY; el cliente nuevo solo cubre voz DENTRO de su TUI, jamás el dictado global). Retiro solo cuando F2 demuestre el lazo de voz en-cliente + confirmación del owner. Pasos entonces: (1) `systemctl --user stop/disable kalimete-ptt`, (2) remover ~/.local/bin/kalimete-ptt + wrapper + env ~/.config/kalimete-ptt (respaldar antes), (3) quitar atajo de teclado Right Ctrl del sistema si es exclusivo, (4) OJO: victoria-tui pausa/restaura el daemon al correr — ese acoplamiento se elimina con el retiro. STT/TTS (voice-server :18810) NO se tocan (compartidos).
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Plan de retiro Kalimete-ptt (DOCUMENTADO, NO ejecutado — condición del owner "si lo suplantamos")**: Kalimete-ptt SIGUE INTACTO y activo (dictado en TODO el sistema + PTT_VOICE_REPLY; el cliente nuevo solo cubre voz DENTRO de su TUI, jamás el dictado global). Retiro solo cuando F2 demuestre el lazo de voz en-cliente + confirmación del owner. Pasos entonces: (1) `systemctl --user stop/disable Kalimete-ptt`, (2) remover ~/.local/bin/Kalimete-ptt + wrapper + env ~/.config/Kalimete-ptt (respaldar antes), (3) quitar atajo de teclado Right Ctrl del sistema si es exclusivo, (4) OJO: victoria-tui pausa/restaura el daemon al correr — ese acoplamiento se elimina con el retiro. STT/TTS (voice-server :18810) NO se tocan (compartidos).
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [08:00] - Ecco Suite: deploy Incremento 19 + Next 16.4.3 (parche seguridad) en VPS ecco + local sincronizado con repo GitHub
 
 - **Tipo**: servicio | deploy | seguridad
-- **Modificado**: VPS ecco (62.171.144.58) `/opt/eccoqualita/eccosuit/` (código rsync desde repo), imagen `eccosuit-app` (rebuild, Next 16.4.3), imagen `eccosuit-migrate` (rebuild con perfil tools), BD `ecco_suite` (migraciones 0023+0024 aplicadas); kalimete `~/dev/eccoqualita/EccoSuit-develop/` reemplazado por clon git de `github.com/VincentEQ/EccoSuit` rama `develop` (HEAD `a4644d6`)
-- **Afecta a**: ecco (VPS producción suit.eccoqualita.com), kalimete (copia dev local)
+- **Modificado**: VPS ecco (62.171.144.58) `/opt/eccoqualita/eccosuit/` (código rsync desde repo), imagen `eccosuit-app` (rebuild, Next 16.4.3), imagen `eccosuit-migrate` (rebuild con perfil tools), BD `ecco_suite` (migraciones 0023+0024 aplicadas); Kalimete `~/dev/eccoqualita/EccoSuit-develop/` reemplazado por clon git de `github.com/VincentEQ/EccoSuit` rama `develop` (HEAD `a4644d6`)
+- **Afecta a**: ecco (VPS producción suit.eccoqualita.com), Kalimete (copia dev local)
 - **Causa**: repo GitHub develop tenía 17 commits ahead (Incrementos 18-19 completos + commit `07649a0` de seguridad Next 16.4.0→16.4.3: GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr, GHSA-p3m5-59mp-jv5r); servidor y copia local estaban en snapshot del 17 oct (Next 16.4.0, sin carpetas del Inc 19, migraciones hasta 0022)
 - **Estado**: ✅ verificado — health `{"status":"ok","app":"up","database":"up"}` vía HTTPS, HTTP 307 (redirect login normal), logs sin errores, 25 migraciones en BD (columnas `purpose/inputs/outputs` en `processes`, enum `project_priority`, `process_kind` + `evaluation`), Next 16.4.3 confirmado dentro del contenedor
 - **Notas**: Backups previos en `/opt/eccoqualita/backups/`: BD `ecco_suite-pre-inc19-20261027-0741.dump` + código `eccosuit-code-pre-inc19-20261027-0742.tar.gz`; local viejo en `~/dev/eccoqualita/EccoSuit-develop.bkup-20261027`. **Lección ops**: `docker compose build` NO reconstruye servicios con `profiles` inactivos (migrate) — el primer run de migraciones usó imagen stale y dijo "aplicadas" sin aplicar nada; detectado verificando `__drizzle_migrations` contra `_journal.json`; fix: `docker compose --profile tools build migrate`. `.env`, `.env.postgres` y `docker-compose.yml` de producción intactos (excluidos del rsync).
@@ -4980,18 +4995,18 @@ EOF又是
 - **Tipo**: cambio cosmético (pedido del owner: quitar el banner, poner helper de comandos/shortcuts)
 - **Que**: el BANNER ASCII del arranque se reemplazó por MOTD_HELPER de 3 líneas: título + (Right Ctrl hablar, /call, /art, /hangup) + (F2 voz, F3 config, F4 callar, PgUp/PgDn scroll, /help). Atajos verificados contra el código real (F2=/voice, F3=config, F4=hush, F9=PTT fallback).
 - **Verificado**: captura pseudo-TTY muestra el helper 1x, 0 rastros del banner viejo; --check OK; TUI viva.
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [07:30] - victoria-tui: banner MOTD "VAROEROS" → VICTORIA legible (reporte del owner)
 - **Tipo**: fix cosmético (el owner preguntó "qué significa VAROEROS" — no significaba nada)
-- **Que**: el BANNER figlet del MOTD (8 glifos, intentaba decir VICTORIA) se emborronaba con la fuente del terminal y se leía como "VAROEROS". Reemplazado por letras ASCII simples 5x5 verificadas + subtítulo "tu IA · hija de Alfredo Armada · kalimete". Lógica intacta.
+- **Que**: el BANNER figlet del MOTD (8 glifos, intentaba decir VICTORIA) se emborronaba con la fuente del terminal y se leía como "VAROEROS". Reemplazado por letras ASCII simples 5x5 verificadas + subtítulo "tu IA · hija de Alfredo Armada · Kalimete". Lógica intacta.
 - **Verificado**: captura pseudo-TTY en vivo muestra VICTORIA legible ✅; --check TODO OK; TUI viva (exit 124).
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [07:30] - Plugin v3.6.0: plantilla dual completa + hamburguesa + aislamiento total de templates
 - **Tipo**: proyecto | feature | fix | elementor | responsive
 - **Modificado**: plugin `erp-ecomm-connector` v3.6.0 (commit `9bd187b`, 6 archivos); 6 slugs con datos Elementor; demo 53 eliminada; home dup 30 + Sample a draft
-- **Afecta a**: kalimete (modelo dual plugin|elementor por tenant)
+- **Afecta a**: Kalimete (modelo dual plugin|elementor por tenant)
 - **Causa**: Usuario: Elementor incompleto (solo landing, sin carrito/etc), fuga entre templates al navegar, sin hamburguesa responsive, alinear textos.
 - **Implementado**: (1) Hamburguesa ≤768px con dropdown + aria + auto-cierre (header compartido, sirve a `[erpc_header]`). (2) 6 slugs duales (inicio/productos/carrito/checkout/login/mi-cuenta): mismas URLs en ambos modos — plugin hijacka en modo plugin, Elementor renderiza en modo elementor. (3) Router refinado (plugin gana en mapeados). (4) Fix JSON inválido en productos/elementor (comillas SQL). (5) Textos: sistema coherente (héroes centro, contenido izquierda) — validado.
 - **Verificación**: plugin mode 4/4 páginas frame completo; elementor mode 6/6 con chrome Elementor (topbar vía shortcode, footer 1x, 0 fugas); 15 productos render; hamburguesa en DOM + CSS + JS válido (node --check); sintaxis OK; push OK.
@@ -5016,7 +5031,7 @@ EOF又是
 ### [06:30] - WP connector v3.12.4: testimonio Miguel A. → Laura A. (foto/nombre)
 - **Tipo**: proyecto | fix | contenido | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/templates/partials/social-proof.php` (testimonio Punta Cana: "Miguel A." → "Laura A."), bump 3.12.3→3.12.4 + CHANGELOG plugin; commit plugin `de4a3e1`. Backup `.bkup-20260922`.
-- **Afecta a**: kalimete (wordpress-local, home)
+- **Afecta a**: Kalimete (wordpress-local, home)
 - **Causa**: Usuario: "Miguel A. Punta Cana tiene imagen femenina con nombre de varón". Validado visualmente: avatar-3.jpg es foto femenina; avatar-1 (Carolina) y avatar-2 (José) correctos. Sin avatares masculinos libres en `assets/img/`, se corrigió el nombre (texto neutro intacto).
 - **Verificación**: home sirve "Laura A." (nombre + alt), "Miguel A." ausente; Playwright headless: 3/3 avatares cargan (256px), foto/nombre coherentes.
 - **Estado**: ✅ sincronizado
@@ -5024,7 +5039,7 @@ EOF又是
 ### [06:30] - Plugin v3.5.2: copy comercial/SEO + imágenes acordes al inventario + responsive validado
 - **Tipo**: proyecto | ux | seo | elementor
 - **Modificado**: plugin `erp-ecomm-connector` v3.5.2 (commit `6f31f6d`); página Elementor 53 (batch-update 6 widgets); media library (IDs 55-56 nuevas, 49-50 sin referencias)
-- **Afecta a**: kalimete (tienda MaganTech)
+- **Afecta a**: Kalimete (tienda MaganTech)
 - **Causa**: Pedido usuario: imágenes no iban con el inventario real, textos debían ser comerciales/SEO sin mencionar "ERP", validar responsive.
 - **Cambios**: (1) Inventario real mapeado (18 categorías: cables, componentes, computadoras, accesorios laptop, redes). (2) Hero: "Componentes, cables y accesorios para tu PC y oficina" + "Stock real, precios competitivos y envío a toda RD" — keywords del inventario. (3) Imágenes Pexels acordes: display de computadoras (hero, ID 55) + tarjetas de video (USP, ID 56). (4) USP sin "ERP": "verificados en nuestro inventario". (5) CTA: "¿Listo para equipar tu setup?".
 - **Responsive**: validado 375/768/1280px en ambas plantillas — 0 overflow, meta viewport, media queries 992/768/480 con grids 3→2→1, Elementor containers renderizan en todos los breakpoints. Screenshots en /tmp/opencode/resp-*.png.
@@ -5034,9 +5049,9 @@ EOF又是
 ### [06:15] - WP connector v3.12.3: imágenes destacados home + thumbs carrito
 - **Tipo**: proyecto | fix | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector`: `templates/partials/featured.php` (mapeo manual → `ERPC_API::normalize_producto()`), `includes/class-erpc-cart.php::enrich()` (imagen envuelta en `normalize_image_url()`), bump 3.12.2→3.12.3 + CHANGELOG plugin; commit plugin `e5bc78a`. Backups `.bkup-20260922`.
-- **Afecta a**: kalimete (wordpress-local, home + carrito)
+- **Afecta a**: Kalimete (wordpress-local, home + carrito)
 - **Causa**: Usuario: en la tienda se veían bien pero los 4 destacados de la home mostraban icono roto. Causa: `featured.php` era el único punto con mapeo manual de productos SIN `normalize_image_url()` → servía `https://10.0.0.106:8100/...` (puerto 8100 solo habla HTTP → ERR_SSL_PROTOCOL_ERROR). El `enrich()` del carrito tenía el mismo bypass.
-- **Verificación**: home sirve `https://erp.kalimete.local/...` (placeholder 200, webp real 200); Playwright headless: 4/4 destacados cargan (`naturalWidth>0`), 0 rotas, 0 errores JS; regresión categorías Todo 15 / Cables 7 / Monitores 10; `php -l` OK en los 3 archivos.
+- **Verificación**: home sirve `https://erp.Kalimete.local/...` (placeholder 200, webp real 200); Playwright headless: 4/4 destacados cargan (`naturalWidth>0`), 0 rotas, 0 errores JS; regresión categorías Todo 15 / Cables 7 / Monitores 10; `php -l` OK en los 3 archivos.
 - **Estado**: ✅ sincronizado
 
 ### [06:15] - Micaserogou login mobile: sin scroll + gap simétrico 24px + nav "Menú" + footer solo marca
@@ -5067,13 +5082,13 @@ EOF又是
   2. **Cuenta admin SM**: el flujo real NO es "primer login crea cuenta" — credenciales de fábrica `admin`/`servermanager` (doc de config.example.yml) → login 302 a `/accounts/new-password` → password permanente seteado → re-login 302 a `/` ✅. Credenciales en `/srv/assetto-corsa/.sm-admin-credentials` (600, root-only, nunca en chat)
   3. **DNS srv00** (subagente Cloudflare): CNAME→túnel eliminado (ID `792ea47c…`), nuevo A record DNS-only `154.53.35.102` (ID `d657f44339febb5dcbc523a1850afe5a`, TTL auto, comment "Assetto Corsa game port UDP/TCP 9600"); `dig @1.1.1.1` → 154.53.35.102 al primer intento; `assetto.armada.do` (túnel, UI) intacto
   4. **CORRECCIÓN entrada 04:45**: el firewall del VPS NO era "ACCEPT all" — es `INPUT policy DROP` con reglas explícitas (el tcpdump captura antes de netfilter, por eso parecía que UDP pasaba). Añadidas y persistidas (netfilter-persistent): UDP 9600, TCP 9600, TCP 8081 (este último para descargas de coches vía Content Manager)
-  5. **E2E verificado desde kalimete**: TCP 9600 `succeeded` con handshake completo capturado (SYN→SYN-ACK→ACK→FIN); UDP 9600 llega a eth0; SM UI 302 vía túnel. Proceso manual acServer matado tras la prueba — el SM lanza el suyo al crear una race desde la UI
+  5. **E2E verificado desde Kalimete**: TCP 9600 `succeeded` con handshake completo capturado (SYN→SYN-ACK→ACK→FIN); UDP 9600 llega a eth0; SM UI 302 vía túnel. Proceso manual acServer matado tras la prueba — el SM lanza el suyo al crear una race desde la UI
   6. **Lección**: una instancia manual de acServer murió sola tras recibir probes UDP basura — no enviar paquetes malformados a un server en pruebas; y tcpdump en el VPS captura pre-netfilter, no prueba que el paquete llegue a la app
 
 ### [05:45] - WP connector v3.12.2: fix categorías no actualizaban sin F5 (guard ERPCLog)
 - **Tipo**: proyecto | fix | wordpress-dev
 - **Modificado**: `~/dev/wordpress/.../erp-ecomm-connector/assets/js/connector.js` (shim no-op de `window.ERPCLog` al inicio del IIFE), `erp-ecomm-connector.php` (bump 3.12.1→3.12.2), CHANGELOG plugin; commit plugin `2fda895` (v3.11.3→v3.12.2, incluye trabajo v3.12.0/3.12.1 que estaba sin commitear). Backups `.bkup-20260922`.
-- **Afecta a**: kalimete (wordpress-local, https://wordpress.kalimete.local)
+- **Afecta a**: Kalimete (wordpress-local, https://wordpress.Kalimete.local)
 - **Causa**: Síntoma del usuario: click en categoría → URL cambiaba (`?categoria=X`) pero el grid no se actualizaba hasta F5, en cada click. Causa raíz reproducida con Playwright: v3.12.0 insertó `ERPCLog.info()` en el camino crítico del click handler (tras `erpcSyncCategoryUrl()`) y como primera línea de `loadProducts()`; si el navegador no carga `logger.js` (cacheado 404/ausente de sesión previa), `ERPCLog is not defined` → TypeError mata el handler DESPUÉS del URL sync y ANTES de `loadProducts()`. Telemetría no-crítica en camino crítico sin guard.
 - **Verificación**: Playwright + Chromium headless: (1) logger.js bloqueado → click Monitores → grid 15→10, 0 errores JS (antes: TypeError + grid congelado); (2) regresión camino caché: Cables 7, Monitores 10, Todo 15; (3) camino AJAX (localStorage vacío): Monitores 10, Cables 5; sitio sirve `ver=3.12.2` con shim; `node --check` + `php -l` OK.
 - **Notas**: El bump de versión invalida el connector.js cacheado en el navegador del usuario. Si el usuario aún viera el bug: hard refresh (Ctrl+Shift+R) una sola vez.
@@ -5097,7 +5112,7 @@ EOF又是
 ### [05:00] - WP connector v3.12.10: checkout exige sesión (anti-suplantación)
 - **Tipo**: proyecto | seguridad | wordpress-dev
 - **Modificado**: plugin (connector.js, shortcodes, auth; bump 3.12.9→3.12.10 + CHANGELOG; commit plugin pendiente).
-- **Afecta a**: kalimete (wordpress-local, /checkout/ y /login/)
+- **Afecta a**: Kalimete (wordpress-local, /checkout/ y /login/)
 - **Causa**: Usuario: comprar sin login permite suplantación (solo email + pago contra entrega) y preguntó por duplicados. Verificado: el ERP reutiliza cliente por email+tenant (2 órdenes → 1 cliente, NO duplica), pero la suplantación era real.
 - **Verificación**: guest → /login/?redirect → registro → /checkout/ con items → orden V-269 ✅; POST sin token rechazado ✅.
 - **Estado**: ✅ sincronizado
@@ -5132,7 +5147,7 @@ EOF又是
 ### [04:30] - WP connector v3.12.9: checkout total 0 + bloquear orden 0 + reclamo guest
 - **Tipo**: proyecto | fix | wordpress-dev + erp-local
 - **Modificado**: plugin (connector.js, shortcodes, auth, api, form auth; bump 3.12.8→3.12.9 + CHANGELOG; commit `7798555`). ERP: submitGuest acceso_api, resetPassword plano+acceso (fix doble-hash), forgotPassword store_url, notificación link a tienda. Backups `.bkup-20260923`.
-- **Afecta a**: kalimete (wordpress-local, erpipo-preprod)
+- **Afecta a**: Kalimete (wordpress-local, erpipo-preprod)
 - **Causa**: Usuario: resumen en RD$ 0.00, orden en 0 "exitosa", guest sin cuenta en ERP. Diagnóstico: selector JS inexistente (orden V-264 correcta en ERP: 2694.70); sin validación total>0; guest sin clave/acceso y sin vía de reclamo; doble-hash en reset.
 - **Verificación E2E**: totales display OK, bloqueo carrito vacío OK, guest → orden V-265 + email reset → set clave → login OK. Cliente 196 acceso=true tenant=10.
 - **Nota**: el `&amp;` del email HTML es correcto (navegador lo decodifica); mi test inicial lo extrajo sin decodificar (falso positivo, no bug).
@@ -5141,10 +5156,10 @@ EOF又是
 ### [04:30] - Micaserogou: sistema visual unificado (5 cabeceras 480px) + fix crítico del detalle de producto + atribución alfredo.pro + guía reutilizable
 - **Tipo**: servicio | frontend | docs
 - **Modificado**: micaserogou (preprod): mu-plugin NUEVO `wp-content/mu-plugins/erpc-micaserogou-visual.php` v1.1.0 (heroes catálogo/sobre-nosotros/reservas, fondo a sangre del login, card 440px, fix overflow `.erpc-container`, barra de atribución alfredo.pro vía `wp_footer` prio 30); `uploads/erpc/producto-detalle.html` + espejo `mejoras-restaurante/` (cierre `})();` del IIFE + fix overflow móvil); `uploads/erpc/contacto.html` + `reservas.html` (+ espejos, backups `.bkup-20261022`); `mu-plugins/erpc-html-filter.php` + `erpc-html-shortcode.php` (guarda `defined()` sobre `ERPC_HTML_DIR`); 5 banners WebP 1600×914 en `assets/img/packs/restaurant/` y `wp-content/uploads/erpc/img/`; `scripts/shot-cdp.py` NUEVO; `CHANGELOG.md` del sitio NUEVO; `docs/GUIA-TEMPLATES-RESTAURANTE.md` NUEVO; `docs/evidencia/2026-10-22/` (21 capturas); hub: `agents/micaserogou.md` (gotchas + cambios recientes), `harness/micaserogou.harness.json` (vivo 2026-10-22 + pitfalls)
-- **Afecta a**: sitio cliente Micaserogou (preprod `micaserogou.kalimete.local`); **producción NO tocada** (requiere ventana + rollback vía `erpsuite/v1/ops`); plugin `armada-suite` NO modificado (compartido entre tenants)
+- **Afecta a**: sitio cliente Micaserogou (preprod `micaserogou.Kalimete.local`); **producción NO tocada** (requiere ventana + rollback vía `erpsuite/v1/ops`); plugin `armada-suite` NO modificado (compartido entre tenants)
 - **Causa**: orden del owner — unificar identidad visual, quitar la imagen de tecnología del catálogo, dar fondo cálido al login, diseñar el detalle de producto e integrar la atribución de alfredo.pro sin dañar el branding del cliente
 - **Estado**: ✅ Validado 21/21 (7 páginas × 375/768/1440): `scroll_h=0`, 5 cabeceras en 480px con `border-radius:0`, card de login 440px (303 @375), 1 sola atribución alfredo.pro, 0 imágenes rotas, 0 errores de consola, sin warnings PHP nuevos
-- **Notas**: (1) **Bug crítico**: `producto-detalle.html` no cerraba el IIFE exterior → `SyntaxError: Unexpected end of input` → TODAS las fichas de producto quedaban muertas en "Cargando producto…" sin error visible en el servidor; corregido y verificado en vivo (id=261 → "ALITAS A LA BARBACOA PICANTES", RD$ 350.00). (2) **El pack gana al HTML del sitio**: `/sobre-nosotros/` lo sirve `templates/packs/restaurant/partials/about.php` e IGNORA el `[erpc_html file="sobre-nosotros.html"]` → ese HTML del sitio es código muerto y su hero heredaba el overlay azul de tecnología (`connector.css:3341-3343`); el override va por CSS site-level. `/reservas/` y `/contacto/` sí usan HTML propio, cuyo CSS inline gana por orden en el documento → el fix definitivo va en esos archivos. (3) **Login a sangre**: `.erpc-auth-page` vive dentro de `.erpc-container` → el fondo va en `::before` con `position:fixed` + `isolation:isolate`; `background-attachment:fixed` solo ≥769px (jitter en móvil). (4) **Atribución alfredo.pro** como barra SEPARADA bajo el footer del cliente, con el SVG exacto extraído del bundle de PetSuite (`assets/index-CsG5EeBR.js` + `assets/index-Cg_BL46I.css`), opacity .55→1 al hover; el copyright del cliente NO se toca. (5) **Overflow horizontal de 32px** en todo el sitio (<1272px) por `content-box` + padding lateral en `.erpc-container` → fix site-level `box-sizing:border-box` + `max-width:1280px`; **upstream recomendado** al agente `armada-suite`. (6) **Warning PHP eliminado**: `ERPC_HTML_DIR` duplicada en 2 mu-plugins. (7) **Playwright roto en kalimete** (`Connection.init: Connection closed while reading from the driver`) → helper CDP `scripts/shot-cdp.py`. (8) `docs/GUIA-TEMPLATES-RESTAURANTE.md` documenta el sistema completo (cabeceras, login, detalle, atribución, overflow, imágenes, verificación, checklist y 7 deudas técnicas) para reutilizar en MaganTech y futuros negocios. (9) **Deuda abierta**: API key del ERP en texto plano en `erpc-html-filter.php:92` → mover a `secrets/` (pendiente de autorización del owner).
+- **Notas**: (1) **Bug crítico**: `producto-detalle.html` no cerraba el IIFE exterior → `SyntaxError: Unexpected end of input` → TODAS las fichas de producto quedaban muertas en "Cargando producto…" sin error visible en el servidor; corregido y verificado en vivo (id=261 → "ALITAS A LA BARBACOA PICANTES", RD$ 350.00). (2) **El pack gana al HTML del sitio**: `/sobre-nosotros/` lo sirve `templates/packs/restaurant/partials/about.php` e IGNORA el `[erpc_html file="sobre-nosotros.html"]` → ese HTML del sitio es código muerto y su hero heredaba el overlay azul de tecnología (`connector.css:3341-3343`); el override va por CSS site-level. `/reservas/` y `/contacto/` sí usan HTML propio, cuyo CSS inline gana por orden en el documento → el fix definitivo va en esos archivos. (3) **Login a sangre**: `.erpc-auth-page` vive dentro de `.erpc-container` → el fondo va en `::before` con `position:fixed` + `isolation:isolate`; `background-attachment:fixed` solo ≥769px (jitter en móvil). (4) **Atribución alfredo.pro** como barra SEPARADA bajo el footer del cliente, con el SVG exacto extraído del bundle de PetSuite (`assets/index-CsG5EeBR.js` + `assets/index-Cg_BL46I.css`), opacity .55→1 al hover; el copyright del cliente NO se toca. (5) **Overflow horizontal de 32px** en todo el sitio (<1272px) por `content-box` + padding lateral en `.erpc-container` → fix site-level `box-sizing:border-box` + `max-width:1280px`; **upstream recomendado** al agente `armada-suite`. (6) **Warning PHP eliminado**: `ERPC_HTML_DIR` duplicada en 2 mu-plugins. (7) **Playwright roto en Kalimete** (`Connection.init: Connection closed while reading from the driver`) → helper CDP `scripts/shot-cdp.py`. (8) `docs/GUIA-TEMPLATES-RESTAURANTE.md` documenta el sistema completo (cabeceras, login, detalle, atribución, overflow, imágenes, verificación, checklist y 7 deudas técnicas) para reutilizar en MaganTech y futuros negocios. (9) **Deuda abierta**: API key del ERP en texto plano en `erpc-html-filter.php:92` → mover a `secrets/` (pendiente de autorización del owner).
 
 ### [04:30] - Armada Suite 5.1.5: sin barra superior, submenú izquierdo persistente
 - **Tipo**: fix | ux | wordpress
@@ -5163,7 +5178,7 @@ EOF又是
 ### [03:30] - erp-chatbot v1.4.0: chat retoma al llegar + mapa del sitio (guía total)
 - **Tipo**: proyecto | fix+feature | UX conversacional | wordpress
 - **Modificado**: erp-chatbot 1.3.0→1.4.0 (~/dev/wordpress: retome incondicional con líneas por destino, mapa del sitio dinámico, ir_a contra el mapa, prompt con destinos). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget del chatbot)
 - **Causa**: Usuario: (1) al navegar al carrito el chat se cerraba sin poder continuar (en checkout quiere seguir hasta confirmar el cierre); (2) el asistente debe guiar por TODA la web en voz y texto, con mapa para nunca perderse (cada instancia distinta).
 - **Diagnóstico**: retomar exigía al_llegar (vacío en carrito/checkout) → chat cerrado; destinos fijos sin noción del sitio real.
 - **Solución**: retome siempre (con fallback por destino); mapa con las páginas reales de la instancia (hoy 8); ir_a validado contra el mapa; prompt con destinos disponibles para guiar por donde pida.
@@ -5173,7 +5188,7 @@ EOF又是
 ### [03:30] - Plugin v3.5.1: Elementor override funcional + multi-color en ambas plantillas + auditoría limpia
 - **Tipo**: proyecto | fix | seguridad | elementor | mcp
 - **Modificado**: plugin `erp-ecomm-connector` v3.5.1 (commit `169514b`, 8 archivos); página demo Elementor ID 53; imágenes Pexels en media library (IDs 49-50)
-- **Afecta a**: kalimete (tienda + modelo multi-tenant)
+- **Afecta a**: Kalimete (tienda + modelo multi-tenant)
 - **Causa**: Validación integral pedida: (1) el override Elementor no funcionaba de verdad — el router secuestraba páginas Elementor vía fallback de shortcode antes que Elementor renderizara; (2) labels de presets con adornos; (3) plantilla Elementor con imágenes multi-uso.
 - **Auditoría**: 0 XSS (echo sin escape), 0 SQL sin prepare, 0 dead code, 0 duplicados, todos los AJAX con nonce (verificado handler por handler), rate limiting en register/login/checkout, colores con sanitize_hex_color + esc_html en inline CSS. Fix adicional: dir uploads/2026/09 era root (uploads fallaban).
 - **Fix arquitectura**: router respeta `_elementor_edit_mode=builder` (jamás intercepta); `[erpc_products]` rinde content-only (`products-content.php`); frame flag global (wp_footer solo si header abrió); labels simples azul/rosa/gris.
@@ -5185,7 +5200,7 @@ EOF又是
 ### [03:30] - ERP local: revert asignación + clave owner MaganTech (m.garcia@magantech.com.do, id=35)
 - **Tipo**: proyecto | accesos | erp-local
 - **Modificado**: DB `erpipo-preprod-db` (users: id=23 business_instance_id → null; id=35 password hash nuevo; sin secretos en este log)
-- **Afecta a**: kalimete (erpipo-preprod, panel erp.kalimete.local)
+- **Afecta a**: Kalimete (erpipo-preprod, panel erp.Kalimete.local)
 - **Causa**: Usuario corrigió el enfoque — prefiere probar desde la perspectiva del dueño de la tienda (admin-business) en vez de asignarse él la instancia. Ambos cambios autorizados por el usuario.
 - **Verificación**: login m.garcia@magantech.com.do → 302 dashboard; dashboard/ordenes/productos/clientes → 200 con su sesión; /owner/* → 403 correcto (sección system-owner).
 - **Estado**: ✅ sincronizado
@@ -5215,8 +5230,8 @@ EOF又是
 
 ### [03:28] - Desvinculación total del servidor ERP externo (prod no se toca)
 - **Tipo**: seguridad | red | accesos | docs
-- **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919-unlink`, bloque `Host vps-erpipo` eliminado); `MAPA.md` + copia local (topología y nodo retirados); `agents/kalimete.md` (fila, alias y bullet retirados); `agents/erp-dev.md` (sección Producción → nota de desvinculación); entradas CHANGELOG de hoy saneadas (IP/detalles SSH redactados); `~/dev/erpipo-preprod/.env.preprod` y `dev-stack/` eliminados (copias de config de terceros, 68K, nadie los usaba); `preprod.env` MAIL_FROM → `dev@erp.kalimete.local`; comentario docker-compose reworded
-- **Afecta a**: kalimete (alias SSH fuera, docs limpios); preprod intacto y verificado (LOGIN 200 tras restart)
+- **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919-unlink`, bloque `Host vps-erpipo` eliminado); `MAPA.md` + copia local (topología y nodo retirados); `agents/Kalimete.md` (fila, alias y bullet retirados); `agents/erp-dev.md` (sección Producción → nota de desvinculación); entradas CHANGELOG de hoy saneadas (IP/detalles SSH redactados); `~/dev/erpipo-preprod/.env.preprod` y `dev-stack/` eliminados (copias de config de terceros, 68K, nadie los usaba); `preprod.env` MAIL_FROM → `dev@erp.Kalimete.local`; comentario docker-compose reworded
+- **Afecta a**: Kalimete (alias SSH fuera, docs limpios); preprod intacto y verificado (LOGIN 200 tras restart)
 - **Causa**: usuario pidió desvincularse: prod no se toca, sin registro del servidor externo en ningún lado
 - **Verificación**: `ssh -G vps-erpipo` ya no resuelve (alias fuera); `ssh -G vps-proxy` OK (1444); grep alias/IP en MAPA+agentes+local = 0; preprod LOGIN 200
 - **Se deja intacto a propósito**: historial ecomm antiguo que cita la API pública (otro workstream); inventario Cloudflare/SKILL del registro DNS (la zona no cambió; borrar el registro rompería la tienda — no autorizado); branding `erpipos` dentro del código app (DB name, README, CORS — es el producto, no info de acceso); backup tar del Desktop (semilla del preprod, sin datos de conexión)
@@ -5226,38 +5241,38 @@ EOF又是
 ### [03:23] - Repo GitHub privado erpipo-preprod + auditoría aislamiento preprod
 - **Tipo**: infra | git | seguridad | preprod | erpipo
 - **Modificado**: repo nuevo `github.com/warcold/erpipo-preprod` (PRIVATE); `.gitignore` endurecido en el código; `agents/erp-dev.md` (repo + workflow + reglas); `MAPA.md` (nodo 6: repo); este CHANGELOG
-- **Afecta a**: kalimete (workflow GitHub → preprod → prod habilitado)
+- **Afecta a**: Kalimete (workflow GitHub → preprod → prod habilitado)
 - **Causa**: usuario pidió validar aislamiento/funcionalidad y subir a GitHub privado sin DB
-- **Auditoría aislamiento** (verificado contra lo real): red dedicada `erpipo-dev-network` (172.22.0.x, no compartida); volúmenes propios `erpipo-dev-mysql-data`/`erpipo-dev-redis-data`; puertos :8100/:8102/:3310/:6390 sin colisión (6379=alfredo-ecomm, 3307=wordpress-db, 5432=postgres); vhost nginx dedicado `erp.kalimete.local.conf` (otros 11 sites intactos); resto de contenedores (12) sin afectación
+- **Auditoría aislamiento** (verificado contra lo real): red dedicada `erpipo-dev-network` (172.22.0.x, no compartida); volúmenes propios `erpipo-dev-mysql-data`/`erpipo-dev-redis-data`; puertos :8100/:8102/:3310/:6390 sin colisión (6379=alfredo-ecomm, 3307=wordpress-db, 5432=postgres); vhost nginx dedicado `erp.Kalimete.local.conf` (otros 11 sites intactos); resto de contenedores (12) sin afectación
 - **Funcionalidad** (verificado): `/` 302→/login, `/login` 200 (18KB), `/phpmyadmin` 200; `artisan about`: Laravel 12.16, PHP 8.3.33, env preprod, debug OFF; DB 203 tablas; Redis PONG; scheduler corriendo; cert mkcert hasta 2028-12-18
 - **Limpieza pre-push**: eliminado dup `sistema-facturacion/sistema-facturacion/` (3.8G, untracked); untracked `.env.backup_audit` (tenía APP_KEY), dumps `*.sql` (68M: releases/ 51M + solo_inserts 7.8M + app/backups 8.8M), views compilados (27 archivos), `*.backup`; placeholders storage restaurados
 - **Repo**: `main` = upstream `05b3323` + 2 commits limpieza (`163839b`, `cc24bf7`); remotos: `origin`=upstream (RO), `preprod`=privado (push); árbol remoto verificado: 0 archivos `.sql`/secrets/`releases/`
-- **DB real** (db.sql 528M + storage 3.5G) nunca entró a git — solo vive en kalimete + contenedor
-- **Workflow confirmado**: GitHub privado → preprod kalimete (pruebas) → prod (vía Git, sin acceso directo; vínculo SSH retirado)
+- **DB real** (db.sql 528M + storage 3.5G) nunca entró a git — solo vive en Kalimete + contenedor
+- **Workflow confirmado**: GitHub privado → preprod Kalimete (pruebas) → prod (vía Git, sin acceso directo; vínculo SSH retirado)
 - **Estado**: ✅ sincronizado
 - **Notas**: historial upstream puede contener secretos viejos (repo es PRIVATE, riesgo contenido); si se rota APP_KEY de prod avisar; infra docker (compose/Dockerfile) queda local + documentada en erp-dev, no en el repo de código
 
 ### [03:15] - ERP local: usuario me@alfredo.pro (id=23) asignado a instancia MaganTech (10)
 - **Tipo**: proyecto | accesos | erp-local
 - **Modificado**: DB `erpipo-preprod-db` (users.business_instance_id  null → 10)
-- **Afecta a**: kalimete (erpipo-preprod, panel erp.kalimete.local)
+- **Afecta a**: Kalimete (erpipo-preprod, panel erp.Kalimete.local)
 - **Causa**: Usuario veía la instancia MaganTech sin su API key. Diagnóstico: key id=2 `magantechwebsite` existe y activa, pero el TenantScope fail-closed la ocultaba (usuario sin instancia → resolveTenantId null). Asignación autorizada por el usuario.
 - **Verificación**: /owner/instances/10/api-keys → 200 y muestra `magantechwebsite`.
 - **Nota**: key de pruebas = id=2 `magantechwebsite` → instancia 10 (existe también en prod; la data local es snapshot + writes de prueba).
 - **Estado**: ✅ sincronizado
 
-### [03:08] - Preprod ERP dockerizado en kalimete (erp.kalimete.local)
+### [03:08] - Preprod ERP dockerizado en Kalimete (erp.Kalimete.local)
 - **Tipo**: infra | docker | preprod | erpipo
-- **Modificado**: `MAPA.md` (nodo kalimete-preprod añadido); `CHANGELOG.md`; `agents/erp-dev.md` (subagente creado); `docker-compose.yml` (stack preprod); `preprod.env` (.env preprod); `nginx` TLS config (erp.kalimete.local.conf + mkcert); symlink `~/.config/opencode/agent/erp-dev.md`
-- **Afecta a**: kalimete (preprod ERP dockerizado)
+- **Modificado**: `MAPA.md` (nodo Kalimete-preprod añadido); `CHANGELOG.md`; `agents/erp-dev.md` (subagente creado); `docker-compose.yml` (stack preprod); `preprod.env` (.env preprod); `nginx` TLS config (erp.Kalimete.local.conf + mkcert); symlink `~/.config/opencode/agent/erp-dev.md`
+- **Afecta a**: Kalimete (preprod ERP dockerizado)
 - **Stack dockerizado** standalone (sin vínculo a prod): app (erpipo-preprod), nginx (:8100), db (mysql:8.0, :3310), redis (redis:7-alpine, :6390), queue, scheduler, phpmyadmin (:8102)
 - **Dump importado**: 601 migraciones, batch 145 (facturacion_db, 528MB)
 - **Código**: ~/dev/erpipo-preprod/code/sistema-facturacion/ (3.8G, uid 1000:1000 en storage/)
-- **SSL**: mkcert erp.kalimete.local.pem (exp 2028-12-18), nginx TLS en :443
-- **Nginx host**: erp.kalimete.local.conf (proxy_pass :8100 app, :8102 phpMyAdmin)
+- **SSL**: mkcert erp.Kalimete.local.pem (exp 2028-12-18), nginx TLS en :443
+- **Nginx host**: erp.Kalimete.local.conf (proxy_pass :8100 app, :8102 phpMyAdmin)
 - **Workers**: queue (`queue:work --tries=3`) + scheduler (`schedule:work`) en Redis
 - **App**: uid 1000:1000, storage/logs/ y storage/framework/ con 775 (warcold:warcold)
-- **Estado**: ✅ erp.kalimete.local funciona (HTTP 302 → LOGIN 200), stack completo UP
+- **Estado**: ✅ erp.Kalimete.local funciona (HTTP 302 → LOGIN 200), stack completo UP
 - **Subagente**: erp-dev creado (`agents/erp-dev.md`), linked en opencode (symlink)
 
 ### [03:05] - Caddyfile de preprod: bloque micaserogou.com eliminado (corrección)
@@ -5268,26 +5283,26 @@ EOF又是
 - **Estado**: ✅ sincronizado
 - **Notas**: Caddyfile limpio ahora. No quedan rastros de micaserogou en preprod.
 
-### [03:00] - Micaserogou eliminado de kalimete y preprod
+### [03:00] - Micaserogou eliminado de Kalimete y preprod
 - **Tipo**: infra | limpieza | proyecto eliminado
-- **Modificado**: kalimete (Docker + código fuente + nginx), vps-preprod (Docker + certificados), docs (MAPA.md, CHANGELOG.md, INVENTARIO.md, agent files)
-- **Afecta a**: kalimete, vps-preprod, toda la documentación armada-sync
+- **Modificado**: Kalimete (Docker + código fuente + nginx), vps-preprod (Docker + certificados), docs (MAPA.md, CHANGELOG.md, INVENTARIO.md, agent files)
+- **Afecta a**: Kalimete, vps-preprod, toda la documentación armada-sync
 - **Causa**: El usuario decidió no continuar con el proyecto Micaserogou. Se eliminó:
   - **kalimete**: Docker container `micaserogou-frontend-1`, directorio `~/dev/apps/micaserogou/` (docker-compose, Dockerfile, frontend, nginx.conf, deploy.sh)
   - **preprod**: Docker container `micaserogou-frontend-1`, directorio `/opt/micaserogou/` (clon Git, docker-compose.yaml)
   - **Preprod certs**: certificados SSL `micaserogou.com` eliminados del volumen Caddy
   - **Docker**: red `micaserogou_default` borrada, imagen `micaserogou-frontend:latest` eliminada
-  - **Documentación**: borrado `agents/eco-micaserogou.md`, eliminadas todas las referencias en MAPA.md, INVENTARIO.md, kalimete.md, eco-cloudflare-dns.md, eco-cloudflare-security.md, eco-vps.md, SKILL.md (Cloudflare), configs/MAPA.md, configs/INVENTARIO.md
+  - **Documentación**: borrado `agents/eco-micaserogou.md`, eliminadas todas las referencias en MAPA.md, INVENTARIO.md, Kalimete.md, eco-cloudflare-dns.md, eco-cloudflare-security.md, eco-vps.md, SKILL.md (Cloudflare), configs/MAPA.md, configs/INVENTARIO.md
   - **Cloudflare**: zona `micaserogou.com` NO eliminada (solo se quitaron referencias locales — el usuario puede borrarla del dashboard si desea)
 - **Estado**: ✅ sincronizado
-- **Notas**: WordPress `wordpress.kalimete.local` ✅ funcionando. ComfyUI se queda en victoria.local:8188 (kalimete sin GPU).
+- **Notas**: WordPress `wordpress.Kalimete.local` ✅ funcionando. ComfyUI se queda en victoria.local:8188 (Kalimete sin GPU).
 
 ---
 
 ### [03:00] - ERP local: reseteo clave cuenta me@alfredo.pro (id=23)
 - **Tipo**: proyecto | accesos | erp-local
 - **Modificado**: DB `erpipo-preprod-db` (tabla users, solo hash; sin secretos en este log)
-- **Afecta a**: kalimete (erpipo-preprod, panel erp.kalimete.local)
+- **Afecta a**: Kalimete (erpipo-preprod, panel erp.Kalimete.local)
 - **Causa**: Usuario no podía entrar al panel local (`auth.failed` crudo por falta de lang). Diagnóstico: su cuenta existe local (id=23) pero con otra clave; owner bootstrap deshabilitado. Reseteo autorizado por el usuario.
 - **Verificación**: POST /login → 302 a /dashboard; /owner → 200 con sesión; /login con sesión → 302 a /dashboard. Hash verificado con Hash::check.
 - **Estado**: ✅ sincronizado
@@ -5304,7 +5319,7 @@ EOF又是
 ### [02:55] - Fix: frontmatter inválido en eco-woodly y eco-alfredo-ecomm rompía el arranque de opencode
 - **Tipo**: agente | config
 - **Modificado**: `agents/eco-woodly.md`, `agents/eco-alfredo-ecomm.md`, symlinks en `~/.config/opencode/agent/`
-- **Afecta a**: kalimete (opencode)
+- **Afecta a**: Kalimete (opencode)
 - **Causa**: Ambos agentes (creados/modificados en sesión Alfredo Pro Ecomm del 2026-09-06 01:26) tenían frontmatter inválido: `mode: agent` (solo son válidos `primary`/`subagent`/`all`), `max_steps` (correcto: `steps`) y claves no estándar (`tools:` en lista, `hidden: true`). El schema de opencode rechazaba los agentes al arrancar; eco-woodly fue renombrado a `.backup` como workaround y eco-alfredo-ecomm nunca tuvo symlink.
 - **Estado**: ✅ verificado — ambos agentes cargan como subagent (`opencode agent list`)
 - **Notas**: frontmatter normalizado al estándar de los demás eco-* (description/mode/subagent/temperature/steps/permission). Restaurado symlink `eco-woodly.md`; creado symlink `eco-alfredo-ecomm.md`.
@@ -5312,7 +5327,7 @@ EOF又是
 ### [02:40] - WordPress local: connector v3.11.3 — soporte centrado, mapa en box, tagline sin solapamiento
 - **Tipo**: proyecto | fix | ux | wordpress-dev
 - **Modificado**: `templates/contacto.php` (soporte técnico centrado + mapa en box dentro del container); `templates/partials/header.php` + CSS (tagline apilado centrado bajo el logo — el absolute al 50% se solapaba con el buscador); bump 3.11.3 + CHANGELOG plugin.
-- **Afecta a**: kalimete (stack wordpress-local, contacto + header home)
+- **Afecta a**: Kalimete (stack wordpress-local, contacto + header home)
 - **Causa**: Usuario: soporte técnico debe quedar centralizado, mapa mejor en box, validar centralizado de texto en header. Hallado: tagline absolute se solapaba con el buscador (search 300-820px vs tagline 600px).
 - **Verificación**: contacto 200 (soporte centrado, mapa en box, chrome único); home 200 (tagline renderiza, CSS 3.11.3); productos/nosotros/cotizar/términos 200; php -l ×3 OK; log limpio.
 - **Estado**: ✅ sincronizado
@@ -5322,7 +5337,7 @@ EOF又是
 ### [02:30] - erp-chatbot v1.3.0: fix loop navegar-llegar-navegar + flujo completo (tienda/carrito/checkout/login)
 - **Tipo**: proyecto | fix+feature | UX conversacional | wordpress
 - **Modificado**: erp-chatbot 1.2.2→1.3.0 (~/dev/wordpress: página actual en contexto, prompt con flujo completo, armar_ir_a central con whitelist+ya_estas, JS con guard mismaTienda, WhatsApp con link de flujo). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, widget + canal WhatsApp)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget + canal WhatsApp)
 - **Causa**: Usuario: (1) el asistente en voz Y texto debe presentar en la web cada paso, incluido cerrar la orden; (2) el bot quedaba en loop.
 - **Diagnóstico del loop**: navegar-siempre + replay al llegar + re-búsqueda del mismo filtro = ciclo infinito. Sin contexto de página el bot decía "te llevo" estando ya ahí.
 - **Solución**: motor con página actual; destinos validados server-side (tienda/carrito/checkout/login, el LLM nunca pone URLs); supresión si ya estás (motor) + guard JS (segunda muralla, dice al_llegar en sitio si omite).
@@ -5332,7 +5347,7 @@ EOF又是
 ### [02:30] - WordPress local: connector v3.11.2 — contacto/nosotros/cotizar full width como la home
 - **Tipo**: proyecto | fix | layout | responsive | wordpress-dev
 - **Modificado**: templates full-page nuevos (`contacto.php` hero foto + info real + form + soporte + mapa; `about.php` [erpc_about]; `cotizar.php` hero foto + form); router (mapeos + shortcode fallbacks + full_page_templates ×3); bump 3.11.2 + CHANGELOG plugin.
-- **Afecta a**: kalimete (stack wordpress-local, contacto/sobre-nosotros/cotizar)
+- **Afecta a**: Kalimete (stack wordpress-local, contacto/sobre-nosotros/cotizar)
 - **Causa**: Usuario: contacto y nosotros no full width como la inicio; responsive en todos los dispositivos. Causa: las 3 renderizaban vía wrapper (main-container) — hero con foto dentro del container.
 - **Verificación**: 3 páginas 200 con main-container=0 (full width), hero=4, chrome único; home 200; términos 200 (wrapper intacto para lectura); media queries cubren desktop/laptop/tablet/mobile; php -l ×5 OK.
 - **Estado**: ✅ sincronizado
@@ -5347,16 +5362,16 @@ EOF又是
 
 ### [02:30] - Estructura espejo Victoria: principal + 19 hide + harness + frescura + upstream + sync unificado
 - **Tipo**: agentes | config | sync | docs
-- **Modificado**: `opencode.jsonc` (+`default_agent: kalimete`), `agents/kalimete.md` (identidad flota + regla TARGET + frescura + harness + snapshot victoria 160K/Docker/7 keys/limites 120K/dual P-LAN), `agents/eco-victoria.md` (tabla 13 servicios + receta 160K + Upstream), 19x `## Upstream`, `harness/` (central + 19 JSON), `sync.sh` (+secrets-gate pre-push), `~/bin/doc-fresh.sh` (TTL 24h, estado local fuera del repo)
-- **Afecta a**: kalimete (cero produccion: solo docs/config; symlink `agents` eliminado = un solo dir real `agent/`, requiere restart TUI; permisos godot-dev/proxmark ya existian, verificado sin cambio)
-- **Causa**: owner: mismo sistema que Victoria (principal visible + hide + @ directo + harness + upstream + frescura) y sync unificado con scopes separados (hub GitHub kalimete Vs snapshots victoria, nunca cruzados)
+- **Modificado**: `opencode.jsonc` (+`default_agent: Kalimete`), `agents/Kalimete.md` (identidad flota + regla TARGET + frescura + harness + snapshot victoria 160K/Docker/7 keys/limites 120K/dual P-LAN), `agents/eco-victoria.md` (tabla 13 servicios + receta 160K + Upstream), 19x `## Upstream`, `harness/` (central + 19 JSON), `sync.sh` (+secrets-gate pre-push), `~/bin/doc-fresh.sh` (TTL 24h, estado local fuera del repo)
+- **Afecta a**: Kalimete (cero produccion: solo docs/config; symlink `agents` eliminado = un solo dir real `agent/`, requiere restart TUI; permisos godot-dev/proxmark ya existian, verificado sin cambio)
+- **Causa**: owner: mismo sistema que Victoria (principal visible + hide + @ directo + harness + upstream + frescura) y sync unificado con scopes separados (hub GitHub Kalimete Vs snapshots victoria, nunca cruzados)
 - **Estado**: en sincronizacion (hub cada 5 min)
 - **Notas**: eco-irc no sale en docker ps (pendiente si es nativo); daily-report Discord FALLO con token presente (pendiente owner: rotar/verificar); binario opencode no en PATH no-interactivo (agent list pendiente en TUI)
 
 ### [02:20] - WordPress local: connector v3.11.1 — contacto real, nosotros rico, tagline centrado
 - **Tipo**: proyecto | fix | feature | ux | wordpress-dev
 - **Modificado**: `[erpc_contact_info]` (datos reales del tenant, dinámico) + `contact-info.php`; `[erpc_about]` (hero con foto about-team.jpg, 4 pilares con iconos, stats animados, USP, CTA) + `about.php`; contenido pág. 17 reescrito limpio (tenía 'n' literales + placeholders); pág. 36 `[erpc_about]`; activación actualizada (ambos shortcodes); CSS (tagline centrado absolute, contact-info cards, about); `assets/img/about-team.jpg` (Unsplash validada); bump 3.11.1 + CHANGELOG plugin. Backups: `contact-page17-content-backup2.txt`, `about-page36-content-backup.txt`, CSS `.bkup-20260920c`.
-- **Afecta a**: kalimete (stack wordpress-local, contacto/sobre-nosotros/header)
+- **Afecta a**: Kalimete (stack wordpress-local, contacto/sobre-nosotros/header)
 - **Causa**: Usuario: contacto no correcto (placeholders soporte@tudominio.com en vez de datos del tenant), nosotros pobre (sin imágenes, cards planas), tagline "tecnología al mejor precio" no centrado en header.
 - **Verificación**: contacto 200 (2 info-cards email real, 0 placeholders, form+mapa, chrome único); nosotros 200 (hero foto, 4 pilares, stats, USP, CTA); home tagline centrado; productos/términos/faq 200; php -l ×4 OK.
 - **Estado**: ✅ sincronizado
@@ -5364,10 +5379,10 @@ EOF又是
 ### [02:20] - Auditoría del agente Victoria Server tras el provisioning delegado: fixes de contradicción + deriva en magantech.md/armada-suite.md
 - **Tipo**: docs (auditoría pedida por el owner: "¿actualizaste Victoria Server con todas las nuevas instrucciones, accesos y límites?")
 - **Modificado**: agents/victoria-server.md (4 fixes), agents/magantech.md (1 fix de deriva), agents/armada-suite.md (estándar nuevo), CHANGELOG.md
-- **Afecta a**: delegación del principal kalimete → Victoria Server; flujo de llaves de negocio de armada-suite
+- **Afecta a**: delegación del principal Kalimete → Victoria Server; flujo de llaves de negocio de armada-suite
 - **Hallazgos**: (1) VERIFICADO OK: el symlink `~/.config/opencode/agent/victoria-server.md` → armada-sync es LIVE (las ediciones 01:45 cargan; `opencode agent list` muestra `Victoria Server (subagent)`); sin secretos en el repo (grep limpio, sync GitHub ya propagó). (2) HUECO 1 — contradicción: las reglas "victoria = SOLO LECTURA, NUNCA ESCRIBIR" no tenían la excepción del provisioning → un agente podía leerlo como prohibido. (3) HUECO 2 — frontmatter description no mencionaba provisioning → el principal no sabía delegar tareas de llaves. (4) DERIVA — magantech.md aún decía "key dedicada magantech — owner la crea en panel" cuando `armada-magantech` YA existe (provisionada 01:45). (5) HUECO 3 — armada-suite.md no documentaba el estándar 1-llave-por-negocio.
 - **Estado**: ✅ 4 fixes en victoria-server.md (description + regla CRÍTICA con excepción + tabla servicios + reglas de operación #1) · ✅ magantech.md pendiente corregido (la key existe, ruta del plaintext) · ✅ armada-suite.md §Integración con Victoria con el estándar completo · micaserogou.md sin cambios justificados (su chatbot no existe aún; el estándar vive en armada-suite.md)
-- **Notas**: backups .bkup-20261020-provision-audit ×3. La única escritura permitida en victoria es `POST /v1/provision-key` (API, no SSH); filesystem/config de victoria sigue intocable para kalimete.
+- **Notas**: backups .bkup-20261020-provision-audit ×3. La única escritura permitida en victoria es `POST /v1/provision-key` (API, no SSH); filesystem/config de victoria sigue intocable para Kalimete.
 
 ### [02:15] - Armada Suite 5.1.1: fixes del owner (Respaldos 404, menú, saves, export limpio)
 - **Tipo**: fix | ux | wordpress
@@ -5382,14 +5397,14 @@ EOF又是
 - **Tipo**: feature (pedido del owner: "debería quedarse hands free así como lo hace chatgpt, como hablando en tiempo real con otra persona")
 - **Que**: el modo `/call` ya NO requiere presionar Right Ctrl — micrófono SIEMPRE ABIERTO con **VAD de energía adaptativo** (clase `HandsFree`, stdlib puro + ffmpeg pipe): (a) detecta cuándo empiezas a hablar (90ms sobre el umbral, que se adapta al ruido ambiente) y cuándo terminas (810ms de silencio) → manda el audio a STT → respuesta streaming + voz; (b) **pre-roll de 300ms** para no cortar la primera palabra; (c) descarta ruidos cortos (<420ms de voz real); (d) tope 30s por utterance; (e) **half-duplex con barge-in**: mientras Victoria habla no escucha (evita eco de sus parlantes), pero si hablas FUERTE sostenido 300ms la calla y te escucha (como interrumpir a una persona); (f) pausa post-voz de Victoria 400ms anti-eco; (g) Right Ctrl sigue funcionando como PTT manual en llamada (el hands-free le cede el turno); (h) status bar muestra el estado en vivo: "escuchando… / tú hablas ▁▃▅▇ / transcribiendo… / Victoria respondiendo"; (i) modo de test `--test-vad` (PCM sintético: silencio+voz+blip+voz+busy).
 - **Bugs cazados en el test**: `_decay()` reseteaba el contador `above` cada frame (el VAD nunca disparaba) — fix: el reset lo hace solo el else del chequeo.
-- **Verificado**: `--test-vad` en kalimete → exactamente 2 utterances (2520ms y 1980ms, con preroll+voz+cola), blip corto descartado, busy no captura ✅; TUI viva en pseudo-TTY (exit 124) + --check TODO OK.
+- **Verificado**: `--test-vad` en Kalimete → exactamente 2 utterances (2520ms y 1980ms, con preroll+voz+cola), blip corto descartado, busy no captura ✅; TUI viva en pseudo-TTY (exit 124) + --check TODO OK.
 - **Impacto**: solo ~/.local/bin/victoria-tui (v3). Fuera de /call todo igual (PTT manual).
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [02:10] - WordPress local: connector v3.11.0 — modo Elementor retirado, una sola plantilla (plugin default)
 - **Tipo**: proyecto | refactor | limpieza | decisión | wordpress-dev
 - **Modificado**: eliminado `kit/` (8 JSON + manifest) + `class-erpc-kit.php` + menú Kit; meta Elementor de 8 páginas (data/edit_mode/template_type/caches/6 baks); draft huérfano 30; plugin Elementor DESACTIVADO (reactivable); `template_mode='plugin'` permanente; pág. 8 `[erpc_landing]`; `_wp_page_template='default'`; README/docs actualizados; bump 3.11.0 + CHANGELOG plugin. Backups: `backups/elementor-cleanup-20260920/` (8 JSON).
-- **Afecta a**: kalimete (stack wordpress-local — arquitectura de una sola plantilla)
+- **Afecta a**: Kalimete (stack wordpress-local — arquitectura de una sola plantilla)
 - **Causa**: Usuario: el template en Elementor está de más (son shortcodes, no se puede editar lo hecho) — borrarlo y quedarse solo con el template del plugin, que se vea tan bien como Elementor. Validado: el home Elementor era solo contenedor de los mismos shortcodes; 2 plantillas = 2 fuentes de divergencia.
 - **Verificación**: 8 páginas 200; home completa (hero=5, usp=4, cards=4, proof=5, cta=1, doctype, CSS 3.11.0); productos 15 chrome único; contacto form+mapa; cotizar form; admin 200 sin menú Kit; php -l OK.
 - **Estado**: ✅ sincronizado
@@ -5397,7 +5412,7 @@ EOF又是
 ### [02:00] - WordPress local: connector v3.10.3 — fix home plugin sin estilos (frame omitido)
 - **Tipo**: proyecto | fix | regresión | wordpress-dev
 - **Modificado**: `templates/landing.php` (frame check restaurado al inicio — include header.php); bump 3.10.3 + CHANGELOG plugin.
-- **Afecta a**: kalimete (stack wordpress-local, home modo plugin)
+- **Afecta a**: Kalimete (stack wordpress-local, home modo plugin)
 - **Causa**: Usuario: "la página de inicio del plugin está rota, no tiene estilo". Causa raíz: el refactor v3.10.2 de landing.php olvidó el include del header (frame doctype/head/wp_head) — la home salía como contenido crudo sin CSS (26KB, sin doctype). Regresión del propio refactor.
 - **Verificación**: home plugin 200/55KB con doctype + 14 stylesheets + trustbar + todas las secciones; 1 header + 1 footer; modo elementor restaurado idéntico; php -l OK.
 - **Estado**: ✅ sincronizado
@@ -5405,7 +5420,7 @@ EOF又是
 ### [02:00] - Plugin v3.5.0: 3 presets color + hero editable + modo Elementor + landing MCP
 - **Tipo**: proyecto | feature | wordpress-dev | mcp | elementor
 - **Modificado**: plugin `erp-ecomm-connector` v3.5.0 (commit `dae78b5`, 11 archivos); página Elementor 47 (draft)
-- **Afecta a**: kalimete (tienda MaganTech + tenants futuros)
+- **Afecta a**: Kalimete (tienda MaganTech + tenants futuros)
 - **Causa**: Pedido usuario: (1) 3 temas de color seleccionables, (2) hero editable desde plugin, (3) switch plantilla plugin|Elementor sin mezcla, (4) diseñar plantilla Elementor, (5) qué modelo usar.
 - **Implementado**: presets azul/rosa/neutro + pickers override (¡los colores del admin ahora SÍ se aplican! estaban guardados pero ignorados); hero con botón de medios; `template_mode` con gate central `erpc_is_elementor_mode()` (router se aparta, frames condicionales); shortcodes `[erpc_header]`/`[erpc_footer]`; sección admin Apariencia.
 - **Verificación**: preset rosa en vivo (#d6336c + derivados), modo elementor verificado (theme render, 0 chrome plugin) + restore a plugin (topbar de vuelta); sintaxis OK; home/productos/login 200; landing Elementor creada vía MCP REST (`create-page/run`, draft 47 canvas con hero+botón+[erpc_products]).
@@ -5422,7 +5437,7 @@ EOF又是
 ### [01:50] - WordPress local: connector v3.10.2 — paridad total home (fuente única de secciones)
 - **Tipo**: proyecto | fix | paridad | arquitectura | wordpress-dev
 - **Modificado**: 5 shortcodes duales nuevos (`erpc_hero/usp/categories/featured/cta`) + parciales (`hero-landing.php`, `categories-landing.php`, `featured.php`, `usp.php`, `cta-landing.php`); `landing.php` refactorizado a shortcodes; home Elementor reconstruido con la misma secuencia (backup `elementor-8-before-v3102.json`); CSS `.erpc-usp*`; bump 3.10.2 + CHANGELOG plugin.
-- **Afecta a**: kalimete (stack wordpress-local, home en ambos modos)
+- **Afecta a**: Kalimete (stack wordpress-local, home en ambos modos)
 - **Causa**: Usuario: la home del plugin se ve mejor que la de Elementor; ambos deben ser iguales (mismas imágenes/textos, mínimas discrepancias). Causa: Elementor tenía `[erpc_products]` que rinde el catálogo completo (hero Catálogo + buscador + filtro + quick-view) dentro de la home.
 - **Verificación**: 12 marcadores de paridad TODOS OK idénticos (hero=5, usp=4, cats=17, cards=4, proof=5, cta=3, avatars=3 + 5 textos); catálogo completo eliminado de la home Elementor; home 200, catálogo 200; log limpio.
 - **Estado**: ✅ sincronizado
@@ -5430,23 +5445,23 @@ EOF又是
 ### [01:45] - WP connector v3.12.8: flujo compra completo (auth real + tenant + red local)
 - **Tipo**: proyecto | fix | wordpress-dev + erp-local
 - **Modificado**: plugin `erp-ecomm-connector` (api/auth/form/js/config/stock-url, bump 3.12.7→3.12.8 + CHANGELOG plugin; commit plugin `73dd312`). MU-plugin `erpc-local.php` → gateway docker. `/etc/hosts` → 127.0.0.1. ERP `preprod.env` → Mailpit local; `AppServiceProvider` forceRootUrl; `ClienteAuthController` verify público + bypass TenantScope. Backups `.bkup-20260922` en cada archivo.
-- **Afecta a**: kalimete (wordpress-local, erpipo-preprod, Mailpit)
+- **Afecta a**: Kalimete (wordpress-local, erpipo-preprod, Mailpit)
 - **Causa**: Usuario: "no sale el código" al crear cuenta + directiva "todo local, independiente de la red". Diagnóstico: (1) ERP sin rutas OTP — plugin apuntaba a `/ecomm/auth/*` → 404; ERP usa password min12 + email link. (2) `get_tenant_id()`=0 → register caía a tenant 3 (no MaganTech 10) → checkout ModelNotFound. (3) MU-plugin con IP LAN vieja (10.0.0.106; actual 10.1.10.174) → timeout ERP; /etc/hosts stale.
 - **Verificación E2E** (todo local): registro → tenant 10 + email en Mailpit + verify OK; login UI; profile load/update; checkout → **orden V-263 completada** (cliente 191, RD$ 3,016.19). Home 0.35s (antes 30s+).
 - **Nota**: `docker network connect erpipo-dev-network wordpress-local` se REVERTIÓ (colisión alias `db` → erpipo-db rompía la DB del WP). La vía correcta es el gateway 172.19.0.1. NO reconectar redes entre stacks.
 - **Estado**: ✅ sincronizado
 
-### [01:45] - Provisioning delegado en victoria: kalimete crea llaves de negocio armada-suite via POST /v1/provision-key (cap provision)
+### [01:45] - Provisioning delegado en victoria: Kalimete crea llaves de negocio armada-suite via POST /v1/provision-key (cap provision)
 - **Tipo**: seguridad | servicio | docs (cambio en VICTORIA, documentado aquí por procedencia cross-machine — autorización del owner)
-- **Modificado**: (victoria) llm-gateway.py + sense_auth.py + admin_template.html + DB (tabla provision_log, cap en llave kalimete); (kalimete, docs) agents/victoria-server.md, harness/victoria-server.harness.json, CHANGELOG.md
+- **Modificado**: (victoria) llm-gateway.py + sense_auth.py + admin_template.html + DB (tabla provision_log, cap en llave Kalimete); (Kalimete, docs) agents/victoria-server.md, harness/victoria-server.harness.json, CHANGELOG.md
 - **Afecta a**: armada-suite (chatbots IA de magantech.com.do, micaserogou.com y próximos negocios), script `armada-llm-provision` (por construir)
-- **Causa**: owner pidió evaluar cómo kalimete crearía llaves de servicio LLM para los proyectos web con su propia llave (sesión ses_ea97154aeffeAWE9n5gdAqrm8V). La propuesta original (key admin provisioner) NO funcionaba: POST /admin/keys exige sesión de panel (ADMIN_PASS), no acepta llaves API. Solución de menor privilegio: endpoint scoped + cap `provision` en la llave kalimete.
-- **Estado**: ✅ E2E completo: 403 sin cap · 201 con cap (rol services + caps [llm] + prefijo armada- forzados) · llave nueva chatea 200 OK · llave nueva NO provisiona (cero escalada) · readonly 403 · provision_log con IP 10.0.0.106 · **primera llave de negocio `armada-magantech` provisionada DESDE kalimete** (plaintext 600 en victoria: `~/.victoria-custom/secrets/armada-magantech.key`)
+- **Causa**: owner pidió evaluar cómo Kalimete crearía llaves de servicio LLM para los proyectos web con su propia llave (sesión ses_ea97154aeffeAWE9n5gdAqrm8V). La propuesta original (key admin provisioner) NO funcionaba: POST /admin/keys exige sesión de panel (ADMIN_PASS), no acepta llaves API. Solución de menor privilegio: endpoint scoped + cap `provision` en la llave Kalimete.
+- **Estado**: ✅ E2E completo: 403 sin cap · 201 con cap (rol services + caps [llm] + prefijo armada- forzados) · llave nueva chatea 200 OK · llave nueva NO provisiona (cero escalada) · readonly 403 · provision_log con IP 10.0.0.106 · **primera llave de negocio `armada-magantech` provisionada DESDE Kalimete** (plaintext 600 en victoria: `~/.victoria-custom/secrets/armada-magantech.key`)
 - **Notas**: el endpoint FIJA rol services + caps ["llm"] + prefijo `armada-<slug>` (el cliente solo elige slug/owner/budget/expiry); máx 10 creaciones/hora por provisionadora (429 provision_rate_limited); auditoría `provision_log`; documentado en `/v1/config-guide` → `provision_api` (auto-descriptivo). Pendientes: script `armada-llm-provision` sobre este endpoint; pegar `armada-magantech` en wp-admin prod (Asistente IA); rotar `servicios-alfredo-pro-llc` (expuesta en chat) cuando el tráfico migre. Detalle técnico: CHANGELOG-vllm.md de victoria 2026-10-20 01:45 EDT.
 
 ### [01:41] - Gaming: mario-bros + armada-starfox BORRADOS + proyecto nuevo "Record of Ragnaroks" (Fase 0)
 - **Tipo**: agente | config | docs
-- **Modificado**: ~/dev/games/godot/ (mario-bros 3.9M/517 archivos y armada-starfox 39M/391 archivos BORRADOS por orden del owner), opencode.jsonc (MCP `godot` removido — apuntaba a mario-bros; queda `godot-studio` como único MCP godot), agents/godot-dev.md + game-studio.md + kalimete.md (refs a juegos borrados), harness godot-dev + game-studio, MAPA.md, ~/dev/games/AGENTS.md + READMEs, NUEVO studio/record-of-ragnaroks/ (scaffold + GDD Fase 0)
+- **Modificado**: ~/dev/games/godot/ (mario-bros 3.9M/517 archivos y armada-starfox 39M/391 archivos BORRADOS por orden del owner), opencode.jsonc (MCP `godot` removido — apuntaba a mario-bros; queda `godot-studio` como único MCP godot), agents/godot-dev.md + game-studio.md + Kalimete.md (refs a juegos borrados), harness godot-dev + game-studio, MAPA.md, ~/dev/games/AGENTS.md + READMEs, NUEVO studio/record-of-ragnaroks/ (scaffold + GDD Fase 0)
 - **Afecta a**: dominio ~/dev/games/ completo + agentes Godot/Game Studio
 - **Causa**: owner — "Borra tanto mario-bross y todo lo relacionado al juego, tambien armada-starfox, vamos a manejar este nuevo proyecto arpg, Record of Ragnaroks como la serie animada... peleas de dioses"
 - **Estado**: ✅ todo aplicado; tar de cortesía efímero en /tmp/opencode/juegos-viejos-20261020.tar.gz (37M, se pierde al reiniciar — mario-bros era git SIN remote)
@@ -5455,14 +5470,14 @@ EOF又是
 ### [01:40] - WordPress local: connector v3.10.1 — fix 403 en Kit Elementor (orden admin_menu)
 - **Tipo**: proyecto | fix | admin | wordpress-dev
 - **Modificado**: `erp-ecomm-connector.php` (`ERPC_Kit::init()` movido de parse-time a `init_admin()`, después del menú padre); bump 3.10.1 + CHANGELOG plugin.
-- **Afecta a**: kalimete (stack wordpress-local, wp-admin → ERP Connector → Kit Elementor)
+- **Afecta a**: Kalimete (stack wordpress-local, wp-admin → ERP Connector → Kit Elementor)
 - **Causa**: Usuario: "no puedo entrar a la configuración en wp-admin, está roto". Diagnóstico end-to-end (login real con usuario temporal): página principal 200 OK, dashboard OK, pero Kit Elementor 403 "Sorry, you are not allowed". Causa raíz: Kit registrado en parse-time (antes de plugins_loaded) → add_submenu_page sin padre registrado → hook con nombre incorrecto → 403 con menú visible.
 - **Verificación**: kit-page 200 (106KB, contenido, sin 403); main-page 200; dashboard con ambos menús; usuario de prueba eliminado (limpio).
 - **Estado**: ✅ sincronizado
 
 ### [01:30] - micaserogou: validación integral 16 páginas — titles, copy restaurante, imágenes de heroes
 - **Tipo**: servicio | frontend | seo
-- **Modificado**: preprod micaserogou.kalimete.local — mu-plugin nuevo `erpc-restaurante-fixes.php`, `erpc-contacto-template.php` reescrito, reservas.html/contacto.html/producto-detalle.html actualizados, post_title de 10 páginas en DB
+- **Modificado**: preprod micaserogou.Kalimete.local — mu-plugin nuevo `erpc-restaurante-fixes.php`, `erpc-contacto-template.php` reescrito, reservas.html/contacto.html/producto-detalle.html actualizados, post_title de 10 páginas en DB
 - **Afecta a**: TODAS las páginas del sitio (16) — verificación integral title/nav/imagen/copy
 - **Causa**: owner pidió validar cada página del menú: texto, imagen, diseño acorde a restaurante
 - **Estado**: ✅ 16/16 páginas — title correcto, nav presente, imagen presente, sin textos viejos de tienda
@@ -5479,21 +5494,21 @@ EOF又是
 
 **Observación para el owner (dato ERP, no template)**: el plato "PASTELON DE BERENJENA" aparece con RD$ 0.00 en el menú — el precio está en 0 en el ERP (tenant 3). Corregir desde el panel del ERP.
 
-### [01:30] - kalimete-ptt v5.1: bug raíz del PTT (fallback silencioso al default agent) + STT con vocabulario + TTS streaming + Victoria friendly
+### [01:30] - Kalimete-ptt v5.1: bug raíz del PTT (fallback silencioso al default agent) + STT con vocabulario + TTS streaming + Victoria friendly
 
 - **Tipo**: servicio | voz | fix
-- **Modificado**: cliente kalimete-ptt (`~/dev/apps/kalimete-ptt/` + deploy `~/.local/bin/`), agente `~/.config/opencode/agent/victoria-voz.md`, **victoria** `/home/victoria/voice-venv/voice-server-host.py` (backup `.bkup-20261027-stt-prompt` — cambio mínimo autorizado por pedido del owner)
+- **Modificado**: cliente Kalimete-ptt (`~/dev/apps/Kalimete-ptt/` + deploy `~/.local/bin/`), agente `~/.config/opencode/agent/victoria-voz.md`, **victoria** `/home/victoria/voice-venv/voice-server-host.py` (backup `.bkup-20261027-stt-prompt` — cambio mínimo autorizado por pedido del owner)
 - **Afecta a**: conversación de voz Ctrl_R con Victoria (PTT)
 - **Causa**: el owner reportó errores + escucha confusa + respuestas técnicas + lentitud. Diagnóstico: (1) **BUG RAÍZ** — desde el deploy v5, `victoria-voz.md` tenía `mode: subagent` y `opencode run` caía silenciosamente al default agent técnico ("Falling back") — Victoria NUNCA respondía, respondía el agente default con listas técnicas de ~1000 chars → 5 chunks TTS ≈ 41s de silencio; (2) STT Whisper small sin `initial_prompt` → nombres propios del ecosistema mal transcritos; (3) TTS secuencial (esperaba el wav completo)
 - **Estado**: ✅ verificado e2e: fix `mode: all` (Victoria responde como Victoria, 13.6s, conversacional, cero jerga) · STT con `?prompt=` de vocabulario en victoria (kalimete/opencode/warcold transcriben perfecto, costo 0) · TTS streaming por frases en el cliente (primera palabra ~15-18s vs ~54s, resto fluye) · timing logs por fase · sesión envenenada eliminada · 4 backups para rollback
-- **Notas**: NO se recomienda Whisper small→medium (initial_prompt resolvió lo real; +2-4s/clip+VRAM) ni streaming TTS server-side (el cliente ya lo resuelve). Vigilancia menor: "STT silencio" tras conectar audífonos = ruteo PulseAudio, no pipeline. Detalle en STATE.md + CHANGELOG.md del proyecto kalimete-ptt.
+- **Notas**: NO se recomienda Whisper small→medium (initial_prompt resolvió lo real; +2-4s/clip+VRAM) ni streaming TTS server-side (el cliente ya lo resuelve). Vigilancia menor: "STT silencio" tras conectar audífonos = ruteo PulseAudio, no pipeline. Detalle en STATE.md + CHANGELOG.md del proyecto Kalimete-ptt.
 
 ## 2026-10-26
 
 ### [01:30] - erp-chatbot v1.2.2: en voz primero lleva, allá continúa la charla
 - **Tipo**: proyecto | feature | UX voz | wordpress
 - **Modificado**: erp-chatbot 1.2.1→1.2.2 (~/dev/wordpress: motor con al_llegar + respuesta breve en voz, widget guarda/retoma continuación vía localStorage). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget del chatbot)
 - **Causa**: Usuario: al encontrar lo pedido, primero llevar allá y continuar la conversación en la tienda (no hablar todo y navegar al final).
 - **Solución**: en voz con productos → respuesta breve hablada + navegación guardando historial/modo-teléfono/al_llegar; en la tienda el widget reabre solo, repinta historial, dice el detalle y retoma escucha. En texto sin cambios.
 - **Verificación**: turno voz → breve + tienda_url + al_llegar con detalle ✅; JS 1.2.2 servido ✅; node + php OK.
@@ -5502,7 +5517,7 @@ EOF又是
 ### [01:30] - WordPress local: connector v3.9.8 — auditoría integral responsive + cross-browser
 - **Tipo**: proyecto | fix | ux | compat | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (CSS: contador en su línea + hamburguesa ≤991px + 11 prefixes `-webkit-`/`100dvh`/`sticky`; JS: resize a 991; bump 3.9.8, commit `c8f0190`, push main OK); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.8); repo padre commit
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, ambos templates — header/botones compartidos)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech, ambos templates — header/botones compartidos)
 - **Causa**: Usuario: validar desktop/móviles/dispositivos + multi-navegador + botones centrados en ambos templates. Hallazgos de la matriz CDP (7 páginas × 7 viewports 1920→360): (1) overflow horizontal en tablet 769-991px — nav completo no cabe, afectaba todas las páginas; (2) "Cargar más productos" descentrado en desktop — contador inline en la misma línea; (3) bug de cascada en el propio fix (bloque 991px antes de la regla base → tablet sin nav ni hamburguesa).
 - **Implementado**: Hamburguesa a ≤991px (mismo dropdown probado + search móvil + JS resize); contador en bloque propio; bloque 991 movido tras el 768 (cascada correcta); 11 prefixes de compatibilidad; auditoría confirma cero `:has()`/`color-mix`/exóticos.
 - **Verificación**: 12 runs CDP con 0 overflow en todos los viewports; hamburguesa 820px abre dropdown con 7 links sin overflow; 100% botones con `text-align:center` + posición verificada uno por uno (los no-centrados son por diseño: pills, search, tabs, USP, newsletter desktop); Firefox real bajo Xvfb con CA mkcert: 5 screenshots con contenido íntegro (Gecko OK); Safari no existe en Linux → cubierto con auditoría CSS estática + prefijos. Screenshots audit-*.png + fx-*.png en /tmp/opencode/.
@@ -5511,7 +5526,7 @@ EOF又是
 ### [01:30] - WordPress local: connector v3.10.0 — Kit Elementor instalable + prueba social + imágenes locales
 - **Tipo**: proyecto | feature | kit | ux | wordpress-dev
 - **Modificado**: `kit/elementor-kit/*.json` (8 páginas) + `manifest.json` + `kit/assets/hero-home.jpg`; importador `ERPC_Kit` (menú Kit Elementor, manual, no pisa diseños); `assets/img/` (hero-home, cta-band, contact-side, 3 avatares — Unsplash License validadas); `ERPC_DEFAULT_HERO` → asset local; `[erpc_social_proof]` (shortcode + partial con contadores animados EN VIVO + testimonios + reveal); CSS (`.erpc-proof*`, hero catálogo con foto, sheen estáticas, CTA con overlay); JS (count-up rAF + IntersectionObserver); home Elementor (hero imagen attachment 73 + sección proof, backup `elementor-8-before-v310.json`); contenido pág. 8 (`[erpc_social_proof][erpc_footer]`); bump 3.10.0 + CHANGELOG plugin.
-- **Afecta a**: kalimete (stack wordpress-local, ambos modos, todas las páginas)
+- **Afecta a**: Kalimete (stack wordpress-local, ambos modos, todas las páginas)
 - **Causa**: Usuario: opción A (el trabajo viene con la plantilla base), imagen en header plugin vs Elementor, imágenes gratuitas validadas en internet, páginas más dinámicas/profesionales (iconos, efectos, social proof).
 - **Verificación**: elementor → home 4 cards + proof 5 counters + 3 avatares + hero en post-8.css + CTA; plugin → home 4 + proof + hero local + CTA; contacto/cotizar chrome único; kit import: skipped en diseño vivo, completed en draft 30; php -l ×6 + node --check OK; log sin entradas nuevas.
 - **Pendiente usuario**: draft huérfano 30 (slug `inicio`) recibió el kit — borrar o dejar (confirmar); testimonios son copy de ejemplo (editar a clientes reales); contadores 2500+/4.9 son estáticos (editar a métricas reales).
@@ -5519,10 +5534,10 @@ EOF又是
 
 ### [01:30] - Veredicto producción GO: connector v3.15.2 (fix image host) — ambos plugins libres de IPs locales
 - **Tipo**: proyecto | fix+auditoría | producción | wordpress
-- **Modificado**: erp-ecomm-connector 3.15.1→3.15.2 (~/dev/wordpress: normalize_image_url() ya NO hardcodea erp.kalimete.local — resolución: constante ERPC_IMAGE_HOST > derivación automática scheme+host de la API URL del ERP > sin host no reescribe; mu-plugin erpc-local.php define la constante para dev; .env.example + DEPLOY-PRODUCCION.md actualizados). PR connector actualizado (MAIN intacto).
-- **Afecta a**: producción futura (vps-preprod), kalimete (dev intacto)
+- **Modificado**: erp-ecomm-connector 3.15.1→3.15.2 (~/dev/wordpress: normalize_image_url() ya NO hardcodea erp.Kalimete.local — resolución: constante ERPC_IMAGE_HOST > derivación automática scheme+host de la API URL del ERP > sin host no reescribe; mu-plugin erpc-local.php define la constante para dev; .env.example + DEPLOY-PRODUCCION.md actualizados). PR connector actualizado (MAIN intacto).
+- **Afecta a**: producción futura (vps-preprod), Kalimete (dev intacto)
 - **Causa**: Usuario: ¿están listos para producción con IPs no-locales? Auditoría final: chatbot 0 hits funcionales; connector 1 bloqueante (fallback imágenes a host LAN) — corregido.
-- **Verificación**: docker con filtro prod → relativa reescrita a erpipos.armada.do, host público/data-uri intactos; constante local → erp.kalimete.local (dev intacto); suite 8/8; php -l OK; barrido JS/CSS sin hosts absolutos.
+- **Verificación**: docker con filtro prod → relativa reescrita a erpipos.armada.do, host público/data-uri intactos; constante local → erp.Kalimete.local (dev intacto); suite 8/8; php -l OK; barrido JS/CSS sin hosts absolutos.
 - **Estado**: ✅ GO para producción tras merge de los PRs (chatbot#1 v1.4.6, connector#1 v3.15.2, ERP amigo#7)
 
 ### [01:30] - Micaserogou: BUG plugin — campos Asistente IA invisibles (JS tabs oculta secciones internas) + hotfix site-level (ZIP v1.0.2)
@@ -5542,45 +5557,45 @@ EOF又是
 - **Borrado final** (autorizado, backup 1.8M en `~/backups/armada-unificacion-20261002/`): erp-commerce-suite/, vibe-ai/, all-in-one-wp-migration/ + mu-plugin muerto + plugins/export/ vacía. Solo queda armada-suite/. Borrado con rm directo (NO vía admin: los uninstall.php habrían borrado las opciones compartidas).
 - **Smoke**: home 200, 8/8 admin 200, AJAX success:true 18 categorías, 0 FATALs, active_plugins=solo armada-suite.
 - **Commits stack** (~/dev/wordpress, sin push): 19a1e4e (5.0.0 creación) + 9697d3d (5.1.0 consolidación) + 169fc4d (borrado aiowpm). Detalle en ~/dev/wordpress/CHANGELOG.md.
-- **Nota proceso**: subagente wordpress-dev agotó steps 2 veces (diagnóstico + 90% construcción); kalimete completó la milla final (fix uninstall.php, activación curl, verificación 8 puntos, consolidación v5.1.0) — documentado por transparencia.
+- **Nota proceso**: subagente wordpress-dev agotó steps 2 veces (diagnóstico + 90% construcción); Kalimete completó la milla final (fix uninstall.php, activación curl, verificación 8 puntos, consolidación v5.1.0) — documentado por transparencia.
 - **Estado**: ✅ verificado end-to-end
 
 ### [01:25] - Granja de contenido de victoria documentada (Victoria Server + Godot + skills art/voice-video)
-- **Tipo**: docs/agentes (autorización del owner; TARGET=kalimete verificado; victoria SOLO lectura)
-- **Modificado**: `agents/victoria-server.md` (sección "Generar contenido desde kalimete": art API 3 templates, TTS/STT :18810, video-server :18811, Sonic :18850 + constraint rutas locales, VLM; fixes deriva: dashboard 18789→**18800** live 2026-10-05, driver →**580.178.04**), `agents/godot-dev.md` (sección "Assets desde Victoria" + fix paths `armada-godot`→`mario-bros`/`armada-starfox` + nota MCP un-proyecto-a-la-vez), `harness/{victoria-server,godot-dev}.harness.json`, `skills/voice-video/SKILL.md` (NUEVO: TTS/STT/video-server/Sonic), `~/dev/godot/mario-bros/AGENTS.md` (pipeline en Decisiones), `~/dev/godot/armada-starfox/AGENTS.md` (ledger NUEVO — antes no tenía)
-- **Afecta a**: kalimete (agentes Godot + Victoria Server, skills) — victoria intocada (solo lectura)
-- **Causa**: auditoría del owner: los agentes no informaban los modelos/APIs de imagen-video-voz disponibles en victoria; Godot no sabía de la granja de arte. La llave kalimete (caps llm/art/tts/whisper) ya abría todo pero nadie lo había documentado
-- **Estado**: ✅ verificado E2E desde kalimete: imagen `z-image-turbo` (202→done ~20s → PNG 1MB en ~/Desktop/e2e-victoria-art-20261007.png) + TTS voz es nativa (WAV 284KB ~/Desktop/e2e-victoria-tts-20261007.wav) + STT roundtrip OK
+- **Tipo**: docs/agentes (autorización del owner; TARGET=Kalimete verificado; victoria SOLO lectura)
+- **Modificado**: `agents/victoria-server.md` (sección "Generar contenido desde Kalimete": art API 3 templates, TTS/STT :18810, video-server :18811, Sonic :18850 + constraint rutas locales, VLM; fixes deriva: dashboard 18789→**18800** live 2026-10-05, driver →**580.178.04**), `agents/godot-dev.md` (sección "Assets desde Victoria" + fix paths `armada-godot`→`mario-bros`/`armada-starfox` + nota MCP un-proyecto-a-la-vez), `harness/{victoria-server,godot-dev}.harness.json`, `skills/voice-video/SKILL.md` (NUEVO: TTS/STT/video-server/Sonic), `~/dev/godot/mario-bros/AGENTS.md` (pipeline en Decisiones), `~/dev/godot/armada-starfox/AGENTS.md` (ledger NUEVO — antes no tenía)
+- **Afecta a**: Kalimete (agentes Godot + Victoria Server, skills) — victoria intocada (solo lectura)
+- **Causa**: auditoría del owner: los agentes no informaban los modelos/APIs de imagen-video-voz disponibles en victoria; Godot no sabía de la granja de arte. La llave Kalimete (caps llm/art/tts/whisper) ya abría todo pero nadie lo había documentado
+- **Estado**: ✅ verificado E2E desde Kalimete: imagen `z-image-turbo` (202→done ~20s → PNG 1MB en ~/Desktop/e2e-victoria-art-20261007.png) + TTS voz es nativa (WAV 284KB ~/Desktop/e2e-victoria-tts-20261007.wav) + STT roundtrip OK
 - **Notas**: backups `.bkup-20261007*` junto a cada archivo. Trabajo hecho por Victoria (victoria.local) con autorización explícita del owner; referenciado en CHANGELOG de victoria.
 
 ### [01:20] - WordPress local: connector v3.9.13 — paridad plugin/Elementor (mapa, chrome único, cotizar)
 - **Tipo**: proyecto | fix | paridad | wordpress-dev
 - **Modificado**: página 17 (`[erpc_map]` agregado al contenido); `static.php` (retira header/footer espejo → chrome único); router (`cotizar`→static, `erpc_contact/quote/map`→static); bump 3.9.13 + CHANGELOG plugin. Backups: `static.php.bkup-20260920b`, `templates.php.bkup-20260920b`, `backups/contact-page17-content-backup.txt`. `template_mode` en `elementor` (original).
-- **Afecta a**: kalimete (stack wordpress-local, contacto/cotizar/legales en ambos modos)
+- **Afecta a**: Kalimete (stack wordpress-local, contacto/cotizar/legales en ambos modos)
 - **Causa**: Usuario: mejoras en ambos defaults (plugin y Elementor) semejantes; el cliente edita Elementor a gusto después. Divergencias: mapa solo en Elementor; doble chrome en plugin; cotizar sin router.
 - **Verificación**: plugin → contacto form+mapa, cotizar form, términos 11 cards, catálogo 15, 1 header+1 footer en las 3; elementor → home 4, contacto form+mapa, cotizar form; log limpio.
 - **Estado**: ✅ sincronizado
 
 ### [01:20] - FIX CRÍTICO victoria-tui: el teclado quedaba MUERTO al abrir la TUI (grab evdev)
 - **Tipo**: bugfix crítico (reporte del owner: "se me inhabilitó el teclado al abrir el tui y no me podía mover")
-- **Causa raíz**: el PttListener de la TUI hacía `dev.grab()` (EVIOCGRAB exclusivo) sobre TODOS los teclados con la tecla PTT — el grab se lleva TODOS los eventos del dispositivo para el proceso que lo toma, y el listener solo procesaba Right Ctrl descartando el resto → teclado muerto para el sistema Y para la propia TUI (curses lee del pty, no de evdev). El kalimete-ptt original NUNCA usa grab (lectura pasiva) — el grab fue una adición mía errónea. Además el hilo único con read_loop se cegaba en el primer teclado (no veía los demás).
+- **Causa raíz**: el PttListener de la TUI hacía `dev.grab()` (EVIOCGRAB exclusivo) sobre TODOS los teclados con la tecla PTT — el grab se lleva TODOS los eventos del dispositivo para el proceso que lo toma, y el listener solo procesaba Right Ctrl descartando el resto → teclado muerto para el sistema Y para la propia TUI (curses lee del pty, no de evdev). El Kalimete-ptt original NUNCA usa grab (lectura pasiva) — el grab fue una adición mía errónea. Además el hilo único con read_loop se cegaba en el primer teclado (no veía los demás).
 - **Fix (v2.2) — arquitectura ESPEJO del daemon probado**: (a) SIN grab, lectura 100% pasiva (evdev replica eventos a todos los lectores); (b) UN HILO POR DISPOSITIVO; (c) filtro de virtuales (`bool(d.phys)` — excluye ydotool/uinput); (d) hot-plug por pyudev; (e) debounce 300ms en keydown.
-- **Verificado E2E en kalimete**: teclado virtual uinput con phys + inyección de Right Ctrl → (1) el listener detecta down/up OK; (2) un SEGUNDO lector pasivo del mismo dispositivo también ve los eventos [1,0] — prueba de que NADA se roba (con el grab viejo el segundo lector habría visto nada). TUI viva en pseudo-TTY (exit 124) + --check TODO OK.
+- **Verificado E2E en Kalimete**: teclado virtual uinput con phys + inyección de Right Ctrl → (1) el listener detecta down/up OK; (2) un SEGUNDO lector pasivo del mismo dispositivo también ve los eventos [1,0] — prueba de que NADA se roba (con el grab viejo el segundo lector habría visto nada). TUI viva en pseudo-TTY (exit 124) + --check TODO OK.
 - **Impacto**: solo ~/.local/bin/victoria-tui. El teclado ya NO puede quedar inhabilitado por la TUI bajo ninguna circunstancia.
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [01:15] - WordPress local: connector v3.9.12 — filtro stock<=1 oculto del ecommerce
 - **Tipo**: proyecto | feature | regla-negocio | wordpress-dev
 - **Modificado**: helper `erpc_con_stock()` en `erp-ecomm-connector.php`; filtro en `landing.php`, `products.php`, `render_products`, `ajax_get_products` (+total ajustado), `ajax_get_products_json`; bump 3.9.12 + CHANGELOG plugin. Backups `*.bkup-20260920b`. Carrito/checkout sin cambios (validan con ERP).
-- **Afecta a**: kalimete (stack wordpress-local, home + catálogo + buscar + cargar más, ambos modos)
+- **Afecta a**: Kalimete (stack wordpress-local, home + catálogo + buscar + cargar más, ambos modos)
 - **Causa**: Usuario: stock 0/1 no debe presentarse en el ecommerce.
 - **Verificación**: 162 ERP → 58 visibles / 104 ocultos; home 4 cards, catálogo 15 cards, cero "Agotado", testigo stock-1 ausente; CSS ver=3.9.12; log sin entradas nuevas.
 - **Estado**: ✅ sincronizado
 
 ### [01:15] - FIX overlay Victoria: sprites no cargaban (ruta assets) + avatar 200x300
-- **Tipo**: fix | servicio (TARGET=kalimete local)
+- **Tipo**: fix | servicio (TARGET=Kalimete local)
 - **Modificado**: `~/dev/victoria/apps/overlay/` — BUG: index.html (en src/) referenciaba `assets/*.png` relativo → resolvía a src/assets/ inexistente (los PNG estaban en apps/overlay/assets/) → solo se veían status-dot y sombra, sin avatar. FIX: assets movidos a `src/assets/`; avatar agrandado 170x260→200x300px (sombra 130px, burbuja/chat/modal bottom 290→330px, translateX -85→-100); renderer.js state inicial null (fuerza activación del sprite en el primer setState, no solo al caminar)
-- **Afecta a**: kalimete (overlay)
+- **Afecta a**: Kalimete (overlay)
 - **Causa**: reporte del owner — "solo veo una bolita y la sombra subiendo y bajando, no veo avatar"; diagnóstico: elementos CSS puros (dot/sombra) visibles + imágenes 404 = ruta relativa rota
 - **Estado**: ✅ verificado por análisis de screenshot (cluster denso 3720px en franja inferior, sprite ~200px localizado en x=1100+, transparencia intacta); recorte de verificación en ~/Desktop/victoria-overlay-verificacion.png; log limpio (0 errores); nota operativa: pkill -f "electron apps/overlay" se mata a sí mismo (el patrón matchea el propio shell) — usar /tmp/kill-overlay.sh o pgrep con exclusión
 
@@ -5588,16 +5603,16 @@ EOF又是
 
 ### [01:11] - Alta website micaserogou.com: preprod verificado + agente Micaserogou + documentación de flota (24 subagentes)
 - **Tipo**: agente | config | docs | servicio
-- **Modificado**: agents/micaserogou.md (NUEVO), harness/micaserogou.harness.json (NUEVO), ~/.config/opencode/agent/micaserogou.md (symlink), agents/kalimete.md (allowlist 23→24, tabla, conteos), MAPA.md (topología + tabla de agentes), README-HUB.md (inventario, dominios, agentes, acciones), websites/micaserogou.com/docs/README.md (secreto redactado), CHANGELOG.md
-- **Afecta a**: kalimete (24 subagentes) + preprod micaserogou :8094 + docs de flota
+- **Modificado**: agents/micaserogou.md (NUEVO), harness/micaserogou.harness.json (NUEVO), ~/.config/opencode/agent/micaserogou.md (symlink), agents/Kalimete.md (allowlist 23→24, tabla, conteos), MAPA.md (topología + tabla de agentes), README-HUB.md (inventario, dominios, agentes, acciones), websites/micaserogou.com/docs/README.md (secreto redactado), CHANGELOG.md
+- **Afecta a**: Kalimete (24 subagentes) + preprod micaserogou :8094 + docs de flota
 - **Causa**: owner pidió dar de alta micaserogou.com como segundo website cliente multi-tenant, siguiendo el patrón MaganTech
 - **Estado**: ✅ preprod + agente + docs verificados; ⚠️ prod pendiente (7 prerrequisitos del checklist)
-- **Notas**: Preprod 3 contenedores healthy (`micaserogou-local` :8094, `micaserogou-db` :3311 porque 3310 estaba ocupado, `micaserogou-mailpit` :8027), WP 7.1.3/PHP 8.3.35/MariaDB 10.11, armada-suite 5.4.2 (ZIP sha256 157b1633…), tenant ERP 3 (key preprod id7 + webhook id4 sin secret), smoke 7/7, `https://micaserogou.kalimete.local` 200 con cert SAN exp. 2029-01-20. Prod `https://micaserogou.com/` 200 pero SIN plugin (cPanel externo; checklist: api_key productiva tenant 3, usuario WP dedicado + App Password, permalinks, HTTPS/REST, backup y webhook prod). Seguridad: password DB en claro redactado de `docs/README.md` (solo queda en `docker-compose.yml`, runtime). 5.4.3 IA nativa en working tree sin bump/ZIP — no desplegar. 15 páginas vs 14 del checklist (verificar antes de prod). Conteos: 25 agents .md (24 subagentes), 25 harness; `opencode agent list` muestra `Micaserogou (subagent)`.
+- **Notas**: Preprod 3 contenedores healthy (`micaserogou-local` :8094, `micaserogou-db` :3311 porque 3310 estaba ocupado, `micaserogou-mailpit` :8027), WP 7.1.3/PHP 8.3.35/MariaDB 10.11, armada-suite 5.4.2 (ZIP sha256 157b1633…), tenant ERP 3 (key preprod id7 + webhook id4 sin secret), smoke 7/7, `https://micaserogou.Kalimete.local` 200 con cert SAN exp. 2029-01-20. Prod `https://micaserogou.com/` 200 pero SIN plugin (cPanel externo; checklist: api_key productiva tenant 3, usuario WP dedicado + App Password, permalinks, HTTPS/REST, backup y webhook prod). Seguridad: password DB en claro redactado de `docs/README.md` (solo queda en `docker-compose.yml`, runtime). 5.4.3 IA nativa en working tree sin bump/ZIP — no desplegar. 15 páginas vs 14 del checklist (verificar antes de prod). Conteos: 25 agents .md (24 subagentes), 25 harness; `opencode agent list` muestra `Micaserogou (subagent)`.
 
 ### [01:10] - WordPress local: connector v3.9.11 — causa raíz home plugin (15→landing 4+CTA en modo plugin)
 - **Tipo**: proyecto | fix | root-cause | wordpress-dev
 - **Modificado**: `includes/class-erpc-templates.php` (portada en modo plugin → `landing`; fallback shortcode honra `per_page/columns/show_more/categoria`); `templates/ecomm/products.php` (consume `erpc_tpl_*`, load-more respeta `$show_more`); página 8 `post_content` (`per_page='12'`→`'4' show_more='0'`); bump 3.9.11 + CHANGELOG plugin. Backups: `class-erpc-templates.php.bkup-20260920`, `backups/home-page8-content-backup.txt`. `template_mode` quedó en `elementor` (original; solo se cambió a `plugin` temporalmente para verificar por HTTP).
-- **Afecta a**: kalimete (stack wordpress-local, home en ambos modos)
+- **Afecta a**: Kalimete (stack wordpress-local, home en ambos modos)
 - **Causa**: Usuario: "no veo que se hayan aplicado". Validación HTTP real demostró que v3.9.10 sí estaba vivo (CSS `ver=3.9.11`) pero la portada en modo plugin nunca rinde `landing.php`: slug `magantech-inicio` ≠ `inicio` → fallback incluía `products.php` directo ignorando attrs → 15 productos del tenant. Tres fuentes divergidas (content:12, elementor:4, router:15).
 - **Verificación**: modo plugin → landing con 4 cards + CTA + hero, sin load-more; modo elementor → 4 cards sin load-more; php -l ×3 OK; debug.log sin entradas nuevas.
 - **Estado**: ✅ sincronizado
@@ -5605,7 +5620,7 @@ EOF又是
 ### [01:10] - Plugin v3.4.2: footer social alineado + cómo funciona la landing (arquitectura)
 - **Tipo**: proyecto | fix | wordpress-dev | docs
 - **Modificado**: plugin `erp-ecomm-connector` v3.4.2 (commit `26fcd5e`)
-- **Afecta a**: kalimete (tienda MaganTech)
+- **Afecta a**: Kalimete (tienda MaganTech)
 - **Causa**: Iconos sociales del footer flotando a la derecha del texto. Raíz: regla legacy `.erpc-footer { text-align:center }` (línea ~849, de un footer viejo) que seguía cascando porque el bloque moderno nunca la neutralizó → texto centrado, iconos flex a la izquierda.
 - **Fix**: `text-align:left` en bloque moderno + `.erpc-footer-social` con `justify-content:flex-start` y gap reducido (44px→16px). Bump v3.4.2 para cache-bust (`?ver=`).
 - **Verificación**: CSS 3.4.2 servido; screenshot footer OK.
@@ -5620,7 +5635,7 @@ EOF又是
   - `assets/css/connector.css` — CSS footer completo (gradiente, grid responsive, badges)
   - `erp-ecomm-connector.php` — Version bumped to 3.1.0
   - `CHANGELOG.md` — Documentado v3.1.0
-- **Afecta a**: kalimete (WordPress dev localhost:8090)
+- **Afecta a**: Kalimete (WordPress dev localhost:8090)
 - **Causa**: Las páginas no se veían coherentes con el profesionalismo del landing, y faltaban links legales en el footer.
 - **Estado**: ✅ Footer completo, todas las páginas consistentes, 0 emojis, 11 templates con PHP limpio
 - **Notas**:
@@ -5632,7 +5647,7 @@ EOF又是
 ### [01:05] - WordPress local: connector v3.9.10 — home plugin en paridad con Elementor (4 destacados + CTA)
 - **Tipo**: proyecto | fix | paridad | wordpress-dev
 - **Modificado**: `templates/landing.php` (destacados 8→4 + sección CTA final "¿Listo para equipar tu setup?/Ir a la tienda"); `assets/css/connector.css` (reglas `.erpc-landing-cta*`); bump 3.9.10 + CHANGELOG del plugin. Backups `.bkup-20260920` de ambos.
-- **Afecta a**: kalimete (stack wordpress-local, home modo plugin)
+- **Afecta a**: Kalimete (stack wordpress-local, home modo plugin)
 - **Causa**: Usuario: home del plugin mostraba muchos productos, no los 4 del Elementor, y le faltaban updates del template Elementor. Causa: `array_slice($productos,0,8)` vs shortcode Elementor `columns='4' per_page='4' show_more='0'`; CTA final no existía en `landing.php`.
 - **Verificación**: render real vía `do_shortcode('[erpc_landing]')` → 4 cards + CTA; php -l OK; últimos `Undefined array key` del 18-sep (pre-fix), cero nuevos.
 - **Estado**: ✅ sincronizado
@@ -5643,12 +5658,12 @@ EOF又是
 - **Hallazgo del push**: origin había avanzado (PR #13 de Juan integrando NUESTRA base 2d0d97b a main/develop + su fix de impresoras) — el push directo fue rechazado; resuelto con merge (preserva los hashes que referencia la RECOMENDACIONES-FASE2-ECOMM.md). La "deriva del doc wordpress" reportada por un subagente era FALSA (verificado: el doc ya dice Armada Suite 5.2.0).
 - **Verificado**: regresión e2e 100% PASS post-merge; 13 containers Up; WP 200 / ERP 200 / Alfredo 200; trees limpios en los 3 repos.
 - **Estado de la sección**: CERRADA. Contexto completo para retomar: agent docs + harnesses (armada-sync) + changelogs de los 3 repos + docs/RECOMENDACIONES-FASE2-ECOMM.md (en origin). Próximos pasos naturales cuando se retome: (a) Juan Carlos revisa/integra Fase 2 (migraciones + --queue=default,webhooks en su prod); (b) WP: consumir orders/{id} + evaluar endpoint webhook para push; (c) Woodly: cablear VITE_API_URL a :3004.
-- **Docs**: changelog kalimete (esta) + 3 agent docs + 3 harnesses + 3 changelogs de proyecto + RECOMENDACIONES-FASE2-ECOMM.md.
+- **Docs**: changelog Kalimete (esta) + 3 agent docs + 3 harnesses + 3 changelogs de proyecto + RECOMENDACIONES-FASE2-ECOMM.md.
 
 ### [01:00] - WordPress local: update total — core 7.1.1 + plugins al día, cero pendientes
 - **Tipo**: proyecto | update | mantenimiento | wordpress-dev
 - **Modificado**: core 7.1→7.1.1; `all-in-one-wp-migration` 7.110→7.111; `emcp-tools` 3.14.1→3.16.1; contenedor `wordpress-local` recreado (activa guards `!defined` del compose en WORDPRESS_CONFIG_EXTRA); wp-cli 2.12.0 instalado en contenedor (`/tmp/wp-cli.phar`, se pierde al recrear). Backups pre-update: `backups/wp-full-20260920.sql` (1.6M) + `backups/wp-content-20260920.tgz` (31M).
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, endpoints MCP)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech, endpoints MCP)
 - **Causa**: Usuario: discrepancias en updates — validar todo y actualizar. Hallado: core pedía 7.1.1 (minor), 2 plugins con update, ruido `Constant already defined` en cada request (compose sin guards + constantes duplicadas).
 - **Verificación**: `core check-update` = latest; plugins/temas con update = cero; home 200; REST OK; rutas MCP (`default-server` + `emcp-tools-server`) intactas tras emcp 3.16.1; `wp-config.php` con 1 sola definición y wp-cli sin warnings; `debug.log` sin autoloader ni warnings de brand. Avisos EMCP `not in the ability registry` (40 líneas) son PREVIOS al update (primera 04:43:05, update posterior) — no es regresión, es logging informativo propio con WP_DEBUG.
 - **Notas**: (1) imagen base sigue `wordpress:6.7-php8.3-apache` aunque el core es 7.1.1 — normal: el core se auto-actualiza sobre la base; no se cambió la imagen a propósito (riesgo innecesario). (2) `mcp-basic-auth` v1.1 sigue INACTIVO (se deja así; activar cambia auth de MCP — pedir confirmación). (3) demás stacks (erpipo-preprod, alfredo-ecomm, taohemps, petsuite, woodly, tapmap): todos Up/healthy; imágenes de build local (actualizar = rebuild/deploy por stack, no tocado) y bases `:latest` compartidas (pull reiniciaría preprod, no tocado).
@@ -5670,7 +5685,7 @@ EOF又是
 ### [00:55] - MaganTech Store v2.0: llave API corregida + plugin e-commerce completo
 - **Tipo**: proyecto | plugin | wordpress
 - **Modificado**: `/home/warcold/dev/wordpress/wp-content/plugins/erpecomm-alfredo-pro/` (v1.0.0 → v2.0.0)
-- **Afecta a**: kalimete (WordPress local, localhost:8090)
+- **Afecta a**: Kalimete (WordPress local, localhost:8090)
 - **Causa**: MaganTech tenía API key errónea; inventario de 400 productos requería paginación + búsqueda + carrito + checkout funcional
 - **Estado**: ✅ completado y probado end-to-end
 - **Detalles**:
@@ -5691,13 +5706,13 @@ EOF又是
 
 ## 2026-09-02
 
-### [00:53] - Gaming: permisos Game Studio+Blender en kalimete + reference rAthena + plan juego Ragnarok×Enshrouded
+### [00:53] - Gaming: permisos Game Studio+Blender en Kalimete + reference rAthena + plan juego Ragnarok×Enshrouded
 - **Tipo**: agente | config | docs
-- **Modificado**: agents/kalimete.md (allowlist 21→23, tabla, conteos), MAPA.md (MCPs + fila blender), ~/dev/games/AGENTS.md (ledger), ~/dev/games/reference/rathena/ (NUEVO, 17M)
-- **Afecta a**: kalimete (delegación gaming), dominio ~/dev/games/
+- **Modificado**: agents/Kalimete.md (allowlist 21→23, tabla, conteos), MAPA.md (MCPs + fila blender), ~/dev/games/AGENTS.md (ledger), ~/dev/games/reference/rathena/ (NUEVO, 17M)
+- **Afecta a**: Kalimete (delegación gaming), dominio ~/dev/games/
 - **Causa**: owner pidió evaluar MCPs godot + agentes gaming + organizar ~/dev/games + arrancar juego nuevo (mecánicas Ragnarok, gráficos Enshrouded, 1 mapa, 99/70 sin advanced)
 - **Estado**: ✅ permisos+docs aplicados; ⚠️ juego en plan (nombre + pre-re por confirmar); mario-bros cleanup pendiente confirmación
-- **Notas**: GAP crítico: Game Studio y Blender existían (repo+symlink+harness) pero NO en permission.task → kalimete no podía delegarles. MCPs godot: 2 instancias correctas por diseño. rAthena: source vive SOLO en la imagen Docker del server (multi-stage, sin src/) — DBs extraídas (pre-re 34 + re 51 + const.yml), fórmulas battle/status/pc.cpp desde upstream. Server ragnarok: demonios siguen caídos (exit 127, mounts rotos custom/rAthena).
+- **Notas**: GAP crítico: Game Studio y Blender existían (repo+symlink+harness) pero NO en permission.task → Kalimete no podía delegarles. MCPs godot: 2 instancias correctas por diseño. rAthena: source vive SOLO en la imagen Docker del server (multi-stage, sin src/) — DBs extraídas (pre-re 34 + re 51 + const.yml), fórmulas battle/status/pc.cpp desde upstream. Server ragnarok: demonios siguen caídos (exit 127, mounts rotos custom/rAthena).
 
 ### [00:51] - Armada Suite 5.3.5 + validación key prod: Sanctum válida, canal equivocado (ecomm público exige iak_)
 - **Tipo**: servicio | fix | seguridad
@@ -5711,43 +5726,43 @@ EOF又是
 - **Notas**: ⚠️ **ROTAR la key expuesta** — quedó en el historial del chat; es un token de staff con acceso API al panel prod: revocarlo en ERP prod y generar uno nuevo (o mejor: provisionar **instance key `iak_*`** para tenant 10 vía admin ERP Configuración > API > Nueva API Key, o tinker `OwnerService::createApiKey($instance10,…)` — el raw se muestra una sola vez). Best practice: `iak_*` (scope tienda) > Sanctum de usuario (scope staff) como store-key. Qué esperar al reintentar con 5.3.5: ✅ "Configuración obtenida" si el token es del tenant 10; ⚠️ mismatch 409 si es de otro tenant (revela el tenant real); ❌ 401+hint si el token murió. ERP `34de630` sigue esperando merge de Juan (8 commits).
 
 ### [00:50] - Sistema Victoria: rename BillyCode→Victoria + Overlay Electron con avatar caminando sobre el taskbar
-- **Tipo**: servicio | proyecto (TARGET=kalimete local)
+- **Tipo**: servicio | proyecto (TARGET=Kalimete local)
 - **Modificado**: `~/dev/billycode` → `~/dev/victoria` (rename completo: folder, scripts vcc-*→victoria-*, docs/vcc→docs/victoria-docs, TODAS las refs BillyCode/VCC/vcc→Victoria/victoria en código+docs, endpoints /vcc/*→/victoria/*, env VCC_*→VICTORIA_*, package @vcc/server→@victoria/server); NUEVO `apps/overlay/` (Electron 33 + sprites): main.js (ventana transparente alwaysOnTop screen-saver, skipTaskbar, focusable:false, click-through forward:true), preload.js, index.html (escena CSS 3D, avatar 170x260px, burbuja, chatbox, modal D7, toast), renderer.js (máquina de estados idle/walk/listen/think/talk/work, caminata infinita con bobbing+flip, pass-through por hover, WS voz /victoria/voice con downsample 48k→16k, WS stream /victoria/stream, chat POST /victoria/chat, aprobaciones POST /victoria/approve, poll approvals 5s); assets: 5 PNG de ~/Documents/Victoria con fondo removido (flood-fill luminance, PIL); launcher `scripts/victoria-overlay.sh` + `~/.local/share/applications/victoria-overlay.desktop`; AGENTS.md del proyecto actualizado; readme.txt temporal eliminado
-- **Afecta a**: kalimete (nuevo servicio overlay + rename del proyecto; sin tocar opencode config ni armada-sync agents)
+- **Afecta a**: Kalimete (nuevo servicio overlay + rename del proyecto; sin tocar opencode config ni armada-sync agents)
 - **Causa**: pedido del owner — un solo sistema unificado bajo el nombre Victoria, con avatar humanoide overlay que camina sobre el taskbar, control de PC vía opencode con aprobación previa de acciones destructivas
-- **Estado**: ✅ verificado en vivo: serve :4096 UP (v1.18.35), backend :8931 UP (health ok, primary kalimete, voz qwen3 TTS+STT ok), overlay corriendo (Electron 33.4.11, transparencia confirmada por análisis de screenshot: 565 colores taskbar visibles + 1549 px sprite Victoria), chat E2E OK (conv creada, respuesta stream, state idle), sintaxis JS OK, sin errores en logs
-- **Notas**: atajo global Ctrl+Shift+V oculta/muestra a Victoria; pendientes: modelo glTF real (sprites por ahora), wake word hands-free, git init del repo; kalimete-ptt sigue intacto (retiro solo tras confirmación del owner)
+- **Estado**: ✅ verificado en vivo: serve :4096 UP (v1.18.35), backend :8931 UP (health ok, primary Kalimete, voz qwen3 TTS+STT ok), overlay corriendo (Electron 33.4.11, transparencia confirmada por análisis de screenshot: 565 colores taskbar visibles + 1549 px sprite Victoria), chat E2E OK (conv creada, respuesta stream, state idle), sintaxis JS OK, sin errores en logs
+- **Notas**: atajo global Ctrl+Shift+V oculta/muestra a Victoria; pendientes: modelo glTF real (sprites por ahora), wake word hands-free, git init del repo; Kalimete-ptt sigue intacto (retiro solo tras confirmación del owner)
 
 ### [00:45] - victoria-gui RETIRADA (orden del owner) + limpieza de rastros de pruebas
 - **Tipo**: removal + limpieza (owner: "quita la versión web no la necesitamos y limpia todos los rastros y cosas temporales")
 - **Que**: (a) `victoria-gui` ELIMINADA por completo: binario `~/.local/bin/victoria-gui`, lanzador `~/.local/share/applications/victoria-gui.desktop`, proceso `--lan` que corría (terminado); (b) limpieza de rastros de pruebas: imágenes de test del Desktop (`robot-barista.png`, `victoria-art-001439.png`), temporales en /tmp (tui-capture*, vgui.*, victoria-tui/gui); (c) victoria-tui actualizada a v2.1 (docstring sin referencia a la gui); (d) el historial compartido (~/.local/share/victoria-tui/history.jsonl) se CONSERVA — lo usa la TUI.
 - **Verificado**: `ls ~/.local/bin/ | grep victoria` → solo victoria-tui; 0 procesos gui; Desktop sin imágenes de test; TUI --check OK post-limpieza.
 - **Lo que queda vivo**: victoria-tui (ASCII + avatar + comandos / + /call + /art) y la skill art para opencode.
-- **Docs**: changelog kalimete (esta entrada) + general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + general de victoria.
 
 ### [00:45] - Granja victoria COMPLETA para Game Studio: image→3D verificado E2E + skill assets-3d + host-admin endurecido (recursos sí, máquina no)
 - **Tipo**: infra | seguridad | docs
 - **Contexto**: owner — "mejora todo para que [kalimete] tenga acceso a victoria y pueda usar el recurso para crear DE TODO desde juegos... via keyring para no conectarnos a ella y utilizar la maquina pero si sus recursos con sus modelos sin explotar y/o hacer que se reinicie". Evaluación de Victoria sobre los cambios del 2026-10-18 (game-studio + blender-mcp) + integración completa.
 - **Hallazgos de la evaluación**:
-  - El game-studio marcaba "image→3D ⏳ Fase 2 requiere auth owner" — **obsoleto**: Hunyuan3D-2 vive en victoria :18860 desde el 2026-10-09 y acepta `image_b64` por HTTP; la llave kalimete (cap `art` → sense elevation) ya pasa el auth. lp-animate :18861 (foto_b64→mp4) igual.
-  - **Hueco de seguridad cerrado en victoria**: `victoria-host-admin.py` usaba `sense_role()` CON elevación de caps → la llave kalimete podía operar la MÁQUINA de victoria (exec/apt/service restart) desde LAN. Victoria endureció :18840 a bridge-key + rol admin puro (`sense_role(elevate=False)`; rol services retirado de ahí) — la llave kalimete ahora da **401 POR DISEÑO**. Verificado por red real desde kalimete.
+  - El game-studio marcaba "image→3D ⏳ Fase 2 requiere auth owner" — **obsoleto**: Hunyuan3D-2 vive en victoria :18860 desde el 2026-10-09 y acepta `image_b64` por HTTP; la llave Kalimete (cap `art` → sense elevation) ya pasa el auth. lp-animate :18861 (foto_b64→mp4) igual.
+  - **Hueco de seguridad cerrado en victoria**: `victoria-host-admin.py` usaba `sense_role()` CON elevación de caps → la llave Kalimete podía operar la MÁQUINA de victoria (exec/apt/service restart) desde LAN. Victoria endureció :18840 a bridge-key + rol admin puro (`sense_role(elevate=False)`; rol services retirado de ahí) — la llave Kalimete ahora da **401 POR DISEÑO**. Verificado por red real desde Kalimete.
 - **Modificado**:
   - **Skill nueva `assets-3d`** (`~/.config/opencode/skills/assets-3d/SKILL.md` + copia `~/armada-sync/skills/`): receta Hunyuan3D-2 image→3D GLB (image_b64 → `/generate` → `/file/<n>.glb`, face_count 10-20k para juego, single-flight/429=cola) + lp-animate foto→mp4 (presets, guia_b64) + pipeline recomendado art→3D→Godot + reglas de convivencia GPU.
   - **Agente `game-studio.md`**: stack table image→3D ✅ E2E + fila animación + fila VLM QA; fase 2 Assets con las 3 vías (Blender/CC0/Hunyuan3D); fase 5 QA con "ojos" VLM (Read de screenshot o image_url); fase 6 audio con lp-animate para cutscenes; sección nueva "Convivencia GPU con victoria" (un job a la vez, 429/503=cola, sustained load, host-admin 401 por diseño); regla 4 clarificada (HTTP=recursos autorizados, SSH=solo lectura).
   - **Agente `victoria-server.md`**: servicios table +Hunyuan3D :18860 +Animar :18861; granja table +fila image→3D +fila animación; skills operadoras actualizadas (art/voice-video/assets-3d); bloque host-admin endurecido; sección 2026-10-19.
   - **Harness `game-studio.harness.json`**: `fase2_victoria` → `image_to_3d_victoria` DESPLEGADO Y VERIFICADO; changelog entry 2026-10-19.
-- **E2E verificado desde kalimete** (script `/tmp/test-victoria-farm*.sh`): gateway 200 · hunyuan health loaded · lp-anim health OK · **host-admin 401 con llave kalimete** · concept art z-image-turbo (job art-15874939504eb7d3, ~25s, golem.png 1.2M) → **Hunyuan3D GLB 3.5MB (46.4s, 284458 verts, magic glTF) descargado** · VLM describió la imagen correcta en ES vía chat completions image_url. Artefactos en `/tmp/victoria-farm-test/`.
-- **Afecta a**: kalimete (skill + 2 agentes + harness), victoria (sense_auth.py + victoria-host-admin.py endurecidos — documentado en SU changelog por Victoria)
+- **E2E verificado desde Kalimete** (script `/tmp/test-victoria-farm*.sh`): gateway 200 · hunyuan health loaded · lp-anim health OK · **host-admin 401 con llave Kalimete** · concept art z-image-turbo (job art-15874939504eb7d3, ~25s, golem.png 1.2M) → **Hunyuan3D GLB 3.5MB (46.4s, 284458 verts, magic glTF) descargado** · VLM describió la imagen correcta en ES vía chat completions image_url. Artefactos en `/tmp/victoria-farm-test/`.
+- **Afecta a**: Kalimete (skill + 2 agentes + harness), victoria (sense_auth.py + victoria-host-admin.py endurecidos — documentado en SU changelog por Victoria)
 - **Causa**: owner (acceso completo a los recursos de victoria via keys, sin operar la máquina, sin explotar la GPU)
 - **Estado**: ✅ verificado E2E por red real (art→3D→GLB + VLM + 401 host-admin)
-- **Notas**: el pipeline completo de un juego ya corre end-to-end: GDD → concept art (skill art) → GLB 3D (skill assets-3d) → Godot (drag GLB) → QA visual (VLM attachment) → diálogos (TTS skill voice-video) → cutscenes (lp-animate). La llave kalimete NO necesita caps nuevas: `art` ya eleva para todos los sentidos generadores. Sonic sigue con constraint de rutas locales (browser/Estudio Podcast o pedírselo a Victoria).
+- **Notas**: el pipeline completo de un juego ya corre end-to-end: GDD → concept art (skill art) → GLB 3D (skill assets-3d) → Godot (drag GLB) → QA visual (VLM attachment) → diálogos (TTS skill voice-video) → cutscenes (lp-animate). La llave Kalimete NO necesita caps nuevas: `art` ya eleva para todos los sentidos generadores. Sonic sigue con constraint de rutas locales (browser/Estudio Podcast o pedírselo a Victoria).
 
 ### [00:45] - Fix permisos: WP admin local no podía borrar plugins (ACLs en bind mount)
 - **Tipo**: fix | infra | wordpress
 - **Causa raíz**: `wp-content/plugins/` es bind mount del host con owner `warcold:warcold` (1000) modo 755; el contenedor corre PHP como `www-data` (UID 33) → solo lectura → "Borrar" en WP admin fallaba (pedía FTP o "no se pudo eliminar"). `themes/` y `uploads/` ya eran www-data (por eso sí funcionaban). Descartado `DISALLOW_FILE_MODS`.
 - **Fix**: ACLs recursivas en `~/dev/wordpress/wp-content/plugins/`: `setfacl -R -m u:33:rwx,u:1000:rwx` + default ACL `-d` para herencia en archivos nuevos. Owner sin cambios → edición host-side intacta.
 - **Verificación E2E**: plugin desechable `zz-test-delete` borrado vía flujo admin real (GET confirm → POST verify-delete → 302) → carpeta físicamente eliminada ✅. www-data touch+rm OK, warcold touch+rm OK.
-- **Extra validado esta sesión**: stack local 100% operativo (DB 22 tablas intactas, login admin/admin123 OK en ambas URLs, plugin 4.4.2 activo, AJAX→ERP 18 categorías reales). El "DB vacía" reportado antes fue falso positivo de kalimete (password root equivocado en sus propios comandos: `rootpassword` vs `root_pass_2026`).
+- **Extra validado esta sesión**: stack local 100% operativo (DB 22 tablas intactas, login admin/admin123 OK en ambas URLs, plugin 4.4.2 activo, AJAX→ERP 18 categorías reales). El "DB vacía" reportado antes fue falso positivo de Kalimete (password root equivocado en sus propios comandos: `rootpassword` vs `root_pass_2026`).
 - **Detalle**: entrada completa en `~/dev/wordpress/CHANGELOG.md` [fix-permisos-plugins]. Reversible: `setfacl -R -b`.
 - **Estado**: ✅ verificado end-to-end
 
@@ -5770,54 +5785,54 @@ EOF又是
 
 ---
 
-### [00:45] - Backup completo sistema-facturación descargado al Escritorio de kalimete
+### [00:45] - Backup completo sistema-facturación descargado al Escritorio de Kalimete
 - **Tipo**: infra | backup | erpipo
 - **Modificado**: `/root/erpipo-facturacion-20260919.tar.gz` en servidor externo (staging en `/root/erpipo-backup-20260919/`); copia en `/home/warcold/Desktop/erpipo-facturacion-20260919.tar.gz` (555M, sha256 verificado, tar íntegro)
-- **Afecta a**: servidor ERP externo (acceso solo-lectura, retirado 2026-09-19) + kalimete (listo para deploy preprod)
+- **Afecta a**: servidor ERP externo (acceso solo-lectura, retirado 2026-09-19) + Kalimete (listo para deploy preprod)
 - **Contenido**: dump fresco `facturacion_db` 528M (Laravel 12.16, PHP 8.3.6, MySQL 8.0.46) + código `sistema-facturacion` 3.8G (sin `node_modules`, con `vendor` + `.env` + `storage/` 3.5G) + dev-stack `/opt/erpipos` (compose, Dockerfile, nginx, php conf) + nginx sites + htpasswd + pool php-fpm + certs LE + script de backup + versions.txt. Karaoke EXCLUIDO a pedido. Compresión 87% (4.3G → 555M)
 - **Estado**: ✅ en Escritorio, listo para dockerizar en preprod
 
 ### [00:45 29-oct] - Victoria (cross-machine, autorizada): seguridad labs + docs_oficiales + MCP blender E2E + prep ventana prod Micaserogou
 - **Tipo**: security | docs | infra
-- **Seguridad (labs kalimete)**: 4 puertos que publicaban 0.0.0.0 pasaron a loopback-only — erpipo-preprod db :3310, redis :6390, mailpit :8025 (vía compose, backup .bkup-20261027-loopback) y wordpress-db :3307 (recreado a mano con misma config + aliases db/wordpress-db; datos en volumen wordpress_db_data intactos, 22 tablas WP verificadas). E2E: nginx :8100 → 200, stack erpipo healthy, WP :8091 → 200.
+- **Seguridad (labs Kalimete)**: 4 puertos que publicaban 0.0.0.0 pasaron a loopback-only — erpipo-preprod db :3310, redis :6390, mailpit :8025 (vía compose, backup .bkup-20261027-loopback) y wordpress-db :3307 (recreado a mano con misma config + aliases db/wordpress-db; datos en volumen wordpress_db_data intactos, 22 tablas WP verificadas). E2E: nginx :8100 → 200, stack erpipo healthy, WP :8091 → 200.
 - **docs_oficiales**: 29/32 harnesses ya los tenían; 3 gaps llenados (armada-templates, assetto, wordpress) con URLs oficiales. Commit 8fbd16e.
 - **MCP blender E2E VERIFICADO**: Blender 5.0.1 GUI bajo Xvfb → addon :9876 → get_scene_info {"status":"success", 3 objetos}. Hallazgo: el addon responde JSON SIN newline final — tests TCP crudos deben usar recv+timeout, no recv-loop por \n (un hang por \n mató al addon con EBADF y parecía crash; lección en conocimiento/LECCIONES.md). Blender detenido tras el test (on-demand por diseño).
 - **Prep ventana prod Micaserogou (5.5.10 → 5.7.0)**: ops/status con App Password usuario victoria → **200** (prod WP 7.1.4, PHP 8.4.27, plugin 5.5.10, ERP prod erpipos.armada.do). Artefacto A (armada-suite-5.7.0.zip) RECUPERADO de la réplica magantech export/ — sha256 **766345c9… MATCH EXACTO** con el checklist (el repo dev-lab plugins/armada-suite/ fue eliminado en la limpieza del 28-oct; el rebuild desde el espejo del sitio NO coincide: 446 vs 529 archivos, espejo divergió). Artefactos B (site-fixes 1.0.3, 130f4b4c…) y C (rollback 5.5.10, b35e007c…) verificados en export/ de micaserogou. Los 3 ZIPs listos para la ventana.
 - **BLOCKERS del deploy (owner)**: (1) crear/confirmar **iak tenant 3 en ERP prod** (erpipos.armada.do) — solo owner/Juan Carlos; (2) ventana manual: snapshot cPanel + uploads wp-admin (flujo 4 clicks del checklist). (3) DECISIÓN pendiente: subir 5.7.0 según checklist vs esperar la fusión Zion CRM 2.0.0 (commits 23:00-23:45 28-oct) — el ecosistema está a mitad de la migración unificada.
-- **Hallazgo de estado**: el inventario de Victoria estaba viejo (5.4.2) — la flota kalimete avanzó a 5.9.1 + fusión Zion CRM 2.0.0. Docs curadas.
+- **Hallazgo de estado**: el inventario de Victoria estaba viejo (5.4.2) — la flota Kalimete avanzó a 5.9.1 + fusión Zion CRM 2.0.0. Docs curadas.
 ## 2026-10-29
 
 ### [00:40] - WordPress local: validación plugin — error MCP corregido + connector v3.9.9
 - **Tipo**: proyecto | fix | validación | wordpress-dev
 - **Modificado**: `mcp-adapter/` (`composer dump-autoload` → `vendor/autoload.php`, 251 clases); plugin `erp-ecomm-connector` (`get_brand()` reescrito con merge defaults<-ERP<-local, `footer.php` + `auth/form.php` blindados con `?? 'Tienda'`, bump 3.9.8→3.9.9); `mcp-basic-auth.php` v1.1 (auth correcta, multi-header Apache/FPM, base64 estricto); `docker-compose.yml` (guards `!defined` en WORDPRESS_CONFIG_EXTRA); `wp-config.php` (WP_DEBUG duplicado eliminado); CHANGELOG del plugin (entrada 3.9.9). Backups `.bkup-20260920` de todo lo tocado.
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, endpoints MCP)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech, endpoints MCP)
 - **Causa**: Usuario: "el plugin emite error de mcp, validar y corregir todas las fallas". Causa raíz: mcp-adapter instalado desde fuente sin `composer install` (sin autoload → plugin oficial muerto; solo vivía la copia bundled de EMCP Tools). Fallas extra: `get_brand()` comparaba array con `!== ''` (warnings `Undefined array key "name"`); `mcp-basic-auth` con lógica invertida y un solo header; colisión de constantes WP_HOME/WP_DEBUG.
 - **Estado**: ✅ sincronizado
-- **Notas**: wordpress-dev agotó sus pasos en diagnóstico (2 sesiones); kalimete aplicó correcciones pendientes directamente. Verificación: php -l ×4 OK; home 200 sin warnings nuevos; clases `WP\MCP\Plugin/Core\McpAdapter/Transport\HttpTransport` resuelven; MCP anónimo → 401 esperado (protegido, requiere usuario WP con cap read); basic inválido → 401 limpio sin fatales. Pendiente upstream: conflicto require-dev del mcp-adapter (php_codesniffer 3 vs 4) + ext-mbstring en host para `composer install` completo.
+- **Notas**: wordpress-dev agotó sus pasos en diagnóstico (2 sesiones); Kalimete aplicó correcciones pendientes directamente. Verificación: php -l ×4 OK; home 200 sin warnings nuevos; clases `WP\MCP\Plugin/Core\McpAdapter/Transport\HttpTransport` resuelven; MCP anónimo → 401 esperado (protegido, requiere usuario WP con cap read); basic inválido → 401 limpio sin fatales. Pendiente upstream: conflicto require-dev del mcp-adapter (php_codesniffer 3 vs 4) + ext-mbstring en host para `composer install` completo.
 
-### [00:40] - Consolidación dominios MaganTech: retiro de `wordpress.kalimete.local` — queda solo `magantech.kalimete.local`
+### [00:40] - Consolidación dominios MaganTech: retiro de `wordpress.Kalimete.local` — queda solo `magantech.Kalimete.local`
 - **Tipo**: infra | red | docs
 - **Contexto**: owner preguntó si ambos dominios "manejan la misma data" → NO es la misma instalación (dev lab :8091 DB :3307 vs preprod :8093 DB :3309 — dos WP separados), pero SÍ la misma tienda/fuente (ERP tenant 10; :8091 = data histórica del desarrollo, :8093 = espejo de prod). Directiva: dejar solo el dominio del proyecto + limpiar discrepancias.
 - **Modificado**:
-  - **Dominio `wordpress.kalimete.local` RETIRADO** (archivado reversible en `/etc/nginx/attic-20261018/`): vhost (80/443/8090 ssl) fuera de sites-enabled/available (+2 bkups viejos), certs mkcert movidos, línea de `/etc/hosts` eliminada (backup `hosts.bkup-20261018`), `nginx -t` OK + reload. :8090 queda libre (nadie más lo usaba). Comentario del vhost magantech actualizado (sin cambio funcional).
-  - **Dev lab :8091 intacto, solo loopback** (`http://localhost:8091`; wp-config dinámico por HTTP_HOST → sin cambios de DB). Compose del stack (`plugins/armada-suite/docker-compose.yml`): fallback `WP_HOME/WP_SITEURL` → `http://localhost:8091` + eliminada entrada `extra_hosts: wordpress.kalimete.local` (aplica al próximo recreate; contenedores NO tocados; backup `.bkup-20261018`).
+  - **Dominio `wordpress.Kalimete.local` RETIRADO** (archivado reversible en `/etc/nginx/attic-20261018/`): vhost (80/443/8090 ssl) fuera de sites-enabled/available (+2 bkups viejos), certs mkcert movidos, línea de `/etc/hosts` eliminada (backup `hosts.bkup-20261018`), `nginx -t` OK + reload. :8090 queda libre (nadie más lo usaba). Comentario del vhost magantech actualizado (sin cambio funcional).
+  - **Dev lab :8091 intacto, solo loopback** (`http://localhost:8091`; wp-config dinámico por HTTP_HOST → sin cambios de DB). Compose del stack (`plugins/armada-suite/docker-compose.yml`): fallback `WP_HOME/WP_SITEURL` → `http://localhost:8091` + eliminada entrada `extra_hosts: wordpress.Kalimete.local` (aplica al próximo recreate; contenedores NO tocados; backup `.bkup-20261018`).
   - **Docs curados**: `MAPA.md` (dev lab + SSL + política dominios → verificados 2026-10-18: zionv, magantech, erp), `wordpress-dev.md` (URLs/probes → localhost:8091 + claim "repo compartido" corregido — el hub NO es repo), `armada-suite.md` (probes → localhost + regresión 19→25 + v5.3.5→5.4.1 + HEAD `b6d5006`), `harness/armada-suite.harness.json` (checks → localhost, versión 5.4.1, zips 5.4.0/5.4.1 añadidos con sha256 completo), `magantech.md` (nota "dominio único del proyecto").
   - **Repos plugins (locales, sin push)**: zionv README L5 → `183fe6a` (ahead 3); armada-suite → `28ab4f8` (.env.example) + `b6d5006` (compose, fix agente WordPress) — working tree limpio.
 - **Afecta a**: dev lab WordPress, agentes WordPress/Armada Suite/MaganTech, docs de flota
-- **Causa**: owner — "manejan la misma data wordpress.kalimete.local y magantech.kalimete.local? de ser asi solo deja magantech.kalimete.local y limpia la discrepancias tambien actualiza documentos y demas, relacionado al proyecto"
-- **Estado**: ✅ verificado (localhost:8091 200; magantech.kalimete.local 200; dominio retirado irresoluble; :8090 libre)
+- **Causa**: owner — "manejan la misma data wordpress.Kalimete.local y magantech.Kalimete.local? de ser asi solo deja magantech.Kalimete.local y limpia la discrepancias tambien actualiza documentos y demas, relacionado al proyecto"
+- **Estado**: ✅ verificado (localhost:8091 200; magantech.Kalimete.local 200; dominio retirado irresoluble; :8090 libre)
 - **Notas**: rollback = restaurar archivos de attic + hosts + reload. Residuales NO accionados: comentario histórico `Main.php:474` (inocuo, comentario v3.11.9 — se deja).
 
 ### [00:35] - micaserogou: página de detalle de producto (punto 4) + proxy ERP en WordPress
 - **Tipo**: servicio | frontend | api-integracion
-- **Modificado**: preprod micaserogou.kalimete.local — página WP id 52 (slug: producto-detalle) + mu-plugin erpc-html-filter.php (proxy REST + interceptor de clics) + uploads/erpc/producto-detalle.html
+- **Modificado**: preprod micaserogou.Kalimete.local — página WP id 52 (slug: producto-detalle) + mu-plugin erpc-html-filter.php (proxy REST + interceptor de clics) + uploads/erpc/producto-detalle.html
 - **Afecta a**: sitio restaurante — catálogo ahora enlaza a detalle individual por producto
 - **Causa**: punto 4 del owner — página de detalle de producto bajo mejores prácticas de restaurante (referencias: Restro/Framer, The Grand Table, Brimky 2026)
 - **Estado**: ✅ verificación estructural completa (12/12 elementos DOM, script, proxy, nonce); render final requiere navegador
 
 **Qué se implementó:**
 1. **Página producto-detalle (id 52)**: breadcrumb, imagen grande con badge de stock (disponible/últimas unidades/agotado), chip de categoría, título, descripción, precio RD$, meta (categoría/estado/código), selector de cantidad, botón "Agregar al carrito" (AJAX del plugin con nonce erpc_cfg), botón "Reservar mesa para este plato" (CTA restaurante), sección "Detalles del plato" (descripción/unidad/ITBIS/ingredientes), productos relacionados de la misma categoría (grid dinámico), CTA final de reserva
-2. **Proxy REST WordPress** (`/wp-json/erpc-proxy/v1/erp/{path}`): reenvía peticiones al ERP API server-side — evita CORS y certificado autofirmado de erp.kalimete.local desde el navegador; API key vive solo server-side
+2. **Proxy REST WordPress** (`/wp-json/erpc-proxy/v1/erp/{path}`): reenvía peticiones al ERP API server-side — evita CORS y certificado autofirmado de erp.Kalimete.local desde el navegador; API key vive solo server-side
 3. **Interceptor de clics**: tarjetas del catálogo (.erpc-card-open) redirigen a /producto-detalle/?id=XXX
 4. **Workaround ERP**: GET /api/products/{id} no existe en el ERP (solo index) → el JS trae products?per_page=100 vía proxy y filtra por ID
 
@@ -5829,12 +5844,12 @@ EOF又是
 - **Verificado**: regresión e2e 100% PASS — catálogo 4/200 + imágenes OK, /up {ok,db,redis}, login+me 200, compra con caja CERRADA → checkout 200 (venta 289, sesion_caja_id NULL), orders list+nueva ruta 200/404, promos 400 invalid_code; webhooks: entregas sent/200 con firma HMAC validada por receptor de prueba (True en ambos eventos); 2 migraciones corridas (653→655); queue worker con --queue=default,webhooks (compose local con .bkup); tree limpio; smoke final OK.
 - **Hallazgos del camino**: queue worker sin --queue= no procesa colas nuevas; redeclarar $afterCommit del trait Queueable es fatal PHP; job ejecuta en contenedor queue (no app) — el receptor de test debía vivir ahí; /up nativo de Laravel 12 renderiza blade HTML.
 - **Pendiente owner**: decidir push de `dev/ecomm-erp` a origin (repo de Juan Carlos) — 9 commits listos para su revisión; el compose de prod de Juan necesitará --queue=default,webhooks.
-- **Docs**: changelog kalimete (esta) + docs/RECOMENDACIONES-FASE2-ECOMM.md en el repo erpipo (viaja con la rama).
+- **Docs**: changelog Kalimete (esta) + docs/RECOMENDACIONES-FASE2-ECOMM.md en el repo erpipo (viaja con la rama).
 
 ### [00:35] - ERP Commerce Suite 4.2.0: panel UX — SPA tabs, diseño propio, datos vivos del ERP
 - **Tipo**: proyecto | UX | feature | wordpress
 - **Modificado**: erp-commerce-suite 4.1.1→4.2.0. AdminMenu SPA client-side (erpsuite-admin.js: tabs sin recarga, deep link #tab-x, localStorage, flechas teclado); erpsuite-admin.css (hero+badge modo, tabs píldora dashicons, cards estado, botones rounded, responsive mobile ≤782px); cards datos vivos en Entorno/Catálogo/MCP (conteos reales ERP vía transient 60s, sin bloqueo si cae); assets solo en nuestra página admin (toplevel_page_erp-suite)
-- **Afecta a**: kalimete (wordpress-local wp-admin), producción (v4.2.0 en export/)
+- **Afecta a**: Kalimete (wordpress-local wp-admin), producción (v4.2.0 en export/)
 - **Causa**: Usuario: hay tabs sin información, todo recarga al hacer click, quiere diseño amigable + responsive/móvil
 - **Validación**: php -l 50/50; regresión 8/8; render() completo sin fatal (8 secciones, 7 hidden, 8 cards, badge DEV); erp_counts productos=162 categorias=18 ok=true (fix: shape real ERPC_API['meta']['total']); ZIP reconstruido 761 KB
 - **Estado**: ✅ sincronizado. Suite push OK. ZIP: ~/dev/wordpress/export/erp-commerce-suite-v4.2.0.zip
@@ -5845,14 +5860,14 @@ EOF又是
 ### [00:35] - Auditoría read-only servidor ERP externo (acceso retirado 2026-09-19)
 - **Tipo**: infra | auditoría | plan
 - **Modificado**: ninguno (solo lectura en servidor externo; cero cambios en el servidor)
-- **Afecta a**: futuro preprod en kalimete + repo GitHub del proyecto ERP
+- **Afecta a**: futuro preprod en Kalimete + repo GitHub del proyecto ERP
 - **Hallazgos**: 2 Laravel 8.3 (sistema-facturacion 3.9G con storage/ 3.5G + karaoke 489M con ffmpeg/yt-dlp) sobre nginx+php-fpm+MySQL 8.0 nativos; stack dev Docker (7 contenedores, compose en /opt/erpipos) montando el código de prod con .env propio; MySQL nativo: facturacion_db 746MB/203tbl (PROD) + karaoke_db 1MB + backup_temp 8.9MB; dev MySQL 712MB (copia de prod); backup diario cron 08:00 a /var/backups/facturacion_db (4.3G acumulados, log OK hasta 20260918); UFW activo (1888 + Nginx + fail2ban sshd/nginx-http-auth); huella total a respaldar ~9GB (4.3G código + 4.3G dumps + 1.6G volúmenes dev opcionales)
 - **Estado**: 📋 plan entregado, pendiente aprobación para ejecutar
 
 ### [00:30] - erp-chatbot v1.2.1: navegación automática en modo voz (sin clic)
 - **Tipo**: proyecto | feature | UX voz | wordpress
 - **Modificado**: erp-chatbot 1.2.0→1.2.1 (~/dev/wordpress: turno marcado de voz, auto-nav al terminar de hablar, prompt según modo). **SIN COMMIT (regla: nada de commits hasta probar).**
-- **Afecta a**: kalimete (wordpress-local :8091, widget del chatbot)
+- **Afecta a**: Kalimete (wordpress-local :8091, widget del chatbot)
 - **Causa**: Usuario: hablando por voz no quiere dar clic — el bot debe llevar solo a la tienda filtrada.
 - **Solución**: mensaje dictado o modo teléfono → sin botón; al terminar de hablar navega solo (900ms); sin TTS a los 1.5s; mensaje nuevo cancela; escribiendo todo igual (con botón).
 - **Verificación**: turno voz=1 con tienda_url ✅; JS 1.2.1 servido con la lógica ✅; node + php OK.
@@ -5861,17 +5876,17 @@ EOF又是
 ### [00:30] - WordPress: fix duplicación visual landing (v3.4.1) + pipeline MCP Elementor operativo
 - **Tipo**: proyecto | fix | wordpress-dev | mcp
 - **Modificado**: plugin `erp-ecomm-connector` v3.4.1 (commit `ba92f2a`); `mcp-adapter` + `emcp-tools` activados con fix autoloader; app password MCP creada
-- **Afecta a**: kalimete (tienda MaganTech + stack MCP)
+- **Afecta a**: Kalimete (tienda MaganTech + stack MCP)
 - **Causa**: (1) Usuario reportó header/footer "duplicados" en la landing: el hero repetía la marca del header, la sección trust repetía la trustbar, y había un `</div>` huérfano tras `</html>` en landing/products/cart. (2) Plugins MCP (mcp-adapter + emcp-tools) inactivos; al activarlos, fatal por jetpack-autoloader duplicado (ambos bundlean el mismo namespace).
 - **Fix**: (1) Hero con headline promocional, trust-grid eliminado, footer tras cierre de .erpc-page — HTML validado 52/52 divs. (2) Guard `class_exists` en `vendor/autoload_packages.php` de AMBOS plugins (mismo namespace hash → redeclaración). (3) `active_plugins` re-serializado con longitudes correctas (mi UPDATE anterior tenía s:19/s:41 erróneos → unserialize fallaba silenciosamente).
-- **Verificación**: Landing 200 con hero promocional, 1 header, 1 footer, 0 trust-grid; productos/carrito/mi-cuenta 200; MCP REST `/wp-abilities/v1/abilities` → **151 abilities (148 emcp-tools Elementor: create-page, build-page, add-container, add-flexbox, atomic widgets, global classes, templates, batch-update)**; auth Basic con app password `mcp-kalimete-2026` (admin).
+- **Verificación**: Landing 200 con hero promocional, 1 header, 1 footer, 0 trust-grid; productos/carrito/mi-cuenta 200; MCP REST `/wp-abilities/v1/abilities` → **151 abilities (148 emcp-tools Elementor: create-page, build-page, add-container, add-flexbox, atomic widgets, global classes, templates, batch-update)**; auth Basic con app password `mcp-Kalimete-2026` (admin).
 - **Estado**: ✅ sincronizado
 - **Notas**: Arquitectura confirmada: plugin=datos (shortcodes), Elementor=diseño, MCP=control programático. Los fixes de autoloader viven en `vendor/` (se pierden en update de plugin — documentar en upstream). El endpoint REST de abilities tiene per_page max 100 (paginar). App password guardada en wp-cli style: NO commitear.
 
 ### [00:30] - WordPress local: connector v3.9.7 — buscador funcional + settings contacto/redes/mapa
 - **Tipo**: proyecto | feature | fix | ux | wordpress-dev
 - **Modificado**: plugin `erp-ecomm-connector` (JS: wiring header search desktop+móvil, `?buscar=`, home_url en erpc_cfg; shortcodes: filtro server-side + `[erpc_map]` nuevo + docs; products.php: paridad; admin: sanitización + sección Contacto/redes/mapa; footer dinámico; CSS; helper `erpc_social_link()`; bump 3.9.7, commit `14b1f4a`, push main OK); `_elementor_data` contacto (sección mapa, backup `_elementor_data_bak_v396`); `map_address` = ciudad (refinar); `~/dev/wordpress/CHANGELOG.md`; `export/erp-ecmm-connector.zip` regenerado (v3.9.7); repo padre commit
-- **Afecta a**: kalimete (stack wordpress-local, tienda MaganTech, ambos templates)
+- **Afecta a**: Kalimete (stack wordpress-local, tienda MaganTech, ambos templates)
 - **Causa**: Usuario: validar buscador contra inventario en ambos templates + settings de redes/contacto/mapa. Hallazgos: (1) buscador del header muerto (HTML sin handlers); (2) `?s=` colisiona con búsqueda nativa de WP (mayúsculas/espacios → 404 del tema) → parámetro propio `?buscar=`; (3) products.php (router plugin) ignoraba el filtro en render inicial; (4) footer con 4× `href="#"` muertos y cero settings de redes/contacto/mapa.
 - **Implementado**: Header search → `/productos/?buscar=` (Enter desktop/móvil + botón); catálogo lee el parámetro (server pre-filtra en ERP + JS pre-llena y filtra al escribir); admin con teléfono/dirección/horario/6 redes/dirección-mapa (XSS y basura rechazadas); footer con redes configuradas + contacto + icono contacto siempre; `[erpc_map]` (Google embed sin key, responsive) agregado a /contacto/.
 - **Verificación**: `?buscar=` filtra inventario real (cable 15/41, laptop 15/38, hdmi 4, mouse 1, inexistente 0); CDP: header desktop+móvil → navegación + resultados correctos; footer con valores (links reales) y vacío (ocultos, 0 muertos); mapa 1060×382 desktop / 307×282 móvil; 200 en modo plugin Y elementor (switch ida/vuelta); php -l ×6 + node --check OK. Screenshots val-search-*.png, val-contacto-map-*.png.
@@ -5888,8 +5903,8 @@ EOF又是
 
 ### [00:30] - Consolidación: eco-cloudflare único + ragnarok docs-harness + limpieza duplicados
 - **Tipo**: infra | agentes | refactor | diagnóstico
-- **Modificado**: `agents/eco-cloudflare.md` (NUEVO, unifica dns/security/storage/tunnels/workers con todas sus reglas aprendidas: IDs de zona/ruleset, NO-2-niveles, R2 ban, playbook túneles). BORRADOS los 5 + sus symlinks (limpieza autorizada). `kalimete.md` (permission `eco-cloudflare-*`→`eco-cloudflare` exacto — el wildcard ya no matcheaba; tabla 5 filas→1). MAPA.md (tabla igual). `eco-ragnarok.md` reescrito como harness docs (rAthena/FluxCP/roBrowser/wsProxy + estado vivo). Fuente+despliegue agregados a woodly/petsuite/taohemps/scriberr/alfredo-ecomm (rutas verificadas). Sin duplicados reales: erp-dev (facturación Laravel) vs alfredo-ecomm (e-commerce Node) son sistemas distintos — documentada la distinción (mismo hostname, puertos :8100/:3004). eco-vps vs proyectos = frontera host/app, se mantiene.
-- **Afecta a**: kalimete (1 solo target Cloudflare, cero misrouting). Sin impacto en producción (docs + routing).
+- **Modificado**: `agents/eco-cloudflare.md` (NUEVO, unifica dns/security/storage/tunnels/workers con todas sus reglas aprendidas: IDs de zona/ruleset, NO-2-niveles, R2 ban, playbook túneles). BORRADOS los 5 + sus symlinks (limpieza autorizada). `Kalimete.md` (permission `eco-cloudflare-*`→`eco-cloudflare` exacto — el wildcard ya no matcheaba; tabla 5 filas→1). MAPA.md (tabla igual). `eco-ragnarok.md` reescrito como harness docs (rAthena/FluxCP/roBrowser/wsProxy + estado vivo). Fuente+despliegue agregados a woodly/petsuite/taohemps/scriberr/alfredo-ecomm (rutas verificadas). Sin duplicados reales: erp-dev (facturación Laravel) vs alfredo-ecomm (e-commerce Node) son sistemas distintos — documentada la distinción (mismo hostname, puertos :8100/:3004). eco-vps vs proyectos = frontera host/app, se mantiene.
+- **Afecta a**: Kalimete (1 solo target Cloudflare, cero misrouting). Sin impacto en producción (docs + routing).
 - **Causa**: Usuario: identificar discrepancias/duplicados, unificar por sistema, harness basado en documentación oficial de cada servicio.
 - **Diagnósticos nuevos (verificados, no inventados)**:
   - 🎮 Demonios rAthena (6900/6121/5121) NO corren en vps-preprod — el juego web carga pero no puede autenticar. Fuente lista en `/srv/ragnarok` (confs, Dockerfiles, sql-init, scripts, ansible).
@@ -5910,13 +5925,13 @@ EOF又是
 - **Notas**: **La causa raíz en prod sigue siendo la API key inválida/stale del tenant** — 5.3.4 solo deja de ocultarla; al deployar y reintentar verá "ERP HTTP 401 en /ecomm/tienda/config: … — API key inválida…". Acción owner/Juan: provisionar key válida para el tenant prod y guardarla en Conexión ERP (el probe la valida antes de grabar). ERP `34de630` sigue esperando merge de Juan (8 commits).
 
 ### [00:25] - Pendientes ejecutados: repo GitHub alfredo-pro-ecomm + release 5.3.2 (fix ZIP) + decisiones owner documentadas
-- **Tipo**: servicio | sync | docs (TARGET=kalimete local + GitHub)
+- **Tipo**: servicio | sync | docs (TARGET=Kalimete local + GitHub)
 - **Modificado**:
   - **Alfredo Ecomm**: repo GitHub PRIVADO `warcold/alfredo-pro-ecomm` creado + push de `master` (01fe048, e39fa99, b6d9e70) — backup off-site del código; verificado sin secrets tracked; CHANGELOG del proyecto actualizado (commit `f9f29e8` pushed); docs agente+harness curadas (pendiente git_remote CERRADO)
   - **WordPress**: **release 5.3.2** (commit `a838486`) — fix empaquetado: el ZIP 5.3.1 excluía `SiteBackup/storage/` por un comando ad-hoc (los archivos existían en disco; diff 5.3.0 vs 5.3.1 = exactamente storage/); ZIP 5.3.2 (2.203.552 bytes, sha256 `d8952c61…`) con storage/ incluido, lista idéntica al 5.3.0, sin secrets; **comando canónico de empaquetado versionado en DEPLOY-GUIA** (cura la causa raíz); regresión 19/19 post-bump; docs agente+harness a 5.3.2
   - **ERP Dev**: decisiones owner 2026-10-13 documentadas en erp-dev.md + harness — **mailpit = dev-only intencional** (catcher SMTP local para no operar servidor de correos; producción usa mail real según main de Juan Carlos; NO investigar el 7.41% CPU, NO tocar ni allá ni aquí); latencia TLS/nginx = esperada del dev local; el preprod se alimenta de main de Juan Carlos adaptado a la red local (pruebas lo más cerca de producción)
   - **WordPress deuda P3**: decisión owner registrada — mantener espejo `tenant.api_key` hasta que main de Juan Carlos deje de leerla (no modificamos el contrato por nuestro lado)
-- **Afecta a**: kalimete local (WP :8091, alfredo :3004, erpipo :8100); GitHub (repo nuevo warcold/alfredo-pro-ecomm); repo armada-sync (docs+harness)
+- **Afecta a**: Kalimete local (WP :8091, alfredo :3004, erpipo :8100); GitHub (repo nuevo warcold/alfredo-pro-ecomm); repo armada-sync (docs+harness)
 - **Causa**: orden del owner — "procede con los pendientes" + aclaración mailpit (dev-only, producción diferente según main de Juan Carlos, sin tocar ni allá ni aquí)
 - **Estado**: ✅ todo verificado (push OK, ZIP storage/ incluido + sin secrets, regresión 19/19, JSON harness válidos)
 - **Notas**: los 4 pendientes del 2026-10-13 quedan CERRADOS: (1) git remote ✅; (2) gap ZIP → release 5.3.2 ✅; (3) mailpit/latencia → decisión owner documentada ✅; (4) deuda P3 → decisión owner documentada, cerrable solo cuando main de Juan evolucione ✅
@@ -5928,7 +5943,7 @@ EOF又是
 - **Que**: victoria-tui reconstruida con personalidad: (a) **banner ASCII** figlet de VICTORIA al arrancar + banner de teléfono al /call; (b) **avatar animado con estados**: ( ◕‿◕ ) idle con PARPADEO cada 4s · ( ◉‿◉ ) grabando en rojo · ( ◔_◔ ) pensando · ( ◕ω◕ ) hablando con boca animada + barras ▁▃▅▇ animadas; (c) **comandos /**: `/call` (Victoria ENTRA EN LA LLAMADA: saludo generado por LLM máx 12 palabras + voz + timer de duración, voz forzada ON) · `/hangup` `/close` (despedida LLM + voz) · `/art <desc>` (genera imagen vía la art API del gateway de Victoria, barra de progreso en el status, guarda en ~/Desktop/victoria-art-*.png, avisa por voz "Imagen lista, papá") · `/voice on|off` · `/status` (ASCII box del stack) · `/model normal|thinking` · `/lang es|en` · `/clear` · `/config` · `/help` (ASCII box) · `/exit`; (d) voz ENCOLADA (una respuesta a la vez, acoplada al avatar); (e) one-shots nuevos: `--art "prompt"`; (f) FIX CRÍTICO visual: `noutrefresh()` sin `doupdate()` = pantalla en blanco en terminal real — cambiado a `refresh()` (el bug existía desde la v1 y no se veía en las pruebas por pseudo-TTY).
 - **Verificado**: --check TODO OK; --art E2E: "gato pirata con loro" → ~/Desktop/victoria-art-001439.png en 15s (exit 0); captura pseudo-TTY muestra el banner figlet + avatar PARPADEANDO (dos estados capturados) + status bar; daemon ptt se restaura tras kill (exit 124); 0 noutrefresh restantes.
 - **Impacto**: solo ~/.local/bin/victoria-tui (v2). victoria-gui queda como extra web.
-- **Docs**: changelog kalimete (esta entrada) + referencia en general de victoria.
+- **Docs**: changelog Kalimete (esta entrada) + referencia en general de victoria.
 
 ### [00:20] - ERP E-Commerce Connector: eliminada plantilla Elementor redundante
 - **Tipo**: proyecto | wordpress | refactor
@@ -5952,30 +5967,30 @@ EOF又是
 
 ### [00:20] - Auditoría completa de conexiones SSH + vps-proxy vivo (vínculo ERP retirado 2026-09-19)
 - **Tipo**: infra | red | accesos | docs
-- **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919`, agregado `vps-proxy`; alias de tercero retirado el mismo día); `MAPA.md` (nodo 6 nuevo + topología, luego retirado); `agents/kalimete.md` (tabla de red, fila retirada); este CHANGELOG
-- **Afecta a**: kalimete (aliases SSH), documentación del ecosistema
+- **Modificado**: `/etc/ssh/ssh_config.d/10-armada-hosts.conf` (backup `.bkup-20260919`, agregado `vps-proxy`; alias de tercero retirado el mismo día); `MAPA.md` (nodo 6 nuevo + topología, luego retirado); `agents/Kalimete.md` (tabla de red, fila retirada); este CHANGELOG
+- **Afecta a**: Kalimete (aliases SSH), documentación del ecosistema
 - **Causa**: Usuario pidió validar todas las conexiones y re-documentar
 - **Validación en vivo** (todos los SSH probados):
-  - ✅ kalimete (local, uptime 1d) | ✅ victoria (gw :8010 → 200, GB10 OK) | ✅ vps-preprod (uptime 67d, 16 contenedores)
+  - ✅ Kalimete (local, uptime 1d) | ✅ victoria (gw :8010 → 200, GB10 OK) | ✅ vps-preprod (uptime 67d, 16 contenedores)
   - ✅ vps-proxy (uptime 228d, Squid 200 en 0.08s) — la marca FAILED 2026-03-17 era **obsoleta**, corregida
   - ❌ ex-vps-erpipo DESVINCULADO 2026-09-19 (alias SSH retirado, sin acceso, fuera de MAPA y agentes)
   - 🔴 jonas (No route to host — sigue fuera de servicio)
-- **Observaciones**: (1) vps-preprod: `caddy` del sistema inactivo (TLS lo sirve contenedor caddy) y `openvpn@server` inactivo — revisar si importa. (2) servidor ERP de terceros: vínculo retirado 2026-09-19 (sin acceso SSH ni registro en red; prod no se toca). (3) kalimete local: UFW inactivo, sin proxy local (solo docker-proxies).
+- **Observaciones**: (1) vps-preprod: `caddy` del sistema inactivo (TLS lo sirve contenedor caddy) y `openvpn@server` inactivo — revisar si importa. (2) servidor ERP de terceros: vínculo retirado 2026-09-19 (sin acceso SSH ni registro en red; prod no se toca). (3) Kalimete local: UFW inactivo, sin proxy local (solo docker-proxies).
 - **Estado**: ✅ sincronizado (pendiente commit+push)
 
 ### [00:05] - Harness único Kalimete: 23 subagentes ocultos + estándar de harness + fixes
 - **Tipo**: infra | agentes | harness | seguridad
-- **Modificado**: 19 archivos (agents/*.md + MAPA.md). `kalimete.md` (permission.task +erp-dev/+godot-dev, tabla +2 filas, sección Harness maestro). Frontmatter `hidden:true`+color en los 17 que faltaban (TAB ahora muestra SOLO kalimete/plan/build). 8 esqueletos expandidos al estándar (stack validado, comandos copiables, capacidades, reglas). `wordpress-dev.md` actualizado (erp-commerce-suite v4.4.0 unificado; el doc citaba plugins pre-4.0.0). MAPA.md (dup taohemps fuera, ERP 4.1.0→4.4.0, filas erp-dev/godot-dev, providers 3→4+MCP). `opencode.jsonc` (backup .bkup-20261001): MCP godot `command` string+args → array (el SDK exige `Array<string>`; así como estaba el MCP nunca conectaba). `eco-docuseal.md`: password SMTP en claro retirada del repo (→ puntero a .env).
-- **Afecta a**: kalimete (enrutamiento único; ya puede delegar a erp-dev y godot-dev, antes denegado por `*: deny`). Sin impacto en producción (solo docs + frontmatter).
+- **Modificado**: 19 archivos (agents/*.md + MAPA.md). `Kalimete.md` (permission.task +erp-dev/+godot-dev, tabla +2 filas, sección Harness maestro). Frontmatter `hidden:true`+color en los 17 que faltaban (TAB ahora muestra SOLO Kalimete/plan/build). 8 esqueletos expandidos al estándar (stack validado, comandos copiables, capacidades, reglas). `wordpress-dev.md` actualizado (erp-commerce-suite v4.4.0 unificado; el doc citaba plugins pre-4.0.0). MAPA.md (dup taohemps fuera, ERP 4.1.0→4.4.0, filas erp-dev/godot-dev, providers 3→4+MCP). `opencode.jsonc` (backup .bkup-20261001): MCP godot `command` string+args → array (el SDK exige `Array<string>`; así como estaba el MCP nunca conectaba). `eco-docuseal.md`: password SMTP en claro retirada del repo (→ puntero a .env).
+- **Afecta a**: Kalimete (enrutamiento único; ya puede delegar a erp-dev y godot-dev, antes denegado por `*: deny`). Sin impacto en producción (solo docs + frontmatter).
 - **Causa**: Usuario: un solo agente principal Kalimete con harness completo; que los agentes manejen sus herramientas según su documentación y no haya que seleccionarlos manualmente.
-- **Validación**: `docker ps` kalimete (19 cont.) + vps-preprod (29 cont., Up 4 weeks); InspIRCd nativo activo (6667/6697, no es docker); ERP plugin v4.4.0 en contenedor; `grep -L hidden` = 0 pendientes; symlinks sanos; `armada-arcade` se edita en `~/armada-arcade/agents/` (el collect lo replica).
+- **Validación**: `docker ps` Kalimete (19 cont.) + vps-preprod (29 cont., Up 4 weeks); InspIRCd nativo activo (6667/6697, no es docker); ERP plugin v4.4.0 en contenedor; `grep -L hidden` = 0 pendientes; symlinks sanos; `armada-arcade` se edita en `~/armada-arcade/agents/` (el collect lo replica).
 - **Estado**: ✅ sincronizado
-- **Notas**: excepciones documentadas en kalimete.md (harness maestro). Lo no verificado en agentes remotos quedó marcado pendiente, no inventado.
+- **Notas**: excepciones documentadas en Kalimete.md (harness maestro). Lo no verificado en agentes remotos quedó marcado pendiente, no inventado.
 
 ### [00:00] - Godot Game Dev: MCP integration (386 herramientas) + agente godot-dev
 - **Tipo**: proyecto | gamedev | MCP | herramienta
 - **Modificado**: @yanhuifair/godot-mcp 1.12.3 (npm global), Godot 4.7.2 (steam), proyecto armada-godot, opencode.jsonc (mcp config), agents/godot-dev.md
-- **Afecta a**: kalimete (opencode MCP client),~/armada-godot (proyecto demo)
+- **Afecta a**: Kalimete (opencode MCP client),~/armada-godot (proyecto demo)
 - **Causa**: Usuario: "VAMOS A CREAR EL HARNESS / AGENTES PARA GODOT" — necesitamos integración de IA con Godot Engine para desarrollo de juegos
 - **Cambios realizados**:
   - ✅ MCP server `@yanhuifair/godot-mcp` 1.12.3 instalado globalmente (npm)
@@ -5988,12 +6003,12 @@ EOF又是
 - **Notas**: 386 herramientas vs IvanMurzak/Godot-MCP (42 tools, requiere .NET 8 que no tenemos). @yanhuifair es TypeScript puro, funciona sin Godot abierto para 220+ tools, tiene undo nativo, runtime freeze/step/screenshot (único), 30 categorías
 
 
-## 2026-11-02 (auditoría cruzada) — estado kalimete verificado desde victoria
+## 2026-11-02 (auditoría cruzada) — estado Kalimete verificado desde victoria
 - Flota picker OK (6 modelos: Using/Thinking/Coding + 3 nube natural). opencode 1.19.5.
-- Agentes live: 28 subagentes + kalimete (primary) + victoria-voz (mode: all, válido) — la doc interna que dice "18" quedó corta; actualizar en el próximo mantenimiento de kalimete.
+- Agentes live: 28 subagentes + Kalimete (primary) + victoria-voz (mode: all, válido) — la doc interna que dice "18" quedó corta; actualizar en el próximo mantenimiento de Kalimete.
 - Higiene: eliminados victoria-voz.md.bkup-20261027 y wordpress-dev.md.bkup-20260926 (stale). bkup-agents/ estructural 20261001 se conserva.
 - ydotoold OK, sync GitHub OK, disco 75% (108G libres).
 - **2026-11-03 14:45 EDT** - daily-report anti-stale (owner: "vemos errores que ya no existen"): auditoría del mecanismo de reporte (victoria-daily-report.py, cron 5×/día → WhatsApp DM owner; único reporte periódico, resto alertadores). 4 fixes: ventana última-alerta gateway 48h→24h (la tormenta resuelta del 01-nov salía ~9 reportes como reciente), coder on-demand :8001 visible (idle=NORMAL sin warning), n8n chequeado en docker, timestamps de logs parseados como hora local del host (sufijo "EDT" hardcodeado de los writers miente tras fin de DST). Backup .bkup-20261103-stale-fix. E2E dry-run OK; primer envío real con fix: cron 16:00 ET. Detalle: CHANGELOG-infra.
 
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
-- MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
+- MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia Kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en Kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.

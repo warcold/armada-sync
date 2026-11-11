@@ -1,6 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
   "instructions": [
     "/home/victoria/.config/opencode/AGENTS-summary.md",
     "/home/victoria/.config/opencode/todowrite-discipline.md"
@@ -10,11 +9,6 @@
     "auto": true,
     "prune": true,
     "reserved": 10000
-  },
-  "skills": {
-    "auto-route": {
-      "path": "/home/victoria/.victoria-custom/skills/auto-route"
-    }
   },
   "provider": {
     "vllm": {
@@ -26,6 +20,26 @@
         "timeout": 3600000,
         "chunkTimeout": 600000,
         "maxRetries": 3
+      },
+      "models": {
+        "nvidia/Qwen3.6-35B-A3B-NVFP4-normal": {
+          "name": "Using a Victoria",
+          "id": "nvidia/Qwen3.6-35B-A3B-NVFP4-normal",
+          "limit": {"context": 220000, "output": 32000},
+          "attachment": true,
+          "tool_call": true,
+          "reasoning": false,
+          "modalities": {"input": ["text", "image", "video"], "output": ["text"]}
+        },
+        "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4": {
+          "name": "Coding con Victoria",
+          "id": "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4",
+          "limit": {"context": 120000, "output": 32000},
+          "attachment": false,
+          "tool_call": true,
+          "reasoning": false,
+          "modalities": {"input": ["text"], "output": ["text"]}
+        }
       }
     },
     "nvidia": {

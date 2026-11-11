@@ -19,8 +19,8 @@ TODO en CHANGELOG, no dañar lo que funciona.
 - **Flota con nombre (11-03, picker simplificado; directiva 11-06)**: "Using a Victoria" (DEFAULT, generalista VLM) · "Coding con Victoria" (on-demand :8001, motor de @Coder, texto only, admin/coder). **MI FLUJO ES 100% LOCAL**: los NIM del config (whitelist 3) están FUERA del flujo de delegación de Victoria — solo uso manual directo del owner; nunca opciones de picker para usuarios. **"Thinking" salió del picker 11-03** (decisión owner): razonar = @Thinker (id normal + kwargs thinking, budget 8192 desde 11-06). Política: LOCAL primero; capacidad faltante = motor local nuevo. kimi muerto en NIM — no usar.
 - Sandbox nemoclaw `victoria-armada` (Discord/WhatsApp/voz) + dashboard `:18800`
 - OpenClaw genera IMÁGENES vía `art-gen` (solo imágenes, política 10-03; templates API z-image-turbo/flux-schnell/sd15 en `~/.victoria-custom/comfyui-templates-api/`; skill `art` en opencode skills de ambos hosts; art API del gateway con cola gpu_arbiter → 429 gpu_busy = reintentar)
-- Tiers base+add-ons (11-04): llm (chat) = BASE universal de toda llave; caps se SUMAN (coder=motor, art=creatividad, tts/whisper=voz). Panel con presets de negocio (Conversación/Desarrollo/Estudio/Voz) + LLM bloqueado. Hint de upgrade UNIFORME en los 3 gates. kalimete = llm+coder+art+tts+whisper+provision (crea llaves armada-* vía POST /v1/provision-key); sense_auth honra caps (coder NO eleva sentidos)
-- Sentidos HOST: voz :18810, video :18811, nav :18820, whois :18830, admin :18840 (con auth), sonic :18850. Voz fuera de LAN: proxy `/voice/{tts,stt,health}` del gateway (auth siempre, caps tts/whisper) — kalimete usa `VICTORIA_TTS_URL=https://victoria.armada.do/voice/tts`
+- Tiers base+add-ons (11-04): llm (chat) = BASE universal de toda llave; caps se SUMAN (coder=motor, art=creatividad, tts/whisper=voz). Panel con presets de negocio (Conversación/Desarrollo/Estudio/Voz) + LLM bloqueado. Hint de upgrade UNIFORME en los 3 gates. Kalimete = llm+coder+art+tts+whisper+provision (crea llaves armada-* vía POST /v1/provision-key); sense_auth honra caps (coder NO eleva sentidos)
+- Sentidos HOST: voz :18810, video :18811, nav :18820, whois :18830, admin :18840 (con auth), sonic :18850. Voz fuera de LAN: proxy `/voice/{tts,stt,health}` del gateway (auth siempre, caps tts/whisper) — Kalimete usa `VICTORIA_TTS_URL=https://victoria.armada.do/voice/tts`
 - Contenido: ComfyUI :8188, LivePortrait :8180, n8n :5678
 - Infra: cloudflared, nginx (victoria.local solo LAN), gpu-saver
 
@@ -45,7 +45,7 @@ TODO en CHANGELOG, no dañar lo que funciona.
 - `Thinker` → razonador profundo (id normal + kwargs thinking ON budget 8192 (2026-11-06); lógica sutil/verificación de planes; análisis puro)
 - Doctrina ruteo (11-02, ampliada 11-03 con Thinker; reforzada 11-06; **auto-route 11-10**): Using = ÚNICO modelo de sesión; **auto-route skill clasifica cada turno**: CONVERSATION → Using directo; PLAN → Task @Thinker (thinking ON); CODE → Task @Coder (modelo Coding). Código sustancial → Task Coder (edit chico → directo); razonamiento profundo → Task Thinker; imágenes/3D/animar/podcast = skills/wrappers; nube FUERA del flujo (solo manual owner); capacidad faltante = motor local; contextos calibrados NO tocar (220K/128K/1M). Delegación explícita `@Coder`/`@Thinker` SIEMPRE respeta sobre auto.
 - Regla: llamar SOLO si coincide misión exacta (Task directo o `@Nombre` — salen todos en el autocomplete `@`; Tab solo lista primaries: Plan/Build/Victoria). Si el subagente edita, él escribe su CHANGELOG + Victoria escribe el general.
-- Sampling por rol (2026-10-03, doctrina flota espejo kalimete; model card NVFP4: coding 0.6/0.95, general 1.0/0.95): Victoria + creativos (Meta Business, Sonic) `temperature 0.6 + top_p 0.95`; infra (vLLM, OpenClaw, Comfyui, RSS, Weather, CloudFlare, Liveportrait, Gpu) `temperature 0.1`. Sin frontmatter vLLM usa default 1.0.
+- Sampling por rol (2026-10-03, doctrina flota espejo Kalimete; model card NVFP4: coding 0.6/0.95, general 1.0/0.95): Victoria + creativos (Meta Business, Sonic) `temperature 0.6 + top_p 0.95`; infra (vLLM, OpenClaw, Comfyui, RSS, Weather, CloudFlare, Liveportrait, Gpu) `temperature 0.1`. Sin frontmatter vLLM usa default 1.0.
 - Todowrite: dueño de la lista = Victoria (primaria); subagentes NO escriben en la lista del padre; `completed` solo tras verificación; item final de verificación en listas 3+; vaciar al cerrar (`todowrite-discipline.md`).
 - Harness: `~/.victoria-custom/harness/` (central + 1 por subagente). Victoria es la única `mode: primary` morada `#8B5CF6`, `default_agent: Victoria` (exacto, case-sensitive); los 10 son `mode: subagent` + `hidden: false` (visibles en `@`, owner pidió verlos todos — 2026-10-01).
 - Frescura: lo LIVE manda (health/logs primero); el doc es receta, no estado. Si discrepan: actuar en live, curar doc + changelog (`agents/victoria.md` §Frescura).
@@ -60,7 +60,7 @@ TODO en CHANGELOG, no dañar lo que funciona.
 - NUNCA pegar contexto global en ledger (referenciar por ruta).
 
 ## Kalimete (host hermano)
-- `kalimete.local` 10.0.0.106, rol dev/ethical. LAPTOP que sale de la LAN:
+- `Kalimete.local` 10.0.0.106, rol dev/ethical. LAPTOP que sale de la LAN:
   provider `vllm` = pública `victoria.armada.do` (roaming, siempre conecta),
   provider `vllm-lan` = `victoria.local:8010` (rápida en casa). En casa usar
   `vllm-lan`, fuera `vllm`. (Dual 2026-09-30; antes solo pública.)
@@ -77,7 +77,7 @@ TODO en CHANGELOG, no dañar lo que funciona.
   Victoria NO es follower del repo GitHub: el deploy destructivo borraría los
   agentes del stack (vllm/sandbox/comfyui). **Off-site UNIFICADO (11-03,
   decisión owner: un solo repo)**: rama aislada `victoria-offsite` en el MISMO
-  hub `warcold/armada-sync` (kalimete solo opera `master` refspec limitado —
+  hub `warcold/armada-sync` (Kalimete solo opera `master` refspec limitado —
   interferencia cero). Deploy key `id_github_victoria` (pendiente agregar).
 
 ## Health rápido
@@ -87,5 +87,5 @@ TODO en CHANGELOG, no dañar lo que funciona.
 
 ## Uso de la flota (owner, 2026-11-03)
 - Owner SIEMPRE en "Using a Victoria" (default). Nunca toca el picker en día a día.
-- Picker (11-03): victoria = Using + Coding (motor @Coder); kalimete = solo Using. Razonar = @Thinker en AMBOS hosts (kalimete lo tiene instalado desde 11-03). Nube = solo >220K o stack caído (manual).
+- Picker (11-03): victoria = Using + Coding (motor @Coder); Kalimete = solo Using. Razonar = @Thinker en AMBOS hosts (Kalimete lo tiene instalado desde 11-03). Nube = solo >220K o stack caído (manual).
 - Trío delegable sin salir de Using: @Coder (código) + @Thinker (razonar) + skills (art/3d/animar/podcast).
