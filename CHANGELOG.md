@@ -1,3 +1,22 @@
+### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
+- **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
+- **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
+- **Detalle completo**: `CHANGELOG-vllm.md` 14:20 EST.
+
+### [2026-11-11 13:30 EST] [gateway] `/v1/setup` ya NO instala nada (caso Justin: Desktop + CLI duplicado)
+- **Tipo**: fix — cumplimiento de la decisión owner 11-04 que el código nunca cumplió
+- **Qué pasaba**: el script de `/v1/setup` instalaba el CLI de opencode (URL vieja = serie 1.x) si `command -v opencode` fallaba. Justin tenía la app **Desktop** (que NO pone CLI en el PATH) → el script le instaló el CLI por encima = duplicado. Validado contra docs oficiales: opencode tiene 3 sabores (CLI/Desktop/Web) y 2 majors (v1 validado por nuestro stack; v2 beta con instalador propio).
+- **Fix**: script reescrito — CERO instalaciones; detección en PATH + 4 rutas comunes; sin CLI → instrucciones oficiales + exit sin tocar nada (E2E: 0 archivos); con CLI → reporta versión y advierte si es v2/beta; respaldo + config + verificación intactos. Mensaje menciona el caso Desktop explícitamente.
+- **Verificado E2E 3 escenarios** (HOMEs temporales): sin CLI → 0 archivos tocados ✓; CLI v1 → backup+config+Victoria ✓; CLI v2-beta → advertencia ✓. Justin: su CLI instalado funciona con nuestra config (puede quedárselo o eliminarlo con `rm -rf ~/.opencode` + limpiar la línea PATH de su shell rc; su Desktop no fue tocado).
+- **Detalle completo**: `CHANGELOG-vllm.md` 13:30 EST.
+
+### [2026-11-11 12:45 EST] [gateway] Válvula 7 RAM-consciente (fix loop coder_busy de kalimete)
+- **Tipo**: fix — detectado por el owner (loop de reintentos `coder_busy` cada 5 min)
+- **Qué pasaba**: sesión de kalimete con turnos CODE (servidos por el coder ✓) + un reasoning gigante (152,923 est / ~186K real) rechazado 6 veces en 30+ min por la válvula 7, que rechaza ciego todo prompt ≥40K al generalista con el coder cargado — regla por correlación, no por causa. Con 63G libres el rechazo era innecesario (la regla nació cuando el coder dejaba ~12-26G). Se auto-resolvía a los 30 min (idle-stop descarga el coder) pero con reintentos inútiles entretanto.
+- **Fix**: válvula 7 RAM-consciente — solo rechaza si `RAM < CODER_VALVE7_MIN_RAM_GB` (default 24G; RAM desconocida → rechaza conservador). Coder cargado + reasoning gigante ahora coexisten cuando hay RAM. Válvula 3 (16G) sigue como red final. Mensaje 429 honesto (menciona la RAM real).
+- **Verificado**: reasoning 123,092 est con coder cargado+healthy → servido con thinking (94.4s, 5,383 chars, fila 77638) — antes 429 en 0.03s. Idle-stop del coder intacto (se descargó solo a los 30 min durante el diagnóstico).
+- **Detalle completo**: `CHANGELOG-vllm.md` 12:45 EST.
+
 ### [2026-11-11 10:50 EST] [gateway+coder] AUTO-ROUTE v3: coder 163840 + espera inline + piso diminutos + :8001 loopback real
 - **Tipo**: feature (completar auto-route, autorizado por owner "continua hasta terminar") + security fix
 - **Qué**: (1) contexto del coder 131072→163840 (contenedor recreado con `--max-model-len 163840`; KV pool 174,752 lo cubre sin RAM extra — el prompt promedio real de kalimete 123K+32K=157K ahora cabe); (2) **espera inline al coder** para prompts grandes (≥40K): pre-warm → poll healthy hasta 120s (`AUTO_ROUTE_CODER_WARM_WAIT`) → el turno aterriza en el coder sin 429/reintentos; si no carga → 503 `warming_up` honesto (antes: fallback thinking → válvula 7 → 429 `coder_busy` en 0.03s = baile inútil); (3) piso `AUTO_ROUTE_CODER_MIN_PROMPT=1000` — títulos y peticiones diminutas no despiertan el motor; (4) **SECURITY**: `:8001` estaba publicado en 0.0.0.0 pese a la doc — recreado `-p 127.0.0.1:8001:8001` + firewall DOCKER-USER extendido a 8001 (unit `victoria-firewall-vllm.service`); (5) válvula 7 loguea route/route_reason.

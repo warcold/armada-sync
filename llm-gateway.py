@@ -127,6 +127,7 @@ CODER_ACTIVE_MEM_MIN_GB = float(os.environ.get("CODER_ACTIVE_MEM_MIN_GB", "10"))
 CODER_STATE_FILE = os.environ.get("CODER_STATE_FILE", "/home/victoria/.victoria-llm/coder-state")
 CODER_LAST_USE_FILE = os.environ.get("CODER_LAST_USE_FILE", "/home/victoria/.victoria-llm/coder-last-use")
 CODER_LARGE_PROMPT_GENERALIST = int(os.environ.get("CODER_LARGE_PROMPT_GENERALIST", "40000"))
+CODER_VALVE7_MIN_RAM_GB = int(os.environ.get("CODER_VALVE7_MIN_RAM_GB", "24"))  # válvula 7 RAM-consciente (2026-11-11): solo rechaza prompts grandes al generalista con coder cargado si la RAM está en banda de riesgo
 _coder_state_cache = {"running": None, "checked": 0.0}
 
 
@@ -2396,8 +2397,18 @@ async def _proxy(request: Request, path: str, key_row: dict):
     # grandes al generalista esperan a que el coder se descargue (idle 30 min
     # o fin de sesión); el chat pequeño (canales, PTT, broadcasts) sigue vivo.
     # Los requests AL coder no pasan por aquí (su gate ya validó RAM).
+    # (2026-11-11 v3.1) RAM-CONSCIENTE: el rechazo CIEGO bloqueaba prompts
+    # legítimos de reasoning mientras el coder cargado dormía idle — caso
+    # real kalimete: 152K est rechazados 30+ min (6 reintentos) con 63G
+    # LIBRES. El coder cargado por sí solo NO es riesgo OOM: la causa real
+    # es la RAM disponible. Ahora solo rechaza si la RAM está en banda de
+    # riesgo (< CODER_VALVE7_MIN_RAM_GB, default 24G — por encima de la
+    # válvula 3 (16G) y de la banda OOM observada ≤11G; RAM desconocida (-1)
+    # → rechaza, comportamiento conservador previo). La válvula 3 sigue como
+    # red final de seguridad.
     if (not _want_coder and _coder_running()
-            and approx_tokens >= CODER_LARGE_PROMPT_GENERALIST):
+            and approx_tokens >= CODER_LARGE_PROMPT_GENERALIST
+            and _system_mem_available_gb() < CODER_VALVE7_MIN_RAM_GB):
         try:
             log_usage(key_name, path, ip_address, (time.time() - start) * 1000, 0,
                       reject_reason="coder_busy", approx_tokens=approx_tokens,
@@ -2408,11 +2419,12 @@ async def _proxy(request: Request, path: str, key_row: dict):
         return JSONResponse(status_code=429, content={
             "error": "coder_busy",
             "retry_after_s": 300,
-            "detail": ("El modelo coder está cargado (sesión de código activa); "
+            "detail": ("El modelo coder está cargado y la RAM del host está en "
+                       f"banda de riesgo ({_system_mem_available_gb()}G disponibles); "
                        f"un prompt de ~{approx_tokens} tokens al generalista encima "
-                       "riesga OOM del host. Reintenta en ~5 min o cuando la sesión "
-                       "de código termine (el coder se descarga solo tras 30 min "
-                       "idle). El chat pequeño sigue funcionando."),
+                       "riesga OOM. Reintenta en ~5 min (el coder se descarga solo "
+                       "tras 30 min idle) o cuando la sesión de código termine. "
+                       "El chat pequeño sigue funcionando."),
         }, headers={"Retry-After": "300"})
 
     # Válvula 2 (anti-freeze): tasa de tokens por key (ventana 60s). Frena
@@ -3364,12 +3376,19 @@ async def v1_config_guide(request: Request):
             "REPLACE_APIKEY": "Tu API key del gateway (la que usaste para leer esto)"
         },
         "client_config_recomendado": (
-            "VIA CANONICA (2026-11-03): UN comando hace todo (instala opencode si falta, "
-            "RESPALDA tu config anterior sin perderla, descarga tu config con el cerebro incluido y verifica): "
+            "VIA CANONICA (2026-11-03): UN comando hace todo (NO instala nada — "
+            "si el CLI de opencode no está en tu PATH, te indica cómo instalarlo "
+            "y sale sin tocar tu sistema; si está, RESPALDA tu config anterior "
+            "sin perderla, descarga tu config con el cerebro incluido y verifica): "
             "curl -fsSL -H 'Authorization: Bearer TU_KEY' TU_BASEURL/v1/setup | bash . "
             "Luego corre 'opencode': la sesion abre con VICTORIA como agente primario "
             "(te atiende, delega a coder/thinker segun la tarea) y tus limites ya configurados. "
             "Tus modelos anteriores (OpenCode Zen, etc.) siguen disponibles en el picker. "
+            "NOTA (2026-11-11): la app Desktop de opencode NO basta — el configurador "
+            "es para el CLI/TUI; detecta el CLI en PATH y rutas comunes (~/.opencode/bin, "
+            "/usr/local/bin, brew, ~/.local/bin) y genera la config de TU major "
+            "(v1 serie 1.x o v2 — ambas validadas contra este gateway; un solo "
+            "setup para todas las versiones). "
             "Alternativa manual (2 comandos): (1) curl -fsSL https://opencode.ai/install | bash "
             "(2) mkdir -p ~/.config/opencode && curl -s -H 'Authorization: Bearer TU_KEY' "
             "TU_BASEURL/v1/client-config -o ~/.config/opencode/opencode.jsonc . "
@@ -3790,9 +3809,13 @@ def _public_agents():
 async def v1_setup(request: Request):
     """Instalador de 1 comando para clientes (2026-11-03): genera un script
     bash PERSONALIZADO con la llave y baseURL del que llama. El script:
-    instala opencode si falta, RESPALDA la config existente del cliente
-    (no toca lo que tiene sin copia), descarga la config con el cerebro
-    embebido y verifica. Uso:
+    NO INSTALA NADA (decisión owner 2026-11-04, reforzada 2026-11-11 tras el
+    caso Justin: tenía opencode Desktop y el script viejo le instaló el CLI
+    por encima — instalar software ajeno es invasivo y crea duplicados entre
+    las versiones CLI/Desktop/v2 de opencode). Si el CLI de opencode no está
+    en el PATH, INDICA cómo instalarlo y sale SIN TOCAR nada. Si está,
+    RESPALDA la config existente (no toca lo que tiene sin copia), descarga
+    la config con el cerebro embebido y verifica. Uso:
       curl -fsSL -H "Authorization: Bearer TU_LLAVE" <gateway>/v1/setup | bash
     Auth: cualquier llave válida. La llave viaja en el script por el mismo
     canal TLS que el comando manual — sin diferencia de exposición."""
@@ -3812,19 +3835,67 @@ async def v1_setup(request: Request):
     host = fwd_host or request.headers.get("host", "127.0.0.1:8010")
     base = f"{scheme}://{host}"
     script = f"""#!/usr/bin/env bash
-# Instalador de Victoria Armada · www.alfredo.pro — generado para la llave '{info['name']}'
+# Configurador de Victoria Armada · www.alfredo.pro — generado para la llave '{info['name']}'
+# NO instala nada (decisión del owner): si el CLI de opencode no está, indica
+# cómo instalarlo y sale sin tocar nada. Si está, respalda tu config y escribe
+# la nueva (con respaldo).
 set -e
 OC_DIR="$HOME/.config/opencode"
 OC_FILE="$OC_DIR/opencode.jsonc"
 
-echo "==> Victoria Armada · instalador (llave: {info['name']}, rol: {info['role']})"
+echo "==> Victoria Armada · configurador (llave: {info['name']}, rol: {info['role']})"
 
-# 1) opencode presente? si no, instalarlo
-if ! command -v opencode >/dev/null 2>&1; then
-  echo "==> opencode no está instalado — instalando..."
-  curl -fsSL https://opencode.ai/install | bash
-  export PATH="$HOME/.opencode/bin:$PATH"
+# 1) Detectar el CLI de opencode — PATH + rutas comunes de instalación.
+#    (La app Desktop NO pone binario CLI en el PATH: si solo tienes Desktop,
+#     este configurador no puede continuar — la config es para el CLI/TUI.)
+OC_BIN=""
+for CAND in "$(command -v opencode 2>/dev/null || true)" \\
+            "$HOME/.opencode/bin/opencode" \\
+            "/usr/local/bin/opencode" \\
+            "/opt/homebrew/bin/opencode" \\
+            "$HOME/.local/bin/opencode"; do
+  if [ -n "$CAND" ] && [ -x "$CAND" ]; then OC_BIN="$CAND"; break; fi
+done
+
+if [ -z "$OC_BIN" ]; then
+  cat <<'MSG'
+
+✋ Este configurador NO instala software en tu máquina (política de Alfredo Pro).
+
+No encontramos el CLI de opencode en tu PATH (¿tienes solo la app Desktop?
+Esta configuración es para el CLI/TUI, que es donde vive Victoria).
+
+Instala el CLI TÚ MISMO con el método que prefieras (documentación oficial
+https://opencode.ai/docs):
+
+  curl -fsSL https://opencode.ai/install | bash     # instalador oficial (v1)
+  # o:  npm install -g opencode-ai
+  # o:  brew install anomalyco/tap/opencode          # macOS
+
+Luego vuelve a correr este mismo comando y continuará solo:
+
+  curl -fsSL -H "Authorization: Bearer TU_LLAVE" {base}/v1/setup | bash
+
+No se modificó NADA en tu sistema.
+MSG
+  exit 0
 fi
+
+OC_VERSION="$("$OC_BIN" --version 2>/dev/null || echo 'desconocida')"
+echo "==> opencode CLI encontrado: $OC_BIN (versión $OC_VERSION)"
+# UNA config para TODAS las versiones (2026-11-11): la major del CLI decide
+# qué schema pedimos al gateway — v1 (serie 1.x) o v2 (2.x/beta, schema
+# providers/package/settings). Ambas validadas E2E contra este gateway.
+case "$OC_VERSION" in
+  2.*|*beta*) MAJOR=2 ;;
+  *)          MAJOR=1 ;;
+esac
+echo "==> Schema de config para tu versión: major=$MAJOR"
+# Asegurar que el binario encontrado es alcanzable para la verificación final
+case ":$PATH:" in
+  *":$(dirname "$OC_BIN"):"*) ;;
+  *) export PATH="$(dirname "$OC_BIN"):$PATH" ;;
+esac
 
 # 2) RESPALDO de la config existente (no tocamos lo que tienes sin copia)
 mkdir -p "$OC_DIR"
@@ -3834,20 +3905,19 @@ if [ -f "$OC_FILE" ]; then
   echo "==> Respaldo de tu config anterior: $BAK"
 fi
 
-# 3) Descargar tu config lista (con Victoria como cerebro incluido)
-curl -s -H "Authorization: Bearer {api_key}" {base}/v1/client-config -o "$OC_FILE"
-echo "==> Config instalada en $OC_FILE"
+# 3) Descargar tu config lista (con Victoria como cerebro incluido),
+#    en el schema de TU versión de opencode
+curl -s -H "Authorization: Bearer {api_key}" "{base}/v1/client-config?major=$MAJOR" -o "$OC_FILE"
+echo "==> Config instalada en $OC_FILE (schema major=$MAJOR)"
 
 # 4) Verificar que el cerebro quedó registrado
-if command -v opencode >/dev/null 2>&1; then
-  if opencode agent list 2>/dev/null | grep -q "victoria"; then
-    echo "==> ✓ Victoria registrada — todo listo"
-  else
-    echo "==> ⚠️ No pude verificar los agentes (¿PATH de opencode?). Abre opencode y verifica."
-  fi
+if "$OC_BIN" agent list 2>/dev/null | grep -q "victoria"; then
+  echo "==> ✓ Victoria registrada — todo listo"
+else
+  echo "==> ⚠️ No pude verificar los agentes. Abre opencode y verifica."
 fi
 
-cat <<'MSG'
+cat <<MSG
 
 ==============================================
   ✓ Listo. Abre 'opencode' y habla con Victoria.
@@ -3874,9 +3944,17 @@ async def client_config(request: Request):
     El nombre del modelo, thinking, límites, timeouts y costos los pone el
     servidor; el cliente solo guarda conexión + key. Lo único que el cliente
     decide localmente es cuándo compactar (limit.context, derivado de tu key).
-    """
+
+    (2026-11-11) UNA config, DOS majors: `?major=2` genera el schema v2
+    (providers plural + package/settings, key del modelo = id enviado,
+    compaction simple) — validado E2E con opencode v2.2.7 real contra este
+    gateway (sesión abre `> victoria`, inferencia OK). Sin el param = schema
+    v1 (serie 1.x, nuestro stack validado). El /v1/setup detecta la versión
+    del CLI del cliente y pide la variante correcta — un solo setup para
+    todas las versiones (decisión owner: simplificar)."""
     key_name = request.state.key["name"]
     role = request.state.key["role"]
+    major = 2 if (request.query_params.get("major") == "2") else 1
     row = get_key(key_name) or {}
     # baseURL detectada del propio request (respeta túneles HTTPS vía proxy headers)
     fwd_proto = (request.headers.get("X-Forwarded-Proto") or "").split(",")[0].strip()
@@ -3902,7 +3980,53 @@ async def client_config(request: Request):
     # SIEMPRE abre en "Using a Victoria"; ella delega a @Coder/@Thinker según la
     # tarea y, si la llave del cliente no tiene el tier, el gateway responde 403
     # con hint de upgrade y ella lo explica con gracia (GET /v1/me).
-    cfg = {
+    if major == 2:
+        # Schema v2 (validado E2E con opencode v2.2.7 real, 2026-11-11):
+        # providers plural + package/settings; el KEY del modelo ES el id
+        # enviado (no lleva campo id/modelID); capabilities/compat se
+        # infieren — no llevamos modalities de v1; compaction simple.
+        cfg = {
+            "$schema": "https://opencode.ai/config.json",
+            "compaction": {"auto": True},
+            "default_agent": "victoria",
+            "providers": {
+                "vllm": {
+                    "name": "· www.alfredo.pro",
+                    "package": "@opencode/ai/providers/openai-compatible",
+                    "settings": {
+                        "baseURL": base_url,
+                        "apiKey": api_key,
+                        "timeout": 3600000,
+                        "chunkTimeout": 600000,
+                    },
+                    "models": {
+                        "nvidia/Qwen3.6-35B-A3B-NVFP4-normal": {
+                            "name": "Using a Victoria",
+                            "limit": {"context": ctx, "output": 32000},
+                            "cost": {"input": price_in, "output": price_out},
+                        },
+                        "NVFP4/Qwen3-Coder-30B-A3B-Instruct-FP4": {
+                            "name": "Coding con Victoria (motor de @Coder)",
+                            "limit": {"context": 96000, "output": 22000},
+                            "cost": {"input": price_in, "output": price_out},
+                        },
+                    },
+                }
+            },
+            "agents": _public_agents(),
+            "_meta": {
+                "generated_by": "· www.alfredo.pro /v1/client-config",
+                "schema": "opencode v2 (major=2)",
+                "key_name": key_name,
+                "role": role,
+                "note": ("Todo lo demás (thinking default OFF, clamp de max_tokens, "
+                         "validación 400, admisión 503/429, metering) lo impone el "
+                         "servidor. Si tu rol es readonly, esta config NO infiere "
+                         "(solo lee la guía); pide una key coder al admin."),
+            },
+        }
+    else:
+        cfg = {
         "$schema": "https://opencode.ai/config.json",
         "compaction": {"auto": True, "prune": True, "reserved": 10000},
         "default_agent": "victoria",
@@ -3943,6 +4067,7 @@ async def client_config(request: Request):
         "agents": _public_agents(),
         "_meta": {
             "generated_by": "· www.alfredo.pro /v1/client-config",
+            "schema": "opencode v1 (serie 1.x)",
             "key_name": key_name,
             "role": role,
             "note": ("Todo lo demás (thinking default OFF, clamp de max_tokens, "
