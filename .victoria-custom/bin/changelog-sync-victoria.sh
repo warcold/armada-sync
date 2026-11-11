@@ -14,7 +14,7 @@ log() { echo "[$(date '+%H:%M:%S')] $*"; }
 push_local() {
     log "Push local → GitHub hub..."
     scp -i ~/.ssh/id_victoria -P 1111 "$LOCAL_CHANGELOG" warcold@kalimete.local:"$REMOTE_CHANGELOG" && \
-    $SSH_CMD "cd ~/armada-sync && git add CHANGELOG.md && git commit -m 'changelog: sync from Victoria $(date -u +%Y-%m-%dT%H:%M:%SZ)' && bash ~/armada-sync/sync.sh" && \
+    $SSH_CMD "cd ~/armada-sync && git add CHANGELOG.md && (git diff --cached --quiet || git commit -m 'changelog: sync from Victoria $(date -u +%Y-%m-%dT%H:%M:%SZ)') && bash ~/armada-sync/sync.sh" && \
     log "Push OK" || log "Push FALLÓ"
 }
 
