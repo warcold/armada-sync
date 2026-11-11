@@ -1,3 +1,11 @@
+### [2026-11-11 05:10 EST] [infra] changelog-sync-victoria.sh: pull destructivo eliminado (sync = push-only)
+- **Tipo**: fix (pérdida de datos) — descubierto en vivo durante el paquete de mejoras
+- **Qué**: el cron */15 `changelog-sync-victoria.sh sync` hacía pull+push donde el pull era un scp remoto→local que PISABA el CHANGELOG.md master con el espejo viejo del hub. Destruyó la entrada "2026-11-11 paquete de mejoras" escrita entre corridas (recuperada de /tmp y re-insertada). Fix: `sync` = push-only (el local es MASTER; el remoto es espejo puro — verificado: Kalimete no escribe entradas en este archivo, documenta lo suyo en su repo per contrato 2026-09-30). El pull queda SOLO manual para restauración explícita.
+- **Por qué**: mismo modo de fallo que motivó armada-sync ("pérdida del historial CHANGELOG por overwrite", 2026-09-14). Un full-file overwrite sobre un archivo append-only destruye trabajo en una ventana de 15 min.
+- **Verificado**: entrada recuperada (6022 líneas), script corregido, push manual al hub con la entrada incluida.
+- **Lección registrada**: ~/.victoria-custom/conocimiento/LECCIONES.md (sync de archivos append-only = push-only o merge real; JAMÁS full-file overwrite pull).
+- **Docs**: yes (general + CHANGELOG-infra + LECCIONES).
+
 ### [2026-11-11 02:15 EST] [hunyuan3d+gateway+coder] Paquete de mejoras post-análisis: Hunyuan lazy/unload, Coder KV 8GiB, retención usage_log
 - **Tipo**: feature (performance/memoria) + fix + higiene — análisis "busca oportunidades" autorizado por owner ("procede hasta terminar")
 - **Qué**: (1) **Hunyuan3D** (CHANGELOG-comfyui 23:15): carga perezosa + watchdog auto-unload (600s idle) + `POST /free` — libera ~10.9GB VRAM + ~11.1GB swap que retenía para siempre; causa raíz del OOM-kill del coder de esa tarde. (2) **Coder KV 6GiB→8GiB** (CHANGELOG-vllm 23:30): pool 174,752 tokens — 2 sesiones agénticas de ~87K concurrentes caben sin preemption; el OOM original fue de Hunyuan, no del KV. (3) **Retención usage_log** (CHANGELOG-vllm 23:30): DELETE >90 días al arrancar del gateway + índice timestamp (76K filas sin límite).
