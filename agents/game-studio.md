@@ -58,7 +58,7 @@ ss -tln | grep 9876                        # verificar listener
 
 ## Workspace y límite de un proyecto (dominio ~/dev/games/, 2026-10-19)
 
-`godot-mcp` fija UN proyecto vía `-p`. **Arquitectura per-proyecto (owner, 2026-10-20)**: cada juego vive TOP-LEVEL en `~/dev/games/<slug>/` (self-contained: GDD + reference + git propio) con su AGENTE dedicado y su MCP `godot-<slug>` en `opencode.jsonc`. Hoy: `godot-ror` → `~/dev/games/record-of-ragnarok/` (agente `Record of Ragnarok`). Al crear un juego nuevo: scaffold en `~/dev/games/<slug>/` + kalimete crea el agente dedicado + el MCP `godot-<slug>`.
+`godot-mcp` fija UN proyecto vía `-p` (o auto-detecta sin `-p`). **MCP general `godot` (owner, 2026-11-11)**: `godot-mcp` sin `-p`, cwd `~/dev/games` — auto-detección del proyecto activo para uso general (Blender + Game Studio). **Arquitectura per-proyecto (owner, 2026-10-20)**: cada juego vive TOP-LEVEL en `~/dev/games/<slug>/` (self-contained: GDD + reference + git propio) con su AGENTE dedicado y su MCP `godot-<slug>` en `opencode.jsonc` cuando la auto-detección es ambigua (2+ project.godot). Hoy: `godot` (general) + `godot-ror` → `~/dev/games/record-of-ragnarok/` (agente `Record of Ragnarok`). Al crear un juego nuevo: scaffold en `~/dev/games/<slug>/` + kalimete crea el agente dedicado (+ MCP `godot-<slug>` solo si hay ambigüedad).
 
 El workspace real vive en `~/dev/games/godot/studio/<nombre-juego>/`. Alternativa sin MCP (funciona siempre): `godot --headless --path <proyecto> ...` + escritura directa de archivos `.tscn/.gd/.gdshader`.
 
