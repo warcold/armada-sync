@@ -1,3 +1,10 @@
+### [2026-11-12 22:05 EST] [micaserogou] Theme propio 100% diseño — sweep final completo
+- **Tipo**: servicio (micaserogou preprod, theme micaserogou-restaurant)
+- **Qué**: verificación visual completa de todas las páginas + fixes: (1) rutas de imágenes en style.css `images/` → `assets/images/` (hero 404 en páginas internas; home lo veía por CSS inline crítico); (2) páginas carrito/checkout usaban shortcodes viejos `zion_*` (solo en .bak) → actualizados a `erpc_cart`/`erpc_checkout` sin `erpc_header`/`erpc_footer` (el theme ya renderiza header/footer — doctrina: plugin = función, theme = diseño); (3) iconos SVG del footer sin tamaño → CSS `.footer-links li` flex + 18px; (4) checkout: `.erpc-form-group` (column) pisaba `.erpc-delivery-toggle` → opciones apiladas con flex-basis 180px como ALTO → override en theme (fila desktop, columna <600px).
+- **Verificado**: screenshots chromium de home/productos/contacto/sobre-nosotros/login/carrito/checkout/mi-cuenta + móvil 390px — todos OK; php -l limpio; debug.log vacío. Catálogo muestra 4 productos: correcto (ERP preprod tiene 85, solo 4 con stock>1 — filtro erpc_con_stock; PASTELON DE BERENJENA sin precio en ERP = dato, no bug).
+- **Afecta a**: micaserogou preprod (https://micaserogou.kalimete.local). Backups: style.css.bkup-imgpath, style.css.bkup-fix-hero, mu-plugins/.bkup-mu-20261112/.
+- **Estado**: ✅ verificado en vivo
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
