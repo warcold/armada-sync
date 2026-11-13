@@ -6080,22 +6080,3 @@ EOF又是
 
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia Kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en Kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
-
-## 2026-11-13
-
-### [01:10] - Cambio: Micaserogou - Reconstrucción completa de la home
-- **Tipo**: tema | diseño | estructura
-- **Modificado**: `micaserogou-restaurant/front-page.php`, `micaserogou-restaurant/footer.php`, `micaserogou-restaurant/style.css`
-- **Afecta a**: micaserogou preprod (https://micaserogou.kalimete.local)
-- **Causa**: Alfredo quiere preprod idéntico a producción en diseño, estructura y contenido
-- **Estado**: ✅ push OK (601ae63)
-- **Notas**: 
-  - Hero: estructura correcta (hero-content sin container wrapper), imagen real + overlay azul oscuro
-  - USP: 4 items (Delivery rápido, Ingredientes frescos, Menú del día, Pago seguro)
-  - Productos destacados con shortcode erpc_featured
-  - Testimonios/Prueba social con counters (850+ clientes, 84 platos, etc)
-  - CTA con botón "Ver el menú"
-  - Footer completo: newsletter bar, 4 columnas, bottom bar con badges
-  - Colores: primario #1a73e8, secundario #34a853, acento #ff6b35
-  - Fuente: Ubuntu (ya no Outfit)
-  - Menú WP configurado: Inicio, Menú, Sobre Nosotros, Contacto, Reservas
