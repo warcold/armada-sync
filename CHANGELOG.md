@@ -1,3 +1,10 @@
+### [2026-11-12 22:55 EST] [micaserogou] Sweep visual completo + responsive + features producción
+- **Tipo**: servicio (micaserogou preprod, theme micaserogou-restaurant)
+- **Qué**: (1) Espacio CTA→footer en home (+margin-bottom var(--space-3xl)); (2) Página menú per_page=8 (shortcode actualizado) — botón "ver más" aparece cuando total>8; (3) Footer visible en páginas con .erpc-page (fix CSS: body.micaserogou-* .erpc-page { display:block; min-height:auto } — el flex column del plugin empujaba footer fuera de vista); (4) Botón sticky "Reservar mesa" + horarios (clonado de producción micaserogou.com) en footer.php + CSS responsive; (5) Responsive validado: móvil 390px, tablet 768px, PC 1440px en home/productos/contacto/sobre/carrito/checkout/mi-cuenta — grids, hero, checkout, footer, sticky reserva OK.
+- **Verificado**: screenshots full-page desktop + 3 breakpoints × 8 páginas; php -l limpio; debug.log vacío.
+- **Afecta a**: micaserogou preprod (https://micaserogou.kalimete.local). Backups: style.css.bkup-imgpath, style.css.bkup-fix-hero, footer.php.bkup (implícito).
+- **Estado**: ✅ verificado en vivo
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
