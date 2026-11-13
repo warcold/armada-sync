@@ -1,10 +1,3 @@
-### [2026-11-12 23:30 EST] [micaserogou] Paginación 8-en-8 + carrito flotante + fix sticky reserva overlap
-- **Tipo**: servicio (micaserogou preprod, theme + plugin ZionV CRM)
-- **Qué**: (1) Paginación real 8 productos/página + botón "Cargar más" funcional: fix en Shortcodes.php (fetch_all=true siempre para filtrar stock ANTES de paginar localmente) + JS connector.js (usa data-per-page del botón); (2) Carrito flotante visible: agregado include cart-float.php en footer.php del theme; (3) Sticky reserva + carrito sin superponerse: CSS responsive — móvil: carrito a la izquierda, sticky full-width; desktop: carrito right:100px, sticky right:24px; (4) Cards AJAX renderizadas con estructura completa (erpc-card-image-wrap, quick-view, badges) para que imágenes no se vean descuadradas.
-- **Verificado**: screenshots desktop + móvil 390px/768px (home, productos, checkout); php -l limpio; debug.log sin errores de theme.
-- **Afecta a**: micaserogou preprod (https://micaserogou.kalimete.local). Backups: style.css, footer.php, plugin Shortcodes.php, connector.js, products-content.php.
-- **Estado**: ✅ verificado en vivo
-
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
