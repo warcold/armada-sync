@@ -1,3 +1,11 @@
+### [2026-11-13 00:15 EST] [micaserogou] Sweep completo — 6 fixes reportados por Alfredo
+
+- **Tipo**: servicio (micaserogou preprod, theme + plugin ZionV CRM)
+- **Qué**: (1) Header "Pedido" — convertido de <div> sin href a <a href="/carrito/">; (2) Header "Mi cuenta" — woocommerce_myaccount_page_id=N/A, hardcodeado fallback a ID 10; (3) Categorías home eliminadas de front-page.php (solo quedan en productos/ vía shortcode); (4) Full-screen design — CSS para secciones del home y productos sin boxed container en desktop (max-width 1280px centrado); (5) Cart float — regla base display:flex + position:fixed añadida (antes solo media queries); (6) "Cargar más" desaparece — has_more usa count pre-stock-filter en Shortcodes.php render_products() + ajax_get_products() para que el botón persista hasta agotar todas las páginas del ERP.
+- **Verificado**: php -l limpio en header.php, front-page.php, Shortcodes.php. Git push OK a micaserogou-website (theme) y zionv-crm (plugin). Pendiente: screenshots de verificación visual en preprod.
+- **Afecta a**: micaserogou preprod (https://micaserogou.kalimete.local). Backups: header.php.bkup, front-page.php.bkup, style.css.bkup, Shortcodes.php.bkup (hechos vía edit tool sin .bkup explícito).
+- **Estado**: ✅ commits push OK, pendiente verificación visual por usuario
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
