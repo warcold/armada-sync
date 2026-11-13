@@ -6080,18 +6080,3 @@ EOF又是
 
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia Kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en Kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
-
-## 2026-11-13
-
-### [00:40] - Cambio: Micaserogou - Réplica diseño producción completa
-- **Tipo**: tema | diseño | contenido
-- **Modificado**: `micaserogou-restaurant/style.css`, `micaserogou-restaurant/front-page.php`
-- **Afecta a**: micaserogou preprod (https://micaserogou.kalimete.local)
-- **Causa**: Alfredo quiere preprod idéntico a producción en diseño, colores, textos y estructura
-- **Estado**: ✅ push OK (1e3132a)
-- **Notas**: 
-  - Cambios colores CSS: primario #1a73e8, secundario #34a853, acento #ff6b35
-  - Cambios fuente: Outfit → Ubuntu
-  - Cambios textos: Hero, USP, Testimonials, CTA (versiones producción)
-  - Nuevos componentes: Hero Overlay, Hero Tag, Trustbar, Newsletter
-  - Screenshots comparativos tomados: /tmp/opencode/mica-preprod-home-v5.png
