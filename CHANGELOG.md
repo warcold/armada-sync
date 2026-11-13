@@ -1,3 +1,11 @@
+### [2026-11-13 00:20 EST] [micaserogou] Fix adicional: cart-float no se imprimía (function_exists→defined)
+
+- **Tipo**: servicio (micaserogou preprod, theme)
+- **Qué**: footer.php usaba `function_exists('ERPSUITE_PLUGIN_DIR')` para verificar la constante del plugin ZionV CRM. `function_exists` verifica funciones, no constantes → siempre false → cart float nunca se imprimía. Corregido a `defined('ERPSUITE_PLUGIN_DIR')`.
+- **Verificado**: curl confirma `erpc-cart-float` en HTML de home y productos. php -l limpio.
+- **Afecta a**: micaserogou preprod. Fix en footer.php.
+- **Estado**: ✅ verificado en vivo
+
 ### [2026-11-13 00:15 EST] [micaserogou] Sweep completo — 6 fixes reportados por Alfredo
 
 - **Tipo**: servicio (micaserogou preprod, theme + plugin ZionV CRM)
