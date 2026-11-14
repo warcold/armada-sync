@@ -37,11 +37,23 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 
 ### Túneles activos
 
-**1. `victoria-armada`** ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a` — ÚNICO túnel de la cuenta (verificado 2026-08-13, healthy, 4 conexiones)
-- Ingress: `victoria.armada.do` → `http://127.0.0.1:8010` (API LLM con llaves, chat validado 2026-08-13); default → 404. ⚠️ Panel /admin = solo LAN; UIs internas = solo LAN
-- `cloudflared.service` systemd en el servidor que corresponda (arm64)
+**1. `victoria-armada`** ID `d9abe241-fcbb-40a6-9202-36d0cfa7a95a` — corre en el servidor victoria (arm64), sirve `victoria.armada.do` → `http://127.0.0.1:8010` (API LLM con llaves); default → 404. ⚠️ Panel /admin = solo LAN; UIs internas = solo LAN
 
-**2. ~~`kalimete-local`~~ ELIMINADO 2026-08-06**: las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` (desarrollo) — nunca exponer en armada.do sin pedir confirmación al usuario.
+**2. `assetto-armada`** ID `ee17c01a-75a7-461c-9410-00f1f736816c` — corre en vps-preprod (`cloudflared.service`, token-mode con `/etc/cloudflared/creds.json`)
+- **⚠️ REMOTAMENTE gestionado (dashboard)**: el `/etc/cloudflared/config.yml` local del VPS se IGNORA. La fuente de verdad del ingress es la API/dashboard: `GET/PUT /accounts/{account_id}/cfd_tunnel/{tunnel_id}/configurations`. Señal de remote-managed: `journalctl -u cloudflared` muestra `Updated to new configuration` con el JSON del ingress. VERIFICAR ESTO ANTES de editar config.yml local (editar el local en un túnel remote-managed = letra muerta).
+- Ingress actual (2026-11-14): `assetto.armada.do` → `http://localhost:8772` (Server Manager); `srv00.assetto.armada.do` → `tcp://localhost:9600`; default → 404. Pendiente añadir regla de path `^/acdl/` → `http://localhost:80` (caddy) ENCIMA de la de assetto→8772.
+- Comandos para túneles remote-managed (las reglas de path van ANTES que la del mismo hostname sin path — orden = prioridad):
+```sh
+# Leer ingress actual
+curl -s "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/cfd_tunnel/$TUNNEL_ID/configurations" \
+  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | jq .
+# Actualizar ingress (REEMPLAZA la config completa: GET primero y preservar TODAS las reglas)
+curl -s -X PUT "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/cfd_tunnel/$TUNNEL_ID/configurations" \
+  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
+  --data '{"config":{"ingress":[...],"warp-routing":{"enabled":false}}}' | jq .
+```
+
+**3. ~~`kalimete-local`~~ ELIMINADO 2026-08-06**: las apps dev de kalimete (royalsmoke, woodly, micasero, kalimete, taohemps, petsuite) son SOLO `.local` (desarrollo) — nunca exponer en armada.do sin pedir confirmación al usuario.
 
 ### Orígenes directos proxied (no túnel) — cada uno con TLS propio
 - **VPS prod** 154.53.35.102 (armada.do y taohemps.com): TLS por caddy (Let's Encrypt), origin cerrado a solo rangos CF (DOCKER-USER).
@@ -83,6 +95,7 @@ Los servicios públicos se sirven por **CF proxied** (A/CNAME naranja → VPS 15
 - La zona `micaserogou.com` (fdebf4707c11ec49d9a73204457ba19c) aún NO tiene token de DNS propio (erpipos-server-dns la cubre)
 
 ### Reglas aprendidas
+- **Restricción de IP del token (error 9109)**: ante "Authentication error" (code 10000) en endpoints de cuenta, NO asumir token revocado — correr `wrangler whoami`: si da error 9109 `Cannot use the access token from location: <ip>`, es la IP allowlist del token (el owner la actualiza en dashboard: Account API Tokens → spring-dream-d681 → IP Filtering). Nota: `GET /user/tokens/verify` devuelve "Invalid API Token" de forma engañosa en este caso.
 - **NUNCA registrar un A proxied (nube naranja) apuntando a un origin sin 443 si la zona está en SSL=strict**: Cloudflare exige HTTPS:443 con cert válido al origin → si no existe, timeout total (caso erpipos 2026-08-07: el origin solo servía HTTP; con flexible funcionaba, strict lo tumbó). Al emitir cert LE en un origin proxied, **grisar temporalmente el registro** (challenge HTTP-01 directo) y volver a naranja después.
 - **NUNCA subdominios de 2 niveles** (api.x.armada.do): Universal SSL gratis no los cubre → handshake_failure. Usar `x-api.armada.do`
 - DNS CNAME: crear con `cloudflared tunnel route dns --overwrite-dns <tunnel_id> <host>` (usa cert.pem de `~/.cloudflared/`, cubre armada.do y micaserogou.com)
