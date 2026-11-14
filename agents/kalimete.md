@@ -34,6 +34,7 @@ permission:
     "Ecco Suit": allow
     "Kalimete Dashboard": allow
     "Kalimete PTT": allow
+    "Assetto Corsa": allow
     "explore": allow
 ---
 
