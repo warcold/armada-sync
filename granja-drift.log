@@ -677,3 +677,4 @@
 2026-11-13T20:25:01.521146 OK
 2026-11-13T21:25:01.958739 OK sincronizado (7 servicios up)
 2026-11-13T21:25:01.958836 OK
+2026-11-13T22:25:04.285593 gateway no alcanza (normal fuera de LAN): <urlopen error [Errno 113] No route to host>
