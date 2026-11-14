@@ -1,3 +1,11 @@
+### [2026-11-13 21:11 EST] [servicio] Pista vr506_dominicana_2_0 restaurada + zip redistribuido (cache-bust ?v=2)
+- **Tipo**: servicio
+- **Modificado**: track folder `vr506_dominicana_2_0` (VPS), `ui/meta_data.json` (DownloadURL), zip en volumen caddy (`_data/acdl/`)
+- **Afecta a**: vps-preprod (assetto-corsa-server + nextcloud-stack)
+- **Causa**: la sesión de señales del 14 nov (VPS) dejó el track sin geometría (models_circu.ini a stub + kn5 renombrado .CORRUPTO) → el auto caía del cielo; se restauró la distribution original
+- **Estado**: ✅ sincronizado
+- **Notas**: restore server-side desde `old-stale-20261109.zip` (kn5 md5 `0aee1111` con señales originales, models_circu.ini 137B, layout drag restaurado; Config.ini/Manifest.json/patch_data_new.dat movidos a backups; vao-patch excluido por diseño). Zip nuevo en disco: 146,221,589 B / 47 files. La URL pública servía el zip viejo por caché de Cloudflare (cf-cache-status HIT, TTL 4h; token de purge no disponible en env) → DownloadURL cambiado a `...zip?v=2` vía POST metadata (verificado: /api/details + content-length 146221589 + magic PK). Pendiente: usuario reinstala vía CM y prueba; luego GET /custom/loop/<RID> y branding logow/OBJ83_SUB1.
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
