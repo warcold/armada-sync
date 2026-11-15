@@ -1,40 +1,3 @@
-## 2026-11-15
-
-### [2026-11-15] [ecomm] Flujo completo ventas web micaserogou.com → ERP
-
-#### Resumen
-El flujo carrito → checkout → venta pendiente "web" en ERP → procesamiento por encargado está funcional end-to-end en preprod.
-
-#### Componentes
-- **ERP (dev/ecomm-erp → 387aa06)**: v3.15.2 - origen_venta filter, canal badge, delivery block, cobros routes fix, quote endpoint.
-- **Website micaserogou (master → 525cf1f)**: v3.15.2 - connector.js quote rendering, checkout template ITBIS row.
-- **Plugin Zion CRM (aff8ff5 local)**: ApiClient::quote(), AJAX quote, checkout ITBIS row. **Push bloqueado** por conflictos de rebranding (ERPSuite_* → ZionCommerce_*).
-
-#### Verificación E2E
-1. Checkout web: selecciona zona "Centro Histórico" → total RD$ 238.50 (75 + 13.50 ITBIS + 150 envío).
-2. ERP: venta #301 creada `pendiente`, `origen_venta=web`, `delivery_fee=150`, `total=238.50`, 0 pagos.
-3. Manager login (gerente@michelle-casero-y-gourmet.com) → `/ventas?origen_venta=web&estado=pendiente` → chip "6 pedido(s) web por procesar" → badge "Web" en filas.
-4. Detalle venta #301: bloque "Pedido Web" con dirección/zona/fee/notas, fila Envío RD$150, ITBIS RD$13.50, Total RD$238.50.
-5. Acción "Registrar Pago" → `/cobros/realizar/301` → pago efectivo 238.50 → venta pasa a `completada`, pago #259 registrado.
-
-#### Credenciales de prueba (preprod local)
-- **ERP**: https://erp.kalimete.local/login
-  - Usuario: `gerente@michelle-casero-y-gourmet.com`
-  - Password: `Gourmet.Qa.2026!` (solo preprod local)
-  - Ventas web pendientes: https://erp.kalimete.local/ventas?origen_venta=web&estado=pendiente
-- **Website preprod**: https://micaserogou.kalimete.local
-  - Login: `/login` (página 9) → usuario WP existente
-  - Checkout: `/checkout` (página 8) → requiere login
-  - Producto test: "1 PIEZA DE POLLO FRITO" (ID 323, RD$ 75)
-  - Zona delivery: "Centro Histórico" (ID 2, RD$ 150, gratis desde RD$ 3000)
-
-#### Pendiente producción
-- Plugin: resolver conflictos rebranding y push a `origin/main`; actualizar submódulo en website.
-- ERP: Juan Carlos merge `dev/ecomm-erp` → `main` + migración `2026_11_15_000001_add_origen_venta_to_ventas_table.php`.
-- Deploy cPanel plugin + tema con cache-bust (versión 2.0.1).
-- Decisión ITBIS: ¿precios del sitio con o sin ITBIS incluido? (Hoy ERP suma 18% aparte).
-
-
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
@@ -4184,6 +4147,29 @@ EOF又是
 - **Causa**: El AJAX `test_connection` fallaba con "Falta API Key" si el usuario no había guardado la API key. El nonce también fallaba por incompatibilidad con `check_ajax_referer`.
 - **Cambios**:
   - JS: envía `api_key` desde el campo del formulario al AJAX de verificación
+  - JS: envía `erpc_test_connection_nonce` adicional para compatibilidad
+  - PHP: `ajax_test_connection()` acepta `$_POST['api_key']` (fallback a DB)
+- **Estado**: ✅ plugin v3.1.1 pusheado a GitHub (commit `b406cf0`)
+- **ZIPs de deploy actualizados**:
+  - `~/dev/wordpress/export/deploy-package/erp-ecmm-connector.zip` (v3.1.1 fresh)
+  - `~/Desktop/MaganTech-Connector-Deploy/erp-ecmm-connector.zip` (v3.1.1 fresh)
+  - `~/dev/wordpress/erp-ecmm-deploy.zip` (eliminado, estaba viejo)
+
+---
+
+### [16:05] - ZIP de producción erp-commerce-suite-4.4.1 empaquetado
+- **Tipo**: release | wordpress
+- **Modificado**: NUEVO `~/dev/wordpress/dist/erp-commerce-suite-4.4.1.zip` (**779 KB, 103 archivos**, raíz `erp-commerce-suite/`). Fuente: `/home/warcold/dev/wordpress/wp-content/plugins/erp-commerce-suite/` (volumen del contenedor wordpress-local). Repo propio del plugin: `ssh://git@github.com/warcold/erp-commerce-suite.git` (rama master).
+- **Contenido**: bootstrap + uninstall + readme.txt + README/CHANGELOG + includes/ (Core/Admin/Store/AI/Remote/Infra) + assets/ + templates/ + docs/ + tests/regression.php (CLI-only, útil para smoke post-deploy). **Excluidos**: `.git/`, todos los `*.bkup` de hoy, `export/` (zips viejos), `node_modules/`, `.env*`, tests legacy.
+- **Verificado**: php -l 6/6 OK pre-zip; `unzip -l` confirma estructura WP estándar y ausencia de .git/.bkup/.env.
+- **Afecta a**: ninguno (artefacto de distribución; el owner lo sube a prod manualmente)
+- **Causa**: owner: "¿dónde está el plugin .zip para subirlo a producción y probar la parte de producción?"
+- **Estado**: ✅ listo para subir
+- **Notas**: ⚠️ `includes/Core/Environment.php` lleva HARDCODEADO el perfil LOCAL sellado (API URL `172.19.0.1:8100`, tenant 10 y key `iak_` local de dev) — por diseño del owner queda en el ZIP; la key local es inútil fuera de la red de Kalimete, pero si el repo fuera público o el zip se comparte, conviene refactor futuro a constante inyectada vía wp-config. En PROD el admin debe: switch → PÚBLICO → tab Conexión → meter URL/tenant/key reales de erpipos prod (las keys de prod viajan en wp_options de prod, NUNCA en el zip). Instrucciones completas entregadas al owner en el chat.
+
+### [16:05] - MaganTech Store: revalidación ERP tras fixes del backend (v2.2)
+- **Tipo**: proyecto | api | wordpress
+- cación
   - JS: envía `erpc_test_connection_nonce` adicional para compatibilidad
   - PHP: `ajax_test_connection()` acepta `$_POST['api_key']` (fallback a DB)
 - **Estado**: ✅ plugin v3.1.1 pusheado a GitHub (commit `b406cf0`)
