@@ -4169,29 +4169,6 @@ EOF又是
 
 ### [16:05] - MaganTech Store: revalidación ERP tras fixes del backend (v2.2)
 - **Tipo**: proyecto | api | wordpress
-- cación
-  - JS: envía `erpc_test_connection_nonce` adicional para compatibilidad
-  - PHP: `ajax_test_connection()` acepta `$_POST['api_key']` (fallback a DB)
-- **Estado**: ✅ plugin v3.1.1 pusheado a GitHub (commit `b406cf0`)
-- **ZIPs de deploy actualizados**:
-  - `~/dev/wordpress/export/deploy-package/erp-ecmm-connector.zip` (v3.1.1 fresh)
-  - `~/Desktop/MaganTech-Connector-Deploy/erp-ecmm-connector.zip` (v3.1.1 fresh)
-  - `~/dev/wordpress/erp-ecmm-deploy.zip` (eliminado, estaba viejo)
-
----
-
-### [16:05] - ZIP de producción erp-commerce-suite-4.4.1 empaquetado
-- **Tipo**: release | wordpress
-- **Modificado**: NUEVO `~/dev/wordpress/dist/erp-commerce-suite-4.4.1.zip` (**779 KB, 103 archivos**, raíz `erp-commerce-suite/`). Fuente: `/home/warcold/dev/wordpress/wp-content/plugins/erp-commerce-suite/` (volumen del contenedor wordpress-local). Repo propio del plugin: `ssh://git@github.com/warcold/erp-commerce-suite.git` (rama master).
-- **Contenido**: bootstrap + uninstall + readme.txt + README/CHANGELOG + includes/ (Core/Admin/Store/AI/Remote/Infra) + assets/ + templates/ + docs/ + tests/regression.php (CLI-only, útil para smoke post-deploy). **Excluidos**: `.git/`, todos los `*.bkup` de hoy, `export/` (zips viejos), `node_modules/`, `.env*`, tests legacy.
-- **Verificado**: php -l 6/6 OK pre-zip; `unzip -l` confirma estructura WP estándar y ausencia de .git/.bkup/.env.
-- **Afecta a**: ninguno (artefacto de distribución; el owner lo sube a prod manualmente)
-- **Causa**: owner: "¿dónde está el plugin .zip para subirlo a producción y probar la parte de producción?"
-- **Estado**: ✅ listo para subir
-- **Notas**: ⚠️ `includes/Core/Environment.php` lleva HARDCODEADO el perfil LOCAL sellado (API URL `172.19.0.1:8100`, tenant 10 y key `iak_` local de dev) — por diseño del owner queda en el ZIP; la key local es inútil fuera de la red de Kalimete, pero si el repo fuera público o el zip se comparte, conviene refactor futuro a constante inyectada vía wp-config. En PROD el admin debe: switch → PÚBLICO → tab Conexión → meter URL/tenant/key reales de erpipos prod (las keys de prod viajan en wp_options de prod, NUNCA en el zip). Instrucciones completas entregadas al owner en el chat.
-
-### [16:05] - MaganTech Store: revalidación ERP tras fixes del backend (v2.2)
-- **Tipo**: proyecto | api | wordpress
 - **Modificado**: `/home/warcold/dev/wordpress/wp-content/plugins/erpecomm-alfredo-pro/`
 - **Afecta a**: Kalimete (localhost:8090)
 - **Causa**: El dueño del ERPipos reportó haber corregido los issues reportados
