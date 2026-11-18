@@ -1,0 +1,21 @@
+{
+  "harness": "plugin-templates",
+  "updated": "2026-11-18",
+  "agent_file": "~/armada-sync/agents/plugin-templates.md",
+  "mode": "subagent",
+  "hidden": false,
+  "scope": "Generación y mantenimiento de templates del plugin Zion CRM 2.0.0 (packs restaurant/tech/neutral, partials, shortcodes). Contrato: solo componentes, NUNCA header/footer, template_mode=default respected.",
+  "live_check": "ls ~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/src/Modules/Commerce/templates/packs/",
+  "checks": [
+    "php -l ~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/src/Modules/Commerce/templates/packs/restaurant/partials/about.php",
+    "grep -r 'get_header\\|get_footer' ~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/src/Modules/Commerce/templates/packs/ 2>/dev/null || echo 'OK: no header/footer en partials'"
+  ],
+  "upstream": {
+    "fuente": "Zion CRM 2.0.0 plugin (warcold/zionv-crm)",
+    "nota": "LIVE manda; templates en src/Modules/Commerce/templates/packs/"
+  },
+  "delegacion": {
+    "cuando_usar": "crear partial para pack, añadir shortcode, actualizar templates plugin, generar product.php",
+    "pre_check": "ls ~/dev/wordpress/plugins/zionv-crm/wp-content/plugins/zionv-crm-plugin/src/Modules/Commerce/templates/packs/"
+  }
+}
