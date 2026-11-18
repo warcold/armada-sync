@@ -6080,26 +6080,3 @@ EOF又是
 
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia Kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en Kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
-
-## 2026-11-18
-
-### [03:15] Cambio: LAN access — mDNS single-label para accesos LAN
-- **Tipo**: infra | red
-- **Modificado**: lan-mdns-publish.sh, avahi-publish-address@.service, certs mkcert (SAN dual), nginx vhosts (3), compose (3), CHANGELOG.md, docs LAN access
-- **Afecta a**: kalimete (host), todos los clientes LAN
-- **Causa**: mdns4_minimal en clientes solo resuelve nombres de 1 label (.local). Los FQDN multi-label (*.kalimete.local) no resolvían desde victoria ni otros dispositivos.
-- **Solución**:
-  1. Publicar mDNS single-label: `micaserogou.local`, `magantech.local`, `zionv.local` → avahi systemd units (dynamic IP via wlan0)
-  2. Regenerar 3 certs mkcert con SAN dual (<name>.local + <name>.kalimete.local + localhost + 127.0.0.1)
-  3. Actualizar server_name en 3 vhosts nginx (añadir <name>.local)
-  4. Convertir magantech vhost de FRONT-DOOR a proxy ESTÁNDAR (Host real + X-Forwarded-Proto)
-  5. Actualizar WP_HOME/WP_SITEURL en DB y compose a https://<name>.local
-  6. Añadir <name>.local a /etc/hosts del host
-- **Estado**: ✅ verificado desde victoria (getent hosts + curl sin --resolve → 200 en los 3)
-- **Notas**: certs CA mkcert instalados en dispositivos para eliminar warnings de navegación. IP wlan0 dinámica → script la resuelve en runtime. No hay exposición a internet (no cloudflared, bindings 127.0.0.1, .local TLD reservado).
-
-### [03:30] Cambio: docs LAN access
-- **Tipo**: docs
-- **Modificado**: docs/LAN-ACCESS.md (hub), CHANGELOG.md
-- **Afecta a**: kalimete (hub)
-- **Notas**: documento con todo el stack: mDNS, certs, nginx, compose, instalación CA, verificación.
