@@ -12,6 +12,140 @@ permission:
   write: allow
 ---
 
+# Context Model Configuration (2026-11-18)
+
+## Modelos de Contexto Soportados
+
+| Modelo | Tokens | Uso | Temperatura | Top-p |
+|--------|--------|-----|-------------|-------|
+| **low** | ≤ 8,000 | Tareas simples: smoke tests, health checks, status, logs, 1-2 archivos | 0.1 | 0.95 |
+| **medium** | 8,001 – 48,000 | Desarrollo estándar: templates, CSS, PHP, shortcodes, 5-15 archivos | 0.4 | 0.95 |
+| **high** | 48,001 – 190,000 | Análisis profundo: arquitectura completa, multi-sitio, refactors grandes, auditorías | 0.6 | 0.95 |
+
+## Reglas de Selección Automática
+
+```python
+def select_context_model(task_description: str, files_estimate: int) -> str:
+    """
+    Selecciona modelo basado en complejidad estimada.
+    El agente DEBE declarar el modelo al iniciar la tarea.
+    """
+    if files_estimate <= 2 and "health" in task_description.lower():
+        return "low"
+    elif files_estimate <= 15:
+        return "medium"
+    else:
+        return "high"
+```
+
+## Límites de Contexto en Creación de Templates
+
+### Template Creation Pipeline (con context awareness)
+
+```php
+// En functions.php del tema base - helper para context-aware rendering
+function zionc_render_template_part( $slug, $context = 'medium' ) {
+    $limits = array(
+        'low'    => 8000,
+        'medium' => 48000,
+        'high'   => 190000,
+    );
+    
+    $max_tokens = $limits[ $context ] ?? 48000;
+    
+    // Si el template part excede tokens estimados, usar fragmentación
+    $estimated = zionc_estimate_template_tokens( $slug );
+    
+    if ( $estimated > $max_tokens ) {
+        // Fragmentar en sub-parts: header, content, footer
+        return zionc_render_fragmented_template( $slug, $max_tokens );
+    }
+    
+    return get_template_part( $slug );
+}
+```
+
+### Integración con ZionV CRM (Plugin)
+
+El plugin ZionV CRM expone shortcodes que el tema consume. Para contextos altos:
+
+```php
+// Shortcode wrapper context-aware
+function zionc_do_shortcode_context( $shortcode, $atts = array(), $context = 'medium' ) {
+    $limits = array( 'low' => 8000, 'medium' => 48000, 'high' => 190000 );
+    $max_tokens = $limits[ $context ] ?? 48000;
+    
+    // Estimar tokens del output del shortcode
+    $estimated = zionc_estimate_shortcode_output( $shortcode, $atts );
+    
+    if ( $estimated > $max_tokens ) {
+        // Para shortcodes grandes (ej: erpc_products con 50+ items), paginar
+        $atts['per_page'] = min( $atts['per_page'] ?? 8, 8 );
+        $atts['paged'] = $atts['paged'] ?? 1;
+    }
+    
+    return do_shortcode( $shortcode, $atts );
+}
+```
+
+### Base Template Directory Structure (Restaurant)
+
+```
+~/dev/wordpress/templates-base/
+└── restaurant-base/                    # Template base FUNCIONAL para restaurantes
+    ├── style.css                       # Header WP + design system restaurant
+    ├── functions.php                   # Bootstrap + helpers context-aware
+    ├── theme.json                      # Config WP 6.6+ (colores, typo, spacing)
+    ├── screenshot.png                  # 1200x900 preview
+    ├── readme.txt                      # WP.org readme
+    ├── CHANGELOG.md                    # Historial del template base
+    ├── front-page.php                  # Hero + CTA catálogo
+    ├── page.php                        # Layout genérico
+    ├── header.php                      # Header con branding + nav + cart
+    ├── footer.php                      # Footer + atribución alfredo.pro
+    ├── inc/
+    │   ├── integration.php             # Helpers ZionV CRM + context models
+    │   ├── setup.php                   # Theme supports, menus, images
+    │   ├── assets.php                  # Enqueue CSS/JS (sin Outfit)
+    │   ├── customizer.php              # Brand, colors, hero, contact
+    │   └── template-tags.php           # Entry content, meta, etc.
+    ├── template-parts/
+    │   ├── content.php
+    │   ├── content-page.php
+    │   ├── content-search.php
+    │   ├── content-single.php
+    │   └── content-none.php
+    ├── assets/
+    │   ├── css/editor.css              # Estilos editor Gutenberg
+    │   └── js/theme.js                 # JS mínimo (nav toggle, smooth scroll)
+    ├── languages/
+    │   └── .gitkeep
+    └── assets/img/packs/restaurant/    # Banners base (generados via skill art)
+        ├── banner-home.webp
+        ├── banner-reservas.webp
+        ├── banner-contacto.webp
+        ├── banner-sobre-nosotros.webp
+        └── banner-producto-detalle.webp
+```
+
+### Reglas de Uso del Template Base
+
+1. **COPIAR, no mover**: `cp -r ~/dev/wordpress/templates-base/restaurant-base/ ~/dev/wordpress/themes/<cliente>-restaurant/`
+2. **Personalizar SOLO**: `style.css` (header), `functions.php` (ZIONC_VERSION), `inc/customizer.php` (defaults), `assets/img/packs/restaurant/` (banners del cliente)
+3. **NO tocar**: `inc/integration.php` (helpers ZionV CRM), `front-page.php` (CTA logic), `template-parts/` (estructura)
+4. **Versionar por cliente**: cada cliente tiene su repo `~/dev/wordpress/themes/<cliente>-restaurant/` con su `CHANGELOG.md`
+5. **Updates al base**: si hay fix en `inc/integration.php` → aplicar a TODOS los clientes via script `sync-template-base.sh`
+
+### Context Model Declaration (Obligatorio al iniciar tarea)
+
+```markdown
+## Task Context Declaration
+- **Model**: high / medium / low
+- **Estimated files**: N
+- **Estimated tokens**: N
+- **Reason**: [breve justificación]
+```
+
 > **Frescura** — el diagnóstico SIEMPRE empieza con estado real (docker ps, curl :health, systemctl, journalctl, ss...). Lo pegado en este doc (estados, contadores, versiones, salidas viejas) NUNCA es verdad: este doc es la RECETA (flags, topología querida, no-touch, historia); el edificio es lo live. Si discrepan -> actua sobre lo LIVE, cura este doc + su harness (+ CHANGELOG) y reporta la deriva. Docs upstream (GitHub/vendor) solo cuando lo live no explica el fallo — no se cachean como verdad permanente.
 
 # WordPress — Agente Principal de Plataforma (Umbrella)

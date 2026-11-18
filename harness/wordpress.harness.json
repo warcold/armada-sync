@@ -1,17 +1,60 @@
 {
   "harness": "wordpress",
-  "updated": "2026-10-29",
+  "updated": "2026-11-18",
   "agent_file": "~/armada-sync/agents/wordpress.md",
   "mode": "subagent",
   "hidden": false,
-  "scope": "WordPress genérico + sitios cliente (micaserogou.com, magantech.com.do, wordpress-dev). Mision: gestion multisite WP + plugin Armada Suite + ERP integration.",
-  "vivo_2026_10_29": "Harness estandarizado schema unificado. WordPress multisite: micaserogou.com (prod 5.5.10 -> 5.7.0 ventana, PHP 8.4.27), magantech.com.do (preprod 5.7.0, PHP 8.5.11 prod / 8.3 preprod), wordpress-dev (:8091 lab, PHP 8.3.20). Plugin Armada Suite 5.5.10/5.7.0/5.8.0 + fusion Zion CRM 2.0.0. Plugin header actualizado: Requires PHP 8.1+. ERP prod erpipos.armada.do (tenant 3 iak pendiente).",
+  "scope": "WordPress genérico + sitios cliente (micaserogou.com, magantech.com.do, wordpress-dev). Mision: gestion multisite WP + plugin Armada Suite + ERP integration. Context models: low (≤8k), medium (8k-48k), high (48k-190k). Template base: restaurant-base funcional en ~/dev/wordpress/templates-base/restaurant-base/.",
+  "vivo_2026_11_18": "Context models añadidos. WordPress multisite: micaserogou.com (prod 5.5.10 -> 5.7.0 ventana, PHP 8.4.27), magantech.com.do (preprod 5.7.0, PHP 8.5.11 prod / 8.3 preprod), wordpress-dev (:8091 lab, PHP 8.3.20). Plugin Armada Suite 5.5.10/5.7.0/5.8.0 + fusion Zion CRM 2.0.0. Plugin header actualizado: Requires PHP 8.1+. ERP prod erpipos.armada.do (tenant 3 iak pendiente). Template base restaurant creado.",
   "live_check": "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/ | grep -q 200 && echo 'wordpress-dev:up' || echo 'wordpress-dev:down'",
   "checks": [
     "curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/",
     "docker ps --format '{{.Names}}: {{.Status}}' | grep -E 'wordpress|mariadb'",
     "curl -s -u victoria:$(cat ~/dev/wordpress/websites/micaserogou.com/secrets/prod-app-password.txt 2>/dev/null) https://micaserogou.com/wp-json/erpsuite/v1/ops/status 2>/dev/null | head -c 100"
   ],
+  "context_models": {
+    "low": {
+      "max_tokens": 8000,
+      "temperature": 0.1,
+      "top_p": 0.95,
+      "use_cases": ["health checks", "smoke tests", "status", "logs", "1-2 archivos"]
+    },
+    "medium": {
+      "max_tokens": 48000,
+      "temperature": 0.4,
+      "top_p": 0.95,
+      "use_cases": ["templates", "CSS", "PHP", "shortcodes", "5-15 archivos"]
+    },
+    "high": {
+      "max_tokens": 190000,
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "use_cases": ["arquitectura completa", "multi-sitio", "refactors grandes", "auditorías"]
+    }
+  },
+  "template_base": {
+    "restaurant": {
+      "path": "~/dev/wordpress/templates-base/restaurant-base/",
+      "description": "Template base FUNCIONAL para restaurantes - copiar para cada cliente",
+      "version": "1.0.0",
+      "includes": [
+        "style.css (design system restaurant)",
+        "functions.php (bootstrap + helpers context-aware)",
+        "theme.json (WP 6.6+ config)",
+        "front-page.php (hero + CTA catálogo)",
+        "inc/integration.php (helpers ZionV CRM + context models)",
+        "inc/customizer.php (brand, colors, hero, contact)",
+        "assets/img/packs/restaurant/ (banners base)"
+      ],
+      "rules": [
+        "COPIAR, no mover: cp -r ~/dev/wordpress/templates-base/restaurant-base/ ~/dev/wordpress/themes/<cliente>-restaurant/",
+        "Personalizar SOLO: style.css header, functions.php ZIONC_VERSION, inc/customizer.php defaults, assets/img/packs/restaurant/ banners",
+        "NO tocar: inc/integration.php, front-page.php CTA logic, template-parts/ estructura",
+        "Versionar por cliente: cada cliente su repo ~/dev/wordpress/themes/<cliente>-restaurant/ con CHANGELOG.md",
+        "Updates al base: fix en inc/integration.php -> aplicar a TODOS via sync-template-base.sh"
+      ]
+    }
+  },
   "upstream": {
     "fuente": "WordPress.org (core) + warcold/armada-suite (plugin) + sitios cliente (micaserogou.com, magantech.com.do). Fusion Zion CRM 2.0.0 (2026-10-28).",
     "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa. Deploy prod = Plan + owner.",
@@ -80,6 +123,10 @@
     ]
   },
   "changelog": [
+    {
+      "fecha": "2026-11-18",
+      "cambio": "Context models (low/medium/high hasta 190k) añadidos. Template base restaurant creado en ~/dev/wordpress/templates-base/restaurant-base/. Helpers context-aware en inc/integration.php. Reglas de copiado y versionado por cliente."
+    },
     {
       "fecha": "2026-10-29",
       "cambio": "Harness estandarizado schema unificado (vivo_, live_check, checks[], upstream.fuente). WP multisite: dev 8091, micaserogou prod 5.5.10->5.7.0, magantech preprod 5.7.0, fusion Zion CRM 2.0.0."
