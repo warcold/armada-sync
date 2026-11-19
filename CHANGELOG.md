@@ -1,3 +1,18 @@
+### [21:28] - Migración: eccosuit-develop → Dokploy (Proyecto #8)
+- **Tipo**: migración
+- **Modificado**: Project `eccosuit-develop` (ID: d4whwbxqEgDb2bLyQYB-1), Compose `eccosuit-develop` (ID: HaetkMF1dn6oJiUA7EX1e)
+- **Afecta a**: kalimete (Ecco Suite Develop - Next.js + PostgreSQL 18 + Worker)
+- **Causa**: Stack completo Next.js + PostgreSQL 18 + Worker (mail-worker)
+- **Estado**: ✅ running (3 servicios: app en 3100, worker, postgres en 5434)
+- **Notas**: 
+  - Imagen pre-construida: eccosuit-develop:dokploy (multi-stage con LibreOffice)
+  - NODE_ENV=development para worker (preprod, permite http en APP_URL)
+  - Base de datos ecco_suite con usuarios ecco_owner/ecco_app, 61 migraciones drizzle aplicadas
+  - Permisos GRANT en schema public para ecco_app
+  - Red externa compose-navigate-virtual-circuit-hpszzm_default
+  - Worker en modo local (buzón local, no SMTP)
+  - Healthcheck /up OK, 61 migraciones aplicadas
+  - Harness documentado
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
