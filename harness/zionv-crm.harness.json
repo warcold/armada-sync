@@ -25,6 +25,7 @@
       "zionv_crm_db_data"
     ],
     "network": "zionv-crm-net",
-    "notes": "Migrado a Dokploy (recreado tras borrado anterior). WordPress + MariaDB para plugin Zion CRM 2.0.0. WP en 8092, DB en 3308. Healthchecks OK. Plugin Zion CRM 2.0.0 instalado y activado en magantech y micaserogou."
+    "notes": "Migrado a Dokploy (recreado tras borrado anterior). WordPress + MariaDB para plugin Zion CRM 2.0.0. WP en 8092, DB en 3308. Healthchecks OK. Plugin Zion CRM 2.0.0 instalado y activado en magantech y micaserogou. | Migrado a shared-infra (DB/Redis/Mailpit compartidos)",
+    "shared_infra": true
   }
 }

@@ -26,6 +26,7 @@
       "WORDPRESS_DB_PASSWORD",
       "MYSQL_ROOT_PASSWORD"
     ],
-    "notes": "Migrado de docker-compose local a Dokploy. Imágenes estándar. Contenedores originales parados. Puerto 8094 en 0.0.0.0 (no loopback) igual que original."
+    "notes": "Migrado de docker-compose local a Dokploy. Imágenes estándar. Contenedores originales parados. Puerto 8094 en 0.0.0.0 (no loopback) igual que original. | Migrado a shared-infra (DB/Redis/Mailpit compartidos)",
+    "shared_infra": true
   }
 }
