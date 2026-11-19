@@ -1,3 +1,10 @@
+### [06:10] - Migración: tapmap → Dokploy (Proyecto #1)
+- **Tipo**: migración
+- **Modificado**: Project `tapmap` (ID: wF8smSTKZkO5NeVxpqD3L), Compose `tapmap` (ID: 40BxfvT-fLKITTU3cee7w)
+- **Afecta a**: kalimete (tapmap-data)
+- **Causa**: Primera migración del plan — validar pipeline compose→Dokploy
+- **Estado**: ✅ running (puerto 8050, network_mode: host)
+- **Notas**: Conflicto inicial con contenedor local tapmap-m1 (mismo puerto 8050). Resuelto parando contenedor antiguo. Harness creado en harness/tapmap.harness.json. SourceType: raw (necesario para compose inline).
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
