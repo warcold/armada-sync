@@ -1,3 +1,10 @@
+### [06:06] - Migración: kalimete-dashboard → Dokploy (Proyecto #2)
+- **Tipo**: migración
+- **Modificado**: Project `kalimete-dashboard` (ID: PTpa0IFtOddLbUMU4hyEY), Compose `kalimete-dashboard` (ID: my0ef9afAi4LobJxuhgx2)
+- **Afecta a**: kalimete (dashboard nginx)
+- **Causa**: Segunda migración — contenedor suelto simple
+- **Estado**: ✅ running (puerto 8080, healthy)
+- **Notas**: Conflicto de puerto 8080 con contenedor original 'kalimete'. Resuelto parando y removendo contenedor local. Compose minimal sin volúmenes externos funciona. Harness creado.
 ### [06:10] - Migración: tapmap → Dokploy (Proyecto #1)
 - **Tipo**: migración
 - **Modificado**: Project `tapmap` (ID: wF8smSTKZkO5NeVxpqD3L), Compose `tapmap` (ID: 40BxfvT-fLKITTU3cee7w)
