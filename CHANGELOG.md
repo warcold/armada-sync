@@ -1,3 +1,10 @@
+### [06:12] - Migración: magantech → Dokploy (Proyecto #6)
+- **Tipo**: migración
+- **Modificado**: Project `magantech` (ID: aD0cCAsnTj8wva_RyU9-1), Compose `magantech` (ID: 8HIzLxX3C7MEAH8bDzDkJ)
+- **Afecta a**: kalimete (MaganTech client WP + MariaDB + Mailpit)
+- **Causa**: Cliente WordPress con imágenes estándar
+- **Estado**: ✅ running (WP 8093, DB 3309, Mailpit 8026 - todos healthy)
+- **Notas**: Contenedores originales parados. Env vars configuradas via API. Harness creado.
 ### [06:10] - Migración: zionv-crm → Dokploy (Proyecto #5)
 - **Tipo**: migración
 - **Modificado**: Project `zionv-crm` (ID: DJUtX1aTXcw25ND_h6ek-), Compose `zionv-crm` (ID: CE3Luz-Vkq_eQFDFFWdxf)
