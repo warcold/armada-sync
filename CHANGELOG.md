@@ -1,3 +1,10 @@
+### [06:10] - Migración: zionv-crm → Dokploy (Proyecto #5)
+- **Tipo**: migración
+- **Modificado**: Project `zionv-crm` (ID: DJUtX1aTXcw25ND_h6ek-), Compose `zionv-crm` (ID: CE3Luz-Vkq_eQFDFFWdxf)
+- **Afecta a**: kalimete (zionv-crm WordPress + MariaDB)
+- **Causa**: Proyecto WordPress con imágenes estándar - migración directa
+- **Estado**: ✅ running (WP en 8092, DB en 3308, ambos healthy)
+- **Notas**: Contenedores originales zionv-local y zionv-db parados para liberar puertos. Harness creado.
 ### [06:06] - Migración: kalimete-dashboard → Dokploy (Proyecto #2)
 - **Tipo**: migración
 - **Modificado**: Project `kalimete-dashboard` (ID: PTpa0IFtOddLbUMU4hyEY), Compose `kalimete-dashboard` (ID: my0ef9afAi4LobJxuhgx2)
