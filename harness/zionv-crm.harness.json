@@ -2,16 +2,20 @@
   "harness": {
     "name": "zionv-crm",
     "type": "dokploy-compose",
-    "project_id": "DJUtX1aTXcw25ND_h6ek-",
-    "compose_id": "CE3Luz-Vkq_eQFDFFWdxf",
-    "environment_id": "-5XtnEm9UTw46CeZ-Nz3Z",
+    "project_id": "IRSqdCm9dNa3zT7QV-qfn",
+    "compose_id": "gJnp6RGxM_2Lfqy6VEbCy",
+    "environment_id": "BgaPt6xZgBCMDbj8jw2gS",
     "source_compose": "~/dev/wordpress/plugins/zionv-crm/docker-compose.yml",
-    "migrated_at": "2026-11-19T06:09:00Z",
+    "migrated_at": "2026-11-19T21:33:00Z",
     "status": "running",
     "services": [
       "zionv-crm-wordpress",
       "zionv-crm-db"
     ],
+    "images": {
+      "wordpress": "wordpress:latest",
+      "db": "mariadb:10.11"
+    },
     "ports": {
       "wordpress": "127.0.0.1:8092",
       "db": "127.0.0.1:3308"
@@ -20,6 +24,7 @@
       "zionv_crm_wp_data",
       "zionv_crm_db_data"
     ],
-    "notes": "Migrado de docker-compose local a Dokploy. Imágenes estándar (wordpress:latest, mariadb:10.11). Requirió parar contenedores originales zionv-local y zionv-db para liberar puertos 8092 y 3308."
+    "network": "zionv-crm-net",
+    "notes": "Migrado a Dokploy (recreado tras borrado anterior). WordPress + MariaDB para plugin Zion CRM 2.0.0. WP en 8092, DB en 3308. Healthchecks OK. Plugin Zion CRM 2.0.0 instalado y activado en magantech y micaserogou."
   }
 }

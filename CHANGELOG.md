@@ -1,3 +1,10 @@
+### [21:34] - Migración: zionv-crm → Dokploy (recreado)
+- **Tipo**: migración
+- **Modificado**: Project `zionv-crm` (ID: IRSqdCm9dNa3zT7QV-qfn), Compose `zionv-crm` (ID: gJnp6RGxM_2Lfqy6VEbCy)
+- **Afecta a**: kalimete (ZionV CRM - WordPress + MariaDB para plugin Zion CRM 2.0.0)
+- **Causa**: Recrear proyecto base para plugin Zion CRM 2.0.0 (requerido por magantech y micaserogou)
+- **Estado**: ✅ running (WP en 8092, DB en 3308, ambos healthy)
+- **Notas**: WordPress + MariaDB recreado. Plugin Zion CRM 2.0.0 instalado en magantech y micaserogou. Harness actualizado.
 ### [21:32] - Migración: taohemps → Dokploy (Proyecto #9)
 - **Tipo**: migración
 - **Modificado**: Project `taohemps` (ID: KnqC2qNE7-yXbDP2xlI5m), Compose `taohemps` (ID: 4LQn-Q5YNC0ka1JRamsN7)
