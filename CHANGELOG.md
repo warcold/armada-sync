@@ -1,19 +1,3 @@
-### [23:08] - Migración completa a Shared Infrastructure (shared-infra)
-- **Tipo**: migración + arquitectura
-- **Modificado**: Proyecto `shared-infra` (ID: 7B7qTIFjCOHxDCA0AwWFB), 9 proyectos migrados
-- **Afecta a**: kalimete (todos los proyectos Docker)
-- **Causa**: Consolidar infraestructura (DB, Redis, Mailpit) para reducir recursos y simplificar mantenimiento
-- **Estado**: ✅ completado y validado
-- **Notas**: 
-  - shared-infra: 4 servicios (MariaDB 10.11, PostgreSQL 18, Redis 7, Mailpit) en puertos 3307, 5433, 6380, 1026/8028
-  - MariaDB: 4 DBs (magantech_wp, micaserogou_wp, zionv_crm, erpipo_preprod) con usuarios dedicados
-  - PostgreSQL: 1 DB (eccosuit_dev) con usuarios eccosuit_user (owner) y ecco_app (restringido)
-  - Redis: cluster compartido 256MB maxmemory
-  - Mailpit: centralizado en 1026/8028 para dev@kalimete.local
-  - Proyectos migrados: magantech, micaserogou, zionv-crm → shared MariaDB; erpipo-preprod → shared Redis + Mailpit (MySQL separado); eccosuit-develop → shared PostgreSQL
-  - Contenedores totales: 22 (antes 26) - ahorro 4 contenedores
-  - Datos migrados via dump/restore para magantech, micaserogou
-  - Harnesses actualizados para todos los proyectos
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
