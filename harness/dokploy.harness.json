@@ -1,0 +1,90 @@
+{
+  "name": "Dokploy",
+  "version": "1.0.0",
+  "created": "2026-11-18",
+  "host": "kalimete",
+  "ip": "10.0.0.106",
+  "harness_type": "dokploy_platform",
+  "dokploy": {
+    "version": "v0.31.4",
+    "image": "dokploy/dokploy:latest",
+    "container_name": "dokploy",
+    "traefik_image": "traefik:v3.7.19",
+    "postgres_image": "postgres:16",
+    "compose_project": "dokploy",
+    "urls": {
+      "panel": "http://localhost:3000",
+      "api": "http://localhost:3000/api/v1",
+      "traefik_admin": "http://localhost:8082",
+      "health": "http://localhost:3000/api/health"
+    },
+    "ports": {
+      "panel": "3000",
+      "traefik_http": "80",
+      "traefik_https": "443",
+      "traefik_admin": "8082"
+    },
+    "volumes": {
+      "etc_dokploy": "/etc/dokploy",
+      "dokploy_data": "/var/lib/docker/volumes/dokploy/_data",
+      "postgres_data": "dokploy-postgres",
+      "traefik_acme": "dokploy-traefik-acme",
+      "docker_sock": "/var/run/docker.sock"
+    },
+    "mcp": {
+      "npm_package": "@dokploy/mcp",
+      "transport": "stdio",
+      "env": {
+        "DOKPLOY_URL": "http://localhost:3000",
+        "DOKPLOY_API_KEY": "<to-create>",
+        "DOKPLOY_TOOL_PRESET": "deploy",
+        "DOKPLOY_REDACT_ENV": "true",
+        "DOKPLOY_TIMEOUT": "30000"
+      }
+    }
+  },
+  "node": {
+    "version": "v22.23.4",
+    "npm_version": "10.9.9"
+  },
+  "checks": {
+    "health": "curl -s http://localhost:3000/api/health | jq '.ok'",
+    "containers": "docker ps --filter name=dokploy --format '{{.Names}}|{{.Image}}|{{.Status}}'",
+    "compose": "docker compose ls",
+    "app_count": "curl -s http://localhost:3000/api/v1/projects -H 'Authorization: Bearer <KEY>' | jq '.projects | length' 2>/dev/null",
+    "docker_sock": "ls -la /var/run/docker.sock",
+    "dokploy_config": "ls -la /etc/dokploy/"
+  },
+  "services_managed": {
+    "dokploy_core": [
+      "dokploy.1.*",
+      "dokploy-traefik",
+      "dokploy-postgres.1.*"
+    ],
+    "migrating_local_compose": [
+      "eccosuit-develop",
+      "erpipo-preprod",
+      "magantech",
+      "micaserogou",
+      "petsuite",
+      "taohemps",
+      "tapmap-data",
+      "zionv-crm",
+      "kalimete-dashboard"
+    ]
+  },
+  "migration_status": "pending",
+  "migration_plan": {
+    "phase1": "Crear API Key + MCP + Project 'kalimete-local'",
+    "phase2": "Migrar 9 compose services 1:1",
+    "phase3": "Servicios infra (postiz, appflowy, etc.)",
+    "phase4": "Domains + SSL con Traefik",
+    "phase5": "Backups + Schedules"
+  },
+  "upstream": {
+    "dokploy": "https://github.com/Dokploy/dokploy",
+    "mcp": "https://github.com/Dokploy/mcp",
+    "docs": "https://docs.dokploy.com",
+    "npm_mcp": "https://www.npmjs.com/package/@dokploy/mcp"
+  }
+}
