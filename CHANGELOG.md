@@ -1,15 +1,3 @@
-### [16:05] - Migración: erpipo-preprod → Dokploy (Proyecto #9, el más complejo)
-- **Tipo**: migración
-- **Modificado**: Project `erpipo-preprod` (ID: AYBLwKYedHs-el9QSO3a1), Compose `erpipo-preprod` (ID: K4YzVVKA8NQhueEYQwvfN)
-- **Afecta a**: kalimete (ERPipo Preprod - 8 servicios)
-- **Causa**: Stack completo Laravel + MySQL + Redis + Queue + Scheduler + phpMyAdmin + Mailpit
-- **Estado**: ✅ running (8 servicios healthy, healthcheck /up OK)
-- **Notas**: 
-  - Imágenes pre-construidas: erpipo-preprod-app:dokploy, erpipo-preprod-nginx:dokploy (config baked in)
-  - Volúmenes pre-poblados: app-code (código Laravel), php-config (custom.ini), mysql-data, redis-data
-  - Fixes críticos: permisos volumen app-code (chown 1000:1000), mysqli install, GRANT TRIGGER + log_bin_trust_function_creators=1, skip migración 2026_09_29_000000
-  - 30+ migraciones Laravel ejecutadas, healthcheck /up OK
-  - Harness documentado
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
