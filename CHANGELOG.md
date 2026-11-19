@@ -1,13 +1,3 @@
-### [2026-11-18 23:47 EST] [dokploy] Subagente Dokploy creado — agente experto en plataforma de deploy Docker local (Kalimete)
-- **Tipo**: agente — nuevo subagente
-- **Creado**: `agents/dokploy.md` + `harness/dokploy.harness.json` + symlink `~/.config/opencode/agent/dokploy.md`
-- **Cubre**: proyectos, docker-compose services, databases, domains, backups, schedules, monitoring, traefik, MCP de Dokploy, migración 1:1 de containers locales → Dokploy
-- **Infra actual**: Dokploy v0.31.4 + Traefik v3.7.19 + PostgreSQL 16, corriendo en Kalimete (:3000)
-- **Inventario**: 8 Docker Compose projects activos (eccosuit, erpipo-preprod, magantech, micaserogou, petsuite, taohemps, tapmap-data, zionv-crm) + 3 containers adicionales (kalimete-dashboard, hello-world-test, wordpress-db-old) + ~10 proyectos sin compose (infra/, apps/, games/)
-- **Plan de migración**: 5 fases — (1) API Key + MCP + Project base, (2) migrar 9 compose services 1:1, (3) infra services, (4) domains/SSL, (5) backups/schedules
-- **MCP**: `@dokploy/mcp` listo para configurar en opencode.jsonc con preset `"deploy"`
-- **Estado**: ✅ creado, pendiente configuración API Key + migración real
-
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
