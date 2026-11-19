@@ -2,6 +2,7 @@
   "name": "Dokploy",
   "version": "1.0.0",
   "created": "2026-11-18",
+  "updated": "2026-11-19",
   "host": "kalimete",
   "ip": "10.0.0.106",
   "harness_type": "dokploy_platform",
@@ -14,7 +15,7 @@
     "compose_project": "dokploy",
     "urls": {
       "panel": "http://localhost:3000",
-      "api": "http://localhost:3000/api/v1",
+      "api": "http://localhost:3000/api",
       "traefik_admin": "http://localhost:8082",
       "health": "http://localhost:3000/api/health"
     },
@@ -36,11 +37,22 @@
       "transport": "stdio",
       "env": {
         "DOKPLOY_URL": "http://localhost:3000",
-        "DOKPLOY_API_KEY": "<to-create>",
+        "DOKPLOY_API_KEY": "devKoBUbYKGXncVNCPObtovXXGDDFZnlNeVqBMHvNzgxHdFmvMQoGsdNhLcwwWTpkwH",
         "DOKPLOY_TOOL_PRESET": "deploy",
         "DOKPLOY_REDACT_ENV": "true",
         "DOKPLOY_TIMEOUT": "30000"
       }
+    },
+    "api_auth": {
+      "method": "X-API-Key header",
+      "header": "X-API-Key: <api-key>",
+      "base_url": "http://localhost:3000/api",
+      "endpoint_format": "${DOKPLOY_URL}/api/<resource>.<method>",
+      "example": "GET /api/project.search -H 'X-API-Key: <key>'"
+    },
+    "admin_user": {
+      "email": "dev@kalimete.local",
+      "name": "Alfredo Armada"
     }
   },
   "node": {
@@ -51,7 +63,7 @@
     "health": "curl -s http://localhost:3000/api/health | jq '.ok'",
     "containers": "docker ps --filter name=dokploy --format '{{.Names}}|{{.Image}}|{{.Status}}'",
     "compose": "docker compose ls",
-    "app_count": "curl -s http://localhost:3000/api/v1/projects -H 'Authorization: Bearer <KEY>' | jq '.projects | length' 2>/dev/null",
+    "api_test": "curl -s http://localhost:3000/api/project.search -H 'X-API-Key: <key>' -H 'Content-Type: application/json'",
     "docker_sock": "ls -la /var/run/docker.sock",
     "dokploy_config": "ls -la /etc/dokploy/"
   },
@@ -73,14 +85,7 @@
       "kalimete-dashboard"
     ]
   },
-  "migration_status": "pending",
-  "migration_plan": {
-    "phase1": "Crear API Key + MCP + Project 'kalimete-local'",
-    "phase2": "Migrar 9 compose services 1:1",
-    "phase3": "Servicios infra (postiz, appflowy, etc.)",
-    "phase4": "Domains + SSL con Traefik",
-    "phase5": "Backups + Schedules"
-  },
+  "migration_status": "phase0-api-key-ready",
   "upstream": {
     "dokploy": "https://github.com/Dokploy/dokploy",
     "mcp": "https://github.com/Dokploy/mcp",

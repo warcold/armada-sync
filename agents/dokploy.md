@@ -260,3 +260,22 @@ Cada cambio en Dokploy se registra en:
 - **Databases**: https://docs.dokploy.com/docs/core/databases
 - **GitHub**: https://github.com/Dokploy/dokploy
 - **MCP GitHub**: https://github.com/Dokploy/mcp
+
+
+### Autenticación API de Dokploy
+
+Dokploy usa **better-auth** con el plugin `@better-auth/api-key`. La API REST usa paths tipo `/api/<resource.method>` (ej: `/api/project.search`, `/api/compose.list`).
+
+**Header de auth**: `X-API-Key: <tu-api-key>` (NO Bearer)
+
+**Formato de endpoints**: `${DOKPLOY_URL}/api/<resource>.<method>`
+
+Ejemplo:
+```bash
+curl -s http://localhost:3000/api/project.search \
+  -H "X-API-Key: devKoBUbYKGXncVNCPObtovXXGDDFZnlNeVqBMHvNzgxHdFmvMQoGsdNhLcwwWTpkwH" \
+  -H "Content-Type: application/json"
+```
+
+**MCP**: El MCP `@dokploy/mcp` usa `DOKPLOY_API_KEY` como `x-api-key` header vía axios con baseURL `${DOKPLOY_URL}/api`.
+
