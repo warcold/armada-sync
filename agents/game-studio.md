@@ -58,7 +58,19 @@ ss -tln | grep 9876                        # verificar listener
 
 ## Workspace y límite de un proyecto (dominio ~/dev/games/, 2026-10-19)
 
-`godot-mcp` fija UN proyecto vía `-p` (o auto-detecta sin `-p`). **MCP general `godot` (owner, 2026-11-11)**: `godot-mcp` sin `-p`, cwd `~/dev/games` — auto-detección del proyecto activo para uso general (Blender + Game Studio). **Arquitectura per-proyecto (owner, 2026-10-20)**: cada juego vive TOP-LEVEL en `~/dev/games/<slug>/` (self-contained: GDD + reference + git propio) con su AGENTE dedicado y su MCP `godot-<slug>` en `opencode.jsonc` cuando la auto-detección es ambigua (2+ project.godot). Hoy: `godot` (general) + `godot-ror` → `~/dev/games/record-of-ragnarok/` (agente `Record of Ragnarok`). Al crear un juego nuevo: scaffold en `~/dev/games/<slug>/` + kalimete crea el agente dedicado (+ MCP `godot-<slug>` solo si hay ambigüedad).
+### MCP Godot — fuente única (consolidado 2026-11-19)
+
+**Regla: UN MCP por proyecto Godot existente, SIEMPRE pinnado con `-p`. Sin MCP genérico.**
+Razón: `godot-mcp` sin `-p` auto-detecta recorriendo el cwd → con 2+ `project.godot` se vuelve
+ambiguo y puede operar sobre el proyecto equivocado (riesgo real: borrar/editar escenas del juego
+incorrecto). El pin explícito es determinista.
+
+- `godot-mcp` = `@yanhuifair/godot-mcp` v1.12.3 (npm global, 386 tools) — escenas, GDScript, shaders, materiales, export.
+- Entry en `opencode.jsonc`: `godot-<slug>` → `command: ["godot-mcp", "-p", "/home/warcold/dev/games/<slug>"]`, `cwd` el proyecto, `enabled: false` (política owner 2026-11-19: todos los MCPs off al iniciar).
+- **Hoy**: `godot-ror` → `~/dev/games/record-of-ragnarok/` (agente `Record of Ragnarok`). Es el ÚNICO MCP Godot (el genérico `godot` sin `-p`, agregado 2026-11-11, fue ELIMINADO 2026-11-19 por redundante: ambos apuntaban al mismo `project.godot`, que es el único del sistema).
+- **Al crear un juego nuevo**: scaffold en `~/dev/games/<slug>/` → kalimete crea el agente dedicado Y agrega `godot-<slug>` pinnado a su proyecto. Nunca reutilizar un MCP apuntando a otro proyecto.
+- Verificación: `opencode mcp list` (debe listarlo `disabled`) · `curl`-less test: `godot --headless --path <proyecto> --quit-after 3` abre el proyecto.
+- Si el MCP falla: alternativa sin MCP que siempre funciona → `godot --headless --path <proyecto> ...` + escritura directa de `.tscn/.gd/.gdshader`.
 
 El workspace real vive en `~/dev/games/godot/studio/<nombre-juego>/`. Alternativa sin MCP (funciona siempre): `godot --headless --path <proyecto> ...` + escritura directa de archivos `.tscn/.gd/.gdshader`.
 

@@ -1,3 +1,11 @@
+### [05:55] - Cambio: MCP Godot consolidado a 1 solo (eliminado el genérico duplicado)
+- **Tipo**: config
+- **Modificado**: `~/.config/opencode/opencode.jsonc` (no se sincroniza), `agents/game-studio.md` (sección MCP Godot canónica), `agents/kalimete.md` (lista MCPs), `harness/game-studio.harness.json`
+- **Afecta a**: kalimete (opencode local), agentes Game Studio + Record of Ragnarok
+- **Causa**: existían 2 MCPs Godot (`godot` genérico sin `-p` desde 2026-11-11 + `godot-ror` pinned desde 2026-10-20). Con un solo `project.godot` en el sistema (record-of-ragnarok), ambos apuntaban al MISMO proyecto → 2 procesos redundantes. El genérico además era riesgoso: con 2+ proyectos la auto-detección se vuelve ambigua y podría operar sobre el juego equivocado.
+- **Estado**: ✅ verificado (`opencode mcp list` = 3 servers: godot-ror, blender, dokploy-mcp — todos disabled)
+- **Notas**: regla definitiva documentada: un MCP `godot-<slug>` por proyecto Godot, siempre pinnado con `-p`, `enabled:false`. Al crear juego nuevo → agente dedicado + MCP propio.
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).

@@ -74,5 +74,11 @@
   },
   "changelogs": [
     "~/armada-sync/CHANGELOG.md"
+  ],
+  "historial_2026_11": [
+    {
+      "fecha": "2026-11-19",
+      "evento": "MCP Godot consolidado a UNO solo: generico 'godot' (sin -p, cwd ~/dev/games, creado 2026-11-11) ELIMINADO por redundante — el unico project.godot del sistema es record-of-ragnarok, asi que ambos MCPs apuntaban al mismo proyecto. Regla definitiva: un MCP godot-<slug> por proyecto, siempre pinnado con -p, enabled:false (politica owner: todos los MCPs off al iniciar). Verificado: opencode mcp list = 3 servers (godot-ror, blender, dokploy-mcp)."
+    }
   ]
 }
