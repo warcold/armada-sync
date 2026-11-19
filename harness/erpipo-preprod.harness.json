@@ -1,0 +1,45 @@
+{
+  "harness": {
+    "name": "erpipo-preprod",
+    "type": "dokploy-compose",
+    "project_id": "AYBLwKYedHs-el9QSO3a1",
+    "compose_id": "K4YzVVKA8NQhueEYQwvfN",
+    "environment_id": "_pWZ0XBmZIio96rO4GILy",
+    "source_compose": "~/dev/erpipo-preprod/docker-compose.yml",
+    "migrated_at": "2026-11-19T16:02:00Z",
+    "status": "running",
+    "services": [
+      "erpipo-preprod-app",
+      "erpipo-preprod-nginx",
+      "erpipo-preprod-db",
+      "erpipo-preprod-redis",
+      "erpipo-preprod-queue",
+      "erpipo-preprod-scheduler",
+      "erpipo-preprod-phpmyadmin",
+      "erpipo-preprod-mailpit"
+    ],
+    "images": {
+      "app": "erpipo-preprod-app:dokploy (pre-built local)",
+      "nginx": "erpipo-preprod-nginx:dokploy (custom, config baked in)",
+      "db": "mysql:8.0",
+      "redis": "redis:7-alpine",
+      "phpmyadmin": "phpmyadmin:latest",
+      "mailpit": "axllent/mailpit:latest"
+    },
+    "ports": {
+      "nginx": "8100",
+      "db": "3310",
+      "redis": "6390",
+      "phpmyadmin": "8102",
+      "mailpit": "8025"
+    },
+    "volumes": [
+      "erpipo-dev-mysql-data",
+      "erpipo-dev-redis-data",
+      "erpipo-dev-app-code",
+      "erpipo-dev-php-config"
+    ],
+    "network": "erpipo-dev-network",
+    "notes": "Migrado a Dokploy con imágenes pre-construidas localmente. Requirió: 1) Build local de app image (PHP 8.4 + extensions), 2) Build local de nginx image (config baked in), 3) Volúmenes pre-poblados (app-code, php-config), 4) Fix permisos en volumen app-code (chown 1000:1000), 5) Instalar mysqli en contenedor, 6) GRANT TRIGGER + log_bin_trust_function_creators=1 en MySQL, 7) Saltar migración problemática 2026_09_29_000000_add_indexes_for_reports. Healthcheck /up OK. Laravel migrations completadas (30+)."
+  }
+}
