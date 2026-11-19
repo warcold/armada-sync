@@ -1,3 +1,16 @@
+### [23:15] - Limpieza: Eliminar taohemps y kalimete-dashboard
+- **Tipo**: limpieza + arquitectura
+- **Modificado**: Proyectos Dokploy eliminados (taohemps, kalimete-dashboard), harnesses y agentes removidos
+- **Afecta a**: kalimete (Dokploy)
+- **Causa**: taohemps proyecto obsoleto; kalimete-dashboard reemplazado por Dokploy UI nativo
+- **Estado**: ✅ completado
+- **Notas**: 
+  - taohemps: proyecto eliminado (ID: KnqC2qNE7-yXbDP2xlI5m) - era frontend nginx + backend Node.js + SQLite
+  - kalimete-dashboard: proyecto eliminado (ID: PTpa0IFtOddLbUMU4hyEY) - era nginx reverse proxy en :8080
+  - Dokploy UI en :3000 sirve como dashboard principal
+  - Harnesses eliminados: taohemps.harness.json, kalimete-dashboard.harness.json
+  - Agente eliminado: kalimete-dashboard.md (armada-sync/agents/ y symlink opencode)
+  - Proyectos activos en Dokploy: 8 (shared-infra, zionv-crm, eccosuit-develop, erpipo-preprod, micaserogou, magantech, petsuite, tapmap)
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
