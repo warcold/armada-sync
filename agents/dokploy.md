@@ -171,25 +171,36 @@ docker exec dokploy-postgres.1.3rifckb4lzpl9t34q04ducwdk psql -U dokploy -d dokp
 
 ## MCP Configuration — opencode.jsonc
 
-Para conectar Dokploy MCP a opencode, agregar al `mcpServers` section:
+⚠️ **Schema gotcha (2026-11-19)**: opencode usa SU PROPIO schema, NO el de Claude Desktop.
+Una entrada con `"command": "npx"` + `"args"` + `"env"` se IGNORA EN SILENCIO (no aparece
+en `opencode mcp list` ni en la UI lateral). Formato correcto: `"type": "local"`,
+`"command"` como **array**, variables en `"environment"`. Además `npx` vive bajo nvm
+(`/home/warcold/.nvm/versions/node/vX/bin/npx`) y opencode NO hereda ese PATH → usar ruta ABSOLUTA.
+
+Sección `mcp` de `~/.config/opencode/opencode.jsonc`:
 
 ```json
 {
-  "mcpServers": {
+  "mcp": {
     "dokploy-mcp": {
-      "command": "npx",
-      "args": ["-y", "@dokploy/mcp"],
-      "env": {
+      "type": "local",
+      "command": ["/home/warcold/.nvm/versions/node/v22.23.4/bin/npx", "-y", "@dokploy/mcp"],
+      "environment": {
         "DOKPLOY_URL": "http://localhost:3000",
-        "DOKPLOY_API_KEY": "devKoBUbYKGXncVNCPObtovXXGDDFZnlNeVqBMHvNzgxHdFmvMQoGsdNhLcwwWTpkwH",
+        "DOKPLOY_API_KEY": "<key dokploy-kalimete>",
         "DOKPLOY_TOOL_PRESET": "deploy",
-        "DOKPLOY_REDACT_ENV": "true",
-        "DOKPLOY_TIMEOUT": "30000"
-      }
+        "DOKPLOY_REDACT_ENV": "true"
+      },
+      "enabled": false
     }
   }
 }
 ```
+
+Verificación: `opencode mcp list` debe mostrar `dokploy-mcp` (disabled) y
+`npx -y @dokploy/mcp` con entorno limpio debe loggear `Loaded tools total:604 loaded:119 preset:deploy`.
+**Política owner (2026-11-19): TODOS los MCPs quedan `enabled: false`** — no arrancan con opencode;
+se activan puntualmente editando el JSON y reiniciando sesión.
 
 - **`DOKPLOY_URL`**: `http://localhost:3000` (Dokploy corre en Kalimete)
 - **`DOKPLOY_API_KEY`**: La key completa (empieza con `devKoB`)

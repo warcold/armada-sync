@@ -32,7 +32,24 @@
         "DOKPLOY_API_KEY": "devKoBUbYKGXncVNCPObtovXXGDDFZnlNeVqBMHvNzgxHdFmvMQoGsdNhLcwwWTpkwH",
         "DOKPLOY_TOOL_PRESET": "deploy",
         "DOKPLOY_REDACT_ENV": "true"
-      }
+      },
+      "transport": "stdio",
+      "preset": "deploy",
+      "tools_loaded": {
+        "total": 604,
+        "with_preset_deploy": 119
+      },
+      "opencode_entry": {
+        "schema_note": "opencode usa type:local + command array + environment; NO mcpServers/args/env (se ignora silenciosamente)",
+        "type": "local",
+        "command": [
+          "/home/warcold/.nvm/versions/node/v22.23.4/bin/npx",
+          "-y",
+          "@dokploy/mcp"
+        ],
+        "enabled": false
+      },
+      "policy": "TODOS los MCPs enabled:false al iniciar opencode (owner 2026-11-19)"
     },
     "api_auth": {
       "method": "X-API-Key header",

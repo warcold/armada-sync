@@ -1,3 +1,13 @@
+## 2026-11-19
+
+### [05:30] - Cambio: dokploy-mcp visible en opencode + todos los MCPs apagados por defecto
+- **Tipo**: config
+- **Modificado**: `agents/dokploy.md` (sección MCP con schema correcto), `harness/dokploy.harness.json`, `~/.config/opencode/opencode.jsonc` (no se sincroniza)
+- **Afecta a**: kalimete (opencode local)
+- **Causa**: el MCP dokploy-mcp no aparecía en la lista de opencode porque usaba schema Claude Desktop (`mcpServers`/`args`/`env`) — opencode lo ignora silenciosamente. Corregido a `type:local` + `command` array + `environment` + ruta absoluta de npx (nvm no está en el PATH de opencode). Además política del owner: TODOS los MCPs en `enabled:false` al iniciar.
+- **Estado**: ✅ verificado (`opencode mcp list` muestra 4 servers disabled; MCP arranca con env limpio: 604 tools, 119 preset deploy)
+- **Notas**: matados los procesos MCP residuales de sesiones previas. Container `hello-world-fvsfjn-mmcuyl` eliminado (test, no necesario).
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
