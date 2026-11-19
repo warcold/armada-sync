@@ -1,3 +1,10 @@
+### [15:52] - Migración: petsuite → Dokploy (Proyecto #3)
+- **Tipo**: migración
+- **Modificado**: Project `petsuite` (ID: CYjeUOwTQheYJncmnBMXH), Compose `petsuite` (ID: Du74nq7il6NKKELJ9OuLg)
+- **Afecta a**: kalimete (petsuite)
+- **Causa**: Proyecto con build local - migrado usando imagen pre-construida
+- **Estado**: ✅ running (puerto 80 interno, red ncweb)
+- **Notas**: Imagen pre-construida petsuite:v2-dokploy. VAPID keys P-256 raw (public 65 bytes base64url, private 32 bytes base64url). Conectado a red ncweb externa. Caddy en host pendiente config para reverse proxy. Harness creado.
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).

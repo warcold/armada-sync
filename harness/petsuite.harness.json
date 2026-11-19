@@ -1,51 +1,37 @@
 {
-  "harness": "petsuite",
-  "updated": "2026-10-01",
-  "agent_file": "~/armada-sync/agents/petsuite.md",
-  "mode": "subagent",
-  "hidden": false,
-  "scope": "PetSuite (pets.armada.do)",
-  "vivo_2026_10_01": "petsuite:v2 Up 4w en vps-preprod",
-  "live_check": "docker ps -f name=petsuite en vps-preprod",
-  "upstream": {
-    "fuente": "PetSuite (pets.armada.do)",
-    "nota": "LIVE manda; lo no verificado se marca pendiente, nunca se inventa"
-  },
-  "docs": [
-    "~/armada-sync/agents/petsuite.md"
-  ],
-  "changelog": "~/armada-sync/CHANGELOG.md",
-  "name": "PetSuite",
-  "docs_oficiales": {
-    "regla": "ANTES de programar/configurar contra el servicio, consultar estas fuentes; si no cubren el caso, verificar contra el LIVE. NUNCA inventar flags/APIs ni usar features de versiones no desplegadas.",
-    "fuentes": [
-      {
-        "nombre": "Caddy",
-        "url": "https://caddyserver.com/docs/",
-        "contenido_clave": "TLS pets.armada.do -> petsuite:80 (network ncweb)"
-      },
-      {
-        "nombre": "Ledger del proyecto (AGENTS.md)",
-        "url": "repo-del-proyecto",
-        "contenido_clave": "API, DB, despliegue (fuente canonica del proyecto)"
-      }
-    ]
-  },
-  "vivo_2026_10_22": "contenedor petsuite Up 28h; https://pets.armada.do 200 — auditoría hub 2026-10-22",
-  "checks": [
-    "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i petsuite || echo petsuite:no-container\"",
-    "curl -s -o /dev/null -w %{http_code} http://petsuite.armada.do:8080/ 2>/dev/null | head -c 100"
-  ],
-  "no_touch": [
-    "Config en vps-preprod",
-    "DB no tocar sin backup"
-  ],
-  "delegacion": {
-    "cuando_usar": "Gestión PetSuite, mascotas, vet",
-    "pre_check": "ssh vps-preprod \"docker ps --format {{.Names}} | grep -i petsuite || echo petsuite:no-container\"",
-    "post_check": "curl -s -o /dev/null -w %{http_code} http://petsuite.armada.do:8080/ 2>/dev/null | head -c 100"
-  },
-  "changelogs": [
-    "~/armada-sync/CHANGELOG.md"
-  ]
+  "harness": {
+    "name": "petsuite",
+    "type": "dokploy-compose",
+    "project_id": "CYjeUOwTQheYJncmnBMXH",
+    "compose_id": "Du74nq7il6NKKELJ9OuLg",
+    "environment_id": "QCFkfY7c-_lkFVZYGaZw3",
+    "source_compose": "~/dev/apps/petsuite/docker-compose.yaml",
+    "migrated_at": "2026-11-19T15:50:00Z",
+    "status": "running",
+    "services": [
+      "petsuite"
+    ],
+    "image": "petsuite:v2-dokploy",
+    "ports": {
+      "internal": "80 (expose)",
+      "external": "via Caddy reverse proxy on ncweb network"
+    },
+    "volumes": [
+      "petsuite_data",
+      "petsuite_storage",
+      "petsuite_logs"
+    ],
+    "env_vars": [
+      "PUSH_VAPID_PUBLIC_KEY",
+      "PUSH_VAPID_PRIVATE_KEY",
+      "JWT_SECRET",
+      "SMTP_*",
+      "PUBLIC_BASE_URL",
+      "CORS_ORIGIN_ALLOWLIST"
+    ],
+    "networks": [
+      "ncweb (external)"
+    ],
+    "notes": "Migrado a Dokploy con imagen pre-construida (petsuite:v2-dokploy). Requirió VAPID keys P-256 raw (public 65 bytes, private 32 bytes). Conectado a red ncweb externa para reverse proxy via Caddy (host). Caddy en host necesita config para proxy a petsuite:80 en red ncweb."
+  }
 }
