@@ -1,0 +1,41 @@
+{
+  "harness": {
+    "name": "taohemps",
+    "type": "dokploy-compose",
+    "project_id": "KnqC2qNE7-yXbDP2xlI5m",
+    "compose_id": "4LQn-Q5YNC0ka1JRamsN7",
+    "environment_id": "4YQ2YwelTo5Y53rJH4nL-",
+    "source_compose": "~/dev/apps/taohemps/docker-compose.yaml",
+    "migrated_at": "2026-11-19T21:31:00Z",
+    "status": "running",
+    "services": [
+      "taohemps-frontend",
+      "taohemps-backend"
+    ],
+    "images": {
+      "frontend": "taohemps-frontend:dokploy (nginx + Vue/Vite, proxy to backend)",
+      "backend": "taohemps-backend:dokploy (Node.js 22 + SQLite)"
+    },
+    "ports": {
+      "frontend": "80 (expose)",
+      "backend": "3000 (expose)"
+    },
+    "volumes": [
+      "db_data",
+      "uploads_data"
+    ],
+    "networks": [
+      "taohemps-net",
+      "ncweb (external)"
+    ],
+    "env_vars": [
+      "DB_PATH",
+      "UPLOADS_PATH",
+      "CORS_ORIGIN",
+      "JWT_SECRET",
+      "ADMIN_USERNAME",
+      "ADMIN_PASSWORD"
+    ],
+    "notes": "Migrado a Dokploy con imágenes pre-construidas localmente. Frontend (nginx) hace proxy a backend via red taohemps-net. Backend usa SQLite (db.sqlite) en volumen db_data. Frontend en red ncweb para Caddy reverse proxy. Nginx config tiene proxy_pass a backend:3000 para /api/ y /uploads/. Error de DNS al inicio de nginx (timing) pero funciona correctamente después."
+  }
+}
