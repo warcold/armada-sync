@@ -1,3 +1,10 @@
+### [06:14] - Migración: micaserogou → Dokploy (Proyecto #7)
+- **Tipo**: migración
+- **Modificado**: Project `micaserogou` (ID: SoC0spk-SaHSLrhxokKYs), Compose `micaserogou` (ID: mIRinq1Azq7_a8-SXNrV9)
+- **Afecta a**: kalimete (Mi Casa Rogou client WP + MariaDB + Mailpit)
+- **Causa**: Cliente WordPress con imágenes estándar
+- **Estado**: ✅ running (WP 8094, DB 3311, Mailpit 8027 - todos healthy)
+- **Notas**: Contenedores originales parados. Puerto 8094 en 0.0.0.0 (no loopback). Harness creado.
 ### [06:12] - Migración: magantech → Dokploy (Proyecto #6)
 - **Tipo**: migración
 - **Modificado**: Project `magantech` (ID: aD0cCAsnTj8wva_RyU9-1), Compose `magantech` (ID: 8HIzLxX3C7MEAH8bDzDkJ)
