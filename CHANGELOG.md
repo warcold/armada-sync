@@ -1,3 +1,10 @@
+### [2026-11-20 21:45 EST] [dokploy] Renombrado proyecto victoria-sentidos → victoria-skills
+- **Tipo**: docs + naming
+- **Qué**: Proyecto Dokploy renombrado vía API (`project.update`); actualizada toda la documentación referenciada (AGENTS.md, agents/*.md, harness, CHANGELOGs, sense_auth.py, knowledge, snapshots). Archivo compose renombrado.
+- **Por qué**: "sentidos" no describe correctamente estos servicios (son skills/habilidades: voice, video, nav, whois, host-admin).
+- **Impacto**: Solo nomenclatura; cero cambios funcionales.
+- **Verificado**: Proyecto en Dokploy muestra "victoria-skills"; docs consistentes.
+
 ### [2026-11-20 21:00 EST] [dokploy] Cutover GATEWAY a producción (:8010) — COMPLETADO
 - **Tipo**: infra + migration + production
 - **Qué**: (1) Parado `victoria-llm-gateway` systemd, puerto 8010 libre. (2) Compose gateway actualizado con mount completo `.victoria-llm`, `ADMIN_PASS`, `VLLM_URL=172.17.0.1:8000`, red `dokploy-network` external. (3) Desplegado `vd-gateway` → healthy en 36s. (4) Verificado: `/health` OK, inferencia con key `alfredo-pro-internal` OK, admin panel LAN-only correcto. (5) `systemctl disable victoria-llm-gateway` (unit intacto para rollback inmediato).
