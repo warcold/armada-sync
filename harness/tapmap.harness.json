@@ -1,22 +1,17 @@
 {
-  "harness": {
-    "name": "tapmap",
-    "type": "dokploy-compose",
-    "project_id": "wF8smSTKZkO5NeVxpqD3L",
-    "compose_id": "40BxfvT-fLKITTU3cee7w",
-    "environment_id": "d5Dm2Rk86A2QsoGCazyjA",
-    "source_compose": "~/dev/tapmap-data/docker-compose.yml",
-    "migrated_at": "2026-11-19T06:03:00Z",
-    "status": "running",
-    "services": [
-      "tapmap"
-    ],
-    "ports": {
-      "host": "8050 (network_mode: host)"
-    },
-    "volumes": [
-      "tapmap_data"
-    ],
-    "notes": "Migrado de docker-compose local a Dokploy. network_mode: host + pid: host requiere puerto 8050 libre en host."
-  }
+  "name": "tapmap",
+  "type": "dokploy-compose",
+  "project_id": "wF8smSTKZkO5NeVxpqD3L",
+  "compose_id": "40BxfvT-fLKITTU3cee7w",
+  "app_name": "tapmap",
+  "status": "running",
+  "service": "tapmap",
+  "container": "tapmap",
+  "image": "olalie/tapmap:latest",
+  "domain": "https://tapmap.kalimete.local",
+  "dokploy_traefik": "N/A (network_mode: host - Traefik no puede enrutar)",
+  "host_port": "0.0.0.0:8050 (network_mode: host)",
+  "front_door": "nginx sistema (/etc/nginx/sites-enabled/tapmap.kalimete.local, cert mkcert)",
+  "database": "volumen tapmap_data (SQLite interno)",
+  "notes": "network_mode: host impide red dokploy-network; dominio solo via nginx :443; no visible en Traefik :8082"
 }

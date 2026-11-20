@@ -1,37 +1,18 @@
 {
-  "harness": {
-    "name": "petsuite",
-    "type": "dokploy-compose",
-    "project_id": "CYjeUOwTQheYJncmnBMXH",
-    "compose_id": "Du74nq7il6NKKELJ9OuLg",
-    "environment_id": "QCFkfY7c-_lkFVZYGaZw3",
-    "source_compose": "~/dev/apps/petsuite/docker-compose.yaml",
-    "migrated_at": "2026-11-19T15:50:00Z",
-    "status": "running",
-    "services": [
-      "petsuite"
-    ],
-    "image": "petsuite:v2-dokploy",
-    "ports": {
-      "internal": "80 (expose)",
-      "external": "via Caddy reverse proxy on ncweb network"
-    },
-    "volumes": [
-      "petsuite_data",
-      "petsuite_storage",
-      "petsuite_logs"
-    ],
-    "env_vars": [
-      "PUSH_VAPID_PUBLIC_KEY",
-      "PUSH_VAPID_PRIVATE_KEY",
-      "JWT_SECRET",
-      "SMTP_*",
-      "PUBLIC_BASE_URL",
-      "CORS_ORIGIN_ALLOWLIST"
-    ],
-    "networks": [
-      "ncweb (external)"
-    ],
-    "notes": "Migrado a Dokploy con imagen pre-construida (petsuite:v2-dokploy). Requirió VAPID keys P-256 raw (public 65 bytes, private 32 bytes). Conectado a red ncweb externa para reverse proxy via Caddy (host). Caddy en host necesita config para proxy a petsuite:80 en red ncweb."
-  }
+  "name": "petsuite",
+  "type": "dokploy-compose",
+  "project_id": "CYjeUOwTQheYJncmnBMXH",
+  "compose_id": "Du74nq7il6NKKELJ9OuLg",
+  "app_name": "petsuite",
+  "status": "running",
+  "service": "petsuite",
+  "container": "petsuite",
+  "image": "petsuite:v2-dokploy",
+  "domain": "https://petsuite.kalimete.local",
+  "dokploy_traefik": "http://petsuite.kalimete.local:8082",
+  "host_port": "127.0.0.1:8095",
+  "front_door": "nginx sistema (/etc/nginx/sites-enabled/petsuite.kalimete.local, cert mkcert)",
+  "database": "volumen petsuite_data (SQLite interno)",
+  "mail": "Mailpit compartido 10.0.0.106:1026 (config SMTP en compose)",
+  "notes": "Puerto host 8095 agregado 2026-11-20; red dokploy-network para Traefik; contenido en volúmenes nombrados"
 }

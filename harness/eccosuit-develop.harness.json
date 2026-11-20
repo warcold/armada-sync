@@ -1,50 +1,18 @@
 {
-  "harness": {
-    "name": "eccosuit-develop",
-    "type": "dokploy-compose",
-    "project_id": "d4whwbxqEgDb2bLyQYB-1",
-    "compose_id": "HaetkMF1dn6oJiUA7EX1e",
-    "environment_id": "-yhdNWa_A9tPq9QiNnDiX",
-    "source_compose": "~/dev/eccoqualita/EccoSuit-develop/docker-compose.yml",
-    "migrated_at": "2026-11-19T21:27:00Z",
-    "status": "running",
-    "services": [
-      "eccosuit-app",
-      "eccosuit-worker",
-      "eccosuit-postgres"
-    ],
-    "images": {
-      "app": "eccosuit-develop:dokploy (pre-built local, Next.js 16.4.5 + LibreOffice)",
-      "worker": "eccosuit-develop:dokploy (same image, mail-worker)",
-      "db": "postgres:18"
-    },
-    "ports": {
-      "app": "3100",
-      "db": "5434"
-    },
-    "volumes": [
-      "ecco_pgdata",
-      "ecco_storage"
-    ],
-    "network": "compose-navigate-virtual-circuit-hpszzm_default",
-    "env_vars": [
-      "APP_URL",
-      "BETTER_AUTH_URL",
-      "BETTER_AUTH_SECRET",
-      "DATABASE_URL",
-      "DATABASE_MIGRATION_URL",
-      "ALLOW_INSECURE_HTTP",
-      "NODE_ENV=development",
-      "LIBREOFFICE_PATH"
-    ],
-    "notes": "Migrado a Dokploy con imagen pre-construida localmente (eccosuit-develop:dokploy). Requirió: 1) Build local multi-stage (deps, build con LibreOffice, runner), 2) NODE_ENV=development para worker (preprod, permite http en APP_URL), 3) Base de datos ecco_suite con usuarios ecco_owner/ecco_app, 3) 61 migraciones SQL aplicadas via drizzle, 4) Permisos GRANT en schema public para ecco_app, 5) Red externa compose-navigate-virtual-circuit-hpszzm_default, 6) Worker en modo local (buzón local, no SMTP). Healthcheck /up OK. 61 migraciones aplicadas. | Migrado a shared-infra (DB/Redis/Mailpit compartidos) | Conectado a shared-infra (Mailpit SMTP 1026) | Conectado a 4 proyectos de infraestructura separados",
-    "shared_infra": true,
-    "mailpit": "shared (10.0.0.106:1026/8028)",
-    "infra_projects": [
-      "mariadb-infra",
-      "postgresql-infra",
-      "redis-infra",
-      "mailpit-infra"
-    ]
-  }
+  "name": "eccosuit-develop",
+  "type": "dokploy-compose",
+  "project_id": "d4whwbxqEgDb2bLyQYB-1",
+  "compose_id": "HaetkMF1dn6oJiUA7EX1e",
+  "app_name": "eccosuit-develop",
+  "status": "running",
+  "services": ["app", "worker"],
+  "containers": ["eccosuit-app", "eccosuit-worker"],
+  "image": "eccosuit-develop:dokploy",
+  "domain": "https://eccosuit.kalimete.local",
+  "dokploy_traefik": "http://eccosuit.kalimete.local:8082",
+  "host_port": "0.0.0.0:3100",
+  "front_door": "nginx sistema (/etc/nginx/sites-enabled/eccosuit.kalimete.local, cert mkcert)",
+  "database": "postgresql-infra:5433 / eccosuit_dev (eccosuit_user owner, ecco_app restricted)",
+  "mail": "Mailpit compartido 10.0.0.106:1026 (config MAIL_* en compose)",
+  "notes": "Red dokploy-network agregada 2026-11-20 para Traefik; 2 servicios (app + worker mail); storage compartido ecco_storage"
 }
