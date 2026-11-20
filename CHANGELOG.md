@@ -1,3 +1,18 @@
+### [08:00] - MIGRACIÓN COMPLETA: 11 proyectos → 2 proyectos lógicos (Kali - Servicios + Kali - Wordpress)
+- **Tipo**: arquitectura | migración | consolidación
+- **Modificado**: Creados proyectos "Kali - Servicios" (4 servicios) + "Kali - Wordpress" (3 WP); 7 proyectos viejos DETENIDOS (NO borrados)
+- **Afecta a**: kalimete (Dokploy)
+- **Causa**: Optimizar recursos, organización, mejores prácticas shared services
+- **Estado**: completado y validado end-to-end
+- **Notas**:
+  - **Kali - Servicios**: MariaDB (3307), PostgreSQL (5433), Redis (6380), Mailpit (1026/8028) en red `kali-servicios-net`
+  - **Kali - Wordpress**: magantech (8093), micaserogou (8094), zionv-crm (8092) en red `kali-wp-net` + `kali-servicios-net` (external)
+  - **Migración de datos**: Volúmenes MariaDB (4 DBs, 59+59+12 tablas), PostgreSQL (138 tablas), WP files copiados a nuevos volúmenes
+  - **Correo**: Mu-plugin `kalimete-mailpit.php` v1.1 (host `kali-mailpit:1025`) en los 3 WP → Mailpit OK
+  - **Credenciales unificadas**: WP admin/colador, email dev@kalimete.local; Dokploy dev@kalimete.local/dokploy123
+  - **Proyectos viejos DETENIDOS (NO borrados)**: mariadb-infra, postgresql-infra, redis-infra, mailpit-infra, magantech, micaserogou, zionv-crm
+  - **Validación 100%**: 3/3 WP HTTPS 200, WP admin 200, 3/3 correo OK, conectividad interna 100%, 4/4 servicios infra OK
+  - **Ahorro recursos**: 1 MariaDB vs 3, 1 PostgreSQL, 1 Redis, 1 Mailpit → ~60% menos RAM
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
