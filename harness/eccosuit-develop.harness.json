@@ -37,7 +37,8 @@
       "NODE_ENV=development",
       "LIBREOFFICE_PATH"
     ],
-    "notes": "Migrado a Dokploy con imagen pre-construida localmente (eccosuit-develop:dokploy). Requirió: 1) Build local multi-stage (deps, build con LibreOffice, runner), 2) NODE_ENV=development para worker (preprod, permite http en APP_URL), 3) Base de datos ecco_suite con usuarios ecco_owner/ecco_app, 3) 61 migraciones SQL aplicadas via drizzle, 4) Permisos GRANT en schema public para ecco_app, 5) Red externa compose-navigate-virtual-circuit-hpszzm_default, 6) Worker en modo local (buzón local, no SMTP). Healthcheck /up OK. 61 migraciones aplicadas. | Migrado a shared-infra (DB/Redis/Mailpit compartidos)",
-    "shared_infra": true
+    "notes": "Migrado a Dokploy con imagen pre-construida localmente (eccosuit-develop:dokploy). Requirió: 1) Build local multi-stage (deps, build con LibreOffice, runner), 2) NODE_ENV=development para worker (preprod, permite http en APP_URL), 3) Base de datos ecco_suite con usuarios ecco_owner/ecco_app, 3) 61 migraciones SQL aplicadas via drizzle, 4) Permisos GRANT en schema public para ecco_app, 5) Red externa compose-navigate-virtual-circuit-hpszzm_default, 6) Worker en modo local (buzón local, no SMTP). Healthcheck /up OK. 61 migraciones aplicadas. | Migrado a shared-infra (DB/Redis/Mailpit compartidos) | Conectado a shared-infra (Mailpit SMTP 1026)",
+    "shared_infra": true,
+    "mailpit": "shared (10.0.0.106:1026/8028)"
   }
 }
