@@ -984,3 +984,4 @@
 2026-11-20T15:25:02.004917 OK
 2026-11-20T16:25:02.038177 gateway no alcanza (normal fuera de LAN): <urlopen error [Errno 111] Connection refused>
 2026-11-20T17:25:01.967354 gateway no alcanza (normal fuera de LAN): <urlopen error [Errno 111] Connection refused>
+2026-11-20T18:25:01.081611 gateway no alcanza (normal fuera de LAN): <urlopen error [Errno 111] Connection refused>
