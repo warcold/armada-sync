@@ -117,3 +117,12 @@
 - **Que**: Los scripts de broadcast NO fueron tocados. La caída del sandbox 16:58-19:00 pausó los broadcasts de WhatsApp/Discord (el agente procesaba los mensajes); con el sandbox restaurado, la distribución se reanuda sola en el próximo cron (07/11/15/19/23 EDT). Crons caídos durante el corte se pierden sin daño (el siguiente slot cubre). Instagram NO se afectó (corre en el host, no depende del sandbox).
 - **Verificado**: sandbox healthy de nuevo; crons intactos en crontab.
 - **Docs**: yes (este changelog)
+
+### [2026-11-19 22:00] Fix: QA visual VLM nunca respondia JSON → imágenes de IG/DC/WA bloqueadas por 9 días
+- **Tipo**: fix
+- **Que**: La función `vlm_image_qa()` en `broadcast_common.py` enviaba imagenes al Qwen3.6-35B con `max_tokens=150` sin bloquear thinking. El modelo gastaba todos los tokens en thinking interno (campo `reasoning`) y `content` quedaba vacío → `respuesta sin JSON ('')` → conservador FAIL → fallback a card sin imagen en IG, embed sin imagen en DC, mensaje sin imagen en WA.
+- **Por que**: El chat template de Qwen3 activa thinking por defecto; el gateway `auto-route` lo neutraliza para chats normales, pero el payload directo de `vlm_image_qa` no usaba `reasoning_effort: "none"`.
+- **Impacto**: IG sin publicar imagenes desde ~2026-11-11; 0 posts con imagen en 9 dias. DC/WA sin imagenes del articulo. 13 posts publicados antes del break (Oct 22-Nov 10) con imagenes reales.
+- **Fix**: Agregar `"reasoning_effort": "none"` al payload del VLM y subir `max_tokens` de 150 a 250 (E2E verificado con imagenes reales de IG compuestas → QA OK).
+- **Verificado**: 5 imagenes reales de IG compuestas pasan QA; 2 imagenes placeholder fallan correctamente (modelo responde JSON indicando el defecto real).
+- **Docs**: yes (CHANGELOG-social.md + CHANGELOG.md general)

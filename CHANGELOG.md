@@ -6080,3 +6080,9 @@ EOF又是
 
 ## 2026-11-03 — Flota Victoria al día + doctrina de uso (desde victoria)
 - MAPA.md: bloque providers REESCRITO (estaba stale pre-rename 11-01): flota correcta Using/Thinking/Coding con Victoria en AMBOS providers (vllm pública + vllm-lan), coder on-demand :8001, nube NIM sin marca (whitelist 3: deepseek-v4.1-flash, glm-5.3-flash, nemotron-3-ultra; kimi muerto), llave propia Kalimete (la nota "admin alfredo" era stale). Doctrina de uso del owner documentada: siempre "Using a Victoria", trío delegable @Coder+@Thinker+skills en victoria; en Kalimete razonar = picker Thinking (no se instalan subagentes de la flota por el pin dual-provider). Nuevo subagente Thinker en victoria (11-03): razonador profundo pineado a Thinking, análisis puro.
+
+### [2026-11-19 22:00] broadcast_common.py: fix reasoning_effort para vlm_image_qa
+- **Tipo**: fix
+- **Que**: `vlm_image_qa()` → payload del VLM: agregar `"reasoning_effort": "none"` + `max_tokens` 150→250. El Qwen3.6-35B activaba thinking interno sin bloquearlo, consumiendo los 150 tokens de max_tokens → `content` vacio → `qa_sin_json` → FAIL sistemático → 9 dias sin imagenes en IG/DC/WA.
+- **Impacto**: QA visual de IG volvio a funcionar (verificado con imagenes reales compuestas del pipeline).
+- **Verificado**: QA OK en imagenes reales de IG; QA FAIL correcto en placeholders.
