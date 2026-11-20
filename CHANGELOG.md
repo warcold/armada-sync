@@ -1,3 +1,11 @@
+### [2026-11-20 22:30 EST] [gateway] Granular caps para 17 skills (best practice)
+- **Tipo**: architecture + security
+- **Qué**: ALL_CAPABILITIES 9→17 (nuevas: video, nav, whois, host_admin, sonic, hunyuan3d, animar). SENSE_ELEVATION_CAPS incluye los 7 nuevos. ROLE_DEFAULT_MODELS actualizado: services=all skills, art=creative skills, 7 roles específicos nuevos. _CAP_FRIENDLY para hints 403 uniformes. admin_template.html con 17 checkboxes + 14 roles. ROLE_DEFAULT_RATE_LIMIT actualizado (host_admin=30/min).
+- **Por qué**: principio de menor privilegio, consistencia, auditoría granular. Antes solo 5 skills tenían caps propios.
+- **Impacto**: keys existentes sin allowed_models usan preset del rol (services ahora incluye todos los skills). Keys con allowed_models personalizado no cambian. Panel admin permite control granular.
+- **Verificado**: sense_auth elevation funciona para todos los nuevos caps; gateway health OK; inferencia OK.
+- **Docs**: CHANGELOG-dokploy.md, sense_auth.py, llm-gateway.py, admin_template.py.
+
 ### [2026-11-20 21:45 EST] [dokploy] Renombrado proyecto victoria-sentidos → victoria-skills
 - **Tipo**: docs + naming
 - **Qué**: Proyecto Dokploy renombrado vía API (`project.update`); actualizada toda la documentación referenciada (AGENTS.md, agents/*.md, harness, CHANGELOGs, sense_auth.py, knowledge, snapshots). Archivo compose renombrado.
