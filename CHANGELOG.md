@@ -1,3 +1,23 @@
+### [2026-11-20 19:45 EST] [gateway] Nombres de llaves limpiados — solo nombre identitario, sin metadata redundante
+- **Tipo**: cleanup + UX
+- **Qué**: Todos los `owner` simplificados a nombre limpio (rol + caps + tier ya dicen el propósito):
+
+| Llave | Antes | Después |
+|---|---|---|
+| `victoria` | Victoria Armada — stack principal | **Victoria Armada** |
+| `alfredo` | Alfredo Armada — owner | **Alfredo Armada** |
+| `juancarlos` | Juan Carlos Jerez — cliente (Desarrollo) | **Juan Carlos Jerez** |
+| `jordan-diaz` | Jordan Diaz — cliente (Desarrollo) | **Jordan Diaz** |
+| `kalimete` | Alfredo Pro — máquina dev interna (eval...) | **Kalimete** |
+| `alfredo-pro-internal` | Alfredo Pro — internal consolidado... | **Alfredo Pro Internal** |
+| `armada-magantech-2` | MaganTech SRL — chatbot web cliente... | **MaganTech SRL** |
+| `armada-micaserogou` | Micaserogou — chatbot web cliente... | **Micaserogou** |
+| `warcold` | warcold — acceso remoto readonly... | **warcold** |
+
+- **Por qué**: El panel admin ya muestra `role`, `allowed_models`, `rate_limit`, `active`, `last_used` — el owner no necesita repetir "cliente desarrollo" ni "chatbot web". Nombre limpio = lectura rápida.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,owner,role FROM api_keys WHERE active=1"` — 9 llaves, nombres limpios.
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
 ### [2026-11-20 19:30 EST] [gateway] Tier `business` para chatbots de clientes + gobernanza de llaves completa
 - **Tipo**: governance + organization
 - **Qué**: Estructura de tiers/roles clara para todas las llaves activas (9):
