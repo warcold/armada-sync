@@ -1,3 +1,10 @@
+### [2026-11-20 23:45 EST] [dokploy] Proyecto victoria-openclaw + publisher migrado
+- **Tipo**: infra + migration
+- **Qué**: Proyecto `victoria-openclaw` creado. Publisher migrado a Dokploy (`oc-publisher` healthy en :18800). Ensure-loop actualizado para detectar contenedor Dokploy `oc-publisher` y no crear duplicado `openclaw-publisher`.
+- **Arquitectura**: Sandbox+gateway en nemoclay/openshell (nativo); publisher en Dokploy; bridges+persistence en ensure-loop; voice/host-admin en host systemd.
+- **Verificado**: Dashboard `{"ok":true,"status":"live"}`; sandbox healthy; ensure-loop activo sin conflictos.
+- **Docs**: CHANGELOG-dokploy.md actualizado.
+
 ### [2026-11-20 23:00 EST] [dokploy] victoria-shared: PostgreSQL, Redis, Mailpit desplegados
 - **Tipo**: infra + shared services
 - **Qué**: 3 composes en proyecto victoria-shared: postgres (5432), redis (6379), mailpit (1025/8025). Todos healthy, restart unless-stopped.
