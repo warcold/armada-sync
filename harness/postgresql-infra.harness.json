@@ -7,5 +7,7 @@
       "postgresql-infra"
     ],
     "notes": "Infraestructura separada - proyecto Dokploy independiente"
-  }
+  },
+  "status": "stopped (migrated to Kali - Servicios / Kali - Wordpress)",
+  "notes": " | MIGRADO 2026-11-20 a Kali - Servicios / Kali - Wordpress. Contenedor DETENIDO, NO borrado."
 }

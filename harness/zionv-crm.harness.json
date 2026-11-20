@@ -4,7 +4,7 @@
   "project_id": "tjUrTPYwIufGPFz5Y5zQO",
   "compose_id": "IxuzBiD7Ucwoig3C7tZ_-",
   "app_name": "compose-calculate-neural-driver-vbmsqf",
-  "status": "running",
+  "status": "stopped (migrated to Kali - Servicios / Kali - Wordpress)",
   "service": "wordpress",
   "container": "zionv-crm-wordpress",
   "image": "wordpress:latest",
@@ -16,5 +16,5 @@
   "database": "mariadb-infra:3307 / zionv_crm (prefijo zionv_)",
   "mail": "mailpit-infra:1026 (mu-plugin kalimete-mailpit.php en el volumen)",
   "admin": "usuario admin, email dev@kalimete.local",
-  "notes": "WordPress instalado 2026-11-20 (DB estaba vacia). Contenido dentro del volumen zionv-crm_wp_data."
+  "notes": "WordPress instalado 2026-11-20 (DB estaba vacia). Contenido dentro del volumen zionv-crm_wp_data. | MIGRADO 2026-11-20 a Kali - Servicios / Kali - Wordpress. Contenedor DETENIDO, NO borrado."
 }

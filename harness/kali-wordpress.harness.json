@@ -1,0 +1,28 @@
+{
+  "name": "Kali - Wordpress",
+  "type": "dokploy-compose",
+  "project_id": "TtmkPSwAr2Rz3a5PXeyct",
+  "compose_id": "erO6pGVRinZYo-6T1MH4m",
+  "app_name": "compose-calculate-auxiliary-microchip-sut6il",
+  "status": "running",
+  "services": ["magantech-wp", "micaserogou-wp", "zionv-wp"],
+  "containers": ["kali-magantech-wp", "kali-micaserogou-wp", "kali-zionv-wp"],
+  "description": "3 sitios WordPress: magantech, micaserogou, zionv-crm",
+  "networks": ["kali-wp-net", "kali-servicios-net (external)"],
+  "ports": {
+    "magantech": "127.0.0.1:8093:80",
+    "micaserogou": "127.0.0.1:8094:80",
+    "zionv": "127.0.0.1:8092:80"
+  },
+  "databases": {
+    "magantech": "magantech_wp (kali-mariadb:3306)",
+    "micaserogou": "micaserogou_wp (kali-mariadb:3306)",
+    "zionv": "zionv_crm (kali-mariadb:3306)"
+  },
+  "mail": "kali-mailpit:1025 (mu-plugin kalimete-mailpit.php)",
+  "credentials": {
+    "wp_admin": "admin / colador",
+    "wp_email": "dev@kalimete.local"
+  },
+  "notes": "3 WordPress en 1 compose, cada uno con su DB en kali-mariadb. Conectan a kali-servicios-net para DB/Mailpit/Redis. Proyectos viejos (magantech, micaserogou, zionv-crm) DETENIDOS (NO borrados)."
+}

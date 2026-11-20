@@ -44150,3 +44150,31 @@ Changes not staged for commit:
 
 no changes added to commit (use "git add" and/or "git commit -a")
 [12:00:01] Push FALLÓ
+[12:10:01] Sync bidireccional...
+[12:10:01] Pull GitHub → local...
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+[12:10:01] Pull FALLÓ
+[12:10:01] Push local → GitHub...
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   changelog-sync.log
+	modified:   harness/magantech.harness.json
+	modified:   harness/mailpit-infra.harness.json
+	modified:   harness/mariadb-infra.harness.json
+	modified:   harness/micaserogou.harness.json
+	modified:   harness/postgresql-infra.harness.json
+	modified:   harness/redis-infra.harness.json
+	modified:   harness/zionv-crm.harness.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	harness/kali-servicios.harness.json
+	harness/kali-wordpress.harness.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
+[12:10:01] Push FALLÓ

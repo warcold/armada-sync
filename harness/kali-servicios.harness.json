@@ -1,0 +1,24 @@
+{
+  "name": "Kali - Servicios",
+  "type": "dokploy-compose",
+  "project_id": "7ELp7s15-srgQm9SHtneg",
+  "compose_id": "vvWlI-OiIQZATYvb0IAmn",
+  "app_name": "compose-reboot-online-matrix-95ki5n",
+  "status": "running",
+  "services": ["mariadb", "postgresql", "redis", "mailpit"],
+  "containers": ["kali-mariadb", "kali-postgresql", "kali-redis", "kali-mailpit"],
+  "description": "Infraestructura compartida: MariaDB, PostgreSQL, Redis, Mailpit",
+  "network": "kali-servicios-net (compose-reboot-online-matrix-95ki5n_kali-servicios-net)",
+  "ports": {
+    "mariadb": "127.0.0.1:3307:3306",
+    "postgresql": "127.0.0.1:5433:5432",
+    "redis": "127.0.0.1:6380:6379",
+    "mailpit_smtp": "127.0.0.1:1026:1025",
+    "mailpit_web": "127.0.0.1:8028:8025"
+  },
+  "databases": {
+    "mariadb": ["magantech_wp", "micaserogou_wp", "zionv_crm", "erpipo_preprod"],
+    "postgresql": ["eccosuit_dev"]
+  },
+  "notes": "Servicios compartidos para TODOS los proyectos. Red externa kali-servicios-net. Proyectos viejos (mariadb-infra, postgresql-infra, redis-infra, mailpit-infra) DETENIDOS (NO borrados)."
+}
