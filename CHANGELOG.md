@@ -1,3 +1,29 @@
+### [2026-11-20 19:15 EST] [gateway] INCIDENTE DE SEGURIDAD: `apps-armada` COMPROMETIDA + Master keys internas establecidas
+- **Tipo**: security incident + governance
+- **Hallazgo crítico**: `apps-armada` (creada 2026-11-16, role `coder`, 2,754 requests en 3 días) **NO es un servicio interno** — estaba siendo usada desde **2 IPs externas ajenas a nuestra infraestructura**:
+  - `154.53.35.102` (AfriNIC, red africana) — 2,345 requests (85%)
+  - `2605:a142:2298:7483::1` (Contabo Inc., VPS Alemania) — 407 requests (15%)
+  - Solo 2 requests de `127.0.0.1` al crearse (test inicial)
+- **Patrón de uso**: prompts creciendo progresivamente 7K→169K tokens, todos `CODE` intent → auto-route intentaba mandar al coder pero excedían límite 128K → fallback a generalista con `thinking ON` (`code_think_fallback:prompt_too_big`). Burst final 2026-11-19 02:00-03:00 (204 req/hr) y **cesó totalmente tras 03:00**.
+- **Acción inmediata**: **REVOCADA** (`deactivated` via admin API). Key plaintext: `vllm-key-1fe50e0de12a4f5c5d1d54c67f3c51fe53c7129a91197451670527aea21f910a` — **rotar si se usó en algún deploy**.
+- **Origen desconocido**: No hay referencia en codebase, no está en `provision_log`, owner genérico "apps-armada". Probable fuga accidental (config compartida, log expuesto, o acceso interno malintencionado).
+- **Clientes legítimos confirmados**: `juancarlos` (Contabo VPS — su infra), `jordan-diaz` (Claro/Rep.Dom — su ISP), `kalimete` (10.0.0.106 LAN — nuestra máquina). Uso externo en claves de clientes = esperado.
+
+**Master Keys Internas Establecidas (governance clara):**
+
+| Llave | Role | Caps (allowed_models) | Propósito |
+|---|---|---|---|
+| `kalimete` | `coder` | `["llm","coder","art","tts","whisper","provision"]` | **Máquina dev interna** — evaluación performance real, patrones uso, errores clientes; provisioning `armada-*` |
+| `alfredo-pro-internal` | `services` | `["llm","art","tts","whisper"]` | **Servicios internos consolidados** — sandbox art-gen (OpenClaw), voz PTT (Kalimete-ptt), broadcasts |
+
+- Separación de responsabilidades: `kalimete` = dev interactiva + evaluación + provisioning; `alfredo-pro-internal` = servicios automatizados (sin `coder`, sin `provision`).
+- Metering aislado por propósito.
+- `apps-armada` **NO va a master key** — era clave comprometida, no servicio nuestro.
+
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,role,active,allowed_models FROM api_keys WHERE active=1"` — 9 llaves activas, estructura limpia.
+- **Pendiente**: Rotar key plaintext si estaba en algún deploy/config externo; revisar logs de acceso admin (¿quién la creó el 11-16?).
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
 ### [2026-11-20 18:45 EST] [gateway] Consolidación de llaves internas + re-clasificación Kalimete como evaluación
 - **Tipo**: refactor + governance
 - **Qué**: 
