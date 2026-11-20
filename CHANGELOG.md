@@ -1,3 +1,19 @@
+### [06:30] - Dominios funcionales *.kalimete.local para TODOS los proyectos (7 apps + 4 infra)
+- **Tipo**: red | servicio | config
+- **Modificado**: composes petsuite/eccosuit-develop, vhosts nginx petsuite/eccosuit/tapmap, certs mkcert, dominios Dokploy, /etc/hosts
+- **Afecta a**: kalimete (Dokploy)
+- **Causa**: Cada proyecto debe tener dominio *.kalimete.local funcional y visible en Dokploy
+- **Estado**: completado y validado
+- **Notas**:
+  - petsuite: puerto host 127.0.0.1:8095 agregado + dokploy-network -> Traefik :8082 200
+  - eccosuit-develop: dokploy-network agregada a ambos servicios (app/worker) -> Traefik :8082 307
+  - tapmap: network_mode: host impide Traefik -> solo nginx :443 (200)
+  - Certificados mkcert generados para petsuite/eccosuit/tapmap.kalimete.local
+  - Vhosts nginx estándar: Host real + X-Forwarded-Proto -> detección SSL correcta
+  - Dominios registrados en Dokploy (UI): 6 apps (magantech, micaserogou, zionv, mail, petsuite, eccosuit) -> Traefik :8082 responde
+  - tapmap excluido de Traefik (network_mode: host)
+  - /etc/hosts: agregadas petsuite/eccosuit/tapmap .kalimete.local -> 127.0.0.1
+  - Harnesses actualizados con dominio, front-door, puertos y notas
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
