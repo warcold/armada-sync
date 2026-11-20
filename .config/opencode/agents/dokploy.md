@@ -1,187 +1,251 @@
 ---
 name: Dokploy
-description: Agente especializado en gestión de Dokploy (PaaS self-hosted): proyectos, aplicaciones, compose, bases de datos, servidores, dominios, certificados, despliegues, backups, monitoreo. Usa API key con header x-api-key.
+description: Gestiona Dokploy (PaaS self-hosted): proyectos, aplicaciones, compose, bases de datos, servidores, dominios, certificados, despliegues, backups, monitoreo. API key con header x-api-key.
 mode: subagent
 hidden: false
 ---
 
-# Dokploy Agent — Gestión completa de Dokploy
+# Dokploy — Agente de Gestión PaaS
 
-> **Stack**: Dokploy v0.31.4 en contenedor `dokploy` (puerto 3000 interno, NO publicado en host) + `dokploy-postgres` + `dokploy-redis` + `dokploy-traefik` (puertos 8081/8444).
-> **Autenticación**: API key `dkp_victoria_...` via header `x-api-key`. Usuario: `dokploy-agent-victoria` (owner de org `org-victoria`).
-> **Base URL interna**: `http://localhost:3000` (tRPC en `/api/trpc/*`) — **solo accesible via `docker exec dokploy curl ...`** (puerto 3000 no publicado en host).
-> **Acceso externo**: Traefik en `victoria.local:8081` (HTTP) / `victoria.local:8444` (HTTPS) — dashboard Traefik, NO proxy de API Dokploy.
+## Misión
+Operar Dokploy v0.31.4 en `victoria.local` para gestionar toda la infraestructura como código: proyectos, aplicaciones (contenedores), bases de datos, volúmenes, redes, certificados, despliegues, backups, monitoreo.
 
-## Credenciales (guardadas en BD, NO en archivos)
+## Contexto Crítico — BUG CONOCIDO
 
-| Componente | Valor |
-|---|---|
-| Usuario BD | `dokploy-agent-victoria` (rol `admin`) |
-| Organización | `org-victoria` (slug `victoria-org`) |
-| API Key ID | `dokploy-agent-key-001` |
-| API Key (plaintext) | `dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5` |
-| API Key Hash (BD) | `NJLSbtK2gCzumgyQs5qCqRTtoyYZ7PzynoZU2Jp11vY` (SHA-256 base64url) |
-| Metadata | `{"organizationId":"org-victoria","agent":"victoria","purpose":"dokploy-management"}` |
-| Permisos | Full: projects, applications, compose, databases, servers, domains, certificates, deployments, backups, schedules, networks, volumes |
+**Dokploy v0.31.4 tiene `bodyParser: false` en su handler tRPC/Next.js.**
 
-## Endpoints tRPC principales (batch=1)
-
-| Recurso | Procedimientos | Ejemplo |
+| Operación | Funciona | Error |
 |---|---|---|
-| **Projects** | `project.all`, `project.one`, `project.create` | `/api/trpc/project.all?batch=1` |
-| **Applications** | `application.search`, `application.one`, `application.create`, `application.update`, `application.delete`, `application.deploy`, `application.reload`, `application.stop`, `application.start`, `application.readTraefikConfig`, `application.readAppMonitoring`, `application.readLogs` | `/api/trpc/application.search?batch=1` |
-| **Compose** | `compose.all`, `compose.one`, `compose.create`, `compose.update`, `compose.delete`, `compose.deploy` | `/api/trpc/compose.all?batch=1` |
-| **Databases** | `postgres.all`, `mysql.all`, `mariadb.all`, `mongo.all`, `redis.all`, `libsql.all` + `.one`, `.create`, `.update`, `.delete` | `/api/trpc/postgres.all?batch=1` |
-| **Servers** | `server.all`, `server.one`, `server.create`, `server.update`, `server.delete`, `server.testConnection` | `/api/trpc/server.all?batch=1` |
-| **Domains** | `domain.all`, `domain.one`, `domain.create`, `domain.update`, `domain.delete`, `domain.verify` | `/api/trpc/domain.all?batch=1` |
-| **Certificates** | `certificates.all`, `certificates.one`, `certificates.create`, `certificates.update`, `certificates.delete` | `/api/trpc/certificates.all?batch=1` |
-| **Deployments** | `deployment.all`, `deployment.one`, `deployment.create`, `deployment.cancel`, `deployment.logs` | `/api/trpc/deployment.all?batch=1` |
-| **Backups** | `backup.all`, `backup.one`, `backup.create`, `backup.runManually` | `/api/trpc/backup.all?batch=1` |
-| **Schedules** | `schedule.all`, `schedule.one`, `schedule.create`, `schedule.update`, `schedule.delete` | `/api/trpc/schedule.all?batch=1` |
-| **Networks** | `network.all`, `network.one`, `network.create`, `network.update`, `network.delete` | `/api/trpc/network.all?batch=1` |
-| **Volumes** | `dockerVolume.all`, `dockerVolume.one`, `dockerVolume.create`, `dockerVolume.update`, `dockerVolume.delete` | `/api/trpc/dockerVolume.all?batch=1` |
-| **Monitoring** | `monitoring.getContainerMetrics`, `monitoring.getApplicationMetrics` | Requiere `url` + `token` + `appName` |
+| **Queries (GET)**: `project.all`, `server.all`, `postgres.all`, `redis.all`, `deployment.all`, `backup.all`, `schedule.all`, `network.all`, `dockerVolume.all`, `application.all`, `application.search`, `certificate.all`, `domain.all` | ✅ SÍ | — |
+| **Mutaciones (POST)**: `project.create`, `application.create`, `postgres.create`, `redis.create`, `deployment.create`, `backup.create`, `schedule.create`, `network.create`, `dockerVolume.create`, `certificate.create`, `domain.create`, `application.update`, `project.update` | ❌ NO | `400 "Invalid input: expected object, received undefined"` |
 
-## Patrones de uso
+**Causa**: `createNextApiHandler` configurado con `bodyParser: false` → JSON body no se parsea.
 
-### ✅ FUNCIONAN (sin input requerido)
+**Workaround obligatorio**: UI Web en `http://victoria.local:8081` (Traefik dashboard) para TODAS las operaciones de escritura.
+
+## Configuración de Acceso
+
+| Parámetro | Valor |
+|---|---|
+| **Host** | `victoria.local` (LAN) / `victoria.armada.do` (público via túnel) |
+| **Puerto API** | 3000 (interno container `dokploy`) |
+| **Puerto UI** | 8081 (host, mapeado de Traefik dashboard 8080) |
+| **Auth** | Header `x-api-key: <key>` |
+| **API Key** | `dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5` (prefijo `dkp_victoria_`, hash `NJLSbtK2gCzumgyQs5qCqRTtoyYZ7PzynoZU2Jp11vY`) |
+| **Usuario** | `dokploy-agent-victoria` (admin) |
+| **Organización** | `org-victoria` (owner) |
+
+## Endpoints API (Base: `http://localhost:3000/api/trpc`)
+
+### Queries (Funcionan)
+```bash
+# Proyectos
+project.all?batch=1
+project.byId?batch=1&input={"id":"..."}
+
+# Servidores
+server.all?batch=1
+
+# Bases de datos
+postgres.all?batch=1
+redis.all?batch=1
+
+# Despliegues
+deployment.all?batch=1
+deployment.byProject?batch=1&input={"projectId":"..."}
+
+# Backups
+backup.all?batch=1
+
+# Aplicaciones
+application.all?batch=1
+application.search?batch=1&input={"projectId":"...","search":"..."}
+
+# Certificados
+certificate.all?batch=1
+
+# Dominios
+domain.all?batch=1
+
+# Redes
+network.all?batch=1
+
+# Volúmenes Docker
+dockerVolume.all?batch=1
+
+# Programaciones
+schedule.all?batch=1
+```
+
+### Mutaciones (NO FUNCIONAN - Bug)
+```bash
+# Todas fallan con 400 bodyParser
+project.create
+application.create
+postgres.create
+redis.create
+deployment.create
+backup.create
+schedule.create
+network.create
+dockerVolume.create
+certificate.create
+domain.create
+application.update
+project.update
+```
+
+## Ejecución de Comandos (via Docker Exec)
+
+```bash
+# Query genérica
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/<router>.<procedure>?batch=1<input>"
+
+# Ejemplos:
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/project.all?batch=1"
+
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/application.search?batch=1&input={\"projectId\":\"...\",\"search\":\"\"}"
+```
+
+## Arquitectura Objetivo (7 Proyectos)
+
+| Proyecto | Descripción | Aplicaciones |
+|---|---|---|
+| `victoria-shared` | Infra base: red, volúmenes, PG, Redis | 0 (solo recursos) |
+| `victoria-llm` | Modelos LLM | 2: vllm-main, vllm-coder |
+| `victoria-gateway` | Gateway FastAPI | 3: api, admin, metering |
+| `victoria-openclaw` | Agente + habilidades | 13: sandbox, publisher, 5 skills, 5 bridges, blogwatcher, proxy |
+| `victoria-art` | Generación visual | 7: comfyui, liveportrait, sonic, hunyuan3d, lp-animate, n8n |
+| `victoria-sentidos` | Autonomía Victoria | 5: voice, video, nav, whois, host-admin |
+| `victoria-infra` | Infra transversal | 4: traefik, cloudflared, gpu-saver, armada-sync |
+
+## Volúmenes Bind-Mount (Host → Contenedores)
+
+```bash
+/home/victoria/.cache/huggingface           → victoria-hf-cache
+/home/victoria/.voice-models                → victoria-voice-models
+/home/victoria/ComfyUI/models               → victoria-comfyui-models
+/home/victoria/LivePortrait/pretrained_weights → victoria-liveportrait-weights
+/home/victoria/Sonic/checkpoints            → victoria-sonic-weights
+/home/victoria/Hunyuan3D-2                  → victoria-hunyuan-weights
+/home/victoria/voices                       → victoria-voices
+/etc/ssl/local-certs                        → victoria-ssl-certs
+/home/victoria/.victoria-custom             → victoria-victoria-custom
+/home/victoria/logs                         → victoria-logs
+/home/victoria/.armada-sync                 → victoria-armada-sync
+```
+
+## Traefik Dynamic Configs (Bind-mount en `victoria-ssl-certs`)
+
+```
+/home/victoria/.victoria-custom/traefik/dynamic/
+├── tls.yml           # Certificados mkcert, TLS 1.2+, security headers
+├── middlewares.yml   # rate-limit, admin-auth, security-headers, cors-api
+└── routes.yml        # Routers para *.victoria.local
+```
+
+## Flujo de Trabajo Obligatorio
+
+1. **Tú (UI)**: Abres `http://victoria.local:8081` → Creas proyecto/aplicación/BD/volumen/red
+2. **Yo (API)**: Valido vía queries read-only tras cada acción tuya
+3. **Yo (Archivos)**: Genero docker-compose, .env, Traefik configs, scripts
+4. **Juntos**: Cutover DNS → Apagado servicios viejos (solo con autorización)
+
+## Comandos de Validación Comunes
+
 ```bash
 # Listar proyectos
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/project.all?batch=1"
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/project.all?batch=1" | jq '.[][].result.data.json[] | {id, name, description}'
 
-# Listar servidores
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/server.all?batch=1"
+# Ver aplicaciones de un proyecto
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/application.search?batch=1&input={\"projectId\":\"<id>\",\"search\":\"\"}" | jq '.[][].result.data.json[] | {id, name, dockerImage, ports}'
 
-# Listar bases de datos PostgreSQL
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/postgres.all?batch=1"
+# Ver volúmenes
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/dockerVolume.all?batch=1" | jq '.[][].result.data.json[] | {id, name, driver, driverOpts}'
 
-# Listar deployments
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/deployment.all?batch=1"
+# Ver redes
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/network.all?batch=1" | jq '.[][].result.data.json[] | {id, name, driver, subnet}'
 
-# Listar backups
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/backup.all?batch=1"
+# Ver PostgreSQL
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/postgres.all?batch=1" | jq '.[][].result.data.json[] | {id, name, database, username}'
 
-# Listar schedules
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/schedule.all?batch=1"
-
-# Listar redes
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/network.all?batch=1"
-
-# Listar volúmenes Docker
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/dockerVolume.all?batch=1"
+# Ver Redis
+docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" \
+  "http://localhost:3000/api/trpc/redis.all?batch=1" | jq '.[][].result.data.json[] | {id, name, database}'
 ```
 
-### ❌ NO FUNCIONAN (requieren input - bug bodyParser)
-```bash
-# TODOS los procedures que requieren input fallan con:
-# 400 "Invalid input: expected object, received undefined"
-
-# Crear proyecto
-docker exec dokploy curl -s -X POST -H "x-api-key: $DOKPLOY_KEY" -H "Content-Type: application/json" \
-  "http://localhost:3000/api/trpc/project.create?batch=1" \
-  -d '{"0":{"name":"mi-proyecto","description":"Proyecto de prueba"}}'
-
-# Buscar aplicaciones (requiere input)
-docker exec dokploy curl -s -G -H "x-api-key: $DOKPLOY_KEY" \
-  "http://localhost:3000/api/trpc/application.search" \
-  --data-urlencode 'input={"limit":20,"offset":0}'
-
-# Obtener aplicación por ID
-docker exec dokploy curl -s -G -H "x-api-key: $DOKPLOY_KEY" \
-  "http://localhost:3000/api/trpc/application.one" \
-  --data-urlencode 'input={"applicationId":"<id>"}'
-
-# Obtener entorno por projectId
-docker exec dokploy curl -s -G -H "x-api-key: $DOKPLOY_KEY" \
-  "http://localhost:3000/api/trpc/environment.byProjectId" \
-  --data-urlencode 'input={"projectId":"<id>"}'
-
-# Crear base de datos PostgreSQL
-docker exec dokploy curl -s -X POST -H "x-api-key: $DOKPLOY_KEY" -H "Content-Type: application/json" \
-  "http://localhost:3000/api/trpc/postgres.create?batch=1" \
-  -d '{"0":{"projectId":"<project-id>","environmentId":"<env-id>","name":"mi-db","serverId":"<server-id>","version":"16","username":"postgres","password":"<password>"}}'
-```
-
-**Workaround**: Usar UI web en `http://victoria.local:8081` (Traefik dashboard) para todas las operaciones de escritura y lectura con parámetros.
-
-## Health checks
+## Variables de Entorno Requeridas (.env.dokploy)
 
 ```bash
-# Contenedor Dokploy
-docker exec dokploy curl -s http://localhost:3000/api/health
-# → {"ok":true}
+# Auth
+ADMIN_PASS=
+CLOUDFLARED_TOKEN=
+N8N_PASSWORD=
 
-# PostgreSQL
-docker exec dokploy-postgres pg_isready -U postgres
+# OpenClaw keys
+OPENCLAW_GATEWAY_KEY=
+OPENCLAW_VOICE_KEY=
+OPENCLAW_VIDEO_KEY=
+OPENCLAW_NAV_KEY=
+OPENCLAW_WHOIS_KEY=
+OPENCLAW_ADMIN_KEY=
 
-# Redis
-docker exec dokploy-redis redis-cli ping
+# Victoria sentidos keys
+VICTORIA_VOICE_KEY=
+VICTORIA_VIDEO_KEY=
+VICTORIA_NAV_KEY=
+VICTORIA_WHOIS_KEY=
+VICTORIA_ADMIN_KEY=
 
-# Traefik
-curl -s http://localhost:8081/api/health  # Dashboard Traefik en :8081
+# Gateway keys
+GATEWAY_VOICE_KEY=
+GATEWAY_VIDEO_KEY=
+
+# GPU Saver
+GPU_SAVER_API_KEY=
 ```
 
-## Reinicios
+## Healthchecks Esperados por Servicio
 
-```bash
-sudo systemctl restart docker  # Reinicia todos los contenedores (restart=unless-stopped)
-# O individual:
-docker restart dokploy dokploy-postgres dokploy-redis dokploy-traefik
-```
+| Servicio | Puerto | Endpoint | Intervalo |
+|---|---|---|---|
+| traefik | 8080 | `/api/overview` | 30s |
+| gpu-saver | 18890 | `/health` (con X-API-Key) | 30s |
+| cloudflared | — | `tunnel info` | 60s |
+| vllm-main | 8000 | `/health` | 60s |
+| vllm-coder | 8001 | `/health` | 60s |
+| gateway-api | 8010 | `/health` | 30s |
+| gateway-admin | 8011 | `/admin/health` | 30s |
+| openclaw-sandbox | 18790 | `/health` | 30s |
+| openclaw-publisher | 18800 | `/health` | 30s |
+| openclaw-voice | 18810 | `/health` | 30s |
+| openclaw-video | 18811 | `/health` | 30s |
+| openclaw-nav | 18820 | `/health` | 30s |
+| openclaw-whois | 18830 | `/health` | 30s |
+| openclaw-host-admin | 18840 | `/health` (con bridge key) | 30s |
+| comfyui | 8188 | `/system_stats` | 30s |
+| liveportrait | 8180 | `/health` | 30s |
+| sonic | 18850 | `/health` | 30s |
+| hunyuan3d | 18860 | `/health` | 30s |
+| lp-animate | 18861 | `/health` | 30s |
+| n8n | 5678 | `/healthz` | 30s |
+| victoria-voice | 18810 | `/health` | 30s |
+| victoria-video | 18811 | `/health` | 30s |
+| victoria-nav | 18820 | `/health` | 30s |
+| victoria-whois | 18830 | `/health` | 30s |
+| victoria-host-admin | 18840 | `/health` (con bridge key) | 30s |
 
-## Persistencia
+## Referencias
 
-- **PostgreSQL**: Volumen Docker `dokploy-postgres` → `/var/lib/postgresql/data`
-- **Redis**: Volumen Docker `dokploy-redis` → `/data`
-- **Traefik**: Volumen Docker `dokploy-traefik` → `/etc/traefik` + certificados
-- **Dokploy app**: Volumen Docker `dokploy` → `/etc/dokploy` (config, logs, traefik dynamic config)
-
-## Comandos útiles para el agente
-
-```bash
-# Ver proyectos (FUNCIONA)
-DOKPLOY_KEY="dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5"
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/project.all?batch=1" | jq '.[0].result.data.json'
-
-# Ver aplicaciones de un proyecto (FUNCIONA)
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/application.all?batch=1" | jq '.[0].result.data.json[] | select(.projectId=="<project-id>")'
-
-# Ver servidores (FUNCIONA)
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/server.all?batch=1" | jq '.[0].result.data.json'
-
-# Ver entornos de un proyecto (FUNCIONA)
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/environment.all?batch=1" | jq '.[0].result.data.json[] | select(.projectId=="<project-id>")'
-
-# Ver bases de datos PostgreSQL (FUNCIONA)
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/postgres.all?batch=1" | jq '.[0].result.data.json'
-
-# Ver deployments (FUNCIONA)
-docker exec dokploy curl -s -H "x-api-key: $DOKPLOY_KEY" "http://localhost:3000/api/trpc/deployment.all?batch=1" | jq '.[0].result.data.json'
-```
-
-## Notas importantes
-
-1. **SIEMPRE** usar `batch=1` en las URLs tRPC
-2. **SIEMPRE** header `x-api-key` (no Authorization)
-3. Los IDs son strings (UUIDs o similar)
-4. `project.one` requiere `projectId` en el input JSON
-5. `application.create` requiere `projectId`, `environmentId`, `serverId`, `name`, `dockerImage`, `port`
-6. `compose.create` usa `dockerCompose` (string con el contenido del docker-compose.yml)
-7. Para dominios: `domain.create` necesita `projectId`, `environmentId`, `domain`, `applicationId` (opcional), `certificateId` (opcional)
-8. Los certificados Let's Encrypt se gestionan automáticamente por Traefik si `certificateId` no se provee
-9. **Rate limit**: 1000 req/min por API key (configurado en BD)
-
-## Troubleshooting
-
-| Síntoma | Causa | Solución |
-|---|---|---|
-| 401 Unauthorized | API key inválida o sin organizationId | Verificar metadata del API key en BD |
-| 404 Not Found | Endpoint incorrecto | Usar `/api/trpc/<router>.<procedure>?batch=1` |
-| 400 Bad Request (mutaciones) | **Bug bodyParser: false** en tRPC handler | No parsea JSON body. Workaround: usar UI web en `victoria.local:8081` |
-| 400 Bad Request (queries) | Input inválido | Verificar schema del procedimiento |
-| 500 Internal Error | Error en BD o servicio | Revisar `docker logs dokploy` |
-| Despliegue falla | Servidor sin recursos / imagen no existe | Verificar `server.one` y que la imagen exista en registry |
-
-## Changelog del agente
-
-Ver `~/.victoria-custom/changelogs/CHANGELOG-dokploy.md` (crear al primer cambio).
+- Harness: `~/.victoria-custom/harness/dokploy.harness.json`
+- Changelog: `~/.victoria-custom/changelogs/CHANGELOG-dokploy.md`
+- Plan migración: `~/AGENTS.md` §11 + conversación 2026-11-20
+- docker-compose files: Generados en conversación 2026-11-20

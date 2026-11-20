@@ -1,133 +1,296 @@
 {
   "name": "Dokploy",
-  "description": "Agente especializado en gestión de Dokploy (PaaS self-hosted): proyectos, aplicaciones, compose, bases de datos, servidores, dominios, certificados, despliegues, backups, monitoreo",
+  "description": "Gestiona Dokploy (PaaS self-hosted): proyectos, aplicaciones, compose, bases de datos, servidores, dominios, certificados, despliegues, backups, monitoreo. API key con header x-api-key.",
   "version": "1.0.0",
   "service": "dokploy",
-  "docs": [
-    "~/.config/opencode/agents/dokploy.md"
-  ],
-  "changelog": "~/.victoria-custom/changelogs/CHANGELOG-dokploy.md",
   "ports": {
-    "dokploy": 3000,
-    "postgres": 5432,
-    "redis": 6379,
-    "traefik_http": 8081,
-    "traefik_https": 8444
+    "api": 3000,
+    "ui": 8081,
+    "traefik_dashboard": 8080
   },
   "containers": [
-    "dokploy",
+    {
+      "name": "dokploy",
+      "image": "dokploy/dokploy:v0.31.4",
+      "ports": ["3000:3000"],
+      "volumes": [
+        "/var/run/docker.sock:/var/run/docker.sock",
+        "dokploy-data:/data"
+      ],
+      "environment": {
+        "ADMIN_EMAIL": "me@alfredo.pro",
+        "ADMIN_PASSWORD": "${ADMIN_PASS}"
+      },
+      "healthcheck": {
+        "test": ["CMD", "curl", "-f", "http://localhost:3000/api/trpc/project.all?batch=1"],
+        "interval": "30s",
+        "timeout": "10s",
+        "retries": 3,
+        "start_period": "30s"
+      }
+    },
+    {
+      "name": "dokploy-postgres",
+      "image": "postgres:16-alpine",
+      "ports": ["5432:5432"],
+      "volumes": ["dokploy-postgres:/var/lib/postgresql/data"],
+      "environment": {
+        "POSTGRES_DB": "dokploy",
+        "POSTGRES_USER": "dokploy",
+        "POSTGRES_PASSWORD": "${POSTGRES_PASSWORD}"
+      }
+    },
+    {
+      "name": "dokploy-redis",
+      "image": "redis:7-alpine",
+      "ports": ["6379:6379"],
+      "volumes": ["dokploy-redis:/data"]
+    },
+    {
+      "name": "dokploy-traefik",
+      "image": "traefik:v3.1",
+      "ports": ["80:80", "443:443", "8080:8080"],
+      "volumes": [
+        "/var/run/docker.sock:/var/run/docker.sock:ro",
+        "/etc/traefik:/etc/traefik:ro",
+        "victoria-ssl-certs:/certs:ro"
+      ],
+      "command": [
+        "--api.dashboard=true",
+        "--api.insecure=true",
+        "--providers.docker=true",
+        "--providers.docker.exposedbydefault=false",
+        "--entrypoints.web.address=:80",
+        "--entrypoints.websecure.address=:443"
+      ]
+    }
+  ],
+  "volumes": [
+    "dokploy-data",
     "dokploy-postgres",
     "dokploy-redis",
-    "dokploy-traefik"
+    "victoria-hf-cache",
+    "victoria-voice-models",
+    "victoria-comfyui-models",
+    "victoria-liveportrait-weights",
+    "victoria-sonic-weights",
+    "victoria-hunyuan-weights",
+    "victoria-voices",
+    "victoria-ssl-certs",
+    "victoria-victoria-custom",
+    "victoria-logs",
+    "victoria-armada-sync",
+    "victoria-gateway-db",
+    "victoria-openclaw-data",
+    "victoria-n8n-data",
+    "victoria-postgres",
+    "victoria-redis"
   ],
-  "systemd_units": [],
-  "health_checks": [
-    {
-      "name": "dokploy_api",
-      "command": "docker exec dokploy curl -s http://localhost:3000/api/health",
-      "expected": "{\"ok\":true}",
-      "interval_sec": 30
-    },
-    {
-      "name": "postgres",
-      "command": "docker exec dokploy-postgres pg_isready -U postgres",
-      "expected": "accepting connections",
-      "interval_sec": 30
-    },
-    {
-      "name": "redis",
-      "command": "docker exec dokploy-redis redis-cli ping",
-      "expected": "PONG",
-      "interval_sec": 30
-    },
-    {
-      "name": "traefik_dashboard",
-      "command": "curl -s http://localhost:8081/api/health",
-      "expected": "200 OK",
-      "interval_sec": 60
-    }
+  "networks": [
+    "victoria-net"
   ],
-  "api_key": {
-    "name": "Victoria Dokploy Agent",
-    "id": "dokploy-agent-key-001",
-    "prefix": "dkp_victoria_",
-    "header": "x-api-key",
-    "plaintext_ref": "dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5",
-    "hash_sha256_b64url": "NJLSbtK2gCzumgyQs5qCqRTtoyYZ7PzynoZU2Jp11vY",
-    "user_id": "dokploy-agent-victoria",
-    "organization_id": "org-victoria",
-    "permissions": [
-      "projects:read", "projects:write",
-      "applications:read", "applications:write",
-      "compose:read", "compose:write",
-      "postgres:read", "postgres:write",
-      "mysql:read", "mysql:write",
-      "mariadb:read", "mariadb:write",
-      "mongo:read", "mongo:write",
-      "redis:read", "redis:write",
-      "libsql:read", "libsql:write",
-      "servers:read", "servers:write",
-      "domains:read", "domains:write",
-      "certificates:read", "certificates:write",
-      "deployments:read", "deployments:write",
-      "backups:read", "backups:write",
-      "schedules:read", "schedules:write",
-      "networks:read", "networks:write",
-      "volumes:read", "volumes:write",
-      "monitoring:read"
-    ],
-    "rate_limit": {
-      "enabled": true,
-      "max_requests": 1000,
-      "time_window_sec": 60
-    }
-  },
-"trpc": {
+  "api": {
     "base_url": "http://localhost:3000/api/trpc",
-    "access_via": "docker exec dokploy curl",
-    "batch_param": "batch=1",
-    "known_issue": "bodyParser: false en tRPC handler (Next.js config api.bodyParser=false) → CUALQUIER procedure que requiera input (POST body o GET query param) NO parsea el input → 400 'Invalid input: expected object, received undefined'. SOLO funcionan procedures SIN input requerido (project.all, server.all, postgres.all, deployment.all, backup.all, schedule.all, network.all, dockerVolume.all, mysql.all, mariadb.all, mongo.all, redis.all, libsql.all).",
-    "routers": {
-      "project": { "working": ["all"], "broken": ["one", "create", "update", "delete"] },
-      "application": { "working": [], "broken": ["search", "one", "create", "update", "delete", "deploy", "reload", "stop", "start", "redeploy", "saveEnvironment", "saveBuildType", "saveGithubProvider", "saveGitlabProvider", "saveBitbucketProvider", "saveGiteaProvider", "saveDockerProvider", "saveGitProvider", "disconnectGitProvider", "markRunning", "refreshToken", "cleanQueues", "clearDeployments", "killBuild", "readTraefikConfig", "dropDeployment", "updateTraefikConfig", "move", "cancelDeployment", "readAppMonitoring", "readLogs"] },
-      "postgres": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
-      "mysql": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
-      "mariadb": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
-      "mongo": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
-      "redis": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
-      "libsql": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
-      "server": { "working": ["all"], "broken": ["one", "create", "update", "delete", "testConnection", "metrics"] },
-      "domain": { "working": [], "broken": ["all", "one", "create", "update", "delete", "verify"] },
-      "certificates": { "working": [], "broken": ["all", "one", "create", "update", "delete", "renew"] },
-      "deployment": { "working": ["all"], "broken": ["one", "create", "cancel", "logs", "restart"] },
-      "backup": { "working": ["all"], "broken": ["one", "create", "update", "delete", "runManually"] },
-      "schedule": { "working": ["all"], "broken": ["one", "create", "update", "delete"] },
-      "network": { "working": ["all"], "broken": ["one", "create", "update", "delete"] },
-      "dockerVolume": { "working": ["all"], "broken": ["one", "create", "update", "delete"] },
-      "environment": { "working": [], "broken": ["byProjectId", "one", "create", "update", "delete"] },
-      "monitoring": { "working": [], "broken": ["getContainerMetrics", "getApplicationMetrics"] }
-    }
+    "auth_header": "x-api-key",
+    "api_key": "dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5",
+    "working_queries": [
+      "project.all",
+      "server.all",
+      "postgres.all",
+      "redis.all",
+      "deployment.all",
+      "backup.all",
+      "schedule.all",
+      "network.all",
+      "dockerVolume.all",
+      "application.all",
+      "application.search",
+      "certificate.all",
+      "domain.all"
+    ],
+    "broken_mutations": [
+      "project.create",
+      "application.create",
+      "postgres.create",
+      "redis.create",
+      "deployment.create",
+      "backup.create",
+      "schedule.create",
+      "network.create",
+      "dockerVolume.create",
+      "certificate.create",
+      "domain.create",
+      "application.update",
+      "project.update"
+    ],
+    "bug": "bodyParser: false in tRPC handler - JSON body not parsed"
   },
-  "recovery": {
-    "postgres_restore": "docker exec dokploy-postgres pg_restore -U postgres -d dokploy < backup.sql",
-    "redis_restore": "docker exec dokploy-redis redis-cli --rdb /data/dump.rdb",
-    "traefik_certs": "Volumen docker dokploy-traefik → /etc/traefik/dynamic/certificates",
-    "full_stack_restart": "docker restart dokploy dokploy-postgres dokploy-redis dokploy-traefik"
+  "traefik_dynamic_configs": {
+    "path": "/home/victoria/.victoria-custom/traefik/dynamic",
+    "files": [
+      "tls.yml",
+      "middlewares.yml",
+      "routes.yml"
+    ],
+    "mount_volume": "victoria-ssl-certs"
+  },
+  "projects_target": [
+    {
+      "name": "victoria-shared",
+      "description": "Infra base: red, volúmenes bind-mount, PostgreSQL, Redis",
+      "applications": 0,
+      "resources": ["network", "volumes", "postgres", "redis"]
+    },
+    {
+      "name": "victoria-llm",
+      "description": "Modelos LLM (vLLM Main + Coder)",
+      "applications": 2,
+      "containers": ["vllm-main", "vllm-coder"],
+      "gpu": true
+    },
+    {
+      "name": "victoria-gateway",
+      "description": "Gateway FastAPI (API + Admin + Metering)",
+      "applications": 3,
+      "containers": ["gateway-api", "gateway-admin", "gateway-metering"]
+    },
+    {
+      "name": "victoria-openclaw",
+      "description": "Agente conversacional + habilidades",
+      "applications": 13,
+      "containers": [
+        "openclaw-sandbox",
+        "openclaw-publisher",
+        "openclaw-voice",
+        "openclaw-video",
+        "openclaw-nav",
+        "openclaw-whois",
+        "openclaw-host-admin",
+        "bridge-voice",
+        "bridge-video",
+        "bridge-nav",
+        "bridge-whois",
+        "bridge-admin",
+        "blogwatcher",
+        "openshell-proxy"
+      ],
+      "gpu": true
+    },
+    {
+      "name": "victoria-art",
+      "description": "Generación visual",
+      "applications": 7,
+      "containers": [
+        "comfyui",
+        "liveportrait",
+        "sonic",
+        "hunyuan3d",
+        "lp-animate",
+        "n8n"
+      ],
+      "gpu": true
+    },
+    {
+      "name": "victoria-sentidos",
+      "description": "Autonomía de Victoria",
+      "applications": 5,
+      "containers": [
+        "victoria-voice",
+        "victoria-video",
+        "victoria-nav",
+        "victoria-whois",
+        "victoria-host-admin"
+      ],
+      "gpu": true
+    },
+    {
+      "name": "victoria-infra",
+      "description": "Infraestructura transversal",
+      "applications": 4,
+      "containers": [
+        "traefik",
+        "cloudflared",
+        "gpu-saver",
+        "armada-sync"
+      ]
+    }
+  ],
+  "healthchecks": {
+    "traefik": { "port": 8080, "endpoint": "/api/overview", "interval": "30s" },
+    "gpu-saver": { "port": 18890, "endpoint": "/health", "auth": "X-API-Key", "interval": "30s" },
+    "cloudflared": { "cmd": "cloudflared tunnel info", "interval": "60s" },
+    "vllm-main": { "port": 8000, "endpoint": "/health", "interval": "60s", "start_period": "300s" },
+    "vllm-coder": { "port": 8001, "endpoint": "/health", "interval": "60s", "start_period": "300s" },
+    "gateway-api": { "port": 8010, "endpoint": "/health", "interval": "30s" },
+    "gateway-admin": { "port": 8011, "endpoint": "/admin/health", "interval": "30s" },
+    "openclaw-sandbox": { "port": 18790, "endpoint": "/health", "interval": "30s", "start_period": "60s" },
+    "openclaw-publisher": { "port": 18800, "endpoint": "/health", "interval": "30s" },
+    "openclaw-voice": { "port": 18810, "endpoint": "/health", "interval": "30s", "start_period": "60s" },
+    "openclaw-video": { "port": 18811, "endpoint": "/health", "interval": "30s" },
+    "openclaw-nav": { "port": 18820, "endpoint": "/health", "interval": "30s", "start_period": "60s" },
+    "openclaw-whois": { "port": 18830, "endpoint": "/health", "interval": "30s" },
+    "openclaw-host-admin": { "port": 18840, "endpoint": "/health", "auth": "bridge-key", "interval": "30s" },
+    "comfyui": { "port": 8188, "endpoint": "/system_stats", "interval": "30s" },
+    "liveportrait": { "port": 8180, "endpoint": "/health", "interval": "30s" },
+    "sonic": { "port": 18850, "endpoint": "/health", "interval": "30s" },
+    "hunyuan3d": { "port": 18860, "endpoint": "/health", "interval": "30s", "start_period": "120s" },
+    "lp-animate": { "port": 18861, "endpoint": "/health", "interval": "30s" },
+    "n8n": { "port": 5678, "endpoint": "/healthz", "interval": "30s" },
+    "victoria-voice": { "port": 18810, "endpoint": "/health", "interval": "30s" },
+    "victoria-video": { "port": 18811, "endpoint": "/health", "interval": "30s" },
+    "victoria-nav": { "port": 18820, "endpoint": "/health", "interval": "30s" },
+    "victoria-whois": { "port": 18830, "endpoint": "/health", "interval": "30s" },
+    "victoria-host-admin": { "port": 18840, "endpoint": "/health", "auth": "bridge-key", "interval": "30s" }
   },
   "scripts": {
-    "list_projects": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/project.all?batch=1\" | jq '.[0].result.data.json'",
-    "list_apps": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/application.all?batch=1\" | jq '.[0].result.data.json'",
-    "list_servers": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/server.all?batch=1\" | jq '.[0].result.data.json'",
-    "list_databases": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/postgres.all?batch=1\" | jq '.[0].result.data.json'",
-    "health_all": "docker exec dokploy curl -s http://localhost:3000/api/health && docker exec dokploy-postgres pg_isready -U postgres && docker exec dokploy-redis redis-cli ping"
+    "validate_project": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/project.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, description}'",
+    "validate_apps": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/application.search?batch=1&input={\\\"projectId\\\":\\\"<id>\\\",\\\"search\\\":\\\"\\\"}\" | jq '.[][].result.data.json[] | {id, name, dockerImage, ports}'",
+    "validate_volumes": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/dockerVolume.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, driver, driverOpts}'",
+    "validate_networks": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/network.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, driver, subnet}'",
+    "validate_postgres": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/postgres.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, database, username}'",
+    "validate_redis": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/redis.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, database}'"
   },
-  "environment": {
-    "DOKPLOY_KEY": "dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5",
-    "DOKPLOY_URL": "http://localhost:3000 (internal only)",
-    "DOKPLOY_TRPC_URL": "http://localhost:3000/api/trpc (access via docker exec)"
-  },
-  "related_harnesses": [
-    "victoria.harness.json",
-    "cloudflare.harness.json"
+  "environment_variables": [
+    "ADMIN_PASS",
+    "CLOUDFLARED_TOKEN",
+    "N8N_PASSWORD",
+    "OPENCLAW_GATEWAY_KEY",
+    "OPENCLAW_VOICE_KEY",
+    "OPENCLAW_VIDEO_KEY",
+    "OPENCLAW_NAV_KEY",
+    "OPENCLAW_WHOIS_KEY",
+    "OPENCLAW_ADMIN_KEY",
+    "VICTORIA_VOICE_KEY",
+    "VICTORIA_VIDEO_KEY",
+    "VICTORIA_NAV_KEY",
+    "VICTORIA_WHOIS_KEY",
+    "VICTORIA_ADMIN_KEY",
+    "GATEWAY_VOICE_KEY",
+    "GATEWAY_VIDEO_KEY",
+    "GPU_SAVER_API_KEY",
+    "POSTGRES_PASSWORD",
+    "DOKPLOY_KEY"
+  ],
+  "changelog": "~/.victoria-custom/changelogs/CHANGELOG-dokploy.md",
+  "agent_config": "~/.config/opencode/agents/dokploy.md",
+  "docs": [
+    "~/AGENTS.md §11",
+    "~/.victoria-custom/harness/dokploy.harness.json"
+  ],
+  "known_issues": [
+    "bodyParser: false in tRPC handler - all mutations fail with 400",
+    "Workaround: UI Web at http://victoria.local:8081 for all writes",
+    "Read-only API works perfectly for validation"
+  ],
+  "migration_phases": [
+    "Phase 0: Network + 14 bind-mount volumes + mkcert + backup",
+    "Phase 1: victoria-shared (network, volumes, PG, Redis)",
+    "Phase 2: victoria-infra (traefik, gpu-saver, cloudflared, armada-sync)",
+    "Phase 3: victoria-llm (vllm-main, vllm-coder)",
+    "Phase 4: victoria-gateway (api, admin, metering)",
+    "Phase 5: victoria-openclaw (13 containers)",
+    "Phase 6: victoria-art (7 containers)",
+    "Phase 7: victoria-sentidos (5 containers)",
+    "Phase 8: Cutover DNS + 24h validation + shutdown legacy"
   ]
 }

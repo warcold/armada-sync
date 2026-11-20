@@ -229,6 +229,7 @@
     "/home/victoria/.victoria-custom/changelogs/CHANGELOG-weather.md",
     "/home/victoria/.victoria-custom/changelogs/CHANGELOG-infra.md",
     "/home/victoria/.victoria-custom/changelogs/CHANGELOG-gpu.md",
+    "/home/victoria/.victoria-custom/changelogs/CHANGELOG-dokploy.md",
     "/home/victoria/.victoria-custom/CHANGELOG-MAESTRO.md"
   ],
   "no_touch": [
@@ -481,6 +482,19 @@
       "model": "vllm/nvidia/Qwen3.6-35B-A3B-NVFP4-normal + kwargs thinking (motor de razonamiento; el id -thinking salió del picker 11-03)",
       "scope": "Razonador profundo: lógica sutil, verificación de planes, debugging de misterios. Análisis puro.",
       "when": "cuando la respuesta rápida no basta"
+    },
+    {
+      "name": "Dokploy",
+      "file": "/home/victoria/.config/opencode/agents/dokploy.md",
+      "harness": "/home/victoria/.victoria-custom/harness/dokploy.harness.json",
+      "mode": "subagent",
+      "scope": "PaaS self-hosted: proyectos, aplicaciones, compose, bases de datos, servidores, dominios, certificados, despliegues, backups, monitoreo — API key x-api-key (BUG: bodyParser false, mutaciones via UI)",
+      "temperature": 0.1,
+      "delegacion": {
+        "cuando_usar": "gestionar Dokploy, crear proyectos/apps/DBs, desplegar, dominios, SSL, validar via API read-only",
+        "pre_check": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/project.all?batch=1\" | grep -q 'victoria' || echo 'Dokploy:down'",
+        "post_check": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/project.all?batch=1\" | jq '.[][].result.data.json[] | {id, name}'"
+      }
     }
   ],
   "changelog_unificado": {

@@ -30,7 +30,7 @@ TODO en CHANGELOG, no dañar lo que funciona.
 - Firewall `:8000`: IPv6 DROP + IPv4 LAN DROP en DOCKER-USER (unit `victoria-firewall-vllm.service`) — solo loopback + docker bridges. NUNKA quitar. Secretos NUNCA commitear.
 - `openclaw plugins install` siempre uid 998, nunca root. Container = efímero (backup antes).
 
-## Subagentes (nombre EXACTO para Task/@ — los 10 VISIBLES en autocomplete @ desde 2026-10-01; solo Victoria en Tab)
+## Subagentes (nombre EXACTO para Task/@ — los 11 VISIBLES en autocomplete @ desde 2026-11-20; solo Victoria en Tab)
 - `vLLM` → vLLM/gateway/inferencia
 - `OpenClaw` → sandbox/voice/video/whois/admin/bridges
 - `Comfyui` → ComfyUI/LivePortrait/imágenes/n8n
@@ -43,6 +43,7 @@ TODO en CHANGELOG, no dañar lo que funciona.
 - `Gpu` → GPU/VRAM/térmica/freeze/OOM/turnos
 - `Coder` → ejecutor de código (pineado al modelo Coding con Victoria; delegar implementación tras el plan)
 - `Thinker` → razonador profundo (id normal + kwargs thinking ON budget 8192 (2026-11-06); lógica sutil/verificación de planes; análisis puro)
+- `Dokploy` → PaaS self-hosted: proyectos, aplicaciones, compose, BDs, servidores, dominios, certificados, despliegues, backups, monitoreo — API key `x-api-key` (BUG: bodyParser false, mutaciones via UI)
 - Doctrina ruteo (11-02, ampliada 11-03 con Thinker; reforzada 11-06; auto-route 11-10; **auto-route GATEWAY 11-11 v3**): Using = ÚNICO modelo de sesión. **NIVEL GATEWAY (11-11, el que manda)**: el gateway de Alfredo Pro clasifica cada turno y enruta SOLO — CODE→motor coder (cap coder + sin imágenes + prompt+output cabe en 163840 + ≤128K + ≥1000 tokens; coder cargando con prompt ≥40K → **espera inline hasta 120s** y aterriza en el coder; si no, generalista **con thinking ON** y pre-warm del coder si está parado; prompt diminuto → generalista sin thinking), REASONING→thinking ON, CONVERSATION→normal; explícito del cliente SIEMPRE gana (**`-normal`/`-fast` es NEUTRO** — OFF real = reasoning_effort none/minimal o enable_thinking=false); auditado en usage_log (route/route_reason). **NIVEL AGENTE (opcional, belt)**: auto-route skill clasifica cada turno: CONVERSATION → Using directo; PLAN → Task @Thinker (thinking ON); CODE → Task @Coder (modelo Coding). Código sustancial → Task Coder (edit chico → directo); razonamiento profundo → Task Thinker; imágenes/3D/animar/podcast = skills/wrappers; nube FUERA del flujo (solo manual owner); capacidad faltante = motor local; contextos calibrados NO tocar (220K/160K/1M). Delegación explícita `@Coder`/`@Thinker` SIEMPRE respeta sobre auto.
 - Regla: llamar SOLO si coincide misión exacta (Task directo o `@Nombre` — salen todos en el autocomplete `@`; Tab solo lista primaries: Plan/Build/Victoria). Si el subagente edita, él escribe su CHANGELOG + Victoria escribe el general.
 - Sampling por rol (2026-10-03, doctrina flota espejo Kalimete; model card NVFP4: coding 0.6/0.95, general 1.0/0.95): Victoria + creativos (Meta Business, Sonic) `temperature 0.6 + top_p 0.95`; infra (vLLM, OpenClaw, Comfyui, RSS, Weather, CloudFlare, Liveportrait, Gpu) `temperature 0.1`. Sin frontmatter vLLM usa default 1.0.
