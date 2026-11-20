@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# armada-llm-provision — crea keys LLM por negocio en el gateway de Victoria.
+# Decisión owner 2026-10-20: keys por negocio (rol services fijo server-side),
+# provisioning automatizado — checklist onboarding: crear tenant ERP → conectar
+# plugin → ESTE script → chatbot nativo.
+#
+# Receta validada LIVE (Victoria Server, 2026-10-20):
+#   POST /v1/provision-key  (LAN http://10.0.0.5:8010 == público victoria.armada.do)
+#   Auth: key con cap 'provision' (usa la key kalimete del opencode.jsonc, provider vllm-lan)
+#   Payload: {"name":"<slug>", "owner"?: "..."}  → server fuerza armada-<slug>, rol services,
+#            caps ["llm"], rate 120/min, 2 slots. 201 devuelve material UNA sola vez.
+#   Errores: 400 ya existe (NO idempotente) · 403 sin cap · 429 (>10/hora) · 422 validación.
+#
+# Uso: armada-llm-provision <slug-negocio> ["Nombre del Owner"] [--test]
+#   --test : tras crear, valida la key con un ping de chat (sin imprimir el material)
+# El material JAMÁS va por stdout/logs — se escribe directo a ~/.secrets/<slug>-llm.key (600).
+set -euo pipefail
+
+GW_LAN="http://10.0.0.5:8010"
+SLUG="${1:-}"
+[ -z "$SLUG" ] && { sed -n '2,16p' "$0"; exit 1; }
+OWNER=""
+DO_TEST=0
+for a in "$@"; do
+  case "$a" in
+    --test) DO_TEST=1 ;;
+    --*) echo "[!] opción desconocida: $a"; exit 1 ;;
+    *) [ "$a" = "$SLUG" ] || OWNER="$a" ;;
+  esac
+done
+
+SECRETS_DIR="$HOME/.secrets"
+OUT="$SECRETS_DIR/$SLUG-llm.key"
+
+# Custodia previa: si ya hay material, no re-provisionar (el API no re-emite).
+if [ -s "$OUT" ]; then
+  echo "[!] Ya existe material custodiado en $OUT — borra el archivo si quieres re-provisionar."
+  exit 0
+fi
+
+# Provisioner key: kalimete (cap provision) desde opencode.jsonc provider vllm-lan.
+PROV_KEY="$(python3 - <<'PY' || true
+import json, os, re
+p = os.path.expanduser('~/.config/opencode/opencode.jsonc')
+s = open(p).read()
+try:
+    d = json.loads(s)
+except json.JSONDecodeError:
+    s2 = re.sub(r'^\s*//.*$', '', s, flags=re.M)  # jsonc: solo comentarios de línea completa
+    d = json.loads(s2)
+print(d['provider']['vllm-lan']['options']['apiKey'])
+PY
+)"
+if [ -z "$PROV_KEY" ]; then
+  echo "[ERROR] No pude leer la provisioner key (opencode.jsonc → provider vllm-lan → apiKey)."
+  exit 1
+fi
+
+echo "[i] Provisionando armada-$SLUG en el gateway de Victoria..."
+RESP="$(curl -s -w $'\n%{http_code}' -X POST "$GW_LAN/v1/provision-key" \
+  -H "Authorization: Bearer $PROV_KEY" \
+  -H 'Content-Type: application/json' \
+  -d "{\"name\":\"$SLUG\"${OWNER:+,\"owner\":\"$OWNER\"}}")"
+CODE="${RESP##*$'\n'}"
+BODY="${RESP%$'\n'*}"
+
+case "$CODE" in
+  201)
+    python3 - "$BODY" "$OUT" <<'PY'
+import json, sys, os
+body, out = sys.argv[1], sys.argv[2]
+d = json.loads(body)
+key = d.get('key') or d.get('api_key') or d.get('plaintext') or d.get('token')
+if not key or not key.startswith('vllm-key-'):
+    print('[ERROR] 201 sin material reconocible — campos de respuesta:', list(d.keys()))
+    sys.exit(1)
+os.makedirs(os.path.dirname(out), exist_ok=True)
+fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+with os.fdopen(fd, 'w') as f:
+    f.write(key + '\n')
+os.chmod(out, 0o600)
+meta = {k: v for k, v in d.items()
+        if not any(t in k.lower() for t in ('key', 'plaintext', 'token', 'secret'))}
+print('[OK] key creada:', json.dumps(meta, ensure_ascii=False))
+print('[OK] material custodiado →', out, f'({os.path.getsize(out)} bytes, mode 600)')
+PY
+    ;;
+  400)
+    echo "[!] Ya existe una key 'armada-$SLUG' — el API NO re-emite material (no idempotente)."
+    echo "    Si no tienes el material: desactívala desde el panel LAN (victoria.local/admin) y re-ejecuta."
+    exit 2
+    ;;
+  403)
+    echo "[!] 403 provision_forbidden — la provisioner key no tiene cap 'provision'."
+    exit 3
+    ;;
+  429)
+    echo "[!] 429 provision_rate_limited — máximo 10 creaciones/hora por provisioner. Reintenta más tarde."
+    exit 4
+    ;;
+  *)
+    echo "[!] HTTP $CODE — respuesta: $BODY"
+    exit 5
+    ;;
+esac
+
+if [ "$DO_TEST" = 1 ] && [ -s "$OUT" ]; then
+  echo "[i] Test de inferencia con la nueva key (model -normal, ping 5 tokens)..."
+  TCODE="$(curl -s -o /dev/null -w '%{http_code}' "$GW_LAN/v1/chat/completions" \
+    -H "Authorization: Bearer $(cat "$OUT")" \
+    -H 'Content-Type: application/json' \
+    -d '{"model":"nvidia/Qwen3.6-35B-A3B-NVFP4-normal","messages":[{"role":"user","content":"ping"}],"max_tokens":5}')"
+  if [ "$TCODE" = "200" ]; then
+    echo "[OK] test chat: HTTP 200 — la key responde inferencia."
+  else
+    echo "[!] test chat: HTTP $TCODE — revisa el gateway/la key."
+    exit 6
+  fi
+fi
+
+echo "[i] Siguiente paso: configurar el negocio — wp-admin → Ajustes → Asistente IA"
+echo "    (URL $GW_LAN/v1 en LAN / https://victoria.armada.do/v1 en prod, key del archivo, model nvidia/Qwen3.6-35B-A3B-NVFP4-normal)"
+echo "    o vía ops API una vez que el Guard 5.4.3 permita la escritura remota."
