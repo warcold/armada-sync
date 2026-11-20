@@ -342,8 +342,8 @@ gateway inyecta `stream_options.include_usage=true` y parsea el chunk SSE final 
 → el 99.97% del tráfico (todo el streaming) SÍ se cuenta y factura. Antes del fix los
 balances estaban ~1000x por debajo de la realidad (ver CHANGELOG 2026-08-30 04:20).
 
-### Auth de los sentidos — excepción host-admin (verificado 2026-09-30)
-Los 5 sentidos aceptan llave gateway (`admin`/`services`, más roles de servicio `art`/`tts` (voz TTS Qwen3)/`whisper`/`liveportrait`/`comfyui` en `sense_auth.py`) con localhost+docker sin llave y LAN con llave. **EXCEPCIÓN: `victoria-host-admin.service` (:18840) exige auth SIEMPRE, incluso en `/health` y desde localhost** (es el sentido más poderoso: exec/apt/services del host). `curl :18840/health` sin llave → `401 unauthorized` = NORMAL, no es caída. Los otros 4 (`:18810/:18811/:18820/:18830`) sí responden `/health` abierto.
+### Auth de los skills — excepción host-admin (verificado 2026-09-30)
+Los 5 skills aceptan llave gateway (`admin`/`services`, más roles de servicio `art`/`tts` (voz TTS Qwen3)/`whisper`/`liveportrait`/`comfyui` en `sense_auth.py`) con localhost+docker sin llave y LAN con llave. **EXCEPCIÓN: `victoria-host-admin.service` (:18840) exige auth SIEMPRE, incluso en `/health` y desde localhost** (es el sentido más poderoso: exec/apt/services del host). `curl :18840/health` sin llave → `401 unauthorized` = NORMAL, no es caída. Los otros 4 (`:18810/:18811/:18820/:18830`) sí responden `/health` abierto.
 
 ### No-Touch Items
 

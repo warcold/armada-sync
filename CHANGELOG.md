@@ -1,3 +1,158 @@
+### [2026-11-20 23:00 EST] [dokploy] victoria-shared: PostgreSQL, Redis, Mailpit desplegados
+- **Tipo**: infra + shared services
+- **Qué**: 3 composes en proyecto victoria-shared: postgres (5432), redis (6379), mailpit (1025/8025). Todos healthy, restart unless-stopped.
+- **Por qué**: infraestructura compartida para aplicaciones (DB, cache, email testing).
+- **Impacto**: victoria-shared ya no está vacío; provee servicios base.
+- **Verificado**: pg_isready, redis-cli ping, mailpit API v1/info.
+- **Docs**: CHANGELOG-dokploy.md actualizado.
+
+### [2026-11-20 22:30 EST] [gateway] Granular caps para 17 skills (best practice)
+- **Tipo**: architecture + security
+- **Qué**: ALL_CAPABILITIES 9→17 (nuevas: video, nav, whois, host_admin, sonic, hunyuan3d, animar). SENSE_ELEVATION_CAPS incluye los 7 nuevos. ROLE_DEFAULT_MODELS actualizado: services=all skills, art=creative skills, 7 roles específicos nuevos. _CAP_FRIENDLY para hints 403 uniformes. admin_template.html con 17 checkboxes + 14 roles. ROLE_DEFAULT_RATE_LIMIT actualizado (host_admin=30/min).
+- **Por qué**: principio de menor privilegio, consistencia, auditoría granular. Antes solo 5 skills tenían caps propios.
+- **Impacto**: keys existentes sin allowed_models usan preset del rol (services ahora incluye todos los skills). Keys con allowed_models personalizado no cambian. Panel admin permite control granular.
+- **Verificado**: sense_auth elevation funciona para todos los nuevos caps; gateway health OK; inferencia OK.
+- **Docs**: CHANGELOG-dokploy.md, sense_auth.py, llm-gateway.py, admin_template.py.
+
+### [2026-11-20 21:45 EST] [dokploy] Renombrado proyecto victoria-sentidos → victoria-skills
+- **Tipo**: docs + naming
+- **Qué**: Proyecto Dokploy renombrado vía API (`project.update`); actualizada toda la documentación referenciada (AGENTS.md, agents/*.md, harness, CHANGELOGs, sense_auth.py, knowledge, snapshots). Archivo compose renombrado.
+- **Por qué**: "sentidos" no describe correctamente estos servicios (son skills/habilidades: voice, video, nav, whois, host-admin).
+- **Impacto**: Solo nomenclatura; cero cambios funcionales.
+- **Verificado**: Proyecto en Dokploy muestra "victoria-skills"; docs consistentes.
+
+### [2026-11-20 21:00 EST] [dokploy] Cutover GATEWAY a producción (:8010) — COMPLETADO
+- **Tipo**: infra + migration + production
+- **Qué**: (1) Parado `victoria-llm-gateway` systemd, puerto 8010 libre. (2) Compose gateway actualizado con mount completo `.victoria-llm`, `ADMIN_PASS`, `VLLM_URL=172.17.0.1:8000`, red `dokploy-network` external. (3) Desplegado `vd-gateway` → healthy en 36s. (4) Verificado: `/health` OK, inferencia con key `alfredo-pro-internal` OK, admin panel LAN-only correcto. (5) `systemctl disable victoria-llm-gateway` (unit intacto para rollback inmediato).
+- **Por qué**: gateway es el servicio crítico de inferencia; cutover coordinado sin pérdida de datos, rollback <5s.
+- **Impacto**: gateway ahora es contenedor Dokploy gestionado; ~2-3 min downtime durante swap (clients reintentan). vLLM/sandbox/voice/host-admin/gpu-saver/sonic/comfyui/liveportrait/n8n intactos en host/nemoclay.
+- **Verificado**: health + inferencia + admin panel + rollback path.
+- **Docs**: `CHANGELOG-dokploy.md` actualizado.
+
+### [2026-11-20 20:00 EST] [dokploy] Hito 2: whois/video/webnav validados, gateway preparado
+- **Tipo**: infra + migration
+- **Qué**: (1) Dockerfiles corregidos: video (sin whisper, deno en /usr/local), webnav (chromium bundled, env CHROMIUM_PATH), gateway (sin stdlib). (2) victoria-video-server.py: get_vlm_key() usa ?mode=ro para mount DB readonly; env vars para portabilidad. (3) 3 servicios validados vía Dokploy: whois en producción :18830 (sandbox OK), video :28811 (yt-dlp + DB read OK), webnav :28820 (playwright navega web). (4) Compose gateway guardado (AxWZzfekvSncpJTOQ4oea) NO desplegado: puerto 8010 conflicto con systemd; cutover requiere parar victoria-llm-gateway. (5) autoDeploy disabled para gateway.
+- **Por qué**: validar el pipeline Dokploy completo sin interrumpir producción; preparar gateway para cutover coordinado.
+- **Impacto**: whois ahora es contenedor Dokploy (unit host disabled). video/webnav en puertos alternos (validación).
+- **Verificado**: whois sandbox wrapper, video /health + yt-dlp probe, webnav /navigate example.com → "Example Domain".
+- **Docs**: `CHANGELOG-dokploy.md` actualizado.
+
+### [2026-11-20 15:20 EST] [dokploy] API tRPC corregida + Hito 1 + whois migrado a Dokploy (primer servicio real)
+- **Tipo**: infra + migration
+- **Qué**: (1) Corregido el diagnóstico del agente Dokploy: el "bug bodyParser" era falso — las mutaciones funcionan con `POST /api/trpc/<proc>` body `{"json":{...}}`; queries con input van `GET ?input={"json":{...}}`. (2) Org renombrada a "Alfredo Pro LLC"; proyectos `victoria-shared`, `victoria-gateway`, `victoria-sentidos`; red `victoria-gpu` registrada. (3) Bugs del scaffolding corregidos: requirements.gateway con paquetes stdlib, Dockerfiles sin `COPY sense_auth.py`, whois sin curl. (4) Gateway build+E2E OK en contenedor (DOKPLOY-OK vía host vLLM), compose guardado SIN desplegar. (5) **whois migrado**: `vd-whois` healthy en :18830 vía compose Dokploy, verificado desde host, 172.18.0.1 y wrapper del sandbox; unit host stopped+disabled (rollback trivial).
+- **Por qué**: avanzar la migración a Dokploy sin romper nada y validar el pipeline completo con el servicio de menor riesgo.
+- **Impacto**: whois ahora es contenedor Dokploy; vLLM/sandbox NO se migran (gestionados por nemoclaw/openshell). Networking: whois bind 0.0.0.0 para el bridge del sandbox.
+- **Verificado**: /health + whois github.com desde 3 rutas; compose.deploy "done"; contenedor healthy.
+- **Nota**: `openclaw-bridge-ensure.sh` ahora salta el unit host si existe el contenedor `vd-whois` (evita pelea por :18830). Rollback whois: parar compose + `systemctl enable --now victoria-whois-server`.
+- **Docs**: `agents/dokploy.md` reescrito + `CHANGELOG-dokploy.md`.
+
+### [2026-11-20 19:45 EST] [gateway] Nombres de llaves limpiados — solo nombre identitario, sin metadata redundante
+- **Tipo**: cleanup + UX
+- **Qué**: Todos los `owner` simplificados a nombre limpio (rol + caps + tier ya dicen el propósito):
+
+| Llave | Antes | Después |
+|---|---|---|
+| `victoria` | Victoria Armada — stack principal | **Victoria Armada** |
+| `alfredo` | Alfredo Armada — owner | **Alfredo Armada** |
+| `juancarlos` | Juan Carlos Jerez — cliente (Desarrollo) | **Juan Carlos Jerez** |
+| `jordan-diaz` | Jordan Diaz — cliente (Desarrollo) | **Jordan Diaz** |
+| `kalimete` | Alfredo Pro — máquina dev interna (eval...) | **Kalimete** |
+| `alfredo-pro-internal` | Alfredo Pro — internal consolidado... | **Alfredo Pro Internal** |
+| `armada-magantech-2` | MaganTech SRL — chatbot web cliente... | **MaganTech SRL** |
+| `armada-micaserogou` | Micaserogou — chatbot web cliente... | **Micaserogou** |
+| `warcold` | warcold — acceso remoto readonly... | **warcold** |
+
+- **Por qué**: El panel admin ya muestra `role`, `allowed_models`, `rate_limit`, `active`, `last_used` — el owner no necesita repetir "cliente desarrollo" ni "chatbot web". Nombre limpio = lectura rápida.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,owner,role FROM api_keys WHERE active=1"` — 9 llaves, nombres limpios.
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
+### [2026-11-20 19:30 EST] [gateway] Tier `business` para chatbots de clientes + gobernanza de llaves completa
+- **Tipo**: governance + organization
+- **Qué**: Estructura de tiers/roles clara para todas las llaves activas (9):
+
+**TIER ADMIN** (acceso total + panel)
+| Llave | Propósito |
+|---|---|
+| `victoria` | Stack principal (orquestadora) |
+| `alfredo` | Owner (Alfredo Armada) |
+
+**TIER CODER** (chat + motor de código + caps extra)
+| Llave | Propósito | Caps |
+|---|---|---|
+| `juancarlos` | Cliente desarrollo | `llm` + `coder` (preset) |
+| `jordan-diaz` | Cliente desarrollo | `llm` + `coder` (preset) |
+| `kalimete` | **Máquina dev interna** — evaluación performance/patrones/errores clientes + provisioning `armada-*` | `llm,coder,art,tts,whisper,provision` |
+
+**TIER SERVICES** (nuestros sistemas internos automatizados)
+| Llave | Propósito | Caps |
+|---|---|---|
+| `alfredo-pro-internal` | **Consolidada**: sandbox art-gen + voz PTT + broadcasts | `llm,art,tts,whisper` |
+
+**TIER BUSINESS** (chatbots web de clientes — customer-facing)
+| Llave | Cliente | Propósito | Caps |
+|---|---|---|---|
+| `armada-magantech-2` | MaganTech SRL | Chatbot web (prod+preprod) | `llm` (solo chat) |
+| `armada-micaserogou` | Micaserogou | Chatbot web | `llm` (solo chat) |
+
+**TIER READONLY** (acceso público controlado)
+| Llave | Propósito |
+|---|---|
+| `warcold` | Acceso remoto readonly (config-guide only) |
+
+- **Regla de caps**: `llm` = base universal (siempre activo). `services` role da `art` por defecto, pero `allowed_models` explícito restringe a lo necesario. Business chatbots **solo `llm`** — no `coder`, no `art`, no voz, no provisioning.
+- **Separación clara**: `services` = nuestros sistemas internos; `business` = chatbots de clientes (aunque ambos usan role `services` en DB, el `allowed_models` y el owner lo diferencian).
+- **Metering aislado** por llave → facturación/analytics por cliente/sistema.
+
+- **Verificado**: 9 llaves activas, estructura limpia, sin llaves huérfanas ni de prueba.
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
+### [2026-11-20 19:15 EST] [gateway] INCIDENTE DE SEGURIDAD: `apps-armada` COMPROMETIDA + Master keys internas establecidas
+- **Tipo**: security incident + governance
+- **Hallazgo crítico**: `apps-armada` (creada 2026-11-16, role `coder`, 2,754 requests en 3 días) **NO es un servicio interno** — estaba siendo usada desde **2 IPs externas ajenas a nuestra infraestructura**:
+  - `154.53.35.102` (AfriNIC, red africana) — 2,345 requests (85%)
+  - `2605:a142:2298:7483::1` (Contabo Inc., VPS Alemania) — 407 requests (15%)
+  - Solo 2 requests de `127.0.0.1` al crearse (test inicial)
+- **Patrón de uso**: prompts creciendo progresivamente 7K→169K tokens, todos `CODE` intent → auto-route intentaba mandar al coder pero excedían límite 128K → fallback a generalista con `thinking ON` (`code_think_fallback:prompt_too_big`). Burst final 2026-11-19 02:00-03:00 (204 req/hr) y **cesó totalmente tras 03:00**.
+- **Acción inmediata**: **REVOCADA** (`deactivated` via admin API). Key plaintext: `vllm-key-1fe50e0de12a4f5c5d1d54c67f3c51fe53c7129a91197451670527aea21f910a` — **rotar si se usó en algún deploy**.
+- **Origen desconocido**: No hay referencia en codebase, no está en `provision_log`, owner genérico "apps-armada". Probable fuga accidental (config compartida, log expuesto, o acceso interno malintencionado).
+- **Clientes legítimos confirmados**: `juancarlos` (Contabo VPS — su infra), `jordan-diaz` (Claro/Rep.Dom — su ISP), `kalimete` (10.0.0.106 LAN — nuestra máquina). Uso externo en claves de clientes = esperado.
+
+**Master Keys Internas Establecidas (governance clara):**
+
+| Llave | Role | Caps (allowed_models) | Propósito |
+|---|---|---|---|
+| `kalimete` | `coder` | `["llm","coder","art","tts","whisper","provision"]` | **Máquina dev interna** — evaluación performance real, patrones uso, errores clientes; provisioning `armada-*` |
+| `alfredo-pro-internal` | `services` | `["llm","art","tts","whisper"]` | **Servicios internos consolidados** — sandbox art-gen (OpenClaw), voz PTT (Kalimete-ptt), broadcasts |
+
+- Separación de responsabilidades: `kalimete` = dev interactiva + evaluación + provisioning; `alfredo-pro-internal` = servicios automatizados (sin `coder`, sin `provision`).
+- Metering aislado por propósito.
+- `apps-armada` **NO va a master key** — era clave comprometida, no servicio nuestro.
+
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,role,active,allowed_models FROM api_keys WHERE active=1"` — 9 llaves activas, estructura limpia.
+- **Pendiente**: Rotar key plaintext si estaba en algún deploy/config externo; revisar logs de acceso admin (¿quién la creó el 11-16?).
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
+### [2026-11-20 18:45 EST] [gateway] Consolidación de llaves internas + re-clasificación Kalimete como evaluación
+- **Tipo**: refactor + governance
+- **Qué**: 
+  1. **Consolidación de 3 llaves internas en 1**: `victoria-openclaw-sandbox` (art), `kalimete-ptt` (services, voz), `servicios-alfredo-pro-llc` (services, broadcasts) → **`alfredo-pro-internal`** (role `services`, caps `["llm","art","tts","whisper"]`). Una sola llave para todos los sistemas internos de Alfredo Pro (sandbox art-gen, voz conversacional PTT, broadcasts), con tiers correctos base+add-ons (llm base + art + tts + whisper).
+  2. **Re-clasificación de `kalimete`**: de "cliente desarrollo" a **"Alfredo Pro — máquina dev interna (evaluación performance/clientes)"** (role `coder`, caps completas `["llm","coder","art","tts","whisper","provision"]`). Objetivo: usar nuestra propia máquina dev como "cliente interno" para medir performance real, patrones de uso y errores que reportan los clientes reales — mejorar nuestros sistemas basándonos en data viva.
+- **Por qué**: 
+  - Las 3 llaves internas eran fragmentación innecesaria (mismo dueño, mismo propósito: nuestros sistemas).
+  - `kalimete-ptt` necesitaba `tts`+`whisper` (voz) que el role `services` no daba por defecto; `victoria-openclaw-sandbox` necesitaba `art`; `servicios-alfredo-pro-llc` necesitaba `art` para broadcasts con imágenes. La consolidada tiene todo.
+  - `kalimete` ya tenía caps completas (incluye `provision` para crear llaves `armada-*`); el cambio es solo semántico/agrupación: ahora está en el grupo "interno" para evaluación, no mezclado con clientes externos.
+- **Impacto**: 10 llaves activas (2 admin, 4 coder, 1 readonly, 3 services). 3 llaves internas consolidadas → 1. 4 llaves desactivadas preservadas (historial). `kalimete` sigue activa con mismas caps, solo metadata actualizada.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,role,active,allowed_models FROM api_keys WHERE active=1"` — estructura limpia.
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
+### [2026-11-20 18:30 EST] [gateway] Limpieza de API keys: desactivar dormantes >1 semana + eliminar llaves de prueba
+- **Tipo**: maintenance + security
+- **Qué**: (1) Desactivada `justin-t` (coder, cliente dormante, último uso 2026-11-11 = 9 días); (2) Eliminadas ~25 llaves de prueba creadas el 2026-11-10 (patrones `test-*`, `final-*`, `debug-*`, `merge-*`, `armada-test-*`, `jordan-diaz-cliente-services`) — todas con 0-3 requests y nombres evidentemente de prueba.
+- **Por qué**: Reducir superficie de ataque, limpiar auditoría, evitar confusión en panel admin. Las llaves de usuarios reales (victoria, alfredo, juancarlos, jordan-diaz, servicios-alfredo-pro-llc, kalimete, kalimete-ptt, apps-armada, armada-micaserogou, victoria-openclaw-sandbox, armada-magantech-2, warcold) **sin tocar**.
+- **Impacto**: 12 llaves activas (todas en uso real), 5 inactivas preservadas por historial (justin-t, armada-magantech, vaclaaw, erp-bot, michael-prestol), ~25 eliminadas.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,active,last_used FROM api_keys"` — solo llaves reales quedan activas.
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).

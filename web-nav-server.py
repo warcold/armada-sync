@@ -21,7 +21,7 @@ except ImportError:
 
 HOST = "0.0.0.0"
 PORT = 18820
-CHROMIUM_PATH = "/snap/bin/chromium"  # Chromium del host
+CHROMIUM_PATH = os.environ.get("CHROMIUM_PATH", "/snap/bin/chromium")  # Chromium del host
 
 start_time = time.time()
 total_requests = 0

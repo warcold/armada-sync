@@ -5,14 +5,15 @@
   "service": "dokploy",
   "ports": {
     "api": 3000,
-    "ui": 8081,
-    "traefik_dashboard": 8080
+    "ui_https": "dokploy.victoria.local (nginx -> 127.0.0.1:3000)"
   },
   "containers": [
     {
       "name": "dokploy",
       "image": "dokploy/dokploy:v0.31.4",
-      "ports": ["3000:3000"],
+      "ports": [
+        "3000:3000"
+      ],
       "volumes": [
         "/var/run/docker.sock:/var/run/docker.sock",
         "dokploy-data:/data"
@@ -22,7 +23,12 @@
         "ADMIN_PASSWORD": "${ADMIN_PASS}"
       },
       "healthcheck": {
-        "test": ["CMD", "curl", "-f", "http://localhost:3000/api/trpc/project.all?batch=1"],
+        "test": [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:3000/api/trpc/project.all"
+        ],
         "interval": "30s",
         "timeout": "10s",
         "retries": 3,
@@ -32,8 +38,12 @@
     {
       "name": "dokploy-postgres",
       "image": "postgres:16-alpine",
-      "ports": ["5432:5432"],
-      "volumes": ["dokploy-postgres:/var/lib/postgresql/data"],
+      "ports": [
+        "5432:5432"
+      ],
+      "volumes": [
+        "dokploy-postgres:/var/lib/postgresql/data"
+      ],
       "environment": {
         "POSTGRES_DB": "dokploy",
         "POSTGRES_USER": "dokploy",
@@ -43,13 +53,21 @@
     {
       "name": "dokploy-redis",
       "image": "redis:7-alpine",
-      "ports": ["6379:6379"],
-      "volumes": ["dokploy-redis:/data"]
+      "ports": [
+        "6379:6379"
+      ],
+      "volumes": [
+        "dokploy-redis:/data"
+      ]
     },
     {
       "name": "dokploy-traefik",
       "image": "traefik:v3.1",
-      "ports": ["80:80", "443:443", "8080:8080"],
+      "ports": [
+        "80:80",
+        "443:443",
+        "8080:8080"
+      ],
       "volumes": [
         "/var/run/docker.sock:/var/run/docker.sock:ro",
         "/etc/traefik:/etc/traefik:ro",
@@ -139,20 +157,32 @@
       "name": "victoria-shared",
       "description": "Infra base: red, volúmenes bind-mount, PostgreSQL, Redis",
       "applications": 0,
-      "resources": ["network", "volumes", "postgres", "redis"]
+      "resources": [
+        "network",
+        "volumes",
+        "postgres",
+        "redis"
+      ]
     },
     {
       "name": "victoria-llm",
       "description": "Modelos LLM (vLLM Main + Coder)",
       "applications": 2,
-      "containers": ["vllm-main", "vllm-coder"],
+      "containers": [
+        "vllm-main",
+        "vllm-coder"
+      ],
       "gpu": true
     },
     {
       "name": "victoria-gateway",
       "description": "Gateway FastAPI (API + Admin + Metering)",
       "applications": 3,
-      "containers": ["gateway-api", "gateway-admin", "gateway-metering"]
+      "containers": [
+        "gateway-api",
+        "gateway-admin",
+        "gateway-metering"
+      ]
     },
     {
       "name": "victoria-openclaw",
@@ -191,7 +221,7 @@
       "gpu": true
     },
     {
-      "name": "victoria-sentidos",
+      "name": "victoria-skills",
       "description": "Autonomía de Victoria",
       "applications": 5,
       "containers": [
@@ -216,31 +246,139 @@
     }
   ],
   "healthchecks": {
-    "traefik": { "port": 8080, "endpoint": "/api/overview", "interval": "30s" },
-    "gpu-saver": { "port": 18890, "endpoint": "/health", "auth": "X-API-Key", "interval": "30s" },
-    "cloudflared": { "cmd": "cloudflared tunnel info", "interval": "60s" },
-    "vllm-main": { "port": 8000, "endpoint": "/health", "interval": "60s", "start_period": "300s" },
-    "vllm-coder": { "port": 8001, "endpoint": "/health", "interval": "60s", "start_period": "300s" },
-    "gateway-api": { "port": 8010, "endpoint": "/health", "interval": "30s" },
-    "gateway-admin": { "port": 8011, "endpoint": "/admin/health", "interval": "30s" },
-    "openclaw-sandbox": { "port": 18790, "endpoint": "/health", "interval": "30s", "start_period": "60s" },
-    "openclaw-publisher": { "port": 18800, "endpoint": "/health", "interval": "30s" },
-    "openclaw-voice": { "port": 18810, "endpoint": "/health", "interval": "30s", "start_period": "60s" },
-    "openclaw-video": { "port": 18811, "endpoint": "/health", "interval": "30s" },
-    "openclaw-nav": { "port": 18820, "endpoint": "/health", "interval": "30s", "start_period": "60s" },
-    "openclaw-whois": { "port": 18830, "endpoint": "/health", "interval": "30s" },
-    "openclaw-host-admin": { "port": 18840, "endpoint": "/health", "auth": "bridge-key", "interval": "30s" },
-    "comfyui": { "port": 8188, "endpoint": "/system_stats", "interval": "30s" },
-    "liveportrait": { "port": 8180, "endpoint": "/health", "interval": "30s" },
-    "sonic": { "port": 18850, "endpoint": "/health", "interval": "30s" },
-    "hunyuan3d": { "port": 18860, "endpoint": "/health", "interval": "30s", "start_period": "120s" },
-    "lp-animate": { "port": 18861, "endpoint": "/health", "interval": "30s" },
-    "n8n": { "port": 5678, "endpoint": "/healthz", "interval": "30s" },
-    "victoria-voice": { "port": 18810, "endpoint": "/health", "interval": "30s" },
-    "victoria-video": { "port": 18811, "endpoint": "/health", "interval": "30s" },
-    "victoria-nav": { "port": 18820, "endpoint": "/health", "interval": "30s" },
-    "victoria-whois": { "port": 18830, "endpoint": "/health", "interval": "30s" },
-    "victoria-host-admin": { "port": 18840, "endpoint": "/health", "auth": "bridge-key", "interval": "30s" }
+    "traefik": {
+      "port": 8080,
+      "endpoint": "/api/overview",
+      "interval": "30s"
+    },
+    "gpu-saver": {
+      "port": 18890,
+      "endpoint": "/health",
+      "auth": "X-API-Key",
+      "interval": "30s"
+    },
+    "cloudflared": {
+      "cmd": "cloudflared tunnel info",
+      "interval": "60s"
+    },
+    "vllm-main": {
+      "port": 8000,
+      "endpoint": "/health",
+      "interval": "60s",
+      "start_period": "300s"
+    },
+    "vllm-coder": {
+      "port": 8001,
+      "endpoint": "/health",
+      "interval": "60s",
+      "start_period": "300s"
+    },
+    "gateway-api": {
+      "port": 8010,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "gateway-admin": {
+      "port": 8011,
+      "endpoint": "/admin/health",
+      "interval": "30s"
+    },
+    "openclaw-sandbox": {
+      "port": 18790,
+      "endpoint": "/health",
+      "interval": "30s",
+      "start_period": "60s"
+    },
+    "openclaw-publisher": {
+      "port": 18800,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "openclaw-voice": {
+      "port": 18810,
+      "endpoint": "/health",
+      "interval": "30s",
+      "start_period": "60s"
+    },
+    "openclaw-video": {
+      "port": 18811,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "openclaw-nav": {
+      "port": 18820,
+      "endpoint": "/health",
+      "interval": "30s",
+      "start_period": "60s"
+    },
+    "openclaw-whois": {
+      "port": 18830,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "openclaw-host-admin": {
+      "port": 18840,
+      "endpoint": "/health",
+      "auth": "bridge-key",
+      "interval": "30s"
+    },
+    "comfyui": {
+      "port": 8188,
+      "endpoint": "/system_stats",
+      "interval": "30s"
+    },
+    "liveportrait": {
+      "port": 8180,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "sonic": {
+      "port": 18850,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "hunyuan3d": {
+      "port": 18860,
+      "endpoint": "/health",
+      "interval": "30s",
+      "start_period": "120s"
+    },
+    "lp-animate": {
+      "port": 18861,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "n8n": {
+      "port": 5678,
+      "endpoint": "/healthz",
+      "interval": "30s"
+    },
+    "victoria-voice": {
+      "port": 18810,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "victoria-video": {
+      "port": 18811,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "victoria-nav": {
+      "port": 18820,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "victoria-whois": {
+      "port": 18830,
+      "endpoint": "/health",
+      "interval": "30s"
+    },
+    "victoria-host-admin": {
+      "port": 18840,
+      "endpoint": "/health",
+      "auth": "bridge-key",
+      "interval": "30s"
+    }
   },
   "scripts": {
     "validate_project": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/project.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, description}'",
@@ -290,7 +428,28 @@
     "Phase 4: victoria-gateway (api, admin, metering)",
     "Phase 5: victoria-openclaw (13 containers)",
     "Phase 6: victoria-art (7 containers)",
-    "Phase 7: victoria-sentidos (5 containers)",
+    "Phase 7: victoria-skills (5 containers)",
     "Phase 8: Cutover DNS + 24h validation + shutdown legacy"
-  ]
+  ],
+  "migration_state": {
+    "org": "Alfredo Pro LLC",
+    "projects": [
+      "victoria-shared",
+      "victoria-gateway",
+      "victoria-skills"
+    ],
+    "network": "victoria-gpu",
+    "migrated": {
+      "whois": "vd-whois :18830 (compose KPkMeQye3QIfDfAYDxDwL)"
+    },
+    "prepared_not_deployed": {
+      "gateway": "victoria-gateway:1.0 (compose AxWZzfekvSncpJTOQ4oea)"
+    },
+    "not_migrated": [
+      "nemoclaw-vllm (nemoclaw)",
+      "openshell sandbox",
+      "host-admin",
+      "gpu-saver (host-only)"
+    ]
+  }
 }

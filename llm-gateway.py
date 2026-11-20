@@ -1121,16 +1121,23 @@ VALID_ROLES = ("admin", "coder", "services", "art", "readonly", "llm",
 # upgrade); coder programa (chat + motor coder); services vive (chat+arte);
 # art genera Y conversa (un cerebro para todos); readonly solo lee la guia.
 ROLE_DEFAULT_MODELS = {
-    "admin": ["llm", "coder", "art", "liveportrait", "comfyui", "tts", "whisper", "n8n"],
+    "admin": ["llm", "coder", "art", "liveportrait", "comfyui", "tts", "whisper", "n8n", "video", "nav", "whois", "host_admin", "sonic", "hunyuan3d", "animar", "provision"],
     "llm": ["llm"],
     "coder": ["llm", "coder"],
-    "services": ["llm", "art", "tts", "whisper"],
-    "art": ["llm", "art", "liveportrait", "comfyui", "tts", "whisper", "n8n"],
+    "services": ["llm", "art", "tts", "whisper", "video", "nav", "whois", "host_admin", "sonic", "hunyuan3d", "animar"],
+    "art": ["llm", "art", "liveportrait", "comfyui", "tts", "whisper", "n8n", "sonic", "hunyuan3d", "animar"],
     "liveportrait": ["liveportrait"],
     "comfyui": ["comfyui", "art"],
     "tts": ["tts"],
     "whisper": ["whisper"],
     "n8n": ["n8n"],
+    "video": ["video"],
+    "nav": ["nav"],
+    "whois": ["whois"],
+    "host_admin": ["host_admin"],
+    "sonic": ["sonic"],
+    "hunyuan3d": ["hunyuan3d"],
+    "animar": ["animar"],
     "readonly": [],
 }
 # Rate limit por rol al crear llaves (equidad total 2026-09-17): TODOS los
@@ -1150,6 +1157,13 @@ ROLE_DEFAULT_RATE_LIMIT = {
     "tts": 60,
     "whisper": 60,
     "n8n": 60,
+    "video": 60,
+    "nav": 60,
+    "whois": 60,
+    "host_admin": 30,
+    "sonic": 60,
+    "hunyuan3d": 60,
+    "animar": 60,
     "readonly": 1000,
 }
 
@@ -1171,6 +1185,13 @@ _CAP_FRIENDLY = {
     "comfyui": "la generación de imágenes",
     "n8n": "los workflows de orquestación",
     "provision": "la creación de llaves de negocio",
+    "video": "el análisis de video (YouTube, frames, transcripción)",
+    "nav": "la navegación web autónoma",
+    "whois": "la consulta de dominios WHOIS",
+    "host_admin": "la administración del host (exec/apt/services)",
+    "sonic": "el podcast con voz sincronizada",
+    "hunyuan3d": "la generación 3D (imagen a GLB)",
+    "animar": "la animación de fotos (LivePortrait headless)",
 }
 
 def _upgrade_hint(key_row, cap):

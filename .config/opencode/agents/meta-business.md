@@ -31,7 +31,7 @@ Garantizar que el contenido agregado vía RSS (tecnología, ciberseguridad, cryp
 | **Discord Pub** | `discord-broadcast.py` | Lee estado RSS, genera opinión (40 words), envía embed con imagen a webhooks | **Dedicado** |
 | **WhatsApp Pub** | `whatsapp-broadcast.py` | Lee estado RSS, genera opinión (40 words), envía imagen + texto a grupos | **Dedicado** |
 | **Token Refresh** | `instagram-token-refresh.py` | Cron semanal (lunes 04:00) para renovar refresh token de Instagram (6 meses vigencia) | **Dedicado** |
-| **Daily Report** | `victoria-daily-report.py` | Reporte DGX-only vía WhatsApp DM al owner (cron 0,8,12,16,20h; quiet hours 01-07 ET auto-skip; flota kalimete EXCLUIDA 2026-10-14 por directiva owner): systemd(15: +hunyuan3d :18860 +lp-animate :18861)+docker(4)+vLLM/gateway+dashboard+8 sentidos (voz/video/nav/whois/admin/sonic/hunyuan/animate)+contenido(5)+UPSTREAM DGX (local vs loopstream)+DOCS (sync 6h, validadas FRESH vs resto ok)+feed+restarts+broadcasts+disco | **Dedicado** (contenido de todos los servicios DGX; si algo sale ⚠️ delegar al dueño) |
+| **Daily Report** | `victoria-daily-report.py` | Reporte DGX-only vía WhatsApp DM al owner (cron 0,8,12,16,20h; quiet hours 01-07 ET auto-skip; flota kalimete EXCLUIDA 2026-10-14 por directiva owner): systemd(15: +hunyuan3d :18860 +lp-animate :18861)+docker(4)+vLLM/gateway+dashboard+8 skills (voz/video/nav/whois/admin/sonic/hunyuan/animate)+contenido(5)+UPSTREAM DGX (local vs loopstream)+DOCS (sync 6h, validadas FRESH vs resto ok)+feed+restarts+broadcasts+disco | **Dedicado** (contenido de todos los servicios DGX; si algo sale ⚠️ delegar al dueño) |
 
 ### Dependencias
 - **Fuente de datos**: `RSS System` (agrega los feeds) y `blogwatcher` (genera el JSON de artículos nuevos).

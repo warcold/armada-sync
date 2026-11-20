@@ -444,7 +444,11 @@ ensure_whois() {
     cid=$(docker ps --filter "name=$SANDBOX_NAME" --format '{{.ID}}' | head -1)
     [ -z "$cid" ] && return 0
 
-    if systemctl is-active --quiet victoria-whois-server.service 2>/dev/null; then
+    # 2026-11-20: whois vive en Dokploy (contenedor vd-whois :18830).
+    # Si el contenedor existe, NO arrancar el unit host: pelearían por el puerto.
+    if docker ps --filter "name=vd-whois" --format '{{.Names}}' 2>/dev/null | grep -q '^vd-whois$'; then
+        :
+    elif systemctl is-active --quiet victoria-whois-server.service 2>/dev/null; then
         :
     else
         log "whois-server host no activo; intentando arrancarlo"

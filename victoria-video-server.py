@@ -35,15 +35,15 @@ import sense_auth
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-HOST = "0.0.0.0"
-PORT = 18811
+HOST = os.environ.get("VIDEO_HOST", "0.0.0.0")
+PORT = int(os.environ.get("VIDEO_PORT", "18811"))
 os.environ["PATH"] = "/home/victoria/.deno/bin:" + os.environ.get("PATH", "")
-VIDEO_ROOT = "/home/victoria/.victoria-custom/videos"
-YTDLP = "/home/victoria/video-venv/bin/yt-dlp"
-FFMPEG = "/usr/bin/ffmpeg"
-FFPROBE = "/usr/bin/ffprobe"
-VOICE_SERVER = "http://127.0.0.1:18810"
-LLM_GATEWAY = "http://127.0.0.1:8010/v1/chat/completions"
+VIDEO_ROOT = os.environ.get("VIDEO_ROOT", "/home/victoria/.victoria-custom/videos")
+YTDLP = os.environ.get("YTDLP_BIN", "/home/victoria/video-venv/bin/yt-dlp")
+FFMPEG = os.environ.get("FFMPEG_BIN", "/usr/bin/ffmpeg")
+FFPROBE = os.environ.get("FFPROBE_BIN", "/usr/bin/ffprobe")
+VOICE_SERVER = os.environ.get("VOICE_SERVER_URL", "http://127.0.0.1:18810")
+LLM_GATEWAY = os.environ.get("LLM_GATEWAY_URL", "http://127.0.0.1:8010/v1/chat/completions")
 LLM_MODEL = "nvidia/Qwen3.6-35B-A3B-NVFP4"
 _started = time.time()
 
@@ -75,13 +75,8 @@ def get_yt_title(url):
 
 
 def get_vlm_key():
-    import sqlite3
-    conn = sqlite3.connect("/home/victoria/.victoria-llm/llm-gateway.db")
-    try:
-        r = conn.execute("SELECT key_plaintext FROM api_keys WHERE name='servicios-alfredo-pro-llc'").fetchone()
-        return r[0] if r else ""
-    finally:
-        conn.close()
+    return os.environ.get("VOICE_API_KEY", "")
+# DB fallback removed: read-only mount conflicts with sqlite3 journaling
 
 
 def describe_frame(frame_path, lang="es"):

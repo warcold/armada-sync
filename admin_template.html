@@ -204,7 +204,7 @@ tr:hover td { background: #1a1a2a; }
         <h3>Crear nueva llave</h3>
         <div class="field"><label class="f">Nombre *</label><br><input id="k-owner" placeholder="ej. Alfredo Armada"></div>
         <div class="field"><label class="f">Tier (rol)</label><br>
-           <select id="k-role"><option value="llm">llm (solo chat)</option><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="readonly">readonly</option><option value="admin">admin</option></select>
+           <select id="k-role"><option value="llm">llm (solo chat)</option><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="video">video</option><option value="nav">nav</option><option value="whois">whois</option><option value="host_admin">host_admin</option><option value="sonic">sonic</option><option value="hunyuan3d">hunyuan3d</option><option value="animar">animar</option><option value="readonly">readonly</option><option value="admin">admin</option></select>
         </div>
         <div class="field"><label class="f">Capacidades (multi-tier) — sin marcar = default del rol</label><br>
           <span id="k-caps" style="display:inline-flex;flex-wrap:wrap;gap:10px;align-items:center">
@@ -217,6 +217,13 @@ tr:hover td { background: #1a1a2a; }
             <label><input type="checkbox" id="k-cap-comfyui"> ComfyUI</label>
             <label><input type="checkbox" id="k-cap-n8n"> n8n</label>
             <label><input type="checkbox" id="k-cap-provision"> 🛠️ Provisionar llaves</label>
+            <label><input type="checkbox" id="k-cap-video"> 🎬 Video</label>
+            <label><input type="checkbox" id="k-cap-nav"> 🌐 Navegación</label>
+            <label><input type="checkbox" id="k-cap-whois"> 🔍 WHOIS</label>
+            <label><input type="checkbox" id="k-cap-host_admin"> 🛡️ Host Admin</label>
+            <label><input type="checkbox" id="k-cap-sonic"> 🎙️ Sonic</label>
+            <label><input type="checkbox" id="k-cap-hunyuan3d"> 🧊 3D</label>
+            <label><input type="checkbox" id="k-cap-animar"> 🎞️ Animar</label>
           </span>
         </div>
         <div style="margin:6px 0 10px">
@@ -228,7 +235,7 @@ tr:hover td { background: #1a1a2a; }
           <button class="small ghost" type="button" onclick="presetCaps('k',['llm','tts','whisper'])">🔊 Voz</button>
           <button class="small ghost" type="button" onclick="presetCaps('k',['llm','coder','art','liveportrait','comfyui','tts','whisper','n8n'])">Todo</button>
         </div>
-        <div class="muted" style="margin-bottom:10px">Los límites técnicos (tokens, presupuesto, precio) se asignan con valores por defecto y se pueden ajustar después en <b>Editar</b>.<br>Modelo <b>base+add-ons</b>: <b>LLM (chat)</b> va SIEMPRE incluido (base universal, bloqueado arriba). Los demás caps se SUMAN por llave: 💻 motor de código · 🎨 imágenes/3D · 🔊 voz · 👂 STT · LP/CF · n8n · 🛠️ provisionar. El <b>rol</b> es solo el preset inicial; los checkboxes mandan. <b>readonly</b>=solo guía (sin inferencia). Las capacidades marcadas <b>añaden</b> a la matriz del rol (ej. coder + 🎨 + 🔊 = chat + imágenes + voz).</div>
+        <div class="muted" style="margin-bottom:10px">Los límites técnicos (tokens, presupuesto, precio) se asignan con valores por defecto y se pueden ajustar después en <b>Editar</b>.<br>Modelo <b>base+add-ons</b>: <b>LLM (chat)</b> va SIEMPRE incluido (base universal, bloqueado arriba). Los demás caps se SUMAN por llave: 💻 motor de código · 🎨 imágenes/3D · 🔊 voz · 👂 STT · 🎬 video · 🌐 nav · 🔍 whois · 🛡️ host_admin · 🎙️ sonic · 🧊 3D · 🎞️ animar · LP/CF · n8n · 🛠️ provisionar. El <b>rol</b> es solo el preset inicial; los checkboxes mandan. <b>readonly</b>=solo guía (sin inferencia). Las capacidades marcadas <b>añaden</b> a la matriz del rol (ej. coder + 🎨 + 🔊 = chat + imágenes + voz).</div>
         <br><button class="success" onclick="createKey()">Crear llave</button>
         <div id="new-key-result"></div>
       </div>
@@ -267,7 +274,7 @@ tr:hover td { background: #1a1a2a; }
     <button class="close" onclick="closeModal('editModal')">&times;</button>
     <h3>Editar llave: <span id="edit-name" class="mono"></span></h3>
     <div class="field"><label class="f">Owner</label><br><input id="e-owner"></div>
-    <div class="field"><label class="f">Rol</label><br>           <select id="e-role" onchange="onEditRoleChange()"><option value="llm">llm (solo chat)</option><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="readonly">readonly</option><option value="admin">admin</option></select></div>
+    <div class="field"><label class="f">Rol</label><br>           <select id="e-role" onchange="onEditRoleChange()"><option value="llm">llm (solo chat)</option><option value="coder">coder</option><option value="services">services</option><option value="art">art</option><option value="video">video</option><option value="nav">nav</option><option value="whois">whois</option><option value="host_admin">host_admin</option><option value="sonic">sonic</option><option value="hunyuan3d">hunyuan3d</option><option value="animar">animar</option><option value="readonly">readonly</option><option value="admin">admin</option></select></div>
     <div class="field"><label class="f">Capacidades (multi-tier) — desmarcar todas = default del rol</label><br>
       <span id="e-caps" style="display:inline-flex;flex-wrap:wrap;gap:10px;align-items:center">
         <label><input type="checkbox" id="e-cap-llm" checked disabled title="Base universal: siempre incluida"> LLM (chat, base)</label>
@@ -279,6 +286,13 @@ tr:hover td { background: #1a1a2a; }
         <label><input type="checkbox" id="e-cap-comfyui"> ComfyUI</label>
         <label><input type="checkbox" id="e-cap-n8n"> n8n</label>
         <label><input type="checkbox" id="e-cap-provision"> 🛠️ Provisionar llaves</label>
+        <label><input type="checkbox" id="e-cap-video"> 🎬 Video</label>
+        <label><input type="checkbox" id="e-cap-nav"> 🌐 Navegación</label>
+        <label><input type="checkbox" id="e-cap-whois"> 🔍 WHOIS</label>
+        <label><input type="checkbox" id="e-cap-host_admin"> 🛡️ Host Admin</label>
+        <label><input type="checkbox" id="e-cap-sonic"> 🎙️ Sonic</label>
+        <label><input type="checkbox" id="e-cap-hunyuan3d"> 🧊 3D</label>
+        <label><input type="checkbox" id="e-cap-animar"> 🎞️ Animar</label>
       </span>
     </div>
     <div class="field"><label class="f">Rate (req/min)</label><br><input id="e-rate" type="number"></div>

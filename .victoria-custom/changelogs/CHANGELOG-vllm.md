@@ -1,3 +1,110 @@
+### [2026-11-20 19:45 EST] [gateway] Nombres de llaves limpiados — solo nombre identitario, sin metadata redundante
+- **Tipo**: cleanup + UX
+- **Qué**: Todos los `owner` simplificados a nombre limpio (rol + caps + tier ya dicen el propósito):
+
+| Llave | Antes | Después |
+|---|---|---|
+| `victoria` | Victoria Armada — stack principal | **Victoria Armada** |
+| `alfredo` | Alfredo Armada — owner | **Alfredo Armada** |
+| `juancarlos` | Juan Carlos Jerez — cliente (Desarrollo) | **Juan Carlos Jerez** |
+| `jordan-diaz` | Jordan Diaz — cliente (Desarrollo) | **Jordan Diaz** |
+| `kalimete` | Alfredo Pro — máquina dev interna (eval...) | **Kalimete** |
+| `alfredo-pro-internal` | Alfredo Pro — internal consolidado... | **Alfredo Pro Internal** |
+| `armada-magantech-2` | MaganTech SRL — chatbot web cliente... | **MaganTech SRL** |
+| `armada-micaserogou` | Micaserogou — chatbot web cliente... | **Micaserogou** |
+| `warcold` | warcold — acceso remoto readonly... | **warcold** |
+
+- **Por qué**: El panel admin ya muestra `role`, `allowed_models`, `rate_limit`, `active`, `last_used` — el owner no necesita repetir "cliente desarrollo" ni "chatbot web". Nombre limpio = lectura rápida.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,owner,role FROM api_keys WHERE active=1"` — 9 llaves, nombres limpios.
+- **Docs**: yes (CHANGELOG general + este).
+
+### [2026-11-20 19:30 EST] [gateway] Tier `business` para chatbots de clientes + gobernanza de llaves completa
+- **Tipo**: governance + organization
+- **Qué**: Estructura de tiers/roles clara para todas las llaves activas (9):
+
+**TIER ADMIN** (acceso total + panel)
+| Llave | Propósito |
+|---|---|
+| `victoria` | Stack principal (orquestadora) |
+| `alfredo` | Owner (Alfredo Armada) |
+
+**TIER CODER** (chat + motor de código + caps extra)
+| Llave | Propósito | Caps |
+|---|---|---|
+| `juancarlos` | Cliente desarrollo | `llm` + `coder` (preset) |
+| `jordan-diaz` | Cliente desarrollo | `llm` + `coder` (preset) |
+| `kalimete` | **Máquina dev interna** — evaluación performance/patrones/errores clientes + provisioning `armada-*` | `llm,coder,art,tts,whisper,provision` |
+
+**TIER SERVICES** (nuestros sistemas internos automatizados)
+| Llave | Propósito | Caps |
+|---|---|---|
+| `alfredo-pro-internal` | **Consolidada**: sandbox art-gen + voz PTT + broadcasts | `llm,art,tts,whisper` |
+
+**TIER BUSINESS** (chatbots web de clientes — customer-facing)
+| Llave | Cliente | Propósito | Caps |
+|---|---|---|---|
+| `armada-magantech-2` | MaganTech SRL | Chatbot web (prod+preprod) | `llm` (solo chat) |
+| `armada-micaserogou` | Micaserogou | Chatbot web | `llm` (solo chat) |
+
+**TIER READONLY** (acceso público controlado)
+| Llave | Propósito |
+|---|---|
+| `warcold` | Acceso remoto readonly (config-guide only) |
+
+- **Regla de caps**: `llm` = base universal (siempre activo). `services` role da `art` por defecto, pero `allowed_models` explícito restringe a lo necesario. Business chatbots **solo `llm`** — no `coder`, no `art`, no voz, no provisioning.
+- **Separación clara**: `services` = nuestros sistemas internos; `business` = chatbots de clientes (aunque ambos usan role `services` en DB, el `allowed_models` y el owner lo diferencian).
+- **Metering aislado** por llave → facturación/analytics por cliente/sistema.
+
+- **Verificado**: 9 llaves activas, estructura limpia, sin llaves huérfanas ni de prueba.
+- **Docs**: yes (CHANGELOG general + este).
+
+### [2026-11-20 19:15 EST] [gateway] INCIDENTE DE SEGURIDAD: `apps-armada` COMPROMETIDA + Master keys internas establecidas
+- **Tipo**: security incident + governance
+- **Hallazgo crítico**: `apps-armada` (creada 2026-11-16, role `coder`, 2,754 requests en 3 días) **NO es un servicio interno** — estaba siendo usada desde **2 IPs externas ajenas a nuestra infraestructura**:
+  - `154.53.35.102` (AfriNIC, red africana) — 2,345 requests (85%)
+  - `2605:a142:2298:7483::1` (Contabo Inc., VPS Alemania) — 407 requests (15%)
+  - Solo 2 requests de `127.0.0.1` al crearse (test inicial)
+- **Patrón de uso**: prompts creciendo progresivamente 7K→169K tokens, todos `CODE` intent → auto-route intentaba mandar al coder pero excedían límite 128K → fallback a generalista con `thinking ON` (`code_think_fallback:prompt_too_big`). Burst final 2026-11-19 02:00-03:00 (204 req/hr) y **cesó totalmente tras 03:00**.
+- **Acción inmediata**: **REVOCADA** (`deactivated` via admin API). Key plaintext: `vllm-key-1fe50e0de12a4f5c5d1d54c67f3c51fe53c7129a91197451670527aea21f910a` — **rotar si se usó en algún deploy**.
+- **Origen desconocido**: No hay referencia en codebase, no está en `provision_log`, owner genérico "apps-armada". Probable fuga accidental (config compartida, log expuesto, o acceso interno malintencionado).
+- **Clientes legítimos confirmados**: `juancarlos` (Contabo VPS — su infra), `jordan-diaz` (Claro/Rep.Dom — su ISP), `kalimete` (10.0.0.106 LAN — nuestra máquina). Uso externo en claves de clientes = esperado.
+
+**Master Keys Internas Establecidas (governance clara):**
+
+| Llave | Role | Caps (allowed_models) | Propósito |
+|---|---|---|---|
+| `kalimete` | `coder` | `["llm","coder","art","tts","whisper","provision"]` | **Máquina dev interna** — evaluación performance real, patrones uso, errores clientes; provisioning `armada-*` |
+| `alfredo-pro-internal` | `services` | `["llm","art","tts","whisper"]` | **Servicios internos consolidados** — sandbox art-gen (OpenClaw), voz PTT (Kalimete-ptt), broadcasts |
+
+- Separación de responsabilidades: `kalimete` = dev interactiva + evaluación + provisioning; `alfredo-pro-internal` = servicios automatizados (sin `coder`, sin `provision`).
+- Metering aislado por propósito.
+- `apps-armada` **NO va a master key** — era clave comprometida, no servicio nuestro.
+
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,role,active,allowed_models FROM api_keys WHERE active=1"` — 9 llaves activas, estructura limpia.
+- **Pendiente**: Rotar key plaintext si estaba en algún deploy/config externo; revisar logs de acceso admin (¿quién la creó el 11-16?).
+- **Docs**: yes (CHANGELOG general + este).
+
+### [2026-11-20 18:45 EST] [gateway] Consolidación de llaves internas + re-clasificación Kalimete como evaluación
+- **Tipo**: refactor + governance
+- **Qué**: 
+  1. **Consolidación de 3 llaves internas en 1**: `victoria-openclaw-sandbox` (art), `kalimete-ptt` (services, voz), `servicios-alfredo-pro-llc` (services, broadcasts) → **`alfredo-pro-internal`** (role `services`, caps `["llm","art","tts","whisper"]`). Una sola llave para todos los sistemas internos de Alfredo Pro (sandbox art-gen, voz conversacional PTT, broadcasts), con tiers correctos base+add-ons (llm base + art + tts + whisper).
+  2. **Re-clasificación de `kalimete`**: de "cliente desarrollo" a **"Alfredo Pro — máquina dev interna (evaluación performance/clientes)"** (role `coder`, caps completas `["llm","coder","art","tts","whisper","provision"]`). Objetivo: usar nuestra propia máquina dev como "cliente interno" para medir performance real, patrones de uso y errores que reportan los clientes reales — mejorar nuestros sistemas basándonos en data viva.
+- **Por qué**: 
+  - Las 3 llaves internas eran fragmentación innecesaria (mismo dueño, mismo propósito: nuestros sistemas).
+  - `kalimete-ptt` necesitaba `tts`+`whisper` (voz) que el role `services` no daba por defecto; `victoria-openclaw-sandbox` necesitaba `art`; `servicios-alfredo-pro-llc` necesitaba `art` para broadcasts con imágenes. La consolidada tiene todo.
+  - `kalimete` ya tenía caps completas (incluye `provision` para crear llaves `armada-*`); el cambio es solo semántico/agrupación: ahora está en el grupo "interno" para evaluación, no mezclado con clientes externos.
+- **Impacto**: 10 llaves activas (2 admin, 4 coder, 1 readonly, 3 services). 3 llaves internas consolidadas → 1. 4 llaves desactivadas preservadas (historial). `kalimete` sigue activa con mismas caps, solo metadata actualizada.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,role,active,allowed_models FROM api_keys WHERE active=1"` — estructura limpia.
+- **Docs**: yes (CHANGELOG general + este).
+
+### [2026-11-20 18:30 EST] [gateway] Limpieza de API keys: desactivar dormantes >1 semana + eliminar llaves de prueba
+- **Tipo**: maintenance + security
+- **Qué**: (1) Desactivada `justin-t` (coder, cliente dormante, último uso 2026-11-11 = 9 días); (2) Eliminadas ~25 llaves de prueba creadas el 2026-11-10 (patrones `test-*`, `final-*`, `debug-*`, `merge-*`, `armada-test-*`, `jordan-diaz-cliente-services`) — todas con 0-3 requests y nombres evidentemente de prueba.
+- **Por qué**: Reducir superficie de ataque, limpiar auditoría, evitar confusión en panel admin. Las llaves de usuarios reales (victoria, alfredo, juancarlos, jordan-diaz, servicios-alfredo-pro-llc, kalimete, kalimete-ptt, apps-armada, armada-micaserogou, victoria-openclaw-sandbox, armada-magantech-2, warcold) **sin tocar**.
+- **Impacto**: 12 llaves activas (todas en uso real), 5 inactivas preservadas por historial (justin-t, armada-magantech, vaclaaw, erp-bot, michael-prestol), ~25 eliminadas.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,active,last_used FROM api_keys"` — solo llaves reales quedan activas.
+- **Docs**: yes (CHANGELOG general + este).
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para TODAS las versiones de opencode: config generada por major (v1/v2), decisión owner "simplificar"
 - **Tipo**: feature (simplificación, propuesta del owner: "¿el mismo setup no puede manejar todo esto? ¿para qué tener múltiples setups si uno solo puede manejar las múltiples versiones?")
 - **Evaluación**: el owner tenía razón — no se necesitan setups separados. Validado contra docs oficiales + E2E real: (a) opencode v2 (beta, v2.2.7) lee la MISMA ruta `~/.config/opencode/opencode.json(c)` pero con schema distinto (`providers` plural vs `provider`, `package`+`settings` vs `npm`+`options`, key del modelo = id enviado sin campo `id`/`modelID`, compaction simple); (b) los agentes embebidos (`mode/model/description/request/system`) son COMPATIBLES entre majors; (c) instalé opencode v2.2.7 en HOME temporal DE ESTE HOST y validé la variante v2 E2E: sesión abre `> victoria` e infiere "OK" a través del gateway.

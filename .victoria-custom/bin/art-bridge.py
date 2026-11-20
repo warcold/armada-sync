@@ -8,7 +8,7 @@ netns del gateway.
 POR QUE EXISTE (2026-10-05): el netns del gateway sale a red SOLO por el proxy
 L7 (10.200.0.1:3128) y el motor de policies NO permite a presets de usuario
 destinos privados (172.18.0.1:8010 da policy_denied aunque el preset
-victoria-art-api este aplicado con pins). Los otros 4 sentidos (voz/video/
+victoria-art-api este aplicado con pins). Los otros 4 skills (voz/video/
 whois/admin) usan este mismo patron puente-socket; el arte era el unico con
 HTTP directo y por eso nunca funciono desde el agente. art-gen habla al
 socket cuando existe (ART_SOCKET, default /tmp/art-gateway.sock) y cae a TCP
