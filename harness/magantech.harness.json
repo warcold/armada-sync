@@ -1,15 +1,20 @@
 {
-  "harness": {
-    "name": "magantech",
-    "type": "dokploy-compose",
-    "status": "running",
-    "services": [
-      "magantech-wordpress"
-    ],
-    "description": "magantech WordPress site",
-    "database": "mariadb-infra (3307)",
-    "mailpit": "mailpit-infra (1026/8028)",
-    "port": "8093",
-    "notes": "Proyecto WordPress independiente. DB en mariadb-infra, Mailpit en mailpit-infra."
-  }
+  "name": "magantech",
+  "type": "dokploy-compose",
+  "project_id": "7MRjH3RG2YDkAAuTQppzx",
+  "compose_id": "-GxssRBmSEotPfOuH0Z0z",
+  "app_name": "compose-hack-primary-circuit-ml4wym",
+  "status": "running",
+  "service": "wordpress",
+  "container": "magantech-wordpress",
+  "image": "wordpress:7.1.3-php8.3-apache",
+  "domain": "https://magantech.kalimete.local",
+  "domain_alias": "https://magantech.local",
+  "dokploy_traefik": "http://magantech.kalimete.local:8082",
+  "host_port": "127.0.0.1:8093",
+  "front_door": "nginx sistema (/etc/nginx/sites-enabled/magantech.kalimete.local, cert mkcert)",
+  "database": "mariadb-infra:3307 / magantech_wp",
+  "mail": "mailpit-infra:1026 (mu-plugin kalimete-mailpit.php en el volumen)",
+  "admin": "usuario admin, email dev@kalimete.local",
+  "notes": "Contenido (themes/plugins/uploads/mu-plugins) vive DENTRO del volumen magantech_wp_data: los bind-mounts ./wp-content en el code dir de Dokploy se pierden al redeployar. NUNCA usar bind mounts ahi."
 }

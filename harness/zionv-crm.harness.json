@@ -1,15 +1,20 @@
 {
-  "harness": {
-    "name": "zionv-crm",
-    "type": "dokploy-compose",
-    "status": "running",
-    "services": [
-      "zionv-crm-wordpress"
-    ],
-    "description": "zionv-crm WordPress site",
-    "database": "mariadb-infra (3307)",
-    "mailpit": "mailpit-infra (1026/8028)",
-    "port": "8092",
-    "notes": "Proyecto WordPress independiente. DB en mariadb-infra, Mailpit en mailpit-infra."
-  }
+  "name": "zionv-crm",
+  "type": "dokploy-compose",
+  "project_id": "tjUrTPYwIufGPFz5Y5zQO",
+  "compose_id": "IxuzBiD7Ucwoig3C7tZ_-",
+  "app_name": "compose-calculate-neural-driver-vbmsqf",
+  "status": "running",
+  "service": "wordpress",
+  "container": "zionv-crm-wordpress",
+  "image": "wordpress:latest",
+  "domain": "https://zionv.kalimete.local",
+  "domain_alias": "https://zionv-crm.kalimete.local",
+  "dokploy_traefik": "http://zionv.kalimete.local:8082",
+  "host_port": "127.0.0.1:8092",
+  "front_door": "nginx sistema (/etc/nginx/sites-enabled/zionv.kalimete.local, cert mkcert)",
+  "database": "mariadb-infra:3307 / zionv_crm (prefijo zionv_)",
+  "mail": "mailpit-infra:1026 (mu-plugin kalimete-mailpit.php en el volumen)",
+  "admin": "usuario admin, email dev@kalimete.local",
+  "notes": "WordPress instalado 2026-11-20 (DB estaba vacia). Contenido dentro del volumen zionv-crm_wp_data."
 }
