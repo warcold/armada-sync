@@ -1,3 +1,12 @@
+### [2026-11-20 15:20 EST] [dokploy] API tRPC corregida + Hito 1 + whois migrado a Dokploy (primer servicio real)
+- **Tipo**: infra + migration
+- **Qué**: (1) Corregido el diagnóstico del agente Dokploy: el "bug bodyParser" era falso — las mutaciones funcionan con `POST /api/trpc/<proc>` body `{"json":{...}}`; queries con input van `GET ?input={"json":{...}}`. (2) Org renombrada a "Alfredo Pro LLC"; proyectos `victoria-shared`, `victoria-gateway`, `victoria-sentidos`; red `victoria-gpu` registrada. (3) Bugs del scaffolding corregidos: requirements.gateway con paquetes stdlib, Dockerfiles sin `COPY sense_auth.py`, whois sin curl. (4) Gateway build+E2E OK en contenedor (DOKPLOY-OK vía host vLLM), compose guardado SIN desplegar. (5) **whois migrado**: `vd-whois` healthy en :18830 vía compose Dokploy, verificado desde host, 172.18.0.1 y wrapper del sandbox; unit host stopped+disabled (rollback trivial).
+- **Por qué**: avanzar la migración a Dokploy sin romper nada y validar el pipeline completo con el servicio de menor riesgo.
+- **Impacto**: whois ahora es contenedor Dokploy; vLLM/sandbox NO se migran (gestionados por nemoclaw/openshell). Networking: whois bind 0.0.0.0 para el bridge del sandbox.
+- **Verificado**: /health + whois github.com desde 3 rutas; compose.deploy "done"; contenedor healthy.
+- **Nota**: `openclaw-bridge-ensure.sh` ahora salta el unit host si existe el contenedor `vd-whois` (evita pelea por :18830). Rollback whois: parar compose + `systemctl enable --now victoria-whois-server`.
+- **Docs**: `agents/dokploy.md` reescrito + `CHANGELOG-dokploy.md`.
+
 ### [2026-11-20 19:45 EST] [gateway] Nombres de llaves limpiados — solo nombre identitario, sin metadata redundante
 - **Tipo**: cleanup + UX
 - **Qué**: Todos los `owner` simplificados a nombre limpio (rol + caps + tier ya dicen el propósito):
