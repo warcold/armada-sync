@@ -1,3 +1,11 @@
+### [2026-11-20 23:00 EST] [dokploy] victoria-shared: PostgreSQL, Redis, Mailpit desplegados
+- **Tipo**: infra + shared services
+- **Qué**: 3 composes en proyecto victoria-shared: postgres (5432), redis (6379), mailpit (1025/8025). Todos healthy, restart unless-stopped.
+- **Por qué**: infraestructura compartida para aplicaciones (DB, cache, email testing).
+- **Impacto**: victoria-shared ya no está vacío; provee servicios base.
+- **Verificado**: pg_isready, redis-cli ping, mailpit API v1/info.
+- **Docs**: CHANGELOG-dokploy.md actualizado.
+
 ### [2026-11-20 22:30 EST] [gateway] Granular caps para 17 skills (best practice)
 - **Tipo**: architecture + security
 - **Qué**: ALL_CAPABILITIES 9→17 (nuevas: video, nav, whois, host_admin, sonic, hunyuan3d, animar). SENSE_ELEVATION_CAPS incluye los 7 nuevos. ROLE_DEFAULT_MODELS actualizado: services=all skills, art=creative skills, 7 roles específicos nuevos. _CAP_FRIENDLY para hints 403 uniformes. admin_template.html con 17 checkboxes + 14 roles. ROLE_DEFAULT_RATE_LIMIT actualizado (host_admin=30/min).
