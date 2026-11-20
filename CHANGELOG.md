@@ -1,3 +1,11 @@
+### [2026-11-20 18:30 EST] [gateway] Limpieza de API keys: desactivar dormantes >1 semana + eliminar llaves de prueba
+- **Tipo**: maintenance + security
+- **Qué**: (1) Desactivada `justin-t` (coder, cliente dormante, último uso 2026-11-11 = 9 días); (2) Eliminadas ~25 llaves de prueba creadas el 2026-11-10 (patrones `test-*`, `final-*`, `debug-*`, `merge-*`, `armada-test-*`, `jordan-diaz-cliente-services`) — todas con 0-3 requests y nombres evidentemente de prueba.
+- **Por qué**: Reducir superficie de ataque, limpiar auditoría, evitar confusión en panel admin. Las llaves de usuarios reales (victoria, alfredo, juancarlos, jordan-diaz, servicios-alfredo-pro-llc, kalimete, kalimete-ptt, apps-armada, armada-micaserogou, victoria-openclaw-sandbox, armada-magantech-2, warcold) **sin tocar**.
+- **Impacto**: 12 llaves activas (todas en uso real), 5 inactivas preservadas por historial (justin-t, armada-magantech, vaclaaw, erp-bot, michael-prestol), ~25 eliminadas.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,active,last_used FROM api_keys"` — solo llaves reales quedan activas.
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
