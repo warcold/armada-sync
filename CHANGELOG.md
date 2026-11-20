@@ -1,3 +1,11 @@
+### [2026-11-20 21:00 EST] [dokploy] Cutover GATEWAY a producción (:8010) — COMPLETADO
+- **Tipo**: infra + migration + production
+- **Qué**: (1) Parado `victoria-llm-gateway` systemd, puerto 8010 libre. (2) Compose gateway actualizado con mount completo `.victoria-llm`, `ADMIN_PASS`, `VLLM_URL=172.17.0.1:8000`, red `dokploy-network` external. (3) Desplegado `vd-gateway` → healthy en 36s. (4) Verificado: `/health` OK, inferencia con key `alfredo-pro-internal` OK, admin panel LAN-only correcto. (5) `systemctl disable victoria-llm-gateway` (unit intacto para rollback inmediato).
+- **Por qué**: gateway es el servicio crítico de inferencia; cutover coordinado sin pérdida de datos, rollback <5s.
+- **Impacto**: gateway ahora es contenedor Dokploy gestionado; ~2-3 min downtime durante swap (clients reintentan). vLLM/sandbox/voice/host-admin/gpu-saver/sonic/comfyui/liveportrait/n8n intactos en host/nemoclay.
+- **Verificado**: health + inferencia + admin panel + rollback path.
+- **Docs**: `CHANGELOG-dokploy.md` actualizado.
+
 ### [2026-11-20 20:00 EST] [dokploy] Hito 2: whois/video/webnav validados, gateway preparado
 - **Tipo**: infra + migration
 - **Qué**: (1) Dockerfiles corregidos: video (sin whisper, deno en /usr/local), webnav (chromium bundled, env CHROMIUM_PATH), gateway (sin stdlib). (2) victoria-video-server.py: get_vlm_key() usa ?mode=ro para mount DB readonly; env vars para portabilidad. (3) 3 servicios validados vía Dokploy: whois en producción :18830 (sandbox OK), video :28811 (yt-dlp + DB read OK), webnav :28820 (playwright navega web). (4) Compose gateway guardado (AxWZzfekvSncpJTOQ4oea) NO desplegado: puerto 8010 conflicto con systemd; cutover requiere parar victoria-llm-gateway. (5) autoDeploy disabled para gateway.
