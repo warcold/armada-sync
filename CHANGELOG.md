@@ -1,3 +1,18 @@
+### [05:40] - Separación: kali-wordpress (1 proyecto, 3 servicios) → 3 proyectos WordPress independientes
+- **Tipo**: arquitectura + refactor
+- **Modificado**: kali-wordpress eliminado; creados magantech, micaserogou, zionv-crm como proyectos separados
+- **Afecta a**: kalimete (Dokploy)
+- **Causa**: Mejorar aislamiento y gestión individual de cada sitio WordPress
+- **Estado**: ✅ completado y validado
+- **Notas**: 
+  - 3 proyectos Dokploy nuevos: magantech (8093), micaserogou (8094), zionv-crm (8092)
+  - Cada uno: 1 servicio WordPress, DB propia en mariadb-infra, Mailpit en mailpit-infra
+  - msmtp para email via shared Mailpit (dev@kalimete.local)
+  - Datos migrados: volúmenes wp-content copiados, DBs ya existían en mariadb-infra
+  - kali-wordpress (proyecto consolidado) eliminado
+  - Harnesses: kali-wordpress eliminado, 3 nuevos creados
+  - Total proyectos Dokploy: 11 (4 infra + 7 apps)
+  - Agrupación lógica: prefijo "wp-" o tag "wordpress" para futuros sitios
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).

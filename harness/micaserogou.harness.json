@@ -1,0 +1,15 @@
+{
+  "harness": {
+    "name": "micaserogou",
+    "type": "dokploy-compose",
+    "status": "running",
+    "services": [
+      "micaserogou-wordpress"
+    ],
+    "description": "micaserogou WordPress site",
+    "database": "mariadb-infra (3307)",
+    "mailpit": "mailpit-infra (1026/8028)",
+    "port": "8094",
+    "notes": "Proyecto WordPress independiente. DB en mariadb-infra, Mailpit en mailpit-infra."
+  }
+}
