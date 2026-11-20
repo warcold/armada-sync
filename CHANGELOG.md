@@ -1,17 +1,3 @@
-### [07:00] - Migración ERP a infraestructura compartida + limpieza huérfanos
-- **Tipo**: migración | arquitectura | limpieza
-- **Modificado**: erpipo-preprod compose (DB propia -> mariadb-infra), harness erpipo-preprod, CHANGELOG
-- **Afecta a**: kalimete (Dokploy)
-- **Causa**: Unificar todas las DBs en mariadb-infra; eliminar contenedores huérfanos
-- **Estado**: completado y validado
-- **Notas**:
-  - erpipo-preprod-db (MySQL 8.0 en 3310) -> mariadb-infra:3307 (DB erpipo_preprod, 346 tablas)
-  - erpipo-preprod-phpmyadmin removido del compose
-  - dokploy-network agregada a todos los servicios ERP (app, nginx, queue, scheduler)
-  - Variables DB_* actualizadas en compose para mariadb-infra
-  - Redeploy vía Dokploy exitoso (nginx recreado con red correcta)
-  - Contenedores huérfanos DETENIDOS (NO borrados): kalimete-dashboard, taohemps-backend, taohemps-frontend, erpipo-preprod-db, erpipo-preprod-phpmyadmin
-  - Validación completa: 8/8 dominios HTTPS 200/307, 6/6 Traefik :8082, 3/3 WP admin, 3/3 correo, 6/6 apps conectan a infra compartida
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).
