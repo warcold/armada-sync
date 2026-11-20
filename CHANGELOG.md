@@ -1,3 +1,17 @@
+### [05:15] - Consolidación: 3 proyectos WordPress → kali-wordpress (1 proyecto, 3 servicios)
+- **Tipo**: consolidación + arquitectura
+- **Modificado**: Proyectos magantech, micaserogou, zionv-crm eliminados; creado kali-wordpress con 3 servicios
+- **Afecta a**: kalimete (Dokploy)
+- **Causa**: Simplificar gestión consolidando sitios WordPress en un solo proyecto multi-servicio
+- **Estado**: ✅ completado y validado
+- **Notas**: 
+  - kali-wordpress: 1 proyecto Dokploy con 3 servicios WordPress (kali-magantech:8093, kali-micaserogou:8094, kali-zionv-crm:8092)
+  - Cada servicio usa su DB en mariadb-infra (magantech_wp, micaserogou_wp, zionv_crm) y Mailpit compartido (mailpit-infra:1026/8028)
+  - msmtp instalado en los 3 contenedores para envío via shared Mailpit
+  - Datos migrados: volúmenes wp-content copiados, DBs ya existían en mariadb-infra
+  - Proyectos eliminados: magantech, micaserogou, zionv-crm (3 proyectos → 1)
+  - Harnesses: 3 antiguos eliminados, 1 nuevo kali-wordpress creado
+  - Total proyectos Dokploy: 9 (4 infra + kali-wordpress + eccosuit-develop + erpipo-preprod + petsuite + tapmap)
 ### [00:05] - Separación de shared-infra en 4 proyectos independientes
 - **Tipo**: arquitectura + refactor
 - **Modificado**: shared-infra eliminado, creados 4 proyectos: mariadb-infra, postgresql-infra, redis-infra, mailpit-infra

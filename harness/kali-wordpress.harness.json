@@ -1,0 +1,24 @@
+{
+  "harness": {
+    "name": "kali-wordpress",
+    "type": "dokploy-compose",
+    "project_id": "xKRc4wIwPAl1DUe0jOyzw",
+    "compose_id": "5J5rxEgIY2znKD0zJoB1J",
+    "environment_id": "PZIM208HUABV4X_QW2bZh",
+    "status": "running",
+    "services": [
+      "kali-magantech",
+      "kali-micaserogou",
+      "kali-zionv-crm"
+    ],
+    "description": "3 sitios WordPress consolidados: magantech, micaserogou, zionv-crm",
+    "database": "mariadb-infra (3307)",
+    "mailpit": "mailpit-infra (1026/8028)",
+    "ports": {
+      "magantech": "8093",
+      "micaserogou": "8094",
+      "zionv-crm": "8092"
+    },
+    "notes": "Consolidado desde 3 proyectos separados. Cada sitio usa su DB en mariadb-infra y Mailpit compartido."
+  }
+}
