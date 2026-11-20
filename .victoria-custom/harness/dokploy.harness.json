@@ -1,0 +1,133 @@
+{
+  "name": "Dokploy",
+  "description": "Agente especializado en gestión de Dokploy (PaaS self-hosted): proyectos, aplicaciones, compose, bases de datos, servidores, dominios, certificados, despliegues, backups, monitoreo",
+  "version": "1.0.0",
+  "service": "dokploy",
+  "docs": [
+    "~/.config/opencode/agents/dokploy.md"
+  ],
+  "changelog": "~/.victoria-custom/changelogs/CHANGELOG-dokploy.md",
+  "ports": {
+    "dokploy": 3000,
+    "postgres": 5432,
+    "redis": 6379,
+    "traefik_http": 8081,
+    "traefik_https": 8444
+  },
+  "containers": [
+    "dokploy",
+    "dokploy-postgres",
+    "dokploy-redis",
+    "dokploy-traefik"
+  ],
+  "systemd_units": [],
+  "health_checks": [
+    {
+      "name": "dokploy_api",
+      "command": "docker exec dokploy curl -s http://localhost:3000/api/health",
+      "expected": "{\"ok\":true}",
+      "interval_sec": 30
+    },
+    {
+      "name": "postgres",
+      "command": "docker exec dokploy-postgres pg_isready -U postgres",
+      "expected": "accepting connections",
+      "interval_sec": 30
+    },
+    {
+      "name": "redis",
+      "command": "docker exec dokploy-redis redis-cli ping",
+      "expected": "PONG",
+      "interval_sec": 30
+    },
+    {
+      "name": "traefik_dashboard",
+      "command": "curl -s http://localhost:8081/api/health",
+      "expected": "200 OK",
+      "interval_sec": 60
+    }
+  ],
+  "api_key": {
+    "name": "Victoria Dokploy Agent",
+    "id": "dokploy-agent-key-001",
+    "prefix": "dkp_victoria_",
+    "header": "x-api-key",
+    "plaintext_ref": "dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5",
+    "hash_sha256_b64url": "NJLSbtK2gCzumgyQs5qCqRTtoyYZ7PzynoZU2Jp11vY",
+    "user_id": "dokploy-agent-victoria",
+    "organization_id": "org-victoria",
+    "permissions": [
+      "projects:read", "projects:write",
+      "applications:read", "applications:write",
+      "compose:read", "compose:write",
+      "postgres:read", "postgres:write",
+      "mysql:read", "mysql:write",
+      "mariadb:read", "mariadb:write",
+      "mongo:read", "mongo:write",
+      "redis:read", "redis:write",
+      "libsql:read", "libsql:write",
+      "servers:read", "servers:write",
+      "domains:read", "domains:write",
+      "certificates:read", "certificates:write",
+      "deployments:read", "deployments:write",
+      "backups:read", "backups:write",
+      "schedules:read", "schedules:write",
+      "networks:read", "networks:write",
+      "volumes:read", "volumes:write",
+      "monitoring:read"
+    ],
+    "rate_limit": {
+      "enabled": true,
+      "max_requests": 1000,
+      "time_window_sec": 60
+    }
+  },
+"trpc": {
+    "base_url": "http://localhost:3000/api/trpc",
+    "access_via": "docker exec dokploy curl",
+    "batch_param": "batch=1",
+    "known_issue": "bodyParser: false en tRPC handler (Next.js config api.bodyParser=false) → CUALQUIER procedure que requiera input (POST body o GET query param) NO parsea el input → 400 'Invalid input: expected object, received undefined'. SOLO funcionan procedures SIN input requerido (project.all, server.all, postgres.all, deployment.all, backup.all, schedule.all, network.all, dockerVolume.all, mysql.all, mariadb.all, mongo.all, redis.all, libsql.all).",
+    "routers": {
+      "project": { "working": ["all"], "broken": ["one", "create", "update", "delete"] },
+      "application": { "working": [], "broken": ["search", "one", "create", "update", "delete", "deploy", "reload", "stop", "start", "redeploy", "saveEnvironment", "saveBuildType", "saveGithubProvider", "saveGitlabProvider", "saveBitbucketProvider", "saveGiteaProvider", "saveDockerProvider", "saveGitProvider", "disconnectGitProvider", "markRunning", "refreshToken", "cleanQueues", "clearDeployments", "killBuild", "readTraefikConfig", "dropDeployment", "updateTraefikConfig", "move", "cancelDeployment", "readAppMonitoring", "readLogs"] },
+      "postgres": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
+      "mysql": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
+      "mariadb": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
+      "mongo": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
+      "redis": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
+      "libsql": { "working": ["all"], "broken": ["one", "create", "update", "delete", "backup", "restore"] },
+      "server": { "working": ["all"], "broken": ["one", "create", "update", "delete", "testConnection", "metrics"] },
+      "domain": { "working": [], "broken": ["all", "one", "create", "update", "delete", "verify"] },
+      "certificates": { "working": [], "broken": ["all", "one", "create", "update", "delete", "renew"] },
+      "deployment": { "working": ["all"], "broken": ["one", "create", "cancel", "logs", "restart"] },
+      "backup": { "working": ["all"], "broken": ["one", "create", "update", "delete", "runManually"] },
+      "schedule": { "working": ["all"], "broken": ["one", "create", "update", "delete"] },
+      "network": { "working": ["all"], "broken": ["one", "create", "update", "delete"] },
+      "dockerVolume": { "working": ["all"], "broken": ["one", "create", "update", "delete"] },
+      "environment": { "working": [], "broken": ["byProjectId", "one", "create", "update", "delete"] },
+      "monitoring": { "working": [], "broken": ["getContainerMetrics", "getApplicationMetrics"] }
+    }
+  },
+  "recovery": {
+    "postgres_restore": "docker exec dokploy-postgres pg_restore -U postgres -d dokploy < backup.sql",
+    "redis_restore": "docker exec dokploy-redis redis-cli --rdb /data/dump.rdb",
+    "traefik_certs": "Volumen docker dokploy-traefik → /etc/traefik/dynamic/certificates",
+    "full_stack_restart": "docker restart dokploy dokploy-postgres dokploy-redis dokploy-traefik"
+  },
+  "scripts": {
+    "list_projects": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/project.all?batch=1\" | jq '.[0].result.data.json'",
+    "list_apps": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/application.all?batch=1\" | jq '.[0].result.data.json'",
+    "list_servers": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/server.all?batch=1\" | jq '.[0].result.data.json'",
+    "list_databases": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/postgres.all?batch=1\" | jq '.[0].result.data.json'",
+    "health_all": "docker exec dokploy curl -s http://localhost:3000/api/health && docker exec dokploy-postgres pg_isready -U postgres && docker exec dokploy-redis redis-cli ping"
+  },
+  "environment": {
+    "DOKPLOY_KEY": "dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5",
+    "DOKPLOY_URL": "http://localhost:3000 (internal only)",
+    "DOKPLOY_TRPC_URL": "http://localhost:3000/api/trpc (access via docker exec)"
+  },
+  "related_harnesses": [
+    "victoria.harness.json",
+    "cloudflare.harness.json"
+  ]
+}
