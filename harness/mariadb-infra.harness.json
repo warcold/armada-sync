@@ -1,0 +1,11 @@
+{
+  "harness": {
+    "name": "mariadb-infra",
+    "type": "dokploy-compose",
+    "status": "running",
+    "services": [
+      "mariadb-infra"
+    ],
+    "notes": "Infraestructura separada - proyecto Dokploy independiente"
+  }
+}

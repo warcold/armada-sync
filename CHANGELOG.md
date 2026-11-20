@@ -1,3 +1,19 @@
+### [00:05] - Separación de shared-infra en 4 proyectos independientes
+- **Tipo**: arquitectura + refactor
+- **Modificado**: shared-infra eliminado, creados 4 proyectos: mariadb-infra, postgresql-infra, redis-infra, mailpit-infra
+- **Afecta a**: kalimete (Dokploy)
+- **Causa**: Mejorar mantenibilidad, escalabilidad y observabilidad separando servicios en proyectos independientes
+- **Estado**: ✅ completado y validado
+- **Notas**: 
+  - mariadb-infra: MariaDB 10.11 (puerto 3307) - 4 DBs (magantech_wp, micaserogou_wp, zionv_crm, erpipo_preprod)
+  - postgresql-infra: PostgreSQL 18 (puerto 5433) - 1 DB (eccosuit_dev) con users eccosuit_user + ecco_app
+  - redis-infra: Redis 7 (puerto 6380) - cluster 256MB maxmemory
+  - mailpit-infra: Mailpit (puertos 1026/8028) - dev@kalimete.local centralizado
+  - Datos migrados desde volúmenes shared-infra originales
+  - 11 proyectos Dokploy totales (4 infra + 7 apps)
+  - Deploy independiente, health checks aislados, escalado granular
+  - Harnesses creados para 4 nuevos proyectos, actualizados 5 proyectos dependientes
+  - shared-infra original eliminado de Dokploy
 ### [2026-11-11 14:20 EST] [gateway] UN setup para todas las versiones de opencode (propuesta owner: simplificar)
 - **Qué**: `/v1/client-config?major=2` genera el schema v2 (providers plural + package/settings, key del modelo = id, compaction simple); el `/v1/setup` detecta la major del CLI y pide la variante correcta — un solo comando maneja v1 y v2, la advertencia de riesgo v2 desapareció (la config ahora coincide con su versión).
 - **Validación**: instalé opencode v2.2.7 en HOME temporal de ESTE host y validé E2E: sesión abre `> victoria` e infiere "OK" por el gateway con la config exacta que escribe el setup. Los agentes embebidos son compatibles entre majors. 4/4 tests (endpoint v2, setup fake-v2, setup real-v1, v2 real E2E).

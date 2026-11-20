@@ -28,8 +28,14 @@
       "ERPCBOT_LLM_URL",
       "ERPCBOT_LLM_KEY"
     ],
-    "notes": "Migrado de docker-compose local a Dokploy. Imágenes estándar. Requirió parar contenedores originales magantech-local, magantech-db, magantech-mailpit. Variables de entorno configuradas via compose.saveEnvironment. | Migrado a shared-infra (DB/Redis/Mailpit compartidos) | Conectado a shared-infra (Mailpit SMTP 1026)",
+    "notes": "Migrado de docker-compose local a Dokploy. Imágenes estándar. Requirió parar contenedores originales magantech-local, magantech-db, magantech-mailpit. Variables de entorno configuradas via compose.saveEnvironment. | Migrado a shared-infra (DB/Redis/Mailpit compartidos) | Conectado a shared-infra (Mailpit SMTP 1026) | Conectado a 4 proyectos de infraestructura separados",
     "shared_infra": true,
-    "mailpit": "shared (10.0.0.106:1026/8028)"
+    "mailpit": "shared (10.0.0.106:1026/8028)",
+    "infra_projects": [
+      "mariadb-infra",
+      "postgresql-infra",
+      "redis-infra",
+      "mailpit-infra"
+    ]
   }
 }

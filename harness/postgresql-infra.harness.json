@@ -1,0 +1,11 @@
+{
+  "harness": {
+    "name": "postgresql-infra",
+    "type": "dokploy-compose",
+    "status": "running",
+    "services": [
+      "postgresql-infra"
+    ],
+    "notes": "Infraestructura separada - proyecto Dokploy independiente"
+  }
+}

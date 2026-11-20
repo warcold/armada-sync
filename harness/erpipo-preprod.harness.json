@@ -40,8 +40,14 @@
       "erpipo-dev-php-config"
     ],
     "network": "erpipo-dev-network",
-    "notes": "Migrado a Dokploy con imágenes pre-construidas localmente. Requirió: 1) Build local de app image (PHP 8.4 + extensions), 2) Build local de nginx image (config baked in), 3) Volúmenes pre-poblados (app-code, php-config), 4) Fix permisos en volumen app-code (chown 1000:1000), 5) Instalar mysqli en contenedor, 6) GRANT TRIGGER + log_bin_trust_function_creators=1 en MySQL, 7) Saltar migración problemática 2026_09_29_000000_add_indexes_for_reports. Healthcheck /up OK. Laravel migrations completadas (30+). | Migrado a shared-infra (DB/Redis/Mailpit compartidos) | Conectado a shared-infra (Mailpit SMTP 1026)",
+    "notes": "Migrado a Dokploy con imágenes pre-construidas localmente. Requirió: 1) Build local de app image (PHP 8.4 + extensions), 2) Build local de nginx image (config baked in), 3) Volúmenes pre-poblados (app-code, php-config), 4) Fix permisos en volumen app-code (chown 1000:1000), 5) Instalar mysqli en contenedor, 6) GRANT TRIGGER + log_bin_trust_function_creators=1 en MySQL, 7) Saltar migración problemática 2026_09_29_000000_add_indexes_for_reports. Healthcheck /up OK. Laravel migrations completadas (30+). | Migrado a shared-infra (DB/Redis/Mailpit compartidos) | Conectado a shared-infra (Mailpit SMTP 1026) | Conectado a 4 proyectos de infraestructura separados",
     "shared_infra": true,
-    "mailpit": "shared (10.0.0.106:1026/8028)"
+    "mailpit": "shared (10.0.0.106:1026/8028)",
+    "infra_projects": [
+      "mariadb-infra",
+      "postgresql-infra",
+      "redis-infra",
+      "mailpit-infra"
+    ]
   }
 }

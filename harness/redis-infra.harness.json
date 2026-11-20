@@ -1,0 +1,11 @@
+{
+  "harness": {
+    "name": "redis-infra",
+    "type": "dokploy-compose",
+    "status": "running",
+    "services": [
+      "redis-infra"
+    ],
+    "notes": "Infraestructura separada - proyecto Dokploy independiente"
+  }
+}
