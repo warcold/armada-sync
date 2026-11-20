@@ -1,3 +1,16 @@
+### [2026-11-20 18:45 EST] [gateway] Consolidación de llaves internas + re-clasificación Kalimete como evaluación
+- **Tipo**: refactor + governance
+- **Qué**: 
+  1. **Consolidación de 3 llaves internas en 1**: `victoria-openclaw-sandbox` (art), `kalimete-ptt` (services, voz), `servicios-alfredo-pro-llc` (services, broadcasts) → **`alfredo-pro-internal`** (role `services`, caps `["llm","art","tts","whisper"]`). Una sola llave para todos los sistemas internos de Alfredo Pro (sandbox art-gen, voz conversacional PTT, broadcasts), con tiers correctos base+add-ons (llm base + art + tts + whisper).
+  2. **Re-clasificación de `kalimete`**: de "cliente desarrollo" a **"Alfredo Pro — máquina dev interna (evaluación performance/clientes)"** (role `coder`, caps completas `["llm","coder","art","tts","whisper","provision"]`). Objetivo: usar nuestra propia máquina dev como "cliente interno" para medir performance real, patrones de uso y errores que reportan los clientes reales — mejorar nuestros sistemas basándonos en data viva.
+- **Por qué**: 
+  - Las 3 llaves internas eran fragmentación innecesaria (mismo dueño, mismo propósito: nuestros sistemas).
+  - `kalimete-ptt` necesitaba `tts`+`whisper` (voz) que el role `services` no daba por defecto; `victoria-openclaw-sandbox` necesitaba `art`; `servicios-alfredo-pro-llc` necesitaba `art` para broadcasts con imágenes. La consolidada tiene todo.
+  - `kalimete` ya tenía caps completas (incluye `provision` para crear llaves `armada-*`); el cambio es solo semántico/agrupación: ahora está en el grupo "interno" para evaluación, no mezclado con clientes externos.
+- **Impacto**: 10 llaves activas (2 admin, 4 coder, 1 readonly, 3 services). 3 llaves internas consolidadas → 1. 4 llaves desactivadas preservadas (historial). `kalimete` sigue activa con mismas caps, solo metadata actualizada.
+- **Verificado**: `sqlite3 llm-gateway.db "SELECT name,role,active,allowed_models FROM api_keys WHERE active=1"` — estructura limpia.
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
 ### [2026-11-20 18:30 EST] [gateway] Limpieza de API keys: desactivar dormantes >1 semana + eliminar llaves de prueba
 - **Tipo**: maintenance + security
 - **Qué**: (1) Desactivada `justin-t` (coder, cliente dormante, último uso 2026-11-11 = 9 días); (2) Eliminadas ~25 llaves de prueba creadas el 2026-11-10 (patrones `test-*`, `final-*`, `debug-*`, `merge-*`, `armada-test-*`, `jordan-diaz-cliente-services`) — todas con 0-3 requests y nombres evidentemente de prueba.
