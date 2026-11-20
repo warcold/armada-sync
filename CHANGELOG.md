@@ -1,3 +1,43 @@
+### [2026-11-20 19:30 EST] [gateway] Tier `business` para chatbots de clientes + gobernanza de llaves completa
+- **Tipo**: governance + organization
+- **Qué**: Estructura de tiers/roles clara para todas las llaves activas (9):
+
+**TIER ADMIN** (acceso total + panel)
+| Llave | Propósito |
+|---|---|
+| `victoria` | Stack principal (orquestadora) |
+| `alfredo` | Owner (Alfredo Armada) |
+
+**TIER CODER** (chat + motor de código + caps extra)
+| Llave | Propósito | Caps |
+|---|---|---|
+| `juancarlos` | Cliente desarrollo | `llm` + `coder` (preset) |
+| `jordan-diaz` | Cliente desarrollo | `llm` + `coder` (preset) |
+| `kalimete` | **Máquina dev interna** — evaluación performance/patrones/errores clientes + provisioning `armada-*` | `llm,coder,art,tts,whisper,provision` |
+
+**TIER SERVICES** (nuestros sistemas internos automatizados)
+| Llave | Propósito | Caps |
+|---|---|---|
+| `alfredo-pro-internal` | **Consolidada**: sandbox art-gen + voz PTT + broadcasts | `llm,art,tts,whisper` |
+
+**TIER BUSINESS** (chatbots web de clientes — customer-facing)
+| Llave | Cliente | Propósito | Caps |
+|---|---|---|---|
+| `armada-magantech-2` | MaganTech SRL | Chatbot web (prod+preprod) | `llm` (solo chat) |
+| `armada-micaserogou` | Micaserogou | Chatbot web | `llm` (solo chat) |
+
+**TIER READONLY** (acceso público controlado)
+| Llave | Propósito |
+|---|---|
+| `warcold` | Acceso remoto readonly (config-guide only) |
+
+- **Regla de caps**: `llm` = base universal (siempre activo). `services` role da `art` por defecto, pero `allowed_models` explícito restringe a lo necesario. Business chatbots **solo `llm`** — no `coder`, no `art`, no voz, no provisioning.
+- **Separación clara**: `services` = nuestros sistemas internos; `business` = chatbots de clientes (aunque ambos usan role `services` en DB, el `allowed_models` y el owner lo diferencian).
+- **Metering aislado** por llave → facturación/analytics por cliente/sistema.
+
+- **Verificado**: 9 llaves activas, estructura limpia, sin llaves huérfanas ni de prueba.
+- **Docs**: yes (CHANGELOG-vllm.md + este).
+
 ### [2026-11-20 19:15 EST] [gateway] INCIDENTE DE SEGURIDAD: `apps-armada` COMPROMETIDA + Master keys internas establecidas
 - **Tipo**: security incident + governance
 - **Hallazgo crítico**: `apps-armada` (creada 2026-11-16, role `coder`, 2,754 requests en 3 días) **NO es un servicio interno** — estaba siendo usada desde **2 IPs externas ajenas a nuestra infraestructura**:
