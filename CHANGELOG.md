@@ -1,3 +1,11 @@
+### [2026-11-20 20:00 EST] [dokploy] Hito 2: whois/video/webnav validados, gateway preparado
+- **Tipo**: infra + migration
+- **Qué**: (1) Dockerfiles corregidos: video (sin whisper, deno en /usr/local), webnav (chromium bundled, env CHROMIUM_PATH), gateway (sin stdlib). (2) victoria-video-server.py: get_vlm_key() usa ?mode=ro para mount DB readonly; env vars para portabilidad. (3) 3 servicios validados vía Dokploy: whois en producción :18830 (sandbox OK), video :28811 (yt-dlp + DB read OK), webnav :28820 (playwright navega web). (4) Compose gateway guardado (AxWZzfekvSncpJTOQ4oea) NO desplegado: puerto 8010 conflicto con systemd; cutover requiere parar victoria-llm-gateway. (5) autoDeploy disabled para gateway.
+- **Por qué**: validar el pipeline Dokploy completo sin interrumpir producción; preparar gateway para cutover coordinado.
+- **Impacto**: whois ahora es contenedor Dokploy (unit host disabled). video/webnav en puertos alternos (validación).
+- **Verificado**: whois sandbox wrapper, video /health + yt-dlp probe, webnav /navigate example.com → "Example Domain".
+- **Docs**: `CHANGELOG-dokploy.md` actualizado.
+
 ### [2026-11-20 15:20 EST] [dokploy] API tRPC corregida + Hito 1 + whois migrado a Dokploy (primer servicio real)
 - **Tipo**: infra + migration
 - **Qué**: (1) Corregido el diagnóstico del agente Dokploy: el "bug bodyParser" era falso — las mutaciones funcionan con `POST /api/trpc/<proc>` body `{"json":{...}}`; queries con input van `GET ?input={"json":{...}}`. (2) Org renombrada a "Alfredo Pro LLC"; proyectos `victoria-shared`, `victoria-gateway`, `victoria-sentidos`; red `victoria-gpu` registrada. (3) Bugs del scaffolding corregidos: requirements.gateway con paquetes stdlib, Dockerfiles sin `COPY sense_auth.py`, whois sin curl. (4) Gateway build+E2E OK en contenedor (DOKPLOY-OK vía host vLLM), compose guardado SIN desplegar. (5) **whois migrado**: `vd-whois` healthy en :18830 vía compose Dokploy, verificado desde host, 172.18.0.1 y wrapper del sandbox; unit host stopped+disabled (rollback trivial).
