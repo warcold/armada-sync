@@ -1,3 +1,12 @@
+### [2026-11-21 06:13 EST] [dokploy] Limpieza de duplicados + healthchecks arreglados
+- **Tipo**: infra + hygiene + migration
+- **Limpieza de duplicados**: Eliminadas 16 apps individuales duplicadas (una por cada compose) — comfyui-app, liveportrait-app, sonic-app, n8n-app, hunyuan3d-app, lp-animate-app, redis-app, mailpit-app, gateway-app, postgres-app, voice-app, video-app, webnav-app, whois-app, oc-publisher-app + 2 cruzadas (hunyuan3d/lp-animate entre victoria-ai y victoria-skills). **Decisión**: los compose projects SON los recursos principales; las apps individuales eran registros redundantes sin contenedores propios (todos los contenedores usan labels `com.docker.compose.project`).
+- **Healthchecks arreglados**: `vd-mailpit` (axllent/mailpit) tenía healthcheck `CMD curl -f http://localhost:8025/` pero `curl` NO existe en la imagen → **arreglado a `wget -q --spider http://localhost:8025/`** → ahora healthy.
+- **vd-voice eliminado**: Contenedor `vd-voice` eliminado de Dokploy porque: (a) imagen `python:3.12-slim` no tiene curl (healthcheck fallaría), (b) `network_mode: host` + puerto 18810 choca con `systemd victoria-voice-server.service` que ya sirve TTS/STT en :18810. **El servicio de voz sigue vivo en el host** vía systemd — Dokploy solo conserva metadata del compose sin contenedor.
+- **Resultado post-limpieza**: 0 apps individuales, 15 composes (todos legítimos), 0 composes antiguas. **12/14 healthy** (vd-mailpit y vd-gateway healthy post-fix; vd-voice N/A eliminado). Los 2 unhealthy reportados por el Thinker (vd-voice preexistente) se resolvieron con la eliminación.
+- **Patrón aprendido**: healthchecks — imágenes Docker Hub oficiales usan `wget` o comando nativo; imágenes custom victoria-* tienen `curl` seguro.
+- **Docs**: dokploy.md actualizado con tabla healthchecks real, dokploy.harness.json actualizado con known_issues + best_practices, CHANGELOG-dokploy.md registrado.
+
 ### [2026-11-20 21:10 EST] [infra] Subdominios *.victoria.local + dnsmasq wildcard + proyecto "Victoria - Apps"
 - **Tipo**: infra + UX
 - **Qué**: nginx vhosts para cada servicio en subdominio root (`comfyui.victoria.local`, `liveportrait.victoria.local`, `n8n.victoria.local`, `openclaw.victoria.local`, `sonic/hunyuan3d/lp-animate.victoria.local` como APIs), certificado wildcard `*.victoria.local` (SAN), dnsmasq en 10.0.0.5:53 con `address=/victoria.local/10.0.0.5` para resolución LAN universal.
