@@ -1,3 +1,30 @@
+### [2026-11-20 21:10 EST] [infra] Subdominios *.victoria.local + dnsmasq wildcard + proyecto "Victoria - Apps"
+- **Tipo**: infra + UX
+- **Qué**: nginx vhosts para cada servicio en subdominio root (`comfyui.victoria.local`, `liveportrait.victoria.local`, `n8n.victoria.local`, `openclaw.victoria.local`, `sonic/hunyuan3d/lp-animate.victoria.local` como APIs), certificado wildcard `*.victoria.local` (SAN), dnsmasq en 10.0.0.5:53 con `address=/victoria.local/10.0.0.5` para resolución LAN universal.
+- **Path-based preservado**: `victoria.local/comfyui/` etc. siguen funcionando (fallback universal, cero config en clientes).
+- **Proyecto renombrado**: `victoria-content` → **"Victoria - Apps"** (apps internas de la casa, sin llaves de cliente).
+- **Registro apps**: `hunyuan3d` y `lp-animate` creadas como apps Dokploy en `victoria-skills` con `applicationId` en composes.
+- **Requisito owner**: configurar router DHCP DNS → 10.0.0.5 para que `*.victoria.local` resuelva en toda la casa.
+- **Verificado**: subdominios UI 200 (Host header), path-based 200, dnsmasq wildcard 10.0.0.5, cert SAN correcto.
+
+### [2026-11-20 20:44 EST] [dokploy] Servicios GPU migrados a contenedores (bind-mount, sin mover pesados)
+- **Tipo**: infra + migration
+- **Qué**: ComfyUI (:8188), LivePortrait (:8180), Sonic (:18850), Hunyuan3D (:18860) y LP-Animate (:18861) migrados de systemd host a contenedores Docker gestionados por compose de Dokploy, con **bind mounts** (venvs, modelos, código) — sin rebuild pesado ni mover modelos (109G/38G) dentro de imágenes.
+- **Cómo**: imagen base nueva `victoria-gpu-base:1.0` (python:3.12-slim + libs nativas GL/sndfile/etc) + wrappers `python3-docker` (PYTHONPATH al venv del host) + técnica `.pth` persistente (`~/.victoria-custom/docker/pth/`) para servicios que lanzan subprocesos con `sys.executable` (evita que el script sobreescriba PYTHONPATH).
+- **Gateway**: `vd-gateway` ahora monta `llm-gateway.py` del host (fuente única) y `COMFY_BASE` pasó a env (`http://172.17.0.1:8188`) porque el gateway está en bridge y ComfyUI en network host. Añadidos mounts de `comfyui-templates-api`, `web/` y `ComfyUI/output` (faltaban → art API `template_not_found`).
+- **Seguridad**: ComfyUI pasa a `--listen 0.0.0.0` (para ser alcanzable por el gateway) protegido por unit `victoria-firewall-comfy.service` (INPUT: solo loopback + 172.16/12, LAN/externo DROP).
+- **Fixes**: `lp-animate-server.py` tenía error de sintaxis (`error("...")` sin `=`) del código on-disk; corregido. `vd-n8n` healthcheck `curl`→`wget` (curl no existe en la imagen). `vd-voice` compose command `python3`→`python3-docker`.
+- **GPU**: venv `comfy-venv` restaurado (el bueno estaba en `comfy-venv.old`; swap hecho; parcial eliminado).
+- **Verificado**: art E2E z-image-turbo → PNG 512x512 (283KB) servido por gateway; nginx `/comfyui/ /liveportrait/ /n8n/` = 200; los 5 contenedores `healthy`; gateway+vLLM 200.
+- **Docs**: CHANGELOG-dokploy/comfyui/liveportrait/sonic/vllm/gpu + dokploy.md.
+
+### [2026-11-20 23:45 EST] [dokploy] Proyecto victoria-openclaw + publisher migrado
+- **Tipo**: infra + migration
+- **Qué**: Proyecto `victoria-openclaw` creado. Publisher migrado a Dokploy (`oc-publisher` healthy en :18800). Ensure-loop actualizado para detectar contenedor Dokploy `oc-publisher` y no crear duplicado `openclaw-publisher`.
+- **Arquitectura**: Sandbox+gateway en nemoclay/openshell (nativo); publisher en Dokploy; bridges+persistence en ensure-loop; voice/host-admin en host systemd.
+- **Verificado**: Dashboard `{"ok":true,"status":"live"}`; sandbox healthy; ensure-loop activo sin conflictos.
+- **Docs**: CHANGELOG-dokploy.md actualizado.
+
 ### [2026-11-20 23:00 EST] [dokploy] victoria-shared: PostgreSQL, Redis, Mailpit desplegados
 - **Tipo**: infra + shared services
 - **Qué**: 3 composes en proyecto victoria-shared: postgres (5432), redis (6379), mailpit (1025/8025). Todos healthy, restart unless-stopped.

@@ -1,3 +1,11 @@
+### [2026-11-20 20:44 EST] [gateway] Monta llm-gateway.py del host (fuente única) + COMFY_BASE por env
+- **Tipo**: infra + refactor
+- **Qué**: `vd-gateway` (compose) ahora monta `/home/victoria/llm-gateway.py:/app/llm-gateway.py:ro` — el código host ES lo que corre (sin rebuild de imagen para cambios). `COMFY_BASE` pasó de hardcoded `http://127.0.0.1:8188` a `os.environ.get("COMFY_BASE", ...)`; env `COMFY_BASE=http://172.17.0.1:8188` porque el gateway está en bridge `dokploy-network` y ComfyUI en network host.
+- **Por qué**: art API devolvía `comfyui_offline` — el gateway sondeaba su propio loopback (127.0.0.1:8188) donde ya no hay ComfyUI (migrado a contenedor host-net).
+- **Impacto**: gateway (auth/metering/art/landing), todos los flujos LLM.
+- **Verificado**: `/health` 200 (`vllm_url` correcto); art E2E `z-image-turbo` → PNG 512x512 servido por `/v1/art-files/`; dentro del contenedor `COMFY_BASE = os.environ.get(...)`.
+- **Docs**: sí (este + dokploy + general).
+
 ### [2026-11-20 19:45 EST] [gateway] Nombres de llaves limpiados — solo nombre identitario, sin metadata redundante
 - **Tipo**: cleanup + UX
 - **Qué**: Todos los `owner` simplificados a nombre limpio (rol + caps + tier ya dicen el propósito):

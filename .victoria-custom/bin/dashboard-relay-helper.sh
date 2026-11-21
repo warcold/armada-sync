@@ -11,6 +11,6 @@ CID=$(docker ps --format '{{.Names}}' | grep -E "armada" | head -1)
 HGPID=$(docker top "$CID" -o pid,cmd 2>/dev/null | grep "openclaw-gateway" | awk '{print $1}' | head -1)
 [ -z "$HGPID" ] && exit 1
 # Detecta el puerto real del gateway dentro del netns (18789 o 18790)
-GWPORT=$(nsenter -t "$HGPID" -n ss -tln 2>/dev/null | grep -oE '127\.0\.0\.1:187(89|90)|0\.0\.0\.0:187(89|90)|\*:187(89|90)' | grep -oE '187(89|90)' | head -1)
+GWPORT=$(sudo nsenter -t "$HGPID" -n ss -tln 2>/dev/null | grep -oE '127\.0\.0\.1:187(89|90)|0\.0\.0\.0:187(89|90)|\*:187(89|90)' | grep -oE '187(89|90)' | head -1)
 [ -z "$GWPORT" ] && GWPORT=18789
-exec nsenter -t "$HGPID" -n socat - TCP:127.0.0.1:$GWPORT
+exec sudo nsenter -t "$HGPID" -n socat - TCP:127.0.0.1:$GWPORT

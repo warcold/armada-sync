@@ -1,4 +1,11 @@
 # CHANGELOG — Sonic Podcast (:18850 + reels + Estudio Podcast)
+
+### [2026-11-20 20:44 EST] [sonic] Migrado a contenedor Dokploy (vd-sonic)
+- **Tipo**: infra + migration
+- **Qué**: Sonic corre en `vd-sonic` (imagen `victoria-gpu-base:1.0`, `network_mode: host`, `--gpus all`), compose `compose-bypass-neural-port-c8omje` (`victoria-content`). Bind mounts `/home/victoria/Sonic`→`/app/Sonic` (y `/home/victoria/Sonic`), `sonic-venv` (ro), `~/.local` (ro), dist-packages (ro), `sonic-server.py` (ro), `llm-gateway.db` (ro), `sense_auth.py` (ro), y `.pth` persistente (sonic-server sobrescribe PYTHONPATH en subprocesos; el `.pth` asegura venv + `~/.local` (fastapi/uvicorn viven ahí)).
+- **Verificado**: `healthy`, `/health` `{ok, checkpoints_exist:true, demo_script_exists:true}`.
+- **Docs**: sí (este + general).
+
 ### [2026-10-14 12:45 EDT] [sonic] Feature audio propio en Estudio Podcast (nota de voz del owner directo a Sonic)
 - **Tipo**: feature — pedido del owner (fix de fondo del PLAN 2026-10-07; forense 2026-10-14: doblaje en Animar deja 60% del video con boca congelada porque LivePortrait transfiere movimiento del GUÍA, no del audio — el lip-sync real audio→labios SOLO lo hace Sonic).
 - **Que**: el tab 🎙️ Estudio Podcast (`LivePortrait/app.py`, código del tab = frontera Sonic) acepta **audio propio** opcional: nuevo `gr.File` 🎧 + ayuda (formatos incl. WhatsApp + ETA ~60s/s a 15 steps/512px · ~100s/s a 25 steps/512px · ~180s/s a 640px). `gpu_wrapped_execute_podcast`/`_execute_podcast_locked` reciben `own_audio` (al final, sin romper orden): con audio → se valida con `audio_own_ok()` y se convierte al MISMO formato del wav del TTS (`ffmpeg -ar 22050 -ac 1 pcm_s16le`, verificado ffprobe sobre wav 2026-09-29) en el mismo path — el resto del pipeline (Sonic/whisper/ffmpeg/biblioteca) queda INTACTO. Guards: con audio el guión es OPCIONAL y los caps 1600/AUTO-1100 NO aplican; sin audio ni guión → error actual intacto; título default "Audio propio". Biblioteca: campo nuevo `audio_propio: bool` (con audio: guion "", prompt "", counts 0, sin fallback RSS inventado) y estado final dice "tu voz 🎧". `gpu_wrapped_preview_audio` SIN cambios (pre-escucha solo del guión). Uploader de Animar NO tocado (frontera Liveportrait).

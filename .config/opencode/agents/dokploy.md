@@ -171,6 +171,41 @@ docker exec dokploy sh -c "curl -s -X POST -H 'x-api-key: $KEY' \
 | vLLM (`nemoclaw-vllm`) y sandbox OpenClaw | ⛔ NO migrar: los gestiona nemoclaw/openshell (regla documentada). Dokploy los consume vía `172.17.0.1:8000` |
 | Coder on-demand dentro del gateway-container | ⚠️ requiere docker CLI + socket; sin eso el auto-start falla (degradación elegante a 503) |
 
+### Migración GPU completada (2026-11-20 20:44 EST) + Subdominios (21:10 EST)
+
+Los 5 servicios GPU corren en contenedores con **bind-mount** (sin mover modelos/venvs dentro de imágenes):
+
+| Contenedor | Puerto | Compose slug | Dokploy app | image |
+|---|---|---|---|---|
+| `vd-comfyui` | 8188 | `compose-transmit-haptic-feed-l2cem6` | ✅ comfyui | `victoria-gpu-base:1.0` |
+| `vd-liveportrait` | 8180 | `compose-reboot-wireless-transmitter-ypz7y7` | ✅ liveportrait | `victoria-gpu-base:1.0` |
+| `vd-sonic` | 18850 | `compose-bypass-neural-port-c8omje` | ✅ sonic | `victoria-gpu-base:1.0` |
+| `vd-hunyuan3d` | 18860 | `compose-hunyuan3d-standalone-v1` | ✅ hunyuan3d | `victoria-gpu-base:1.0` |
+| `vd-lp-animate` | 18861 | `compose-lp-animate-standalone-v1` | ✅ lp-animate | `victoria-gpu-base:1.0` |
+
+**Proyecto renombrado**: `victoria-content` → **"Victoria - Apps"** (apps internas red doméstica, sin llaves cliente).
+
+**Patrón clave**: imagen base `victoria-gpu-base:1.0` + wrappers `python3-docker` (PYTHONPATH al venv host) + `.pth` persistente en `~/.victoria-custom/docker/pth/{sonic,hunyuan,lpa}.pth` (montado en `/usr/local/lib/python3.12/site-packages/zzz-venv.pth`) para servicios que lanzan subprocesos con `sys.executable` y sobrescriben PYTHONPATH. Todo `network_mode: host` + `--gpus all` (vía `deploy.resources.reservations.devices`).
+
+**Gateway**: monta `llm-gateway.py` del host (fuente única) + `COMFY_BASE=http://172.17.0.1:8188` (env; está en bridge, ComfyUI en host-net). ComfyUI bindea `0.0.0.0` protegido por `victoria-firewall-comfy.service` (INPUT: loopback + 172.16/12, LAN DROP).
+
+**Reconciliación completa**: `vd-voice`, `vd-video`, `vd-webnav` migrados a compose (labels `com.docker.compose.project` activos). `vd-hunyuan3d` y `vd-lp-animate` registrados como apps Dokploy en `victoria-skills`.
+
+---
+
+### Subdominios *.victoria.local (2026-11-20 21:10 EST) — Infra lista, activación pendiente owner
+
+| Componente | Estado |
+|---|---|
+| **nginx vhosts** | 7 server blocks en `gateway.conf`: `comfyui|liveportrait|n8n|openclaw|sonic|hunyuan3d|lp-animate.victoria.local` → proxy a root de cada servicio |
+| **Certificado wildcard** | `/etc/ssl/local-certs/victoria.local-wildcard.pem` (SAN `*.victoria.local, victoria.local`, RSA 2048, 825 días) |
+| **dnsmasq** | Instalado, `/etc/dnsmasq.d/victoria-wildcard.conf`: escucha `10.0.0.5:53` (enP7s7), `address=/victoria.local/10.0.0.5`, upstream 8.8.8.8/1.1.1.1 |
+| **Path-based fallback** | `victoria.local/comfyui/`, `/liveportrait/`, `/n8n/`, `/openclaw/` **preservados** (universal, cero config) |
+
+**Requisito para LAN completa**: owner configura router DHCP option 6 (DNS) → **10.0.0.5**. Entonces cualquier dispositivo resuelve `*.victoria.local` → 10.0.0.5 y accede por HTTPS a su subdominio.
+
+**Verificado**: `dig @10.0.0.5 *.victoria.local` → 10.0.0.5; `curl -H Host: sub.victoria.local` → 200 (UI), 403/404 correctos (APIs); path-based 200.
+
 ## Comandos de Validación Comunes
 
 ```bash

@@ -1,3 +1,11 @@
+### [2026-11-20 20:44 EST] [comfyui] Migrado a contenedor Dokploy (vd-comfyui) + gateway art E2E restaurado
+- **Tipo**: infra + migration
+- **Qué**: ComfyUI corre ahora en `vd-comfyui` (imagen `victoria-gpu-base:1.0`, `network_mode: host`, `--gpus all`), gestionado por compose `compose-transmit-haptic-feed-l2cem6` (`victoria-content`). Bind mounts `/home/victoria/ComfyUI` (rw) + `comfy-venv` (ro); comando wrapper `python3-docker main.py --listen 0.0.0.0 --port 8188 --reserve-vram 8`.
+- **Por qué**: unificar gestión bajo Dokploy sin mover modelos (109G) dentro de imágenes.
+- **Seguridad**: bind `0.0.0.0` (necesario para que el gateway en bridge lo alcance) protegido por `victoria-firewall-comfy.service` (solo loopback + docker/LAN-interna 172.16/12; LAN 10.x DROP).
+- **Verificado**: `/system_stats` 200; art API E2E `z-image-turbo` → PNG 512x512 283KB servido por `/v1/art-files/`; nginx `/comfyui/` 200.
+- **Docs**: sí (este + general).
+
 ### [2026-11-11 00:35 EST] [hunyuan3d] Carga perezosa + auto-unload idle + POST /free (libera ~10.9GB VRAM + ~11GB swap)
 - **Tipo**: feature (performance/memoria) — parte del paquete de mejoras autorizado por owner ("procede hasta terminar")
 - **Que**: hunyuan-server.py re-arquitecturado autocontenido (sin tocar gpu-saver): (1) **carga perezosa** — los pipelines ya NO cargan al arrancar; cargan en el primer `/generate` bajo job_lock + lock del árbitro; (2) **watchdog idle interno** (hilo daemon, chequeo 60s): descarga los modelos tras `HUNYUAN_IDLE_UNLOAD_S` (default 600s) sin uso, bajo job_lock (nunca pisa un trabajo en curso); (3) **`POST /free`** (patrón /free de ComfyUI, auth sense_auth igual que /generate) para descarga manual; (4) `/health` ahora reporta `idle_s`.

@@ -1,3 +1,9 @@
+### [2026-11-20 20:44 EST] [liveportrait] Migrado a contenedor Dokploy (vd-liveportrait)
+- **Tipo**: infra + migration
+- **Qué**: LivePortrait corre en `vd-liveportrait` (imagen `victoria-gpu-base:1.0`, `network_mode: host`, `--gpus all`), compose `compose-reboot-wireless-transmitter-ypz7y7` (`victoria-content`). Bind mounts: `LivePortrait` (rw), `liveportrait-venv` (ro), `~/.local` (ro), `/usr/lib/python3/dist-packages` (ro, venv usa include-system-site-packages), `victoria-reference` (ro). Comando wrapper `python3-docker app.py --server_name 0.0.0.0 --server_port 8180`.
+- **Verificado**: `healthy`, `GET /` 200, pesos cargados; nginx `/liveportrait/` 200 (root_path intacto).
+- **Docs**: sí (este + general).
+
 ### [2026-11-03 15:20 EDT] [liveportrait] Gradio 6.29.1 -> 6.31.0 (ventana de mantenimiento autorizada por owner)
 - **Tipo**: refactor (upgrade dependencia)
 - **Que**: upgrade de Gradio en liveportrait-venv (6.29.1 -> 6.31.0, última de PyPI). UI custom intacta: theme-in-launch, root_path /liveportrait, custom_css, retry de launch() — los 4 fixes manuales siguen vigentes.

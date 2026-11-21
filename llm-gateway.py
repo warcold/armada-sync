@@ -2764,7 +2764,7 @@ async def proxy_completions(request: Request):
 # los clientes tienen timeouts de segundos. Cobro por imagen/segundo-video
 # (columnas price_per_image/price_per_video_sec de la llave).
 # ---------------------------------------------------------------------------
-COMFY_BASE = "http://127.0.0.1:8188"
+COMFY_BASE = os.environ.get("COMFY_BASE", "http://127.0.0.1:8188")
 COMFY_WORKFLOWS_DIR = pathlib.Path("/home/victoria/ComfyUI/user/default/workflows")
 # Templates API-format canonicos (2026-10-03): los .json de workflows/ son
 # UI-format (cascaras vacias — /prompt los rechaza); estos SI son API-format

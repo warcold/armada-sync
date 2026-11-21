@@ -1,4 +1,12 @@
 # CHANGELOG — GPU unificada GB10 (guardián + árbitro + térmica + VRAM)
+
+### [2026-11-20 20:44 EST] [gpu] Imagen base victoria-gpu-base:1.0 + 5 servicios GPU en contenedores
+- **Tipo**: infra
+- **Qué**: nueva imagen `victoria-gpu-base:1.0` (python:3.12-slim trixie + libtiff6, libgl1, libglib2.0-0, libsm6, libxext6, libxrender1, libgomp1, libsndfile1, libmagic1, ffmpeg, libjpeg62-turbo, libpng16-16, libwebp7, libopenjp2-7, libegl1, libxi6, libxcursor1, libxrandr1, gstreamer, git, curl, wget). Dockerfile en `/home/victoria/dokploy/build/gpu-base/Dockerfile`. Todos los contenedores GPU usan `--gpus all` vía `deploy.resources.reservations.devices`.
+- **Nota**: los servicios GPU (ComfyUI/LP/Sonic/Hunyuan/LP-Animate) ahora conviven como contenedores con `network_mode: host`; el `gpu-saver` los ve como procesos CUDA normales. `--reserve-vram 8` en ComfyUI mantiene headroom para vLLM.
+- **Verificado**: los 5 `healthy`; headsets `/health`/`/system_stats` OK; art E2E.
+- **Docs**: sí (este + general).
+
 ### [2026-11-06 13:20 EST] [gpu] Alertas de carga sostenida ahora IDENTIFICAN los procesos GPU (auto-diagnóstico en la alerta)
 - **Tipo**: mejora (observabilidad — hallazgo de la auditoría del watchdog)
 - **Qué**: el owner sintió "cada 30 min sube la temperatura, ¿qué proceso está pegado?" — la auditoría mostró que el watchdog SIEMPRE funcionó (12 alertas WA enviadas 03:28-09:02, cada ~30 min = el cooldown) pero la alerta decía "el motor lleva X min" sin decir CUÁL proceso. **Mejora**: `_sustained_wa_alert` ahora consulta `nvidia-smi --query-compute-apps` y añade al mensaje el top-3 procesos por memoria GPU (ej. "• VLLM::EngineCore (pid 34881, 37.8G)"). Nueva función `_gpu_top_processes()` (subprocess, timeout 10s, fail-safe → lista vacía).

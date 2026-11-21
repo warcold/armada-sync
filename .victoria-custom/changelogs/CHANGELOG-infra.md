@@ -1,3 +1,11 @@
+### [2026-11-20 21:10 EST] [infra] Subdominios *.victoria.local + wildcard cert + dnsmasq
+- **Tipo**: infra + UX
+- **nginx**: 7 server blocks nuevos en `gateway.conf` para `comfyui|liveportrait|n8n|openclaw|sonic|hunyuan3d|lp-animate.victoria.local` con proxy a root de cada servicio, cert wildcard `/etc/ssl/local-certs/victoria.local-wildcard.pem` (SAN `*.victoria.local, victoria.local`).
+- **dnsmasq**: instalado, config `/etc/dnsmasq.d/victoria-wildcard.conf` escuchando en `10.0.0.5:53` (interface enP7s7), `address=/victoria.local/10.0.0.5`, upstream 8.8.8.8/1.1.1.1. NO toca loopback (systemd-resolved intacto).
+- **Path-based preservado**: `victoria.local/comfyui/`, `/liveportrait/`, `/n8n/`, `/openclaw/` siguen operativos (fallback universal para dispositivos sin DNS custom).
+- **Requisito activación LAN**: router DHCP DNS → 10.0.0.5 (acción física owner).
+- **Verificado**: dig @10.0.0.5 subdominios → 10.0.0.5; curl Host header → 200 (UI), 403/404 correctos (APIs); path-based 200.
+
 ### [2026-11-11 05:10 EST] [infra] changelog-sync-victoria.sh: pull destructivo eliminado (sync = push-only)
 - **Tipo**: fix (pérdida de datos) — descubierto en vivo durante el paquete de mejoras
 - **Qué**: el cron */15 `changelog-sync-victoria.sh sync` hacía pull+push donde el pull era un scp remoto→local que PISABA el CHANGELOG.md master con el espejo viejo del hub. Destruyó la entrada "2026-11-11 paquete de mejoras" escrita entre corridas (recuperada de /tmp y re-insertada). Fix: `sync` = push-only (el local es MASTER; el remoto es espejo puro — verificado: Kalimete no escribe entradas en este archivo, documenta lo suyo en su repo per contrato 2026-09-30). El pull queda SOLO manual para restauración explícita.

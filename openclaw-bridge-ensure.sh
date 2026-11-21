@@ -143,6 +143,17 @@ ensure_publisher() {
         log "publisher sin label victoria.group; recreando con label"
         need=1
     fi
+    # 2026-11-20: Publisher gestionado por Dokploy (container oc-publisher).
+    # Si existe oc-publisher, NO gestionar openclaw-publisher.
+    if docker ps --filter "name=oc-publisher" --format "{{.ID}}" 2>/dev/null | grep -q .; then
+        need=0
+        log "publisher gestionado por Dokploy (oc-publisher); saltando gestión local"
+    # Stop legacy publisher if it exists
+    if docker ps --filter "name=openclaw-publisher" --format "{{.ID}}" 2>/dev/null | grep -q .; then
+        docker rm -f openclaw-publisher >/dev/null 2>&1
+        log "publisher legacy (openclaw-publisher) detenido; oc-publisher en Dokploy es el activo"
+    fi
+    fi
     if [ "$need" -eq 1 ]; then
         docker rm -f openclaw-publisher >/dev/null 2>&1
         docker run -d --name openclaw-publisher \

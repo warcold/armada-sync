@@ -1,5 +1,19 @@
 # CHANGELOG — Dokploy
 
+### [2026-11-20 21:10 EST] [dokploy] Subdominios + dnsmasq + proyecto "Victoria - Apps" + apps hunyuan3d/lp-animate
+- **Tipo**: infra + UX + registro
+- **Subdominios**: nginx vhosts por servicio (`comfyui|liveportrait|n8n|openclaw|sonic|hunyuan3d|lp-animate.victoria.local`), cert wildcard `*.victoria.local`, dnsmasq en 10.0.0.5:53 (`address=/victoria.local/10.0.0.5`). Path-based `victoria.local/*` preservado como fallback universal.
+- **Proyecto**: `victoria-content` renombrado a **"Victoria - Apps"** (apps internas red doméstica, sin llaves cliente).
+- **Apps registradas**: `hunyuan3d` (WK-DCbltWikv9kNj5qw9N) y `lp-animate` (0HcY2YwqFCGv551gc7Q7b) creadas en `victoria-skills` con labels `applicationId` en composes.
+- **Requisito owner**: router DHCP option 6 → 10.0.0.5 para resolución LAN completa.
+- **Verificado**: subdominios UI 200, path-based 200, dnsmasq wildcard, cert SAN.
+- **Tipo**: infra + migration
+- **Qué**: `vd-comfyui`, `vd-liveportrait`, `vd-sonic` recreados vía compose de Dokploy (labels `com.docker.compose.project`); `vd-hunyuan3d` y `vd-lp-animate` con compose en disco (slugs `compose-hunyuan3d-standalone-v1`/`compose-lp-animate-standalone-v1`, **pendiente registrarlos en UI**). Todos `image: victoria-gpu-base:1.0`, `network_mode: host`, `--gpus all`, bind mounts de venvs/modelos/código.
+- **Gateway**: compose `compose-input-1080p-driver-4h9dqt` ahora monta `/home/victoria/llm-gateway.py:/app/llm-gateway.py:ro` (fuente única: cambios host aplican tras restart) + `COMFY_BASE=http://172.17.0.1:8188` (env) + mounts `comfyui-templates-api`, `.victoria-custom/web`, `ComfyUI/output`, `sense_auth.py`.
+- **n8n/voice**: `vd-n8n` recreado con healthcheck `wget` (curl ausente) → healthy; `vd-voice` compose command `python3`→`python3-docker`.
+- **Verificado**: art E2E PNG 512x512 servido; nginx `/comfyui/ /liveportrait/ /n8n/` 200; 5 GPU + n8n healthy.
+- **Pendiente**: registrar hunyuan3d/lp-animate como apps Dokploy; reconciliar `vd-voice`/`vd-video`/`vd-webnav` (creados con docker run, sin labels) vía sus composes.
+
 ## [2026-11-20] Creación subagente Dokploy + Harness + Arquitectura 7 proyectos
 
 ### Added
@@ -211,3 +225,33 @@
 - Todos con `restart: unless-stopped` → auto-arrancan en reboot.
 - Puertos expuestos en 0.0.0.0 (LAN accesible); auth por red/credenciales.
 - Mailpit Web UI en `http://victoria.local:8025` (via nginx si se configura).
+
+## [2026-11-20 23:45 EST] Proyecto victoria-openclaw creado + publisher migrado
+
+### Proyecto Dokploy: victoria-openclaw (vVzKNCyK6HNM4WioKIyGl)
+- **Publisher** (`openclaw-publisher`, compose `3f723LMyIW61-on6O52Rj`): ✅ **PRODUCCIÓN**
+  - Dashboard OpenClaw en `http://victoria.local:18800`
+  - Gestionado por Dokploy (container `oc-publisher`)
+  - Ensure-loop actualizado para detectar `oc-publisher` y no crear `openclaw-publisher` duplicado
+
+### Componentes OpenClaw (arquitectura actual)
+| Componente | Gestión | Estado |
+|---|---|---|
+| **Sandbox nemoclaw** | nemoclay/openshell (host) | ✅ Healthy |
+| **Gateway OpenClaw** | openshell systemd user | ✅ Healthy |
+| **Publisher** | **Dokploy** (`oc-publisher`) | ✅ Healthy |
+| **Bridges (voz/video/whois/admin)** | Sandbox (ensure-loop) | ✅ Healthy |
+| **Voice server** | Host systemd | ✅ Healthy |
+| **Host-admin** | Host systemd | ✅ Healthy |
+| **Persistence** | ensure-loop + persist.sh | ✅ Healthy |
+
+### Decisión de arquitectura
+- **Sandbox + gateway OpenClaw**: Se mantienen en nemoclay/openshell (orchestrator nativo)
+- **Publisher**: Migrado a Dokploy (contenedor simple, bien definido)
+- **Bridges + persistence**: Se mantienen en ensure-loop (lógica compleja de rebuild/recovery)
+- **Voice + Host-admin**: Servicios de host (GPU, binarios del sistema)
+
+### Bridges monitor (pendiente)
+- Compose `bridges` en estado `error` (debugging pendiente)
+- Los bridges reales corren en sandbox vía ensure-loop (funcionando)
+
