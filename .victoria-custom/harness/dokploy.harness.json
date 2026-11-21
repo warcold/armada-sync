@@ -110,38 +110,60 @@
   "api": {
     "base_url": "http://localhost:3000/api/trpc",
     "auth_header": "x-api-key",
-    "api_key": "dkp_victoria_732596f16c2bfcde0f1452e2c0061ff5",
+    "api_key_file": "~/.victoria-custom/secrets/dokploy.api.key",
+    "notes": "API key en harness obsoleto (dkp_victoria_...). La key real está en ~/.victoria-custom/secrets/dokploy.api.key. Key correcta activa y verificada 2026-11-21.",
     "working_queries": [
       "project.all",
       "server.all",
-      "postgres.all",
-      "redis.all",
       "deployment.all",
-      "backup.all",
-      "schedule.all",
+      "application.all",
+      "deployment.byProject",
       "network.all",
       "dockerVolume.all",
-      "application.all",
-      "application.search",
       "certificate.all",
-      "domain.all"
+      "domain.all",
+      "compose.search",
+      "deployment.all"
     ],
-    "broken_mutations": [
+    "mutations": [
       "project.create",
+      "project.update",
+      "project.remove",
       "application.create",
-      "postgres.create",
-      "redis.create",
-      "deployment.create",
-      "backup.create",
-      "schedule.create",
-      "network.create",
-      "dockerVolume.create",
-      "certificate.create",
-      "domain.create",
       "application.update",
-      "project.update"
+      "application.delete",
+      "compose.create",
+      "compose.update",
+      "compose.redeploy",
+      "network.create",
+      "organization.update",
+      "deployment.create",
+      "deploy.compose"
     ],
-    "bug": "bodyParser: false in tRPC handler - JSON body not parsed"
+    "non_existent": [
+      "dockerVolume.all",
+      "postgres.all",
+      "redis.all",
+      "backup.all",
+      "schedule.all"
+    ],
+    "api_endpoints": {
+      "vd-mailpit": "compose-victoria-core-mailpit",
+      "vd-voice": "compose-victoria-skills-voice (N/A - service en host)",
+      "vd-whois": "compose-victoria-skills-whois",
+      "vd-video": "compose-victoria-skills-video",
+      "vd-webnav": "compose-victoria-skills-webnav",
+      "vd-gateway": "compose-victoria-core-gateway",
+      "vd-comfyui": "compose-victoria-ai-comfyui",
+      "vd-liveportrait": "compose-victoria-ai-liveportrait",
+      "vd-sonic": "compose-victoria-ai-sonic",
+      "vd-n8n": "compose-victoria-ai-n8n",
+      "vd-hunyuan3d": "compose-victoria-ai-hunyuan3d",
+      "vd-lp-animate": "compose-victoria-ai-lp-animate",
+      "vd-redis": "compose-victoria-core-redis",
+      "vd-postgres": "compose-victoria-core-postgres",
+      "oc-publisher": "compose-victoria-agent-oc-publisher"
+    }
   },
   "traefik_dynamic_configs": {
     "path": "/home/victoria/.victoria-custom/traefik/dynamic",
@@ -154,261 +176,213 @@
   },
   "projects_target": [
     {
-      "name": "victoria-shared",
-      "description": "Infra base: red, volúmenes bind-mount, PostgreSQL, Redis",
+      "name": "victoria-agent",
+      "description": "OpenClaw agent platform (oc-publisher)",
       "applications": 0,
-      "resources": [
-        "network",
-        "volumes",
-        "postgres",
-        "redis"
+      "composes": 1,
+      "container_ids": ["compose-victoria-agent-oc-publisher"]
+    },
+    {
+      "name": "victoria-ai",
+      "description": "AI/ML services (comfyui, liveportrait, sonic, n8n, hunyuan3d, lp-animate)",
+      "applications": 0,
+      "composes": 6,
+      "container_ids": [
+        "compose-victoria-ai-comfyui",
+        "compose-victoria-ai-liveportrait",
+        "compose-victoria-ai-sonic",
+        "compose-victoria-ai-n8n",
+        "compose-victoria-ai-hunyuan3d",
+        "compose-victoria-ai-lp-animate"
+      ],
+      "gpu": true
+    },
+    {
+      "name": "victoria-core",
+      "description": "Core infrastructure (postgres, redis, gateway, mailpit)",
+      "applications": 0,
+      "composes": 4,
+      "container_ids": [
+        "compose-victoria-core-postgres",
+        "compose-victoria-core-redis",
+        "compose-victoria-core-gateway",
+        "compose-victoria-core-mailpit"
       ]
-    },
-    {
-      "name": "victoria-llm",
-      "description": "Modelos LLM (vLLM Main + Coder)",
-      "applications": 2,
-      "containers": [
-        "vllm-main",
-        "vllm-coder"
-      ],
-      "gpu": true
-    },
-    {
-      "name": "victoria-gateway",
-      "description": "Gateway FastAPI (API + Admin + Metering)",
-      "applications": 3,
-      "containers": [
-        "gateway-api",
-        "gateway-admin",
-        "gateway-metering"
-      ]
-    },
-    {
-      "name": "victoria-openclaw",
-      "description": "Agente conversacional + habilidades",
-      "applications": 13,
-      "containers": [
-        "openclaw-sandbox",
-        "openclaw-publisher",
-        "openclaw-voice",
-        "openclaw-video",
-        "openclaw-nav",
-        "openclaw-whois",
-        "openclaw-host-admin",
-        "bridge-voice",
-        "bridge-video",
-        "bridge-nav",
-        "bridge-whois",
-        "bridge-admin",
-        "blogwatcher",
-        "openshell-proxy"
-      ],
-      "gpu": true
-    },
-    {
-      "name": "victoria-art",
-      "description": "Generación visual",
-      "applications": 7,
-      "containers": [
-        "comfyui",
-        "liveportrait",
-        "sonic",
-        "hunyuan3d",
-        "lp-animate",
-        "n8n"
-      ],
-      "gpu": true
     },
     {
       "name": "victoria-skills",
-      "description": "Autonomía de Victoria",
-      "applications": 5,
-      "containers": [
-        "victoria-voice",
-        "victoria-video",
-        "victoria-nav",
-        "victoria-whois",
-        "victoria-host-admin"
+      "description": "Sentidos autonomos de Victoria (video, webnav, whois, voice)",
+      "applications": 0,
+      "composes": 4,
+      "container_ids": [
+        "compose-victoria-skills-voice",
+        "compose-victoria-skills-video",
+        "compose-victoria-skills-webnav",
+        "compose-victoria-skills-whois"
       ],
-      "gpu": true
-    },
-    {
-      "name": "victoria-infra",
-      "description": "Infraestructura transversal",
-      "applications": 4,
-      "containers": [
-        "traefik",
-        "cloudflared",
-        "gpu-saver",
-        "armada-sync"
-      ]
+      "gpu": true,
+      "notes": "vd-voice eliminated: service runs on host via systemd (port conflict). vd-mailpit healthcheck fixed: curl → wget (2026-11-21)."
     }
   ],
   "healthchecks": {
-    "traefik": {
-      "port": 8080,
-      "endpoint": "/api/overview",
-      "interval": "30s"
+    "vd-mailpit": {
+      "compose_id": "compose-victoria-core-mailpit",
+      "port": 8025,
+      "cmd": "wget -q --spider http://localhost:8025/",
+      "interval": "30s",
+      "image": "axllent/mailpit",
+      "status": "healthy",
+      "fix_applied": "2026-11-21: curl → wget (mailpit no tiene curl)"
     },
-    "gpu-saver": {
-      "port": 18890,
-      "endpoint": "/health",
-      "auth": "X-API-Key",
-      "interval": "30s"
-    },
-    "cloudflared": {
-      "cmd": "cloudflared tunnel info",
-      "interval": "60s"
-    },
-    "vllm-main": {
-      "port": 8000,
-      "endpoint": "/health",
-      "interval": "60s",
-      "start_period": "300s"
-    },
-    "vllm-coder": {
-      "port": 8001,
-      "endpoint": "/health",
-      "interval": "60s",
-      "start_period": "300s"
-    },
-    "gateway-api": {
-      "port": 8010,
-      "endpoint": "/health",
-      "interval": "30s"
-    },
-    "gateway-admin": {
-      "port": 8011,
-      "endpoint": "/admin/health",
-      "interval": "30s"
-    },
-    "openclaw-sandbox": {
-      "port": 18790,
+    "vd-whois": {
+      "compose_id": "compose-victoria-skills-whois",
+      "port": 18830,
       "endpoint": "/health",
       "interval": "30s",
-      "start_period": "60s"
+      "image": "victoria-whois:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
     },
-    "openclaw-publisher": {
-      "port": 18800,
-      "endpoint": "/health",
-      "interval": "30s"
-    },
-    "openclaw-voice": {
-      "port": 18810,
-      "endpoint": "/health",
-      "interval": "30s",
-      "start_period": "60s"
-    },
-    "openclaw-video": {
+    "vd-video": {
+      "compose_id": "compose-victoria-skills-video",
       "port": 18811,
       "endpoint": "/health",
-      "interval": "30s"
+      "interval": "30s",
+      "image": "victoria-video:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
     },
-    "openclaw-nav": {
+    "vd-webnav": {
+      "compose_id": "compose-victoria-skills-webnav",
       "port": 18820,
       "endpoint": "/health",
       "interval": "30s",
-      "start_period": "60s"
+      "image": "victoria-webnav:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
     },
-    "openclaw-whois": {
-      "port": 18830,
+    "vd-gateway": {
+      "compose_id": "compose-victoria-core-gateway",
+      "port": 8010,
       "endpoint": "/health",
-      "interval": "30s"
+      "interval": "30s",
+      "image": "victoria-gateway:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
     },
-    "openclaw-host-admin": {
-      "port": 18840,
-      "endpoint": "/health",
-      "auth": "bridge-key",
-      "interval": "30s"
+    "vd-n8n": {
+      "compose_id": "compose-victoria-ai-n8n",
+      "port": 5678,
+      "cmd": "wget -q --spider http://127.0.0.1:5678/healthz",
+      "interval": "30s",
+      "image": "n8nio/n8n",
+      "status": "healthy"
     },
-    "comfyui": {
-      "port": 8188,
-      "endpoint": "/system_stats",
-      "interval": "30s"
-    },
-    "liveportrait": {
-      "port": 8180,
-      "endpoint": "/health",
-      "interval": "30s"
-    },
-    "sonic": {
+    "vd-sonic": {
+      "compose_id": "compose-victoria-ai-sonic",
       "port": 18850,
       "endpoint": "/health",
-      "interval": "30s"
+      "interval": "30s",
+      "image": "victoria-gpu-base:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
     },
-    "hunyuan3d": {
+    "vd-liveportrait": {
+      "compose_id": "compose-victoria-ai-liveportrait",
+      "port": 8180,
+      "endpoint": "/",
+      "interval": "30s",
+      "image": "victoria-gpu-base:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
+    },
+    "vd-comfyui": {
+      "compose_id": "compose-victoria-ai-comfyui",
+      "port": 8188,
+      "endpoint": "/system_stats",
+      "interval": "30s",
+      "image": "victoria-gpu-base:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
+    },
+    "vd-hunyuan3d": {
+      "compose_id": "compose-victoria-ai-hunyuan3d",
       "port": 18860,
       "endpoint": "/health",
       "interval": "30s",
-      "start_period": "120s"
+      "image": "victoria-gpu-base:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
     },
-    "lp-animate": {
+    "vd-lp-animate": {
+      "compose_id": "compose-victoria-ai-lp-animate",
       "port": 18861,
       "endpoint": "/health",
-      "interval": "30s"
+      "interval": "30s",
+      "image": "victoria-gpu-base:1.0",
+      "status": "healthy",
+      "note": "custom image, has curl"
     },
-    "n8n": {
-      "port": 5678,
-      "endpoint": "/healthz",
-      "interval": "30s"
+    "vd-redis": {
+      "compose_id": "compose-victoria-core-redis",
+      "cmd": "redis-cli ping",
+      "interval": "30s",
+      "image": "redis:7-alpine",
+      "status": "healthy"
     },
-    "victoria-voice": {
-      "port": 18810,
-      "endpoint": "/health",
-      "interval": "30s"
+    "vd-postgres": {
+      "compose_id": "compose-victoria-core-postgres",
+      "cmd": "pg_isready -U victoria -d victoria",
+      "interval": "30s",
+      "image": "postgres:16-alpine",
+      "status": "healthy"
     },
-    "victoria-video": {
-      "port": 18811,
-      "endpoint": "/health",
-      "interval": "30s"
-    },
-    "victoria-nav": {
-      "port": 18820,
-      "endpoint": "/health",
-      "interval": "30s"
-    },
-    "victoria-whois": {
-      "port": 18830,
-      "endpoint": "/health",
-      "interval": "30s"
-    },
-    "victoria-host-admin": {
-      "port": 18840,
-      "endpoint": "/health",
-      "auth": "bridge-key",
-      "interval": "30s"
+    "vd-voice": {
+      "compose_id": "compose-victoria-skills-voice",
+      "status": "N/A - ELIMINADO",
+      "reason": "vd-voice removed: conflicts with host victoria-voice-server.service (:18810). Voice service runs on host via systemd. Dokploy compose metadata preserved but container not managed.",
+      "note": "python:3.12-slim has NO curl — would fail healthcheck if deployed. Also network_mode: host + docker creates port conflict."
     }
   },
   "scripts": {
-    "validate_project": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/project.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, description}'",
-    "validate_apps": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/application.search?batch=1&input={\\\"projectId\\\":\\\"<id>\\\",\\\"search\\\":\\\"\\\"}\" | jq '.[][].result.data.json[] | {id, name, dockerImage, ports}'",
-    "validate_volumes": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/dockerVolume.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, driver, driverOpts}'",
-    "validate_networks": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/network.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, driver, subnet}'",
-    "validate_postgres": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/postgres.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, database, username}'",
-    "validate_redis": "docker exec dokploy curl -s -H \"x-api-key: $DOKPLOY_KEY\" \"http://localhost:3000/api/trpc/redis.all?batch=1\" | jq '.[][].result.data.json[] | {id, name, database}'"
+    "validate_project": "docker exec dokploy curl -s -H \"x-api-key: $(cat ~/.victoria-custom/secrets/dokploy.api.key)\" \"http://localhost:3000/api/trpc/project.all\" | jq '.result.data.json[] | {projectId, name, description}'",
+    "validate_compose": "docker exec dokploy curl -s -H \"x-api-key: $(cat ~/.victoria-custom/secrets/dokploy.api.key)\" \"http://localhost:3000/api/trpc/project.all\" | jq -c '.result.data.json[] | .environments[0].compose[] | {name, composeId, composeStatus}'"
   },
-  "environment_variables": [
-    "ADMIN_PASS",
-    "CLOUDFLARED_TOKEN",
-    "N8N_PASSWORD",
-    "OPENCLAW_GATEWAY_KEY",
-    "OPENCLAW_VOICE_KEY",
-    "OPENCLAW_VIDEO_KEY",
-    "OPENCLAW_NAV_KEY",
-    "OPENCLAW_WHOIS_KEY",
-    "OPENCLAW_ADMIN_KEY",
-    "VICTORIA_VOICE_KEY",
-    "VICTORIA_VIDEO_KEY",
-    "VICTORIA_NAV_KEY",
-    "VICTORIA_WHOIS_KEY",
-    "VICTORIA_ADMIN_KEY",
-    "GATEWAY_VOICE_KEY",
-    "GATEWAY_VIDEO_KEY",
-    "GPU_SAVER_API_KEY",
-    "POSTGRES_PASSWORD",
-    "DOKPLOY_KEY"
+  "scripts_old_obsolete": [
+    "validate_apps - usa dockerVolume.all que NO existe en Dokploy v0.31.x",
+    "validate_volumes - usa dockerVolume.all que NO existe",
+    "validate_networks - usa network.all con POST (debe ser GET con --data-urlencode input)",
+    "validate_postgres - usa postgres.all que NO existe",
+    "validate_redis - usa redis.all que NO existe"
   ],
+  "best_practices": {
+    "healthchecks": {
+      "rule": "Usar wget o comando nativo para imágenes de Docker Hub. Usar curl SOLO para imágenes custom (victoria-*).",
+      "examples": {
+        "wget": "wget -q --spider http://localhost:8025/",
+        "curl": "curl -f http://localhost:8025/",
+        "native": "redis-cli ping / pg_isready -U user -d db",
+        "python": "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:port/health')\""
+      },
+      "note": "Dokploy no detecta cambios de archivos compose automaticamente — recrear contenedores manualmente con 'docker compose up -d' después de editar el compose file."
+    },
+    "resources": {
+      "cpu_reservation": "Documentar en compose deploy.resources.reservations",
+      "memory_limit": "Documentar en compose deploy.resources.reservations",
+      "gpu": "Usar deploy.resources.reservations.devices para GPU (victoria-gpu-base usa 'all')"
+    },
+    "security": {
+      "secrets": "Usar variables de entorno, NO hardcodear keys en compose files",
+      "network": "Puertos solo en loopback (127.0.0.1) cuando sea posible",
+      "labels": "Usar labels de dokploy para project/organization tracking"
+    },
+    "healthcheck_patterns": {
+      "images_docker_hub": "wget -q --spider o comando nativo",
+      "custom_victoria_images": "curl -f funciona (incluido en imagen)",
+      "gpu_services": "Verificar endpoint específico del servicio",
+      "databases": "pg_isready, redis-cli ping, mongoHealthCheck, etc."
+    }
+  },
   "changelog": "~/.victoria-custom/changelogs/CHANGELOG-dokploy.md",
   "agent_config": "~/.config/opencode/agents/dokploy.md",
   "docs": [
@@ -416,40 +390,45 @@
     "~/.victoria-custom/harness/dokploy.harness.json"
   ],
   "known_issues": [
-    "bodyParser: false in tRPC handler - all mutations fail with 400",
-    "Workaround: UI Web at http://victoria.local:8081 for all writes",
-    "Read-only API works perfectly for validation"
+    "API key obsoleta en harness (dkp_victoria_...) — usar ~/.victoria-custom/secrets/dokploy.api.key",
+    "vd-voice eliminado: servicio corre en host via systemd (puerto 18810 conflictivo)",
+    "vd-mailpit healthcheck arreglado: curl → wget (2026-11-21)",
+    "Dokploy no detecta cambios de archivos compose automaticamente — hay que recrear manualmente los contenedores con docker compose up -d",
+    "Mutations via compose.redeploy funciona; compose.update no actualiza healthcheck de contenedores ya creados",
+    "Routers inexistentes en Dokploy: dockerVolume.all, postgres.all, redis.all, backup.all, schedule.all"
   ],
   "migration_phases": [
     "Phase 0: Network + 14 bind-mount volumes + mkcert + backup",
-    "Phase 1: victoria-shared (network, volumes, PG, Redis)",
-    "Phase 2: victoria-infra (traefik, gpu-saver, cloudflared, armada-sync)",
-    "Phase 3: victoria-llm (vllm-main, vllm-coder)",
-    "Phase 4: victoria-gateway (api, admin, metering)",
-    "Phase 5: victoria-openclaw (13 containers)",
-    "Phase 6: victoria-art (7 containers)",
-    "Phase 7: victoria-skills (5 containers)",
-    "Phase 8: Cutover DNS + 24h validation + shutdown legacy"
+    "Phase 1: victoria-agent (oc-publisher)",
+    "Phase 2: victoria-ai (comfyui, liveportrait, sonic, n8n, hunyuan3d, lp-animate)",
+    "Phase 3: victoria-core (postgres, redis, gateway, mailpit)",
+    "Phase 4: victoria-skills (video, webnav, whois — voice eliminado, service en host)",
+    "Phase 5: Cutover DNS + 24h validation + shutdown legacy"
   ],
   "migration_state": {
     "org": "Alfredo Pro LLC",
-    "projects": [
-      "victoria-shared",
-      "victoria-gateway",
+    "org_id": "cVKnzMSsWUDc2irlqgo-k",
+    "projects_real": [
+      "victoria-agent",
+      "victoria-ai",
+      "victoria-core",
       "victoria-skills"
     ],
-    "network": "victoria-gpu",
-    "migrated": {
-      "whois": "vd-whois :18830 (compose KPkMeQye3QIfDfAYDxDwL)"
-    },
-    "prepared_not_deployed": {
-      "gateway": "victoria-gateway:1.0 (compose AxWZzfekvSncpJTOQ4oea)"
-    },
+    "projects_documented_old": [
+      "victoria-shared",
+      "victoria-gateway",
+      "victoria-llm",
+      "victoria-openclaw",
+      "victoria-art"
+    ],
+    "status": "migration en curso - 4 proyectos activos, 15 composes, 0 apps individuales, 0 DBs",
+    "vd_voice": "ELIMINADO - service en host via systemd",
+    "vd_mailpit": "ARREGLADO - healthcheck curl → wget (2026-11-21)",
     "not_migrated": [
       "nemoclaw-vllm (nemoclaw)",
       "openshell sandbox",
-      "host-admin",
-      "gpu-saver (host-only)"
+      "host-admin (service en host)",
+      "gpu-saver (service en host)"
     ]
   }
 }

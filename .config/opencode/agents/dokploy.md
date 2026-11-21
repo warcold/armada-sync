@@ -111,17 +111,20 @@ docker exec dokploy sh -c "curl -s -X POST -H 'x-api-key: $KEY' \
   'http://localhost:3000/api/trpc/project.create'"
 ```
 
-## Arquitectura Objetivo (7 Proyectos)
+## Arquitectura Objetivo (4 Proyectos — ESTADO REAL 2026-11-21)
 
-| Proyecto | Descripción | Aplicaciones |
-|---|---|---|
-| `victoria-shared` | Infra base: red, volúmenes, PG, Redis | 0 (solo recursos) |
-| `victoria-llm` | Modelos LLM | 2: vllm-main, vllm-coder |
-| `victoria-gateway` | Gateway FastAPI | 3: api, admin, metering |
-| `victoria-openclaw` | Agente + habilidades | 13: sandbox, publisher, 5 skills, 5 bridges, blogwatcher, proxy |
-| `victoria-art` | Generación visual | 7: comfyui, liveportrait, sonic, hunyuan3d, lp-animate, n8n |
-| `victoria-skills` | Autonomía Victoria | 5: voice, video, nav, whois, host-admin |
-| `victoria-infra` | Infra transversal | 4: traefik, cloudflared, gpu-saver, armada-sync |
+| Proyecto | Descripción | Composes | GPU |
+|---|---|---|---|
+| `victoria-agent` | OpenClaw agent platform (oc-publisher) | 1: oc-publisher | no |
+| `victoria-ai` | AI/ML services (comfyui, liveportrait, sonic, n8n, hunyuan3d, lp-animate) | 6 | sí |
+| `victoria-core` | Core infrastructure (postgres, redis, gateway, mailpit) | 4 | no |
+| `victoria-skills` | Sentidos autónomos de Victoria (video, webnav, whois, voice) | 4 | sí (host) |
+
+**Notas**:
+- `vd-voice` en victoria-skills: compose metadata existe pero el contenedor fue eliminado (service en host via systemd).
+- `victoria-shared`, `victoria-llm`, `victoria-gateway`, `victoria-openclaw`, `victoria-art`, `victoria-infra` son proyectos del plan de migración ORIGINAL que ya fueron reemplazados por los 4 proyectos activos actuales.
+- **0 apps individuales, 0 databases individuales** — toda la infra es compose.
+- **Recurso de la granja**: vd-hunyuan3d y vd-lp-animate expuestos a Kalimete (cap art → sense_auth).
 
 ## Volúmenes Bind-Mount (Host → Contenedores)
 
@@ -158,18 +161,64 @@ docker exec dokploy sh -c "curl -s -X POST -H 'x-api-key: $KEY' \
    autorización explícita del owner y ventana definida (los puertos chocan).
 4. **Registro**: cada cambio → `CHANGELOG-dokploy.md` + `CHANGELOG.md`.
 
-## Estado de la migración (2026-11-20)
+## Estado de la migración (2026-11-21)
 
-| Recurso | Estado |
+### Healthchecks (arreglados 2026-11-21)
+
+| Contenedor | Imagen | Healthcheck | Estado |
+|---|---|---|---|
+| vd-mailpit | axllent/mailpit | `wget -q --spider http://localhost:8025/` | ✅ healthy |
+| vd-whois | victoria-whois:1.0 | `curl -f http://localhost:18830/health` | ✅ healthy |
+| vd-video | victoria-video:1.0 | `curl -f http://localhost:18811/health` | ✅ healthy |
+| vd-webnav | victoria-webnav:1.0 | `curl -f http://localhost:18820/health` | ✅ healthy |
+| vd-gateway | victoria-gateway:1.0 | `curl -f http://localhost:8010/health` | ✅ healthy |
+| vd-n8n | n8nio/n8n | `wget -q --spider http://127.0.0.1:5678/healthz` | ✅ healthy |
+| vd-sonic | victoria-gpu-base | `curl -f http://127.0.0.1:18850/health` | ✅ healthy |
+| vd-liveportrait | victoria-gpu-base | `curl -f http://127.0.0.1:8180/` | ✅ healthy |
+| vd-comfyui | victoria-gpu-base | `curl -f http://127.0.0.1:8188/system_stats` | ✅ healthy |
+| vd-hunyuan3d | victoria-gpu-base | `curl -f http://127.0.0.1:18860/health` | ✅ healthy |
+| vd-lp-animate | victoria-gpu-base | `curl -f http://127.0.0.1:18861/health` | ✅ healthy |
+| vd-redis | redis:7-alpine | `redis-cli ping` | ✅ healthy |
+| vd-postgres | postgres:16-alpine | `pg_isready -U victoria -d victoria` | ✅ healthy |
+| oc-publisher | python:3.12-slim | (sin healthcheck) | ✅ up |
+| **vd-voice** | **python:3.12-slim** | **ELIMINADO** — servicio corre en HOST vía `systemd victoria-voice-server.service` (puerto 18810 conflictivo con network_mode: host) | **N/A** |
+
+**Nota crítica**: `vd-mailpit` tenía `curl` (no instalado en `axllent/mailpit`) → arreglado a `wget`. `vd-voice` fue eliminado porque: (a) `python:3.12-slim` no tiene curl, (b) `network_mode: host` choca con `systemd victoria-voice-server.service` que ya sirve TTS/STT en :18810. El servicio de voz sigue vivo en el host; Dokploy solo registra la metadata del compose.
+
+### Proyectos reales (API)
+
+| Proyecto | ID | Composes | Estado |
+|---|---|---|---|
+| victoria-agent | victoria-agent-proj | 1: oc-publisher | ✅ activo |
+| victoria-ai | victoria-ai-proj | 6: comfyui, liveportrait, sonic, n8n, hunyuan3d, lp-animate | ✅ activo |
+| victoria-core | victoria-core-proj | 4: postgres, redis, gateway, mailpit | ✅ activo |
+| victoria-skills | ZYfA2_95l1ekYGEoIi3o1 | 4: voice, video, webnav, whois | ✅ activo |
+
+**Nota**: `victoria-shared` y `victoria-gateway` (documentados antes) fueron renombrados/reemplazados. El proyecto real es `victoria-core` (infra base: PG, Redis, gateway, mailpit).
+
+### Composes que usan `curl` vs `wget`/nativo
+
+| Herramienta | Composes que la usan | Imágenes |
+|---|---|---|
+| **curl** | whois, video, webnav, gateway, sonic, liveportrait, comfyui, hunyuan3d, lp-animate | todas IMÁGENES CUSTOM (victoria-*) → tienen curl |
+| **wget** | mailpit, n8n | axllent/mailpit, n8nio/n8n |
+| **nativo** | postgres (pg_isready), redis (redis-cli) | postgres, redis (alpine) |
+| **python3** | ~~voice~~ (eliminado) | python:3.12-slim |
+
+**Regla para futuros healthchecks**: si la imagen es de Docker Hub oficial (sin customizar), usar `wget` o comando nativo. Si es imagen custom de victoria (`victoria-*`), `curl` es seguro.
+
+### Limpieza de duplicados (2026-11-21 04:47 EST)
+
+Se eliminaron **16 apps individuales duplicadas** (registros en Dokploy sin contenedores propios, todos los contenedores ya son gestionados por los composes con labels `com.docker.compose.project`):
+
+| Proyecto | Apps eliminadas |
 |---|---|
-| Org `Alfredo Pro LLC` | ✅ renombrada vía API (slug queda null) |
-| Proyectos `victoria-shared` / `victoria-llm` / `victoria-gateway` | ✅ creados |
-| Red `victoria-gpu` | ✅ registrada en Dokploy (dockerId null → se materializa al desplegar) |
-| `Dockerfile.gateway` | ✅ corregido (faltaba `sense_auth.py`; requirements traía stdlib) y build OK |
-| Gateway en contenedor | ✅ E2E: `victoria-gateway:test` respondió `DOKPLOY-OK` vía host vLLM |
-| `victoria-lan` | ⚠️ ya existe en Docker → NO recrear; usar `external: true` |
-| vLLM (`nemoclaw-vllm`) y sandbox OpenClaw | ⛔ NO migrar: los gestiona nemoclaw/openshell (regla documentada). Dokploy los consume vía `172.17.0.1:8000` |
-| Coder on-demand dentro del gateway-container | ⚠️ requiere docker CLI + socket; sin eso el auto-start falla (degradación elegante a 503) |
+| victoria-ai | comfyui-app, liveportrait-app, sonic-app, n8n-app, hunyuan3d-app, lp-animate-app |
+| victoria-core | redis-app, mailpit-app, gateway-app, postgres-app |
+| victoria-skills | voice-app, video-app, webnav-app, whois-app, apps cruzadas |
+| victoria-agent | oc-publisher-app |
+
+**Decisión**: los compose projects SON los recursos principales; las apps individuales eran redundantes. Post-limpieza: 0 apps, 15 composes, 0 composes antiguas.
 
 ### Migración GPU completada (2026-11-20 20:44 EST) + Subdominios (21:10 EST)
 
@@ -189,7 +238,7 @@ Los 5 servicios GPU corren en contenedores con **bind-mount** (sin mover modelos
 
 **Gateway**: monta `llm-gateway.py` del host (fuente única) + `COMFY_BASE=http://172.17.0.1:8188` (env; está en bridge, ComfyUI en host-net). ComfyUI bindea `0.0.0.0` protegido por `victoria-firewall-comfy.service` (INPUT: loopback + 172.16/12, LAN DROP).
 
-**Reconciliación completa**: `vd-voice`, `vd-video`, `vd-webnav` migrados a compose (labels `com.docker.compose.project` activos). `vd-hunyuan3d` y `vd-lp-animate` registrados como apps Dokploy en `victoria-skills`.
+**Reconciliación completa (2026-11-21)**: `vd-voice` fue ELIMINADO (servicio en host via systemd, conflict de puerto). `vd-video`, `vd-webnav`, `vd-whois` migrados a compose (labels `com.docker.compose.project` activos). 16 apps individuales eliminadas (duplicados de composes). Post-limpieza: 0 apps, 15 composes, 0 composes antiguas.
 
 ---
 

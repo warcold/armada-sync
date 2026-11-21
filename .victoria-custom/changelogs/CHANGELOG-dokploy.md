@@ -1,6 +1,49 @@
 # CHANGELOG — Dokploy
 
-### [2026-11-20 21:10 EST] [dokploy] Subdominios + dnsmasq + proyecto "Victoria - Apps" + apps hunyuan3d/lp-animate
+## [2026-11-21 04:47 EST] Limpieza de duplicados + healthchecks arreglados
+
+### Limpieza de duplicados
+- **16 apps individuales eliminadas** (registros en Dokploy sin contenedores propios):
+  - victoria-ai: comfyui-app, liveportrait-app, sonic-app, n8n-app, hunyuan3d-app, lp-animate-app
+  - victoria-core: redis-app, mailpit-app, gateway-app, postgres-app
+  - victoria-skills: voice-app, video-app, webnav-app, whois-app, 2 apps cruzadas
+  - victoria-agent: oc-publisher-app
+- **Decisión**: los compose projects SON los recursos principales; las apps individuales eran registros redundantes sin contenedores propios (todos los contenedores usan labels `com.docker.compose.project`).
+- **Post-limpieza**: 0 apps, 15 composes, 0 composes antiguas.
+
+### Healthchecks arreglados (2026-11-21)
+- **vd-mailpit**: healthcheck `CMD curl -f http://localhost:8025/` → `CMD wget -q --spider http://localhost:8025/` (mailpit axllent/mailpit no tiene curl instalado). State: unhealthy → healthy.
+- **vd-voice**: contenedor eliminado (no es app Dokploy, es servicio host via systemd). `python:3.12-slim` no tiene curl, `network_mode: host` choca con puerto 18810 de systemd victoria-voice-server.service.
+
+### Patrón aprendido
+| Tipo de imagen | Healthcheck recomendado |
+|---|---|
+| Docker Hub oficial (mailpit, n8n, redis, postgres) | `wget -q --spider` o nativo |
+| Custom victoria-* | `curl -f` |
+| python:3.12-slim | `python3 -c "..."` (sin curl/wget) |
+
+### Estado post-limpieza
+| Contenedor | Imagen | Estado |
+|---|---|---|
+| vd-mailpit | axllent/mailpit | ✅ healthy (arreglado) |
+| vd-whois | victoria-whois:1.0 | ✅ healthy |
+| vd-video | victoria-video:1.0 | ✅ healthy |
+| vd-webnav | victoria-webnav:1.0 | ✅ healthy |
+| vd-gateway | victoria-gateway:1.0 | ✅ healthy |
+| vd-n8n | n8nio/n8n | ✅ healthy |
+| vd-sonic | victoria-gpu-base:1.0 | ✅ healthy |
+| vd-liveportrait | victoria-gpu-base:1.0 | ✅ healthy |
+| vd-comfyui | victoria-gpu-base:1.0 | ✅ healthy |
+| vd-hunyuan3d | victoria-gpu-base:1.0 | ✅ healthy |
+| vd-lp-animate | victoria-gpu-base:1.0 | ✅ healthy |
+| vd-redis | redis:7-alpine | ✅ healthy |
+| vd-postgres | postgres:16-alpine | ✅ healthy |
+| oc-publisher | python:3.12-slim | ✅ up (sin healthcheck) |
+| **vd-voice** | **N/A** | **ELIMINADO** (servicio host systemd) |
+
+---
+
+## [2026-11-20 21:10 EST] [dokploy] Subdominios + dnsmasq + proyecto "Victoria - Apps" + apps hunyuan3d/lp-animate
 - **Tipo**: infra + UX + registro
 - **Subdominios**: nginx vhosts por servicio (`comfyui|liveportrait|n8n|openclaw|sonic|hunyuan3d|lp-animate.victoria.local`), cert wildcard `*.victoria.local`, dnsmasq en 10.0.0.5:53 (`address=/victoria.local/10.0.0.5`). Path-based `victoria.local/*` preservado como fallback universal.
 - **Proyecto**: `victoria-content` renombrado a **"Victoria - Apps"** (apps internas red doméstica, sin llaves cliente).
