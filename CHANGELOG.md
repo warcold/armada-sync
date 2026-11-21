@@ -1,3 +1,12 @@
+### [2026-11-20 21:10 EST] [infra] Subdominios *.victoria.local + dnsmasq wildcard + proyecto "Victoria - Apps"
+- **Tipo**: infra + UX
+- **Qué**: nginx vhosts para cada servicio en subdominio root (`comfyui.victoria.local`, `liveportrait.victoria.local`, `n8n.victoria.local`, `openclaw.victoria.local`, `sonic/hunyuan3d/lp-animate.victoria.local` como APIs), certificado wildcard `*.victoria.local` (SAN), dnsmasq en 10.0.0.5:53 con `address=/victoria.local/10.0.0.5` para resolución LAN universal.
+- **Path-based preservado**: `victoria.local/comfyui/` etc. siguen funcionando (fallback universal, cero config en clientes).
+- **Proyecto renombrado**: `victoria-content` → **"Victoria - Apps"** (apps internas de la casa, sin llaves de cliente).
+- **Registro apps**: `hunyuan3d` y `lp-animate` creadas como apps Dokploy en `victoria-skills` con `applicationId` en composes.
+- **Requisito owner**: configurar router DHCP DNS → 10.0.0.5 para que `*.victoria.local` resuelva en toda la casa.
+- **Verificado**: subdominios UI 200 (Host header), path-based 200, dnsmasq wildcard 10.0.0.5, cert SAN correcto.
+
 ### [2026-11-20 20:44 EST] [dokploy] Servicios GPU migrados a contenedores (bind-mount, sin mover pesados)
 - **Tipo**: infra + migration
 - **Qué**: ComfyUI (:8188), LivePortrait (:8180), Sonic (:18850), Hunyuan3D (:18860) y LP-Animate (:18861) migrados de systemd host a contenedores Docker gestionados por compose de Dokploy, con **bind mounts** (venvs, modelos, código) — sin rebuild pesado ni mover modelos (109G/38G) dentro de imágenes.
